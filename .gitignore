@@ -1,0 +1,41 @@
+# Private meta repository allowlist.
+#
+# This repository tracks only workspace-level governance and shared
+# automation metadata. Individual project repositories under this directory
+# stay independent and are intentionally ignored by default.
+
+# Ignore every top-level path unless explicitly allowed below.
+/*
+
+# Root entry files.
+!/.gitignore
+!/AGENTS.md
+!/CLAUDE.md
+
+# Governance and specs.
+!/docs/
+!/docs/**
+
+# Project-local global skill bridges.
+!/.agents/
+!/.agents/**
+!/.claude/
+!/.claude/skills/
+!/.claude/skills/**
+
+# Shared scripts, schemas, and tests.
+!/scripts/
+!/scripts/**
+!/schemas/
+!/schemas/**
+!/tests/
+!/tests/**
+
+# Keep local machine settings and generated artifacts out of the meta repo.
+/.claude/*
+!/.claude/skills/
+!/.claude/skills/**
+/.DS_Store
+**/.DS_Store
+**/__pycache__/
+*.py[cod]

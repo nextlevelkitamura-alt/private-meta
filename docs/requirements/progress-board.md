@@ -4,6 +4,7 @@
 
 - REQ-001: Shared router for `CLAUDE.md` and `AGENTS.md`. Evidence: `bash scripts/agent-instructions/check-agent-instructions.sh` passed on 2026-05-28.
 - REQ-002: Source-of-truth docs under `docs/requirements/`, `docs/specs/`, and `docs/adr/`. Evidence: required path checks passed on 2026-05-28.
+- REQ-003: `requirements-governor` resolves and runs from both Claude Code and Codex CLI contexts. Evidence: `bash scripts/agent-instructions/check-skill-compatibility.sh` passed on 2026-06-26, including `claude --help` and `codex --help`; latest result recorded in `docs/agent/compatibility-checklist.md`.
 - REQ-004: Entry file line policy and validation. Evidence: `wc -l CLAUDE.md AGENTS.md` returned 96 lines each on 2026-05-28.
 - NFR-001: Safe compatibility and instruction check boundaries. Evidence: `docs/agent/compatibility-checklist.md` separates safe read-only commands from `check-skill-compatibility.sh`, which writes the checklist result block.
 - REQ-005: `note-create` learning research pack before commentary for technical topics. Evidence: skill docs and note scripts updated, then TypeScript check passed on 2026-05-28.
@@ -28,6 +29,7 @@
 - REQ-025: `kimi-webbridge` logged-in Arc workflow support. Evidence: on 2026-06-19, daemon and Arc extension were aligned at v1.10.0; Arc-safe `arc-session.sh` was added; `screenshot.sh` was updated for path-return screenshots; skill docs were updated; `quick_validate.py`, `bash -n`, health, two-session switching, click URL refresh, snapshot/evaluate, and screenshot smoke tests passed.
 - REQ-026: `short-video-create` reusable progressive-disclosure Skill. Evidence: on 2026-06-19, the Skill was added; on 2026-06-22, it was renamed to `short-video-create` with six workflows, five references, three asset templates, and global symlinks in `.codex/skills`, `.claude/skills`, and `.agents/skills`; trailing-whitespace check returned no matches; `bash scripts/agent-instructions/check-skill-compatibility.sh` passed after the rename.
 - REQ-027: `coding-task-orchestrator` confirmation-first development-task orchestration Skill. Evidence: on 2026-06-26, static Skill docs and supervisor evaluation patches were in place; the basic six live prompt cases passed in `docs/specs/coding-task-orchestrator-skill/live-manual-prompt-test-2026-06-26.md`; the additional six live prompt cases passed in `docs/specs/coding-task-orchestrator-skill/live-manual-prompt-test-additional-2026-06-26.md`; real branch/worktree representative operation evidence was recorded in `docs/specs/coding-task-orchestrator-skill/real-operation-evidence-2026-06-26.md` with branch `chore/cto-real-op-evidence-20260626`, worktree `/Users/kitamuranaohiro/Private/focusmap-wt-cto-real-op-evidence-20260626`, commit `e938272e14ea93092455ab752fa8e4d6bfe27b9c`, worker return supervision, closeout judgment, and explicit non-execution of prohibited operations.
+- REQ-028: `Private/` local Git meta-repository for Orca/Codex/Claude governance work. Evidence: commit `3dc31d3` initialized `/Users/kitamuranaohiro/Private` on `main`; `git ls-files` contains only allowed meta paths; `git status --ignored --short` shows child repos and local settings ignored; `git remote -v` has no configured remote.
 
 ## In Progress
 
@@ -39,7 +41,6 @@
 
 ## Needs Verification
 
-- REQ-003: `requirements-governor` skill file placement resolves for Claude Code and Codex, but Claude Code runtime detection is unverified because `claude --help` fails with a missing native binary.
 - REQ-007: `note-create` ImageGen-first visual rule and non-destructive note login check were implemented on 2026-05-29, but end-to-end draft creation still requires `note-nextlevel` reauthentication.
 - REQ-015: Local `mlx-whisper` transcription pipeline and units-based `caption_blocks` generator were added on 2026-06-01; `unittest` and `py_compile` passed, but real `mlx-whisper` inference still needs local dependency/model installation and sample media verification.
 - REQ-016: `ai-news-short-video` now has a transcription decision gate for ordinary edit assets, quoted videos, existing MP4s, interviews, and caption timing work; global `video-transcription` symlinks were added, but one ordinary TTS edit and one quoted-video edit should still be run to verify the automatic use/skip decision.

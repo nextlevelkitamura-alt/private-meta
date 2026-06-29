@@ -75,12 +75,12 @@
 
 ## ステップ（実装＝すべて ~/Private のドキュメント作業）
 
-- [ ] `areas/現在地.md` 新設（現 active: OrcaCLI複数エージェント運用 / キャリア転換 を記載）。
-- [ ] `areas/AGENTS.md` 更新: 卒業フロー・卒業手順・移行ログ形式・現在地.md・area内実行のコード線引き・plan.md統一テンプレ。
-- [ ] `my-brain/AGENTS.md` 更新: 工房→卒業の概念を数行。
-- [ ] `personal-os/AGENTS.md` 更新: 1行ポインタ追加＋「公開GitHub remote」→「非公開(private)」訂正（CLAUDE.md は symlink なので実体は AGENTS.md を直す）。
-- [ ] thinking/ 廃止: 各 area の thinking/ 削除、`plans-lifecycle.md` をこの plan に畳む（内容を失わない）。
-- [ ] 触らない: AIエージェント基盤（plans/作らない）／既存 active・done・archive 計画（移動しない、OrcaCLI・キャリア転換もそのまま）／projects 配下の各repo。
+- [x] `areas/現在地.md` 新設（現 active: OrcaCLI複数エージェント運用 / キャリア転換 を記載）。
+- [x] `areas/AGENTS.md` 更新: 卒業フロー・卒業手順・移行ログ形式・現在地.md・area内実行のコード線引き・plan.md統一テンプレ。
+- [x] `my-brain/AGENTS.md` 更新: 工房→卒業の概念を数行。
+- [x] `personal-os/AGENTS.md` 更新: 1行ポインタ追加＋「公開GitHub remote」→「非公開(private)」訂正（CLAUDE.md は symlink なので実体は AGENTS.md を直す）。
+- [x] thinking/ 廃止: 各 area の thinking/ 削除、`plans-lifecycle.md` をこの plan に畳む（内容を失わない）。
+- [x] 触らない: AIエージェント基盤（plans/作らない）／既存 active・done・archive 計画（移動しない、OrcaCLI・キャリア転換もそのまま）／projects 配下の各repo。
 
 ## 完了条件
 
@@ -93,4 +93,13 @@
 ## 関連
 
 1. 先行: `done/2026-06-29-計画バケット化`（バケット導入）、`done/2026-06-29-運用整理`（命名規約・2repo構造）。
-2. 旧設計メモ `../../thinking/plans-lifecycle.md` は本 plan に畳む（thinking/ 廃止に伴い移設）。
+2. 旧設計メモ plans-lifecycle.md（旧 `thinking/`）は本 plan に内容を畳んで削除済み。
+
+## 結果
+
+実装日: 2026-06-29 JST / コミット: `d7cdb6f`（codex/commit-cleanup）
+
+- 全ステップ実施。`現在地.md` 新設、`areas/AGENTS.md` に機構（§2 俯瞰・§5 ライフサイクル・卒業手順・移行ログ書式・area内実行・plan.md テンプレ）集約、`my-brain/AGENTS.md`（概念）・`personal-os/AGENTS.md`（ポインタ＋remote訂正）反映、thinking/ 全廃止。
+- 想定外の修正: `~/Private/.gitignore` の areas allowlist が ai運用 のみで、work/money/health/現在地.md が静かに無視されていた盲点を修正。未追跡だった `work/キャリア転換` plan.md も追跡へ復帰。
+- 反映先: `areas/AGENTS.md`、`my-brain/AGENTS.md`、`personal-os/AGENTS.md`、`.gitignore`、`現在地.md`。
+- 評価（done→archive）は人間。実運用で卒業を1回通すまで保留してよい。

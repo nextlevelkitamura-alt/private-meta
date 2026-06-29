@@ -11,7 +11,7 @@
 ## 背景
 
 1. 設計判断は `../../../thinking/plans-lifecycle.md` を参照（フォルダが状態の正本、`状態:` フィールド廃止）。
-2. 直前の plans廃止移行（`../../done/2026-06-基盤整理/`）で Codex が Skill ルーティングを
+2. 直前の plans廃止移行（`../../archive/2026-06-29-plans廃止とarea一本化/`）で Codex が Skill ルーティングを
    「フィールド方式」で約12ファイルに書いた。バケット方式に直す必要がある。
 
 ## 適用済み（areas側・Claude実施 2026-06-29）
@@ -20,10 +20,9 @@
 - `areas/AGENTS.md` Plan標準構成、`ai運用/AGENTS.md` 計画ルーティングをバケット方式に更新。
 - 既存plan を振り分け（active←orca/career、done←done7件）、plan.md から `状態:` フィールド除去。
 
-## 残作業（Skill側・Codexへ委譲）
+## Skill側（完了）
 
-詳細手順は `ops/ai/codex-skill-bucket化.md`（種別: ai / 状態: done）。
-約12ファイルの「フィールド方式」記述を「バケット方式」へ書き換える。repo-local 側は変更しない。
+2026-06-29 Codex実施・AIエージェント基盤repoコミット済。手順は `ops/ai/codex-skill-bucket化.md`、詳細は下の「結果」。
 
 ## 完了条件
 

@@ -85,4 +85,4 @@ grep -rn "状態: planning\|状態: ready\|状態: active\|`状態:` を書く" 
 
 ## Git
 `AIエージェント基盤/AGENTS.md` のGit運用に従う。意味のある単位でcommit。push/main操作はしない。
-完了後、親計画 `2026-06-計画バケット化` を `done/` へ `git mv`（評価後に `archive/`）。
+完了後、親計画 `2026-06-29-計画バケット化` を `done/` へ `git mv`（評価後に `archive/`）。

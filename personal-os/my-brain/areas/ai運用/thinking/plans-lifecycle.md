@@ -10,8 +10,8 @@
 - [x] 振り分け: active←orca/career、done←done7件（基盤整理含む）へ git mv。
 - [x] strip: 全plan.md から `状態:` フィールド除去（`分類:`/`種別:` は維持）。
 - [x] 参照修正: 基盤整理 を指す2箇所を done/ パスへ更新。
-- [x] skill handoff 作成: `plans/active/2026-06-計画バケット化/ops/ai/codex-skill-bucket化.md`（状態 ready）。
-- [ ] skill実行: 約12ファイルの「フィールド方式→バケット方式」化（Codexへ委譲、上記handoff）。
+- [x] skill handoff 作成: `plans/done/2026-06-29-計画バケット化/ops/ai/codex-skill-bucket化.md`（Codex実施済）。
+- [x] skill実行: 約12ファイルの「フィールド方式→バケット方式」化（Codex実施・コミット済 2026-06-29）。
 
 レビュー完了報告を受けて 2026-06-29 に実施。skill側の実行のみ Codex 残。
 

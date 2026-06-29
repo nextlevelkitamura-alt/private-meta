@@ -26,7 +26,7 @@
 5. Global Skill計画はこのareaに置き、repo-local Skill計画は所有repo内の `plans/skills/` を正本にする。
 6. repo-local Skillの所属repoが未確定なら、所有repoを決める計画としてこのareaに `分類: repo` で置く。
 7. repo-local SkillをGlobal化する判断が主目的なら、このareaに `分類: skill` で置く。
-8. 旧計画ディレクトリは廃止済み。移行状況は `plans/archive/2026-06-基盤整理/plan.md` を見る。
+8. 旧計画ディレクトリは廃止済み。移行状況は `plans/archive/2026-06-29-plans廃止とarea一本化/plan.md` を見る。
 
 ## 4. 作業ルール
 

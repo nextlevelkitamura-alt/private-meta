@@ -29,12 +29,14 @@ areas/<area>/
 
 ```text
 plans/
-  active/   <YYYY-MM-short-name>/plan.md
+  active/   <YYYY-MM-DD-日本語企画名>/plan.md
   paused/   .gitkeep
   done/     .gitkeep
   archive/  .gitkeep
 ```
 
+0. 計画フォルダ名は `YYYY-MM-DD-日本語企画名`。日付は作成日。固有名詞（Orca, skill-creator-custom 等）は
+   識別子として残し、企画名は日本語で簡潔に（15〜20字目安）。
 1. バケットが計画の状態の正本。意味は次の通り。
    - `active`: 進行中、または着手前で今のスコープに入っているもの。
    - `paused`: 一時停止。再開予定あり。
@@ -47,6 +49,8 @@ plans/
    - 一時停止 → `paused/`。
    - 作業完了（未評価）→ plan.md に結果を追記し `done/` へ。
    - 評価OK → `archive/` へ。問題があれば `active/` へ戻す。
+   - 評価ゲート: `done` は「エージェント完了・未評価」、`archive` は「評価済みOK」。
+     完了報告を受けた計画オーナー（または委任された Claude）が done を確認してから archive へ動かす。
 4. 空の `paused/` `done/` `archive/` は `.gitkeep` を置く（gitは空ディレクトリを保存しないため）。
 5. `plan.md` を計画本文の正本にする。背景、判断、ワークフロー、完了条件はまず `plan.md` に書く。
    `checklist.md` や追加ファイルは、分離した方が読みやすい時だけ作る。
@@ -56,7 +60,7 @@ plans/
 計画を作ったら、`ops/` に種別5フォルダを作る。状態はフォルダにせず、各作業ファイルの中で持つ。
 
 ```text
-plans/<YYYY-MM-short-name>/
+plans/active/<YYYY-MM-DD-日本語企画名>/
   plan.md
   ops/
     human/        .gitkeep

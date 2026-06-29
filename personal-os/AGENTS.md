@@ -32,6 +32,13 @@
 3. `my-brain/`: 自分の考え、領域ごとの判断軸、調査、計画。
 4. `AIエージェント基盤/`: Global Skill正本、Global Skill registry、repo履歴ログ、runtime露出補助。
 
+### git構造（コミット前に必ず把握）
+
+1. `~/Private` 全体が1つのgit repo（branch `main`、remote 無し＝ローカルのみ）。`personal-os/my-brain/` 等を追跡する。
+2. `AIエージェント基盤/` は別の独立git repo（別branch・公開GitHub remote）で、`~/Private` 側からは `.gitignore` で非追跡。二重管理は起きていない。
+3. 1論理変更が2repoにまたがることがある（例: plans廃止→ai運用一本化）。各repoで別々にコミットし、本文で相手repoの変更に言及して束ねる。
+4. コミット前に確認する: `main` 直コミットか作業branchか、`git add -A` を避けてパス指定、secret混入、push可否（push は明示依頼時のみ）。
+
 ## 4. 大事にする価値観
 
 1. 正本を一つにする。コピーや二重管理で安心しない。

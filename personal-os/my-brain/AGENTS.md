@@ -15,7 +15,7 @@
 
 1. 実装repo本体は `/Users/kitamuranaohiro/Private/projects/` に置く。
 2. Global Skill正本、registry、runtime露出、履歴ログは `../AIエージェント基盤/` を正とする。
-3. 旧 `../plans/` は廃止済み。基盤・Skill・repo・loop計画は `areas/ai運用/` に置く。移行状況は `areas/ai運用/plans/archive/2026-06-基盤整理/plan.md` を見る。
+3. 旧 `../plans/` は廃止済み。基盤・Skill・repo・loop計画は `areas/ai運用/` に置く。移行状況は `areas/ai運用/plans/archive/2026-06-29-plans廃止とarea一本化/plan.md` を見る。
 4. 同じ計画本文を `thinking/`、`plans/`、repo側にコピーしない。
 
 ## 3. 作業ルール

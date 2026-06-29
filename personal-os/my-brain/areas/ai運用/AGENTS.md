@@ -23,7 +23,7 @@
 2. `plan.md` 冒頭に `分類:`、`種別:` を書く。状態はフォルダ（バケット）で持ち、`状態:` フィールドは書かない。
 3. `分類:` は `skill`、`repo`、`loop` を使う。Personal OS基盤や横断運用は、主対象に最も近い分類で扱う。
 4. `種別:` の定義と、バケット（状態）の規約・移動方法は `../AGENTS.md` を正とする。
-5. Global Skill計画はこのareaに置き、repo-local Skill計画は所有repo内の `plans/skills/` を正本にする。
+5. Global Skill / loop 計画はこのareaで育成し、成熟したら `../../../AIエージェント基盤/plans/<分類>/` へ卒業させる（卒業手順は `../AGENTS.md` §5、卒業先構成は基盤 `AGENTS.md` §1.1）。repo-local Skill計画は所有repo内の `plans/skills/` を正本にする。
 6. repo-local Skillの所属repoが未確定なら、所有repoを決める計画としてこのareaに `分類: repo` で置く。
 7. repo-local SkillをGlobal化する判断が主目的なら、このareaに `分類: skill` で置く。
 8. 旧計画ディレクトリは廃止済み。移行状況は `plans/archive/2026-06-29-plans廃止とarea一本化/plan.md` を見る。

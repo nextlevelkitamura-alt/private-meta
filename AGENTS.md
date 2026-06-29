@@ -17,6 +17,7 @@
    - `personal-os/my-brain/`: 自分の考え、領域ごとの判断軸、調査、計画。
    - `personal-os/AIエージェント基盤/`: Global Skill正本、runtime露出、registry、repo履歴ログの正本。
    - `personal-os/my-brain/areas/ai運用/plans/`: Personal OS基盤、横断repo、Global Skill、repo、loopの企画・計画書。
+   - 計画の状態・バケット規約の正本は `personal-os/my-brain/areas/AGENTS.md`（語彙）と `personal-os/AIエージェント基盤/AGENTS.md` §1.1（卒業先 `plans/` 構成）。
 2. `projects/`: 各プロジェクト/リポジトリの置き場。
    - `projects/active/`: 今使うもの。`仕事/`、`focusmap/` などはここに置く。
    - `projects/paused/`: 一時停止中だが残すもの。旧直下repoはまずここへ集約する。

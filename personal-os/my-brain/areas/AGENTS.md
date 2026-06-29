@@ -32,7 +32,7 @@ areas/<area>/
 1. active な計画だけを1行ポインタで載せる。列＝優先 / 領域 / 計画 / 場所 / 次の一手。
 2. area で育成中の計画と、repoへ卒業して実行中の計画の両方を載せる（`場所` 列で区別）。
 3. 状態の正本はフォルダ。現在地.md は索引。計画を active に出し入れする `git mv` と同じコミットで、この1行も足す/消す。
-4. paused / done / archive / 卒業済みは載せない（履歴は各 area の `plans/` とログが持つ）。
+4. 進行中（area は `active`、基盤は `planning`/`ready`/`active`）だけ載せる。`paused` / `done` / `archive` に入ったら載せない（履歴は各 `plans/` とログが持つ）。
 
 ## 3. Plan標準構成
 
@@ -117,12 +117,12 @@ plans/active/<YYYY-MM-DD-日本語企画名>/
 3. 卒業先の判断:
    - 単一repoに属す作業 → そのrepoの `plans/`。
    - personal-os構造・横断・repo無し → 卒業せず area 内で実行（`ops/human`・`ops/ai`）。
-   - global skill / 横断infra → 成熟後に「AIエージェント基盤へ卒業 or area留置」を1計画ずつ判断（今は AIエージェント基盤に `plans/` を作らない）。
+   - global skill / loop → `AIエージェント基盤/plans/<分類>/`（`skill` か `loop`）へ卒業。状態は §4 の6語彙をフルでバケット化する（`planning`/`ready`/`active`/`paused`/`done`/`archive`）。構成の正本は基盤 `AGENTS.md` §1.1。
 
 ### 卒業手順（repoへ移す場合）
 
 1. 人間が「卒業」と判断。
-2. 移行先を決める（既存repo / 新規repo＝repo-create で先に作成 / AIエージェント基盤＝global skill）。
+2. 移行先を決める（既存repo / 新規repo＝repo-create で先に作成 / AIエージェント基盤＝global skill・loop は `plans/<分類>/`）。
 3. 移行先repoに `plan.md`（＋要れば ops）を作成 → そのrepoで commit。
 4. area の元 plan フォルダを削除し、`移行済み/YYYY-MM/MM-DD-<計画名>.md` に移行ログを追記 → ~/Private で commit。
 5. `現在地.md` の行を「場所＝<repo>」に更新（active のまま、実行先が変わっただけ）。

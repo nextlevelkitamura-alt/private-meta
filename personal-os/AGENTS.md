@@ -70,7 +70,7 @@
 3. 計画から派生するhuman、AI、repo、Skill、loop作業は、同じ計画フォルダ内の `ops/<種別>/<作業名>.md` に置き、状態はファイル内の `状態:` 行で持つ。
 4. Personal OS基盤、横断repo、Global Skill、repo、loopの計画は `my-brain/areas/ai運用/plans/active/<YYYY-MM-DD-日本語企画名>/plan.md` に置く（状態はバケットで移す）。
 5. 実行済みの事実、移動、削除、改名、登録の履歴は該当registryの `logs/` に短く残す。
-6. Global Skillの正本は `AIエージェント基盤/skills/` に置く。
+6. Global Skillの正本は `AIエージェント基盤/skills/`、Global loop の正本は `AIエージェント基盤/loops/` に置く。
 7. Global Skillの索引は `AIエージェント基盤/global-skill-registry/catalog/` に置く。
 8. repo単位の登録、移動、削除、repo-local Skill履歴は `AIエージェント基盤/repo-registry/logs/` に置く。
 9. 特定repoの計画やrepo-local Skill計画は、そのrepo内の `plans/` に置く。

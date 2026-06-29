@@ -62,3 +62,14 @@ AIエージェント基盤を「リポジトリ全体のうち**グローバル/
 1. 先行: `done/2026-06-29-計画ライフサイクル設計`（育成→卒業、`plans/` §1.1 の定義）。本計画はその続きで「本体（`loops/`）とコード置き場」を扱う。
 2. 既実装: 基盤 `AGENTS.md` §1.1（`plans/`）。本計画は §1.2（`loops/`）と code policy を足す。
 3. 宿題（別計画に切り出す）: loop 起動の仕組み（スケジューラ／runtime露出）。
+
+## 結果
+
+実装日: 2026-06-29 JST / コミット: 基盤 `45b5c2f`（codex/align-agent-registries）＋ ~/Private 本コミット（codex/commit-cleanup）
+
+- **A 位置づけ**: 基盤 `AGENTS.md` §0 に「グローバル/基盤レイヤを管理する場所・global実装正本の集約」を明文化。
+- **B loops/**: §1 地図に `loops/` 追加、§1.2「loops/ の構成」新設（`loop.md`＋`scripts/`、状態=frontmatter、`plans/loop` と相互参照、起動の仕組みは未確定として宿題化）。§2.1・§6 にも導線。
+- **C コード置き場**: §4 に「コード（実装）の置き場」（scope軸の4区別）を追記し、「基盤はコードを持たない」と読める箇所を排除。§4.1 に loop を Global判断対象として追加。
+- 反映先: 基盤 `AGENTS.md`（§0/§1/§1.2/§2/§4/§6）、`personal-os/AGENTS.md` §6.6（Global loop正本＝`基盤/loops/`）。
+- 宿題（別計画）: loop 起動の仕組み（スケジューラ/runtime露出）。実体 `loops/` フォルダは初回 loop 作成時に生やす（今は空フォルダを作らない）。
+- 評価（done→archive）は人間。

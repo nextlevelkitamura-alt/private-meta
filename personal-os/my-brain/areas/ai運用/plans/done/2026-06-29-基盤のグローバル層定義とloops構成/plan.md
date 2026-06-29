@@ -73,3 +73,10 @@ AIエージェント基盤を「リポジトリ全体のうち**グローバル/
 - 反映先: 基盤 `AGENTS.md`（§0/§1/§1.2/§2/§4/§6）、`personal-os/AGENTS.md` §6.6（Global loop正本＝`基盤/loops/`）。
 - 宿題（別計画）: loop 起動の仕組み（スケジューラ/runtime露出）。実体 `loops/` フォルダは初回 loop 作成時に生やす（今は空フォルダを作らない）。
 - 評価（done→archive）は人間。
+
+### 追記2（2026-06-30）: loop起動の標準化 ＋ skill計画の置き場変更
+
+- **loop 起動の宿題を標準化**: `loops/references/loop-runbook.md`（launchd ＋ 軽量ディスパッチャ ＋ runner 2系統 `ai`/`script`）を新設。リファレンス実装は仕事リポ `scripts/nextlevel-dispatcher/`（実地調査で既に本番稼働を確認）。`loops/` 実体を作成。
+- **skill 計画の置き場変更**: `plans/skill/`（未実体）→ `global-skill-registry/plans/` に移動。`plans/` は loop 専用に。基盤 `AGENTS.md` §1.1/§1.2/§2.6/§3.7/§6/§7 ＋ `personal-os/AGENTS.md` §6.2 を整合。
+- **残る宿題**: グローバル dispatcher 本体の実装と、仕事リポ自動化の統合・移行（仕事は今のまま稼働）。
+- コミット: 基盤 `eeeaa4c` ＋ ~/Private 本コミット。

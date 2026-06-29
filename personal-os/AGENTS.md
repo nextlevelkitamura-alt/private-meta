@@ -66,7 +66,7 @@
 ## 6. 更新ルール
 
 1. 領域別の考え、調査、判断軸、実行計画は `my-brain/areas/` に置く。
-2. 領域別計画は `my-brain/areas/<area>/plans/<バケット>/<計画名>/plan.md` を正本にする（状態はバケット）。計画は area で育て、成熟したら実行repoへ卒業させる（流れの正本は `my-brain/areas/AGENTS.md` の §5）。計画の状態バケット語彙（`planning`/`ready`/`active`/`paused`/`done`/`archive`）は area と `AIエージェント基盤/` 共通で `my-brain/areas/AGENTS.md` §4 が正本。global skill / loop の卒業先 `AIエージェント基盤/plans/` の構成は同 repo の `AGENTS.md` §1.1。
+2. 領域別計画は `my-brain/areas/<area>/plans/<バケット>/<計画名>/plan.md` を正本にする（状態はバケット）。計画は area で育て、成熟したら実行repoへ卒業させる（流れの正本は `my-brain/areas/AGENTS.md` の §5）。計画の状態バケット語彙（`planning`/`ready`/`active`/`paused`/`done`/`archive`）は area と `AIエージェント基盤/` 共通で `my-brain/areas/AGENTS.md` §4 が正本。global skill 計画の卒業先は `AIエージェント基盤/global-skill-registry/plans/`、loop 計画は `AIエージェント基盤/plans/loop/`（構成は同 repo `AGENTS.md` §1.1）。
 3. 計画から派生するhuman、AI、repo、Skill、loop作業は、同じ計画フォルダ内の `ops/<種別>/<作業名>.md` に置き、状態はファイル内の `状態:` 行で持つ。
 4. Personal OS基盤、横断repo、Global Skill、repo、loopの計画は `my-brain/areas/ai運用/plans/active/<YYYY-MM-DD-日本語企画名>/plan.md` に置く（状態はバケットで移す）。
 5. 実行済みの事実、移動、削除、改名、登録の履歴は該当registryの `logs/` に短く残す。

@@ -19,7 +19,7 @@
 3. `personal-os/` 直下に、新しい正本フォルダや作業場を勝手に増やさない。
 4. 新しいrepo本体は原則として `/Users/kitamuranaohiro/Private/projects/` 配下に置く。
 5. repoの現在状態は `/Users/kitamuranaohiro/Private/projects/{active,paused,archive}/` の実体配置を正とする。
-6. `my-brain/`、`AIエージェント基盤/`、`plans/`、各repoの `plans/` に同じ内容を二重管理しない。
+6. `my-brain/areas/`、`AIエージェント基盤/`、各repoの `plans/` に同じ内容を二重管理しない。
 7. secret、token、credential、環境変数の値は表示・記録・commitしない。
 8. フォルダ構成、正本、計画、registry、logs、runtime露出を変更した場合は、関連する `AGENTS.md` / `CLAUDE.md` / plans / logs / catalog の整合性を同じ作業単位で確認・更新する。
 9. 構成やルールを変更したまま、エージェント向け入口説明を古い状態で放置しない。
@@ -31,7 +31,6 @@
 2. `CLAUDE.md`: `AGENTS.md` への相対symlink。本文コピーは禁止。
 3. `my-brain/`: 自分の考え、領域ごとの判断軸、調査、計画。
 4. `AIエージェント基盤/`: Global Skill正本、Global Skill registry、repo履歴ログ、runtime露出補助。
-5. `plans/`: 既存のPersonal OS横断計画、Global Skill、repo、loopの企画・計画書。新しい領域別計画は `my-brain/areas/` を優先する。
 
 ## 4. 大事にする価値観
 
@@ -51,7 +50,7 @@
 2. my-brainを触る場合は `my-brain/AGENTS.md` を読む。
 3. 領域別の考えや計画を触る場合は `my-brain/areas/AGENTS.md` と対象areaの `AGENTS.md` を読む。
 4. AIエージェント基盤を触る場合は `AIエージェント基盤/AGENTS.md` を読む。
-5. 既存の横断計画書を触る場合は `plans/AGENTS.md` を読む。
+5. Personal OS基盤、Global Skill、repo、loopの計画を触る場合は `my-brain/areas/AGENTS.md` と `my-brain/areas/ai運用/AGENTS.md` を読む。
 6. 特定repoに関わる場合は、そのrepoの `AGENTS.md` を読む。
 7. 作業前に対象の正本、履歴、現在状態の置き場を確認する。
 8. 新しいディレクトリを増やす場合は、同じ作業でこのファイルのフォルダ概要に役割を追加する。
@@ -60,9 +59,9 @@
 ## 6. 更新ルール
 
 1. 領域別の考え、調査、判断軸、実行計画は `my-brain/areas/` に置く。
-2. 領域別計画は `my-brain/areas/<area>/plans/<計画名>/plan.md` を正本にする。
+2. 領域別計画は `my-brain/areas/<area>/plans/<バケット>/<計画名>/plan.md` を正本にする（状態はバケット）。
 3. 計画から派生するhuman、AI、repo、Skill、loop作業は、同じ計画フォルダ内の `ops/<種別>/<作業名>.md` に置き、状態はファイル内の `状態:` 行で持つ。
-4. 既存のPersonal OS横断計画、Global Skill、repo、loopの計画は、移行が完了するまで `plans/` に置く。
+4. Personal OS基盤、横断repo、Global Skill、repo、loopの計画は `my-brain/areas/ai運用/plans/active/<YYYY-MM-short-name>/plan.md` に置く（状態はバケットで移す）。
 5. 実行済みの事実、移動、削除、改名、登録の履歴は該当registryの `logs/` に短く残す。
 6. Global Skillの正本は `AIエージェント基盤/skills/` に置く。
 7. Global Skillの索引は `AIエージェント基盤/global-skill-registry/catalog/` に置く。

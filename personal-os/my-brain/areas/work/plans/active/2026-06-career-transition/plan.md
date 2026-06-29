@@ -1,6 +1,5 @@
 # Career Transition
 
-状態: planning
 
 ## 目的
 

@@ -35,7 +35,7 @@
 ### git構造（コミット前に必ず把握）
 
 1. `~/Private` 全体が1つのgit repo（branch `main`、remote 無し＝ローカルのみ）。`personal-os/my-brain/` 等を追跡する。
-2. `AIエージェント基盤/` は別の独立git repo（別branch・公開GitHub remote）で、`~/Private` 側からは `.gitignore` で非追跡。二重管理は起きていない。
+2. `AIエージェント基盤/` は別の独立git repo（別branch・非公開(private)のGitHub remote）で、`~/Private` 側からは `.gitignore` で非追跡。二重管理は起きていない。
 3. 1論理変更が2repoにまたがることがある（例: plans廃止→ai運用一本化）。各repoで別々にコミットし、本文で相手repoの変更に言及して束ねる。
 4. コミット前に確認する: `main` 直コミットか作業branchか、`git add -A` を避けてパス指定、secret混入、push可否（push は明示依頼時のみ）。
 
@@ -66,9 +66,9 @@
 ## 6. 更新ルール
 
 1. 領域別の考え、調査、判断軸、実行計画は `my-brain/areas/` に置く。
-2. 領域別計画は `my-brain/areas/<area>/plans/<バケット>/<計画名>/plan.md` を正本にする（状態はバケット）。
+2. 領域別計画は `my-brain/areas/<area>/plans/<バケット>/<計画名>/plan.md` を正本にする（状態はバケット）。計画は area で育て、成熟したら実行repoへ卒業させる（流れの正本は `my-brain/areas/AGENTS.md` の §5）。
 3. 計画から派生するhuman、AI、repo、Skill、loop作業は、同じ計画フォルダ内の `ops/<種別>/<作業名>.md` に置き、状態はファイル内の `状態:` 行で持つ。
-4. Personal OS基盤、横断repo、Global Skill、repo、loopの計画は `my-brain/areas/ai運用/plans/active/<YYYY-MM-short-name>/plan.md` に置く（状態はバケットで移す）。
+4. Personal OS基盤、横断repo、Global Skill、repo、loopの計画は `my-brain/areas/ai運用/plans/active/<YYYY-MM-DD-日本語企画名>/plan.md` に置く（状態はバケットで移す）。
 5. 実行済みの事実、移動、削除、改名、登録の履歴は該当registryの `logs/` に短く残す。
 6. Global Skillの正本は `AIエージェント基盤/skills/` に置く。
 7. Global Skillの索引は `AIエージェント基盤/global-skill-registry/catalog/` に置く。

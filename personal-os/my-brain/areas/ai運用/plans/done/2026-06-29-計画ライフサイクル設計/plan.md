@@ -103,3 +103,7 @@
 - 想定外の修正: `~/Private/.gitignore` の areas allowlist が ai運用 のみで、work/money/health/現在地.md が静かに無視されていた盲点を修正。未追跡だった `work/キャリア転換` plan.md も追跡へ復帰。
 - 反映先: `areas/AGENTS.md`、`my-brain/AGENTS.md`、`personal-os/AGENTS.md`、`.gitignore`、`現在地.md`。
 - 評価（done→archive）は人間。実運用で卒業を1回通すまで保留してよい。
+
+### 追記（2026-06-29）: 先送りした基盤 plans/ を定義
+
+方針の「今は AIエージェント基盤に plans/ を作らない（先送り）」を解消。卒業先 `AIエージェント基盤/plans/<分類>/<状態>/` を基盤 `AGENTS.md` §1.1 に定義（分類=skill·loop はフォルダ、状態=planning/ready/active/paused/done/archive、種別=frontmatter、ready=AI実行キュー）。`areas/AGENTS.md` §5 の卒業先・卒業手順も更新。コミット: `4ce61d0`（~/Private）/ `5153828`（基盤）。loop実装本体の置き場は別途。

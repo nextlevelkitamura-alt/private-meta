@@ -5,8 +5,8 @@
 ## 1. 置くもの
 
 1. 仕事やキャリアに関する判断軸は `identity.md` に置く。
-2. 調査、仮説、方向性、未整理の考えは `thinking/` に置く。
-3. 実行する計画は `plans/active/<YYYY-MM-short-name>/plan.md` に作り、状態に応じてバケット（active/paused/done/archive）間を移す（規約は `../AGENTS.md`）。
+2. 固まっていない構想は `identity.md` か、育成中の計画の `plan.md` の `方針`（未確定のまま）に置く。`thinking/` は廃止した。
+3. 実行する計画は `plans/active/<YYYY-MM-DD-日本語企画名>/plan.md` に作り、状態に応じてバケット（active/paused/done/archive）間を移す。repo実行が要る計画は成熟後に実行repoへ卒業させる（規約・卒業手順は `../AGENTS.md`）。
 4. 計画から派生するhuman、AI、repo、Skill、loop作業は、同じ計画フォルダ内の `ops/<種別>/<作業名>.md` に置く（種別・状態の定義は `../AGENTS.md` 参照）。
 
 ## 2. 置かないもの
@@ -17,7 +17,7 @@
 
 ## 3. 作業ルール
 
-1. 新しい計画を作る前に、既存の `thinking/` と `plans/` を確認する。
+1. 新しい計画を作る前に、既存の `plans/` を確認する。
 2. まず `plan.md` に全体像を書く。
 3. 計画を作ったら `ops/` に種別5フォルダ（`.gitkeep`付き）を作り、作業が出たら `ops/<種別>/<作業名>.md` に置く。
 4. confidentialな会社情報、個人情報、認証情報は書かない。

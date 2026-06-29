@@ -6,8 +6,8 @@
 ## 1. 置くもの
 
 1. 基盤の運営方針・判断軸は `identity.md` に置く。
-2. 調査、仮説、未整理の考えは `thinking/` に置く。
-3. 実行する計画は `plans/active/<YYYY-MM-short-name>/plan.md` に作り、状態に応じてバケット（active/paused/done/archive）間を移す。規約は `../AGENTS.md`。
+2. 固まっていない構想は `identity.md` か、育成中の計画の `plan.md` の `方針`（未確定のまま）に置く。`thinking/` は廃止した。
+3. 実行する計画は `plans/active/<YYYY-MM-DD-日本語企画名>/plan.md` に作り、状態に応じてバケット（active/paused/done/archive）間を移す。repo実行が要る計画は成熟後に実行repoへ卒業させる。規約・卒業手順は `../AGENTS.md`。
 4. 計画から派生するhuman、AI、repo、Skill、loop作業は、同じ計画フォルダ内の `ops/<種別>/<作業名>.md` に置く（種別・状態の定義は `../AGENTS.md` 参照）。
 5. Personal OS基盤・横断repo・Global Skill・repo・loopの計画は、このareaを正本にする。
 
@@ -19,7 +19,7 @@
 
 ## 3. 計画ルーティング
 
-1. 1計画は `plans/active/<YYYY-MM-short-name>/plan.md` に作り、状態に応じてバケット（active/paused/done/archive）間を `git mv` で移す。
+1. 1計画は `plans/active/<YYYY-MM-DD-日本語企画名>/plan.md` に作り、状態に応じてバケット（active/paused/done/archive）間を `git mv` で移す。
 2. `plan.md` 冒頭に `分類:`、`種別:` を書く。状態はフォルダ（バケット）で持ち、`状態:` フィールドは書かない。
 3. `分類:` は `skill`、`repo`、`loop` を使う。Personal OS基盤や横断運用は、主対象に最も近い分類で扱う。
 4. `種別:` の定義と、バケット（状態）の規約・移動方法は `../AGENTS.md` を正とする。
@@ -30,7 +30,7 @@
 
 ## 4. 作業ルール
 
-1. 新しい計画を作る前に、既存の `thinking/` と `plans/` を確認する。
+1. 新しい計画を作る前に、既存の `plans/` を確認する。
 2. まず `plan.md` に目的、対象、判断、実行順、完了条件を書く。
 3. 計画を作ったら `ops/` に種別5フォルダ（`.gitkeep`付き）を作り、作業が出たら `ops/<種別>/<作業名>.md` に置く。
 4. 完了済み計画には、結果と反映先だけを短く追記する。
@@ -44,7 +44,7 @@
 
 ## 6. 完了条件
 
-1. 計画がこのareaの `plans/<バケット>/<YYYY-MM-short-name>/plan.md` に配置されている。
+1. 計画がこのareaの `plans/<バケット>/<YYYY-MM-DD-日本語企画名>/plan.md` に配置されている。
 2. `分類:`、`種別:` が本文冒頭にある（状態はバケットで持ち、`状態:` 行は書かない）。
 3. 計画、現在状態、履歴、実装正本が混ざっていない。
 4. repo-local Skill計画をPersonal OS側へコピーしていない。

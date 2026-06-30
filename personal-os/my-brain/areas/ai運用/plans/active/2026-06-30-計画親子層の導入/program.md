@@ -27,6 +27,7 @@
 
 03  plan-opsスキル … planning
     次: ゲート→workflows→references ／ run-card=repo-aware・cross-repo戻し(C)
+    実地テスト所見(a-2要件): claim/done の mv 自動化・計画→run-card 生成・レビュー項目の範囲付き機械判定
     場所: plans/03（→基盤卒業） ／ 依存: 01,02
 
 04  判断系スキル棚卸し … planning

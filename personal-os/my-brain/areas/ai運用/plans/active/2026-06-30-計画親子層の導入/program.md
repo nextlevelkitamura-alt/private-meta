@@ -18,10 +18,10 @@
 ## 子計画マップ
 | NN | 子計画 | 状態 | 場所 | 依存 | 次の一手 |
 |----|--------|------|------|------|----------|
-| 01 | AGENTS規約追記＋ai-jobs雛形 | active | plans/01 | ― | 反映済・最終検証 |
-| 02 | テンプレ確定 | planning | plans/02 | 01 | program.md/子/run-cardの3テンプレ |
-| 03 | plan-opsスキル | planning | plans/03（→基盤卒業） | 01,02 | ゲート→workflows→references |
-| 04 | 判断系スキル棚卸し | planning | plans/04（→基盤卒業） | 03 | mokuteki/orchestratorの重複整理 |
+| 01 | AGENTS規約追記＋ai-jobs雛形 | active | plans/01 | ― | 反映済・最終検証／ready統一(C) |
+| 02 | テンプレ確定 | planning | plans/02 | 01 | program.md/子/run-cardの3テンプレ＋レビュー項目節(C) |
+| 03 | plan-opsスキル | planning | plans/03（→基盤卒業） | 01,02 | ゲート→workflows→references／run-card=repo-aware・cross-repo戻し(C) |
+| 04 | 判断系スキル棚卸し | planning | plans/04（→基盤卒業） | 03 | mokuteki/orchestratorの重複整理＋計画立案パイプライン統合(C) |
 | 05 | 各repo標準展開 | planning | plans/05（→各repo） | 02 | ai-jobsで並列展開 |
 
 ## 完了条件
@@ -33,4 +33,5 @@
 
 ## 関連
 - Program B「AI自動実行基盤（Orca運用）」＝ `../2026-06-29-OrcaCLI複数エージェント運用/`。本program（A）に依存（A→B）。Bは ai-jobs を消費して回す。
-- area＝傘。A と B は area 配下の焦点programであり、「基盤整備」大programは作らない。
+- Program C「目的管理ハーネス」＝ `../2026-06-30-目的管理ハーネス/program.md`。Cの設計が本Aの子へ追補として入る（上の「次の一手」の(C)印）。run-card共通契約とダッシュボードがA/B/Cの接点。
+- area＝傘。A・B・C は area 配下の焦点programであり、「基盤整備」大programは作らない。

@@ -8,6 +8,19 @@
 - 目的: Orca上のworktreeとterminalだけで、多段AI作業を開始、監督、差し戻し、commit/push、削除まで完結させる。
 - 対象: Orca CLI、Orca Automations、Orca orchestration、agent hooks、Codex terminal、Git closeout。
 
+## 目的管理ハーネス(C)との接続・追補
+
+program C「目的管理ハーネス」(`../2026-06-30-目的管理ハーネス/program.md`)から本Bへ次を反映する。
+
+1. 最初に作るのは **監督＝振り分けスキル**。ai-jobs/ready の run-card を読み、各cardの担当engine・使うskill・worktree/branch を決め、`dispatch --inject` でskill注入promptを渡す。これがA(計画)とB(実行)の接点。
+2. 入力は **repo-aware な run-card**(担当/出所/対象repo/作業導線/ブランチ/依頼/許可/前提/完了条件/戻し方)。別repoに卒業した計画も、このcard1枚で対象repoに入って実行できる。
+3. **ダッシュボードは監督が単一writerで再生成**する。各worker/worktreeには書かせない(同時書き込み衝突・crash対策)。workerの義務は「完了→report-path付き worker_done を監督へ送る」だけ。
+4. 制約: done瞬間の汎用callbackは無い前提。done挙動はpromptに焼き込み、監督が worker_done に反応。取りこぼしは `worktree ps`/agent hooks で確認。
+
+### 後続 (今回パーク)
+- 各skillの細かな中身・誘導ルール・skillを loop フォルダのどこへ置くかは後続で詰める(今回はハーネス設計＝枠まで)。
+- ROI・評価基準は本ハーネスを一定運用後に別途設計(現状未確定)。
+
 ## 最終判断
 
 1. 標準案はOrca内で完結させる。

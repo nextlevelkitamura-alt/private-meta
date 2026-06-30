@@ -72,41 +72,50 @@ plans/
 3. `完了条件` は未確定でよい（「未確定」と明記）。`方針` も固まる前は「未確定」と書いて育てる。
 4. 「背景: 未記入」のような空欄テンプレは禁止。書けない欄は消すか「未確定」と書く。
 
-## 4. Ops標準構成
+### プログラム計画（親子層）
 
-計画を作ったら、`ops/` に種別5フォルダを作る。状態はフォルダにせず、各作業ファイルの中で持つ。
+複数の子計画を束ねる必要が出たら、単発 plan.md の上に「プログラム（program）」を被せる。
+
+**判定基準**: 派生が単発作業で足りる → 単発計画のまま。**独立に卒業する子計画を2本以上生む → プログラム化**。
 
 ```text
-plans/active/<YYYY-MM-DD-日本語企画名>/
-  plan.md
-  ops/
-    human/        .gitkeep
-    ai/           .gitkeep
-    repositories/ .gitkeep
-    skills/       .gitkeep
-    loops/        .gitkeep
+plans/active/<YYYY-MM-DD-日本語企画名>/   # programフォルダ（自身の状態はこのareaバケット）
+  program.md            # 親＝索引（目的・全体像・子計画マップ・完了条件）
+  plans/                # 子計画群（平置きファイル）
+    NN-<子計画名>.md     # 子＝plan.md 相当。frontmatter に 親計画: backlink
+  references/           # 任意・遅延：参照資料（完成した材料。考え・未確定は方針/identity.md）
 ```
 
-1. 種別フォルダは空のまま `.gitkeep` を置く。gitは空ディレクトリを保存しないため。
-2. 作業は `ops/<種別>/<作業名>.md` に置く。
-3. 状態はファイル先頭の `状態:` 行で持つ。フォルダで状態を分けない。
+1. **親はフォルダ、親ドキュメントは直下 `program.md`。** 子は `plans/` に平置き。
+2. **子の状態は program.md の子計画マップが持つ**（列: NN / 子計画 / 状態 / 場所 / 依存 / 次の一手）。子に状態バケットは作らない。
+3. `program.md` frontmatter に `形態: program` を書く（単発 plan.md と区別）。
+4. 子が並列実行で複数作業に割れる時だけ、その子をフォルダにし、実行は ai-jobs へ（§4.2）。
+5. 子が卒業しても program.md は索引として残り、マップの「場所」列を更新する（§5）。
 
-種別は次を使う。
+## 4. 計画状態語彙 と タスク実行（ai-jobs）
 
-1. `human`: 人間がやること。
-2. `ai`: 既存AIに依頼すること。
-3. `repositories`: repoの新規作成、既存改善、移動、整理。
-4. `skills`: Skillの新規作成、既存改善、統合整理。
-5. `loops`: 定期実行、監視、反復処理、自動運用loop。
+### 4.1 計画状態語彙（バケットの正本）
 
-状態は次を使う。
+計画 / program のライフサイクル状態。バケット（フォルダ）で持つ。area・基盤で使う語彙の正本はここ。
 
-1. `planning`: 方針検討中、未着手、判断未確定。
-2. `ready`: 計画済みで、着手可能。
-3. `active`: 実行中。
+1. `planning`: 方針検討中、未着手、判断未確定。（基盤plansのみ。areaは active で育てる）
+2. `ready`: 計画済みで着手可能。（基盤plansで loop が拾う印）
+3. `active`: 実行中／area育成中。
 4. `paused`: 一時停止。
-5. `done`: 完了済み。
-6. `archive`: 終了、参照専用、または古いもの。
+5. `done`: 完了・未評価。
+6. `archive`: 評価済みOK・参照専用。
+
+area の plan バケットは `active/paused/done/archive`（§3）、基盤の plan バケットは6語フル（基盤 `AGENTS.md` §1.1）。
+
+### 4.2 タスク実行は ai-jobs キューへ
+
+計画から派生する「実行する作業」は、area 内にフォルダを作らず、基盤の **ai-jobs キュー**に run-card として出す。
+
+1. 置き場・運用の正本は `AIエージェント基盤/ai-jobs/`。run-state＝フォルダ位置 `ready/running/review/done/archive`（中身に `状態:` を書かない）。
+2. run-card 1枚＝1実行依頼（`担当`/`出所`/`依頼`/`許可`/`戻し方`/`差し戻し上限`）。`出所` は計画への絶対パス backlink。
+3. **human 作業は ai-jobs に入れない。** 人間のやることは program.md マップの「次の一手」か 子.md に書く。
+4. 完了したら plan-ops が出所の計画（program.md マップ／子.md）を更新する（ジョブ→計画へ集約。コピーしない）。
+5. 旧 `ops/` 5フォルダ構成は廃止。既存計画に残る `ops/` は legacy（新規には作らない・破壊しない）。
 
 ## 5. 計画ライフサイクル: 育成 → 卒業
 
@@ -116,18 +125,26 @@ plans/active/<YYYY-MM-DD-日本語企画名>/
 2. 卒業の引き金: 当面は人間が判断する。評価軸が固まったらAIとのハイブリッドへ。評価軸は実運用の中で固める。
 3. 卒業先の判断:
    - 単一repoに属す作業 → そのrepoの `plans/`。
-   - personal-os構造・横断・repo無し → 卒業せず area 内で実行（`ops/human`・`ops/ai`）。
+   - personal-os構造・横断・repo無し → 卒業せず area 内で実行（human作業は program.md マップ／子.md、AI実行は ai-jobs。§4.2）。
    - global skill / loop → `AIエージェント基盤/plans/<分類>/`（`skill` か `loop`）へ卒業。状態は §4 の6語彙をフルでバケット化する（`planning`/`ready`/`active`/`paused`/`done`/`archive`）。構成の正本は基盤 `AGENTS.md` §1.1。
 
 ### 卒業手順（repoへ移す場合）
 
 1. 人間が「卒業」と判断。
 2. 移行先を決める（既存repo / 新規repo＝repo-create で先に作成 / AIエージェント基盤＝global skill・loop は `plans/<分類>/`）。
-3. 移行先repoに `plan.md`（＋要れば ops）を作成 → そのrepoで commit。
+3. 移行先repoに `plan.md`（＋要れば子計画）を作成 → そのrepoで commit。
 4. area の元 plan フォルダを削除し、`移行済み/YYYY-MM/MM-DD-<計画名>.md` に移行ログを追記 → ~/Private で commit。
 5. `現在地.md` の行を「場所＝<repo>」に更新（active のまま、実行先が変わっただけ）。
 6. 確認: secret無し / 移行先パスが現在地と移行ログで一致。
    ※ 卒業は ~/Private と移行先repoの2repoをまたぐ。`git mv` できないので「移行先で作成commit → area側で削除＋ログcommit」の2コミットになる。
+
+### プログラムの子計画の卒業
+
+プログラム配下の子は、個別に卒業する。親 program.md は索引として area に残る。
+
+1. 子の本体を卒業先へ（上の通常手順）。子 frontmatter の `親計画:` backlink は、卒業後は**絶対パス**にする（cross-repo になるため）。
+2. program.md の子計画マップの「場所」列を卒業先に更新（状態は active のまま、実行先が変わっただけ）。
+3. 親 program.md は動かさない（全体の地図として工房に残る）。
 
 ### 移行ログの書式
 
@@ -150,7 +167,7 @@ plans/active/<YYYY-MM-DD-日本語企画名>/
 ## 6. 配置判断
 
 1. 領域内の実行計画は `plans/active/<計画名>/plan.md` に作り、状態に応じてバケット間を移す。考え・調査は独立させず `identity.md` か plan.md の `方針` に寄せる。
-2. その計画から派生する作業は、同じ計画フォルダ内の `ops/<種別>/<作業名>.md` に置き、状態はファイル内の `状態:` 行で持つ。
+2. その計画から派生する実行作業は、area内にフォルダを作らず基盤の ai-jobs キューに run-card で出す（§4.2）。独立に卒業する子計画を2本以上生むなら program 化する（§3）。
 3. 成熟した計画は §5 の卒業手順で実行repoへ移す。area には現在地ポインタと移行ログが残る。
 4. repo本体は `/Users/kitamuranaohiro/Private/projects/` に置く。
 5. Skill正本、registry、logsは `/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/` を正とする。

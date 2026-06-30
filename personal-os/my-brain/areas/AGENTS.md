@@ -111,7 +111,7 @@ area の plan バケットは `active/paused/done/archive`（§3）、基盤の 
 
 計画から派生する「実行する作業」は、area 内にフォルダを作らず、基盤の **ai-jobs キュー**に run-card として出す。
 
-1. 置き場・運用の正本は `AIエージェント基盤/ai-jobs/`。run-state＝フォルダ位置 `ready/running/review/done/archive`（中身に `状態:` を書かない）。
+1. 置き場・運用の正本は `AIエージェント基盤/loops-registry/ai-jobs/`。run-state＝フォルダ位置 `ready/running/review/done/archive`（中身に `状態:` を書かない）。
 2. run-card 1枚＝1実行依頼（`担当`/`出所`/`依頼`/`許可`/`戻し方`/`差し戻し上限`）。`出所` は計画への絶対パス backlink。
 3. **human 作業は ai-jobs に入れない。** 人間のやることは program.md マップの「次の一手」か 子.md に書く。
 4. 完了したら plan-ops が出所の計画（program.md マップ／子.md）を更新する（ジョブ→計画へ集約。コピーしない）。
@@ -126,12 +126,12 @@ area の plan バケットは `active/paused/done/archive`（§3）、基盤の 
 3. 卒業先の判断:
    - 単一repoに属す作業 → そのrepoの `plans/`。
    - personal-os構造・横断・repo無し → 卒業せず area 内で実行（human作業は program.md マップ／子.md、AI実行は ai-jobs。§4.2）。
-   - global skill / loop → `AIエージェント基盤/plans/<分類>/`（`skill` か `loop`）へ卒業。状態は §4 の6語彙をフルでバケット化する（`planning`/`ready`/`active`/`paused`/`done`/`archive`）。構成の正本は基盤 `AGENTS.md` §1.1。
+   - global skill / loop → 基盤の卒業先（skill＝`AIエージェント基盤/global-skill-registry/plans/`、loop＝`AIエージェント基盤/loops-registry/plans/loop/`）へ卒業。状態は §4 の6語彙をフルでバケット化する（`planning`/`ready`/`active`/`paused`/`done`/`archive`）。構成の正本は基盤 `AGENTS.md` §1.1。
 
 ### 卒業手順（repoへ移す場合）
 
 1. 人間が「卒業」と判断。
-2. 移行先を決める（既存repo / 新規repo＝repo-create で先に作成 / AIエージェント基盤＝global skill・loop は `plans/<分類>/`）。
+2. 移行先を決める（既存repo / 新規repo＝repo-create で先に作成 / AIエージェント基盤＝global skill は `global-skill-registry/plans/`、loop は `loops-registry/plans/loop/`）。
 3. 移行先repoに `plan.md`（＋要れば子計画）を作成 → そのrepoで commit。
 4. area の元 plan フォルダを削除し、`移行済み/YYYY-MM/MM-DD-<計画名>.md` に移行ログを追記 → ~/Private で commit。
 5. `現在地.md` の行を「場所＝<repo>」に更新（active のまま、実行先が変わっただけ）。

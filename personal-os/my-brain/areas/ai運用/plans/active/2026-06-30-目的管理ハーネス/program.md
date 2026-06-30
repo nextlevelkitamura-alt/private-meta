@@ -27,6 +27,10 @@
     次: 手順書化済(ゴール/朝夜ルーティン.md)。skill化は子04で判断
     場所: plans/03 ／ 依存: 01・02
 
+04  実行レーン自動化とデイリー自動ログ … active
+    次: plan.md化済。jobctl reviewing動詞[A]→worker型+1枚実走[B]→dispatcher[B]→hook[C]→夜loop[C]
+    場所: plans/04 ／ 依存: 03・A-03・B
+
 ## 完了条件
 - my-brainにゴールladder(3年/年間/デイリー)とダッシュボードが存在し、dashboard.shがplans/とai-jobs/の状態から自動生成する(子01,02)。
 - 朝夜ルーティンが目標・ダッシュボード・デイリーを突き合わせ、逆算Alignmentとボード更新を回す(子03)。

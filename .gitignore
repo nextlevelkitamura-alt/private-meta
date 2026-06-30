@@ -25,6 +25,9 @@
 /personal-os/my-brain/*
 !/personal-os/my-brain/AGENTS.md
 !/personal-os/my-brain/CLAUDE.md
+# 縦の目標ladder（3年→年間→デイリー）。areaブロックと違い除外物が無いので全サブツリーを追跡する。
+!/personal-os/my-brain/ゴール/
+!/personal-os/my-brain/ゴール/**
 !/personal-os/my-brain/areas/
 /personal-os/my-brain/areas/*
 !/personal-os/my-brain/areas/AGENTS.md

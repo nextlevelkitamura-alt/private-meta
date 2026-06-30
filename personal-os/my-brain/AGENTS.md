@@ -7,11 +7,12 @@
 
 ## 1. 役割
 
-1. `areas/`: work、ai運用、money、health などの継続領域を置く。
-2. 各areaでは、判断軸（`identity.md`）と実行計画（`plans/`）を分けて管理する。
-3. 領域の目的、判断基準、置くもの、置かないものは各areaの `identity.md` に置く。
-4. 実行する計画は各areaの `plans/<バケット>/<計画名>/plan.md` を正本にする（状態はバケット）。
-5. 計画はこの `areas/` を単一正本にする。基盤・Skill・repo・loop計画も `areas/ai運用/` に寄せる。
+1. `areas/`: work、ai運用、money、health などの継続領域（横の領域別）を置く。
+2. `ゴール/`: 3年→年間→デイリーの縦ladder（的と履歴）。横の `areas/` と分け、今の状態1枚はダッシュボード（`areas/現在地.md`→昇格予定・子02）。
+3. 各areaでは、判断軸（`identity.md`）と実行計画（`plans/`）を分けて管理する。
+4. 領域の目的、判断基準、置くもの、置かないものは各areaの `identity.md` に置く。
+5. 実行する計画は各areaの `plans/<バケット>/<計画名>/plan.md` を正本にする（状態はバケット）。
+6. 計画はこの `areas/` を単一正本にする。基盤・Skill・repo・loop計画も `areas/ai運用/` に寄せる。
 
 ## 2. 境界
 

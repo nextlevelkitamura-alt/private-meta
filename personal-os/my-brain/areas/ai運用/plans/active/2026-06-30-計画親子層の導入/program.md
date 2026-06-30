@@ -25,10 +25,10 @@
     次: program.md/子/run-cardの3テンプレ ＋ レビュー項目節(C)
     場所: plans/02 ／ 依存: 01
 
-03  plan-opsスキル … planning
-    次: ゲート→workflows→references ／ run-card=repo-aware・cross-repo戻し(C)
-    実地テスト所見(a-2要件): claim/done の mv 自動化・計画→run-card 生成・レビュー項目の範囲付き機械判定
-    場所: plans/03（→基盤卒業） ／ 依存: 01,02
+03  plan-opsスキル … active
+    次: v1実装済(jobctl/new-run-card/check-section)。scaffold/卒業/親子集約は手動運用→子04で継続
+    実地テスト所見: 痛点3つ(claim/done mv・run-card生成・範囲付きレビュー判定)を自動化＝完了
+    場所: 基盤 skills/plan-ops/（実装）・plans/03（設計） ／ 依存: 01,02
 
 04  判断系スキル棚卸し … planning
     次: mokuteki/orchestratorの重複整理 ＋ 計画立案パイプライン統合(C)

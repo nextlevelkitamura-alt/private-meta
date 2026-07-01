@@ -26,6 +26,9 @@
 - **02 デイリー二重管理分析（Stream2）** … active
   次: 現状マップ＋論点＋選択肢を `plans/02-デイリー二重管理分析.md` に。設計はしない。
   場所: `plans/02-デイリー二重管理分析.md` ／ worktree: `Private:design-daily-analysis`
+- **03 orca-cockpit スキル新設** … 完了（基盤 main 反映）
+  成果: 基盤 `skills/orca-cockpit/`（cockpit.sh: up/split/agent/down・並列・codex自動更新）。
+  場所: `plans/03-orca-cockpit.md` ／ 反映: 基盤 main（merge d86532f）
 
 ## 完了条件（レビュー項目）
 

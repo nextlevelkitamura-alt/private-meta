@@ -60,9 +60,10 @@
     成果: トリアージSkill＋巡回loop（--dry-run・mkdirロック・クレーム式冪等・重複行=1依頼集約・awkロケールバグ副次修正LC_ALL=C）。plist未ロード=launchd登録（運用開始）は決定待ち10の人間ゲート
     教訓: 実装ペインが未コミットのままターン終了→マージ空振り（Already up to date）を検知し、指揮官がworktreeで回収コミット（421f1e5）。マージ前チェック追加=plans/10学び15
     場所: plans/06 ／ 依存: 03,04
-07  plan-ops残機能（旧・計画親子層03） … 実装中（計画レビュー合格2026-07-02・2ペインレーン planops-tools-v1）
+07  plan-ops残機能（旧・計画親子層03） … 完了（レビューPASS2巡目・mainマージd530f42・テスト56/56）
     要点: 実測=当日28コミット中19件が手動マップ更新。progctl（マップ機械書換・判断は指揮官のまま）＋scaffold正本化＋program-lintの3本+SKILL.md現行化。卒業自動化は実績0回のため保留継続
-    次: レーン実装→実装レビュー→マージ。マージ後に指揮官がareas/AGENTS.md §3ポインタ化と実マップへのprogctl初適用（例外2点は人間承認済み）
+    次: ―（マージ後作業済み: §3ポインタ化・progctl初適用・lint 0確認）
+    参照: AIエージェント基盤@d530f42
     場所: plans/07 ／ 依存: ―（着手順序のみ04a・06後）
 08  判断系スキル棚卸し（旧・計画親子層04） … 実装中（計画レビュー合格2026-07-02・指揮官直実行）
     要点: 判断正本を契約§2+実行体制+cockpit-supervisorの3点へ一本化。mokuteki-jisso/agent-task-orchestratorは畳む候補（部品吸収→skill-deleteゲート）。task-routerはfocusmap（active）採用実在を確認→残す

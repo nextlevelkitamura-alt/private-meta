@@ -49,3 +49,10 @@
 - Program B「AI自動実行基盤（Orca運用）」＝ `../2026-06-29-OrcaCLI複数エージェント運用/`。本program（A）に依存（A→B）。Bは ai-jobs を消費して回す。
 - Program C「目的管理ハーネス」＝ `../2026-06-30-目的管理ハーネス/program.md`。Cの設計が本Aの子へ追補として入る（上の「次の一手」の(C)印）。run-card共通契約とダッシュボードがA/B/Cの接点。
 - area＝傘。A・B・C は area 配下の焦点programであり、「基盤整備」大programは作らない。
+
+## 結果と反映先（2026-07-02 統合・doneへ）
+
+- 子01/02: `areas/AGENTS.md` §3-4 に規約・テンプレとして反映済み（run-cardテンプレはモードA休眠に伴い保留）。
+- 子03: plan-ops v1 は基盤 `skills/plan-ops/` に反映済み。残り（scaffold/卒業/親子集約の自動化）は統合program子07へ移記。
+- 子04/05: 統合program子08/09へ移記。program呼称A/B/Cは廃止（決定ログ#2）。
+- 移記先: `../../active/2026-07-02-状態と記録の統合設計/program.md`

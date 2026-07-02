@@ -150,3 +150,9 @@ Codexにも `Stop` などのhookが入り、Orcaは `done` や `lastAssistantMes
 3. `worker_done`、`status`、`gate`、agent hooksの使い分けがSkill本文に反映されている。
 4. 変更ありはcommit/push/close、変更なしはno-op close、未完了は残す方針になっている。
 5. Skill作成時にlogs/catalog更新要否を確認する。
+
+## 結果と反映先（2026-07-02 統合・doneへ）
+
+- 中核は orca-cockpit（基盤 `skills/orca-cockpit/`）として実装済み。監督フロー・worker_done・closeoutの知見は運用契約§2と統合program子04へ反映。
+- 自動起動（orca automations接続）は統合program子06以降で、`../2026-07-01-スキル実行オーケストレーション/plans/01-分配設計.md` を素材に後続判断。
+- 移記先: `../../active/2026-07-02-状態と記録の統合設計/program.md`

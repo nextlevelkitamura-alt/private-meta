@@ -53,9 +53,9 @@
 04  統合ボードとcockpit段階イベント … 計画
     次: 03の後に着手。ダッシュボードのポインタ化と参照規約更新を含む
     場所: plans/04 ／ 依存: 03
-05  ai-jobs後始末 … 人間確認待ち（前半完了・指揮官レビュー合格）
-    成果: exec-audit監査実施＋カードdoneへ（ready空）／stale doc修正3ファイル（基盤branch ai-jobs-cleanup, 9e18a96）
-    次: 人間承認2点（基盤mainへのマージ／launchdドリフト8件の扱い）。後半=出力先変更＋audit.sh冪等バグ修正（04後）
+05  ai-jobs後始末 … 前半完了（マージ済 d918be9）／後半a=実装（ライト・レーンaudit-idempotency-fix）
+    成果: 監査実施・カードdone・stale doc修正マージ済み
+    次: 後半a=audit.sh冪等バグ修正を実装中（レビュー=指揮官）。後半b=出力先変更は子04後。launchdドリフト8件はあなたの判断プール
     場所: plans/05 ／ 依存: ―
 06  依頼インボックスloop … 計画
     次: 03安定後。トリアージSkill＋巡回loop（起案まで）

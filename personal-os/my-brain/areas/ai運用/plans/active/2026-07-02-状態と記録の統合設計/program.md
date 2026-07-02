@@ -53,7 +53,7 @@
 04  統合ボードとcockpit段階イベント … 04a実装（2ペイン・レーンboard-live-v1・03合格を受け自動チェーン起動）
     範囲: 04a=方針2+4（レンダラがデイリー3区画へレーン実況を描画）。方針3（ダッシュボードのポインタ化・規約更新）=指揮官担当で04aマージ後。04b（方針1 cockpit.sh段階イベント）=子10マージ後（cockpit.sh編集の衝突回避）
     次: CHILD04A_DONE→レビュー自動キック(REVIEW04A)→合格→承認セット提示
-    場所: plans/04 ／ 依存: 03（済）・04bのみ10
+    場所: plans/04 ／ 依存: 03（済）・10（済）。04bは04aマージ後（レンダラfile衝突回避）
 05  ai-jobs後始末 … 前半・後半aマージ済み（d918be9 / 13ad03e）
     成果: 監査実施・カードdone・stale doc修正・audit.sh冪等バグ修正+回帰テスト（潜在unbound variableバグ修正含む・指揮官レビュー合格・事後報告マージ）
     次: 後半b=出力先変更は子04後。launchdドリフト8件は人間の判断プール
@@ -68,9 +68,8 @@
     場所: plans/08 ／ 依存: ―
 09  各repo標準展開（旧・計画親子層05） … 保留
     場所: plans/09 ／ 依存: 04
-10  cockpit監督の自動ウェイク（メタスキル） … 人間確認待ち（差し戻し1→再レビュー合格・マージ承認待ち）
-    成果: watch.sh正式版＋テスト19/19（偽陽性負例含む）・cockpit.shにplan（構成カード）/perm（役割別権限・deny付acceptEdits・bypass不使用）・skills/cockpit-supervisor/SKILL.md新設（起床時判断・構成カード・見張り番運用）・orca-cockpit側はポインタ化・2ペイン既定化（--pane明示で3ペイン可を実測）
-    次: 人間のOKで指揮官がmainへマージ（承認セット提示済み）
+10  cockpit監督の自動ウェイク（メタスキル） … 完了（人間承認→mainマージ99a9d64・スモーク19/19）
+    成果: watch.sh正式版＋テスト19/19・plan（構成カード）・perm（役割別権限・bypass不使用）・skills/cockpit-supervisor/SKILL.md新設・orca-cockpitポインタ化・2ペイン既定。既定モデルを実行体制標準へ追従（f25eb23・軽微事後報告）。運用学習1〜13はplans/10が正本
     場所: plans/10 ／ 依存: ―
 
 ## 方針
@@ -172,6 +171,8 @@
 6. `ready/` の exec-audit カードの扱い（手動処理 or 出力先変更）。
 7. デイリーとダッシュボードの統合（`ダッシュボード.md` は廃止してポインタ化。参照規約も更新）。
 8. 依頼インボックス＋巡回loopの新設（起案まで・実行はしない）。
+9. worktree撤去の承認プール（削除は常に事前承認）: 収穫済み design-skill-orchestration／design-daily-analysis、マージ済み renderer-v1／cockpit-supervisor-v1（成果はmain反映済み・撤去は cockpit.sh down）。
+※1〜8は2026-07-02の8点GOと個別承認で承認済み。9とlaunchdドリフト8件（子05）が未決。
 
 ## 完了条件（レビュー項目）
 

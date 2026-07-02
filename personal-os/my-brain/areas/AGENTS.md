@@ -3,7 +3,7 @@
 このディレクトリは、work、ai運用、money、health などの継続領域を置く場所。
 各areaは、考え、判断軸、計画を領域ごとに閉じて管理する。
 personal-os の計画はここを単一正本にする。基盤・Skill・repo・loop計画は `ai運用/` が担当し、旧 `../../plans/` は廃止済み。
-縦の目標ladder（3年→年間→デイリーの的と履歴）は隣の `../ゴール/`。ここ（areas）は横の領域別。全体の今は `../ダッシュボード.md`（my-brain直下へ昇格）。
+縦の目標ladder（3年→年間→デイリーの的と履歴）は隣の `../ゴール/`。ここ（areas）は横の領域別。全体の今は当日デイリーの計画ボード区画（レンダラ自動描画。`../ダッシュボード.md` はポインタ）。
 
 計画は area で育て、成熟したら実行repoへ卒業させる（§5）。my-brain は計画を育てる工房であって、実行の現場ではない。
 
@@ -26,14 +26,14 @@ areas/<area>/
 
 考え・調査・仮説は独立フォルダにせず、`identity.md`（判断軸）か、育成中の計画の `plans/active/<計画>/plan.md` の `方針`（未確定のまま育てる）に寄せる。`thinking/` は廃止した。
 
-## 2. 全体俯瞰: ダッシュボード.md
+## 2. 全体俯瞰: 当日デイリーの計画ボード
 
-`../ダッシュボード.md`（my-brain直下へ昇格）は全領域の「今」を1枚で見る中央ボード。計画状態と AIジョブ状態を集約する。
+全領域の「今」は当日デイリー（`../ゴール/デイリー/<年>/<月>/<日>.md`）の自動3区画（今やっていること・待ち・計画ボード）で見る。基盤レンダラ（`AIエージェント基盤/loops-registry/loops/renderer/`）が active な計画（単発 `plan.md`・`program.md` 子計画マップ）を走査して自動描画するため、手動の索引更新は不要（2026-07-02 決定ログ#2-⑦実施）。
 
-1. active な計画だけを載せる。1計画＝1ブロックのリスト形式（表は使わない／生テキストで列がずれるため）。書式: 1行目「優先(◎/○) 計画名 … 領域」、続けて `次:`（次の一手）と `場所:`（plan・programへのパス）。
-2. area で育成中の計画と、repoへ卒業して実行中の計画の両方を載せる（`場所:` で区別）。
-3. 状態の正本はフォルダ。ダッシュボード.md は索引。計画を active に出し入れする `git mv` と同じコミットで、このブロックも足す/消す。
-4. 進行中（area は `active`、基盤は `planning`/`ready`/`active`）だけ載せる。`paused` / `done` / `archive` に入ったら載せない（履歴は各 `plans/` とログが持つ）。
+1. 優先マーク（◎/○）は各 plan.md / program.md 冒頭の `優先:` 行に書く（ボード行頭に表示される）。
+2. 「次の一手」は plan.md / program.md 子計画マップの `次:` 行が正本。
+3. ボードに載るのは active バケットの計画だけ（`paused`/`done`/`archive` は載らない。履歴は各 `plans/` とログ）。
+4. `../ダッシュボード.md` は1行ポインタとして残置。中央ボードとしての手動更新は廃止。
 
 ## 3. Plan標準構成
 
@@ -178,8 +178,8 @@ area の plan バケットは `active/paused/done/archive`（§3）、基盤の 
 2. 移行先を決める（既存repo / 新規repo＝repo-create で先に作成 / AIエージェント基盤＝global skill は `global-skill-registry/plans/`、loop は `loops-registry/plans/loop/`）。
 3. 移行先repoに `plan.md`（＋要れば子計画）を作成 → そのrepoで commit。
 4. area の元 plan フォルダを削除し、`移行済み/YYYY-MM/MM-DD-<計画名>.md` に移行ログを追記 → ~/Private で commit。
-5. `../ダッシュボード.md` の行を「場所＝<repo>」に更新（active のまま、実行先が変わっただけ）。
-6. 確認: secret無し / 移行先パスがダッシュボードと移行ログで一致。
+5. 計画ボードへの反映はレンダラが自動で行う（手動更新不要）。program の子なら program.md マップの「場所」を移行先に更新する。
+6. 確認: secret無し / 移行先パスが計画文書（program.md マップ・plan.md）と移行ログで一致。
    ※ 卒業は ~/Private と移行先repoの2repoをまたぐ。`git mv` できないので「移行先で作成commit → area側で削除＋ログcommit」の2コミットになる。
 
 ### プログラムの子計画の卒業
@@ -212,7 +212,7 @@ area の plan バケットは `active/paused/done/archive`（§3）、基盤の 
 
 1. 領域内の実行計画は `plans/active/<計画名>/plan.md` に作り、状態に応じてバケット間を移す。考え・調査は独立させず `identity.md` か plan.md の `方針` に寄せる。
 2. その計画から派生する実行作業は、area内にフォルダを作らず基盤の ai-jobs キューに run-card で出す（§4.2）。独立に卒業する子計画を2本以上生むなら program 化する（§3）。
-3. 成熟した計画は §5 の卒業手順で実行repoへ移す。area にはダッシュボードのポインタと移行ログが残る。
+3. 成熟した計画は §5 の卒業手順で実行repoへ移す。area には移行ログが残る（ボード表示はレンダラが自動追従）。
 4. repo本体は `/Users/kitamuranaohiro/Private/projects/` に置く。
 5. Skill正本、registry、logsは `/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/` を正とする。
 6. 計画本文を複数箇所にコピーしない。必要なら相対パスで参照する。

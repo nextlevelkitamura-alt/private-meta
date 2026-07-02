@@ -57,9 +57,9 @@
     成果: 監査実施・カードdone・stale doc修正・audit.sh冪等バグ修正+回帰テスト（潜在unbound variableバグ修正含む・指揮官レビュー合格・事後報告マージ）
     次: 後半b=出力先変更は子04後。launchdドリフト8件は人間の判断プール
     場所: plans/05 ／ 依存: ―
-06  依頼インボックスloop … 人間確認待ち（差し戻し2→最終レビュー合格・マージ承認待ち）
-    成果: トリアージSkill＋巡回loop（--dry-run・mkdirロック・クレーム式冪等・重複行=1依頼集約・plistドラフトのみ）＋テスト10/10。3往復のレビューでrm -rf級の後始末欠陥・二重起案・重複行意味論ズレを排除
-    次: 人間のOKでmainへマージ→launchd登録は別途の人間ゲート（登録までloopは停止のまま）
+06  依頼インボックスloop … 完了（人間承認→mainマージa72936b・スモーク10/10＋dry-run正常）
+    成果: トリアージSkill＋巡回loop（--dry-run・mkdirロック・クレーム式冪等・重複行=1依頼集約・awkロケールバグ副次修正LC_ALL=C）。plist未ロード=launchd登録（運用開始）は決定待ち10の人間ゲート
+    教訓: 実装ペインが未コミットのままターン終了→マージ空振り（Already up to date）を検知し、指揮官がworktreeで回収コミット（421f1e5）。マージ前チェック追加=plans/10学び15
     場所: plans/06 ／ 依存: 03,04
 07  plan-ops残機能（旧・計画親子層03） … 計画レビュー待ち（調査完了・草案反映済み）
     要点: 実測=当日28コミット中19件が手動マップ更新。progctl（マップ機械書換・判断は指揮官のまま）＋scaffold正本化＋program-lintの3本+SKILL.md現行化。卒業自動化は実績0回のため保留継続
@@ -174,8 +174,9 @@
 6. `ready/` の exec-audit カードの扱い（手動処理 or 出力先変更）。
 7. デイリーとダッシュボードの統合（`ダッシュボード.md` は廃止してポインタ化。参照規約も更新）。
 8. 依頼インボックス＋巡回loopの新設（起案まで・実行はしない）。
-9. worktree撤去: 4本（renderer-v1／cockpit-supervisor-v1／design-skill-orchestration／design-daily-analysis）は2026-07-02承認→撤去済み。同条件のマージ済み候補が追加で2本: ai-jobs-cleanup／audit-idempotency-fix（子05レーン・d918be9/13ad03eでmain反映済み）— 未承認・保留中。
-※1〜8は2026-07-02の8点GOと個別承認で承認済み。9の追加2本とlaunchdドリフト8件（子05）が未決。
+9. worktree撤去: 4本（renderer-v1／cockpit-supervisor-v1／design-skill-orchestration／design-daily-analysis）は2026-07-02承認→撤去済み。マージ済みの追加候補3本: ai-jobs-cleanup／audit-idempotency-fix（子05レーン・d918be9/13ad03e）／inbox-triage-v1（子06レーン・a72936b）— 未承認・保留中。
+10. inbox-patrol の launchd 登録＝巡回の運用開始判断（plist配置済み・未ロード。登録するまで何も自動起動しない。レンダラ安定を見てから）。
+※1〜8は2026-07-02の8点GOと個別承認で承認済み。9の追加3本・10・launchdドリフト8件（子05）が未決。runtime露出symlink10本は2026-07-02承認→実施済み。
 
 ## 完了条件（レビュー項目）
 

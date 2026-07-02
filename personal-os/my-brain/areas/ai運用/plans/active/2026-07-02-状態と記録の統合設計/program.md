@@ -173,9 +173,9 @@
 6. `ready/` の exec-audit カードの扱い（手動処理 or 出力先変更）。
 7. デイリーとダッシュボードの統合（`ダッシュボード.md` は廃止してポインタ化。参照規約も更新）。
 8. 依頼インボックス＋巡回loopの新設（起案まで・実行はしない）。
-9. worktree撤去: 4本（renderer-v1／cockpit-supervisor-v1／design-skill-orchestration／design-daily-analysis）は2026-07-02承認→撤去済み。マージ済みの追加候補3本: ai-jobs-cleanup／audit-idempotency-fix（子05レーン・d918be9/13ad03e）／inbox-triage-v1（子06レーン・a72936b）— 未承認・保留中。
+9. worktree撤去: 完了（2026-07-02）。計10本を人間承認のうえ撤去（renderer-v1／cockpit-supervisor-v1／design×2／ai-jobs-cleanup／audit-idempotency-fix／inbox-triage-v1／board-live-v1／stage-events-v1／audit-inbox-v1）。基盤配下のorca worktreeは0本。
 10. inbox-patrol の launchd 登録＝巡回の運用開始判断（plist配置済み・未ロード。登録するまで何も自動起動しない。レンダラ安定を見てから）。
-※1〜8は2026-07-02の8点GOと個別承認で承認済み。9の追加3本・10・launchdドリフト8件（子05）が未決。runtime露出symlink10本は2026-07-02承認→実施済み。
+※1〜9は承認済み・実施済み。未決=10（inbox-patrolのlaunchd登録）とlaunchdドリフト8件（子05）。runtime露出symlink10本は2026-07-02承認→実施済み。
 
 ## 完了条件（レビュー項目）
 

@@ -69,7 +69,8 @@
     要点: 判断正本を契約§2+実行体制+cockpit-supervisorの3点へ一本化。mokuteki-jisso/agent-task-orchestratorは畳む候補（部品吸収→skill-deleteゲート）。task-routerはfocusmap（active）採用実在を確認→残す
     次: 去就を決定ログへ追記→残すスキルの契約§2参照化→畳む2本の部品吸収準備→削除承認セット提示（削除実行のみ再ゲート）
     場所: plans/08 ／ 依存: ―（着手時期のみ04a/06後）
-09  各repo標準展開（旧・計画親子層05） … 保留
+09  各repo標準展開（旧・計画親子層05） … 完了（2026-07-02・薄い接続=仕事+focusmapへ参照3行・plan-triage実運用1件目）
+    次: ―（フォルダ構造の型は新規計画「repo構造の標準化構想」へ分離・別チャット指揮官）
     場所: plans/09 ／ 依存: 04
 10  cockpit監督の自動ウェイク（メタスキル） … 完了（人間承認→mainマージ99a9d64・スモーク19/19）
     成果: watch.sh正式版＋テスト19/19・plan（構成カード）・perm（役割別権限・bypass不使用）・skills/cockpit-supervisor/SKILL.md新設・orca-cockpitポインタ化・2ペイン既定。既定モデルを実行体制標準へ追従（f25eb23・軽微事後報告）。運用学習1〜13はplans/10が正本

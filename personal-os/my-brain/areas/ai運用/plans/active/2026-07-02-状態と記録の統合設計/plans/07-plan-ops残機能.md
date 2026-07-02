@@ -20,11 +20,11 @@
 
 ## 完了条件（レビュー項目）
 
-- [ ] progctl: fixtureへの`set`2回連続で差分ゼロ（冪等）・マップ外セクションがバイト不変のテストが全PASS
-- [ ] scaffold: 生成物がareas/AGENTS.md §3必須構成を満たし、テンプレ本文の正本が`skills/plan-ops/templates/`の1箇所のみ（§3は本文複製ゼロのポインタ・grep確認）
-- [ ] program-lint: 違反合成fixtureで非0 exit+違反行指摘、現行統合programの実ファイルで0 exit
-- [ ] SKILL.md: 「program A」等の旧レター参照がgrep 0件、モードB/ai-jobs休眠が運用契約§1と矛盾しない
-- [ ] 実運用スモーク: 実programへの子状態変更1件をprogctl経由（dry-run→承認→commit）で実施できる
+- [x] progctl: fixtureへの`set`2回連続で差分ゼロ（冪等）・マップ外セクションがバイト不変のテストが全PASS
+- [x] scaffold: 生成物がareas/AGENTS.md §3必須構成を満たし、テンプレ本文の正本が`skills/plan-ops/templates/`の1箇所のみ（§3は本文複製ゼロのポインタ・grep確認）
+- [x] program-lint: 違反合成fixtureで非0 exit+違反行指摘、現行統合programの実ファイルで0 exit
+- [x] SKILL.md: 「program A」等の旧レター参照がgrep 0件、モードB/ai-jobs休眠が運用契約§1と矛盾しない
+- [x] 実運用スモーク: 実programへの子状態変更1件をprogctl経由（dry-run→承認→commit）で実施できる
 
 ## 着手時期
 

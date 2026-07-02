@@ -11,6 +11,6 @@
 
 ## 完了条件（レビュー項目）
 
-- [ ] `ready/` が空で、デイリー/ボードの件数表示と実フォルダが一致
-- [ ] 「未登録」等のstale記述が実測と一致（launchctl list / settings.json 確認）
-- [ ] dispatcher・branchが削除されていない
+- [x] `ready/` が空で、デイリー/ボードの件数表示と実フォルダが一致
+- [x] 「未登録」等のstale記述が実測と一致（launchctl list / settings.json 確認）
+- [x] dispatcher・branchが削除されていない

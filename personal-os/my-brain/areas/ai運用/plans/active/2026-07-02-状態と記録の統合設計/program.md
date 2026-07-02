@@ -175,7 +175,7 @@
 8. 依頼インボックス＋巡回loopの新設（起案まで・実行はしない）。
 9. worktree撤去: 完了（2026-07-02）。計10本を人間承認のうえ撤去（renderer-v1／cockpit-supervisor-v1／design×2／ai-jobs-cleanup／audit-idempotency-fix／inbox-triage-v1／board-live-v1／stage-events-v1／audit-inbox-v1）。基盤配下のorca worktreeは0本。
 10. inbox-patrol の launchd 登録＝巡回の運用開始判断（plist配置済み・未ロード。登録するまで何も自動起動しない。レンダラ安定を見てから）。
-※1〜9は承認済み・実施済み。未決=10（inbox-patrolのlaunchd登録）とlaunchdドリフト8件（子05）。runtime露出symlink10本は2026-07-02承認→実施済み。
+※1〜9は承認済み・実施済み。launchdドリフト8件も2026-07-02処置済み（7plist退避+bootout3件・決定ログ#6・マニュアル追従済み）。未決=10（inbox-patrolのlaunchd登録）のみ。runtime露出symlink10本は2026-07-02承認→実施済み。
 
 ## 完了条件（レビュー項目）
 

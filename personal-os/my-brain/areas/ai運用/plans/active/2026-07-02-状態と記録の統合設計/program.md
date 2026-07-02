@@ -68,9 +68,9 @@
     場所: plans/08 ／ 依存: ―
 09  各repo標準展開（旧・計画親子層05） … 保留
     場所: plans/09 ／ 依存: 04
-10  cockpit監督の自動ウェイク（メタスキル） … 修正（差し戻し1回目）
-    経緯: 実装完了(watch.sh+plan/perm・テスト16/16)→レビューFAIL。指揮官裁定=Blocking1採用（独立メタスキルSKILL.md未作成・方針2の分離に違反）／Blocking2却下（催促なし反応の実績は指揮官運用ログで充足）／偽陽性負例テストを必須化
-    次: cockpit-supervisor/SKILL.md新設＋orca-cockpit側ポインタ化＋負例テスト→再レビュー(REVIEW10B)
+10  cockpit監督の自動ウェイク（メタスキル） … 人間確認待ち（差し戻し1→再レビュー合格・マージ承認待ち）
+    成果: watch.sh正式版＋テスト19/19（偽陽性負例含む）・cockpit.shにplan（構成カード）/perm（役割別権限・deny付acceptEdits・bypass不使用）・skills/cockpit-supervisor/SKILL.md新設（起床時判断・構成カード・見張り番運用）・orca-cockpit側はポインタ化・2ペイン既定化（--pane明示で3ペイン可を実測）
+    次: 人間のOKで指揮官がmainへマージ（承認セット提示済み）
     場所: plans/10 ／ 依存: ―
 
 ## 方針

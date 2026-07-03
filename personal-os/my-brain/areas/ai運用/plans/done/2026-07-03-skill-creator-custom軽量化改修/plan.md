@@ -69,3 +69,7 @@ Skill作成・改善の窓口 `skill-creator-custom` を、人間の5原則（SK
 - 指摘2（AGENTS.mdのスコープ外変更混入）: 基盤 `AGENTS.md` の未コミット変更は本改修以前からのユーザー作業であり、本改修では触れていない。コミット時はパス指定で本改修分（skills/skill-creator-custom/・GLOBAL_AGENTS.md）と分離すること。
 - 追加確認: description 286字・第三人称・近接Skill分離OK／SKILL.htmlは人間専用が成立／references 1階層／catalog更新不要は妥当／三点照合・repo探索の価値は scan.md に保持。
 - SKILL.html: scan.md修正は構造・ルール・workflow一覧に影響しないため、同一作業単位内で生成済みの内容が有効（再生成しても同一）。
+
+### 追補（2026-07-03・SKILL.html詳細化）
+
+人間の追加要望により、SKILL.htmlの型を固定5節→固定6節に拡張。④を「各workflowの中身（何を・Step構造・完了条件）」、⑤を「referencesの中身（各判断基準の節構成と、いつ読むか）」に。人間がmdを開かず各ファイルの中身を掴めるようにする。3点を揃えて反映（二重管理回避）: create-rules.md §9-3/4（規約）、assets/skill-template.html（骨組み・.wf/.refブロック追加）、skill-creator-custom/SKILL.html（実体を6節で再生成）。単一SKILL.md構成でworkflow/referenceが無いSkillは④⑤を省く旨も明記。

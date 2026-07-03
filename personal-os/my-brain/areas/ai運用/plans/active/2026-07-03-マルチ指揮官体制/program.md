@@ -127,8 +127,8 @@
 05  起票ゲートskill … 実装完了（実測2件待ち）
     次: v0=23b7f5f＋手順組み込み完了（commander-prompt 65180fa／cockpit-supervisor・role-prompts 601f728=検収済み）＋実走1件=skill-creator-custom監査を起票→采配（出所デイリー記録済み・2026-07-03 14時台）。残=実測2件（「起票」発火語での起動1回・サクッと1件が起票→1分以内に実行開始）→揃い次第完了
     場所: plans/05 ／ 依存: 03（済み）・02のB締め（済み2026-07-03）
-06  統合見張り1分化 … 実装中（フェーズ2レビューPASS・push済み・2b采配中）
-    次: フェーズ1完了+旧plist bootout済み。フェーズ2=ps読み1回化+停滞10分検知（ec2ead4）+出所なし検知（d831ce7・events.jsonl結合・再裁定反映）→codex gpt-5.5 high 1パスレビュー=FAIL1件（出所なしのevents読取失敗を空集合と取り違え）→差し戻し対応b698bbf→確認PASS（検収済み）→push済み（2026-07-03 16:35 d831ce7..b698bbf）。フェーズ2b=ペイン台帳の読み手側を采配9本目・玉Aで中間1へ（書き手はspawn 999356dが実装済み・SENTINEL2B_DONE待ち）
+06  統合見張り1分化 … 実装完了（フェーズ2b込み・push=spawnレビュー合流待ち）
+    次: フェーズ2完了+push済み（b698bbf）。フェーズ2b完了=ペイン台帳panes.jsonl読み手（bc64616・codexレビューFAIL1=per-line best-effort不備→fe8be6a→確認PASS・keeper29/29等全緑・検収済み2026-07-03 17時台）。出所なし=events∪panes.jsonlへ拡張・停滞WAKEにowner/role付与。handle列は書式不安定のため不使用（正規化は中間2へ申し送り=loop.md明記）。push=中間2のspawnレビューPASS後に一括（履歴直列のため）。残=実運用観察のみ
     場所: plans/06 ／ 依存: 04（司令部の監視対象が確定してから）
 07  worktree回収と夜締め状況まとめ … 実装完了（夜会初実走待ち）
     次: worktree-sweep.sh実装済み（基盤3840101・テスト8/8・実環境実走OK=クローズ候補1本(app-setup)/注意4本・稼働レーンを候補にしない保守側判定を実測確認・検収済み）。morning-routine 23:30手順へ接続済み（A）。残=今夜の初実走→夜会承認→downは人間実行。承認後実行のバッチ化は次の玉候補

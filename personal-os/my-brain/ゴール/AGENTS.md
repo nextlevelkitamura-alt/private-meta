@@ -8,7 +8,7 @@
 - `年間計画/<年>.md`: その年の的。3年計画から落とす。
 - `デイリー/<年>/<月>/<年-月-日>.md`: 1日1枚・追記の履歴。
 - `templates/デイリー.md`: 移設済みポインタ（雛形の正本=基盤repo `loops-registry/loops/renderer/templates/デイリー.md`）。
-- `朝夜ルーティン.md`: 毎日の運用手順（朝夜・逆算Alignment）。
+- `朝夜ルーティン.md`: ポインタのみ（毎日の運用手順の正本=Global Skill `morning-routine`。2026-07-03移行・逆算Alignmentは夜会手順に吸収）。
 - `references/`: ゴール設定インタビュー等の参照テンプレ。
 
 ## ゴールが未設定/薄いとき

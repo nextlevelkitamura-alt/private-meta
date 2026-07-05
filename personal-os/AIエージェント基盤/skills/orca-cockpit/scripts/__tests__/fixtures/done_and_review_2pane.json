@@ -1,0 +1,16 @@
+{
+  "id": "synthetic",
+  "ok": true,
+  "result": {
+    "worktrees": [
+      {
+        "path": "/synthetic/lane-a",
+        "status": "working",
+        "agents": [
+          {"agentType": "claude", "state": "done", "paneKey": "tab-impl:leaf-impl", "lastAssistantMessage": "修正版の変更一覧を報告します。\n\nCHILD08_DONE"},
+          {"agentType": "codex", "state": "done", "paneKey": "tab-rev:leaf-rev", "lastAssistantMessage": "差分と完了条件を照合しました。\n\nREVIEW_RESULT: PASS"}
+        ]
+      }
+    ]
+  }
+}

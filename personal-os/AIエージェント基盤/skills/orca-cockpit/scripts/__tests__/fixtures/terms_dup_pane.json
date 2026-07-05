@@ -1,0 +1,10 @@
+{
+  "id": "synthetic",
+  "ok": true,
+  "result": {
+    "terminals": [
+      {"handle": "term_rev_1", "worktreePath": "/synthetic/lane-a", "tabId": "tab-rev", "leafId": "leaf-rev", "title": "レビュー", "preview": ""},
+      {"handle": "term_rev_dup", "worktreePath": "/synthetic/lane-a", "tabId": "tab-rev", "leafId": "leaf-rev", "title": "レビュー(重複)", "preview": ""}
+    ]
+  }
+}

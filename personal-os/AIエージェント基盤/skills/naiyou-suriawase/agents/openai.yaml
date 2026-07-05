@@ -1,0 +1,5 @@
+interface:
+  display_name: "内容すり合わせ"
+  short_description: "依頼を実行前に整理して、意図・ゴール・曖昧点を確認する"
+  brand_color: "#F97316"
+  default_prompt: "内容すり合わせ"

@@ -1,0 +1,19 @@
+{
+  "id": "synthetic",
+  "ok": true,
+  "result": {
+    "worktrees": [
+      {
+        "path": "/synthetic/lane-a",
+        "status": "working",
+        "agents": [
+          {
+            "agentType": "claude",
+            "state": "working",
+            "lastAssistantMessage": "合成テスト: 合格したら「段階: 人間確認待ち」を最終行に出力する予定です。\nまだ実装中のため出力していません。"
+          }
+        ]
+      }
+    ]
+  }
+}

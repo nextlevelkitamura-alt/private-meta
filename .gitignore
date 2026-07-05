@@ -12,11 +12,17 @@
 !/AGENTS.md
 !/CLAUDE.md
 
-# Personal OS planning layer. Keep the nested AI agent foundation repo independent.
+# Personal OS planning layer.
 !/personal-os/
 /personal-os/*
 !/personal-os/AGENTS.md
 !/personal-os/CLAUDE.md
+# AIエージェント基盤: 別repoを廃止しこのrepoへ統合（2026-07-05）。全サブツリーを追跡する。
+# 基盤内の揮発物（tmp/outputs/state/run-card等）はネストした AIエージェント基盤/.gitignore が除外する。
+!/personal-os/AIエージェント基盤/
+!/personal-os/AIエージェント基盤/**
+# 統合時に残った旧バックアップ（.bak-*ディレクトリ）は非追跡。
+/personal-os/AIエージェント基盤/**/*.bak-*/
 # パーソナルOS説明書（運用モデルの入口ドキュメント）。全サブツリーを追跡。
 !/personal-os/説明書/
 !/personal-os/説明書/**
@@ -79,3 +85,6 @@
 **/.DS_Store
 **/__pycache__/
 *.py[cod]
+
+# session-board: デイリーボードの flock 用ロックファイル（0バイト・実行時生成物）
+*.md.lock

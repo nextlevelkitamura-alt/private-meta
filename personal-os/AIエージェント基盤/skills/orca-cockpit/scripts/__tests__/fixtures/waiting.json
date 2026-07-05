@@ -1,0 +1,15 @@
+{
+  "id": "synthetic",
+  "ok": true,
+  "result": {
+    "worktrees": [
+      {
+        "path": "/synthetic/lane-a",
+        "status": "waiting",
+        "agents": [
+          {"agentType": "claude", "state": "waiting", "lastAssistantMessage": "合成テスト: 権限を確認してください"}
+        ]
+      }
+    ]
+  }
+}

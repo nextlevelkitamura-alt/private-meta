@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kitamura.inbox-patrol</string>
+
+  <!--
+    draft。置くだけ・未ロード（有効化は人間ゲート＝運用契約§2・§7の破壊操作ゲート対象）。
+    有効化する場合:
+      cp com.kitamura.inbox-patrol.plist ~/Library/LaunchAgents/
+      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.kitamura.inbox-patrol.plist
+      launchctl enable gui/$(id -u)/com.kitamura.inbox-patrol
+    停止:
+      launchctl bootout gui/$(id -u)/com.kitamura.inbox-patrol
+    手動実行（抽出のみ・AI起動なし）: cd <このフォルダ> && scripts/patrol.sh --dry-run
+    手動実行（実行動: headless AIを本当に起動する。secretは使わないが実plan.md作成・実デイリー書き込みが起きる）:
+      cd <このフォルダ> && scripts/patrol.sh
+
+    30〜60分間隔（../../references/loop-types.md ②headless）。既定はStartInterval 1800秒(30分)。
+    60分にしたい場合は 1800 を 3600 に差し替える（1箇所）。RunAtLoad は付けない（起動直後の連打を避ける）。
+    patrol.sh の抽出部分は読み取り専用・冪等。headless AI起動（inbox-triage Skill）は
+    plan.md起案とインボックス行への処理済み印のみを行い、実装・実行はしない設計（SKILL.md参照）。
+  -->
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/inbox-patrol' &amp;&amp; scripts/patrol.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/inbox-patrol</string>
+
+  <key>StartInterval</key>
+  <integer>1800</integer>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>/Users/kitamuranaohiro</string>
+    <key>PATH</key>
+    <string>/Users/kitamuranaohiro/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>TZ</key>
+    <string>Asia/Tokyo</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/inbox-patrol/output/logs/launchd.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/inbox-patrol/output/logs/launchd.err.log</string>
+</dict>
+</plist>

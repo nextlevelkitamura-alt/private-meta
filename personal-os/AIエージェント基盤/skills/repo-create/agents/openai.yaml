@@ -1,0 +1,4 @@
+interface:
+  display_name: "Repo Create"
+  short_description: "repoを作る、または既存repoをAIが作業しやすい状態へ整える"
+  default_prompt: "Use $repo-create to create a new repository or improve an existing repository. Keep it simple: choose create-repo or improve-repo, check AGENTS.md/CLAUDE.md, minimal folders, Git safety, and repo-registry needs."

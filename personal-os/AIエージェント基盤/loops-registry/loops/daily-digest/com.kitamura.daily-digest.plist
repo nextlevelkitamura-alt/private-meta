@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kitamura.daily-digest</string>
+
+  <!--
+    ⚠️ 現況（2026-07-03時点）: このファイル（repo正本）は12:30／18:30／23:30 JSTの3回・
+    StartCalendarInterval 3本へ既に書き換え済み（draft）だが、実機 ~/Library/LaunchAgents/ には
+    まだ**旧・毎日23:30単発**の内容がcp配置されたまま稼働中（bootstrap済み）。つまり現状の実挙動は
+    「23:30の締めレンダ+digestが1回だけ」であり、下記の3回スケジュールはまだ反映されていない。
+    3回化の実機反映＝下記「切替手順（人間ゲート・cp→symlink移行）」の実施が必要（指揮官側が実施）。
+
+    [反映後の挙動] 12:30／18:30／23:30 JST の3回、当日デイリーへ auto:digest（＋23:30のみ
+    auto:done/auto:align 等「締めの最終レンダ」一式）を冪等再生成する（2026-07-03人間裁定・
+    案2=3回スナップ採用）。launchdは1ジョブ=1ProgramArgumentsのため、3本のStartCalendarIntervalは
+    同じコマンドを共有し、実行時の時刻（hour=23か否か）でrun.shへ渡す引数（--snapshotの有無）を
+    コマンド側で切り替える。
+      hour=23 → scripts/run.sh（従来どおり: render.sh --final + digest.sh）
+      hour!=23（12:30/18:30）→ scripts/run.sh --snapshot（render.sh通常レンダ + digest.shのみ）
+
+    切替手順（人間ゲート・cp→symlink移行。詳細・理由は ../loop.md「## 登録手順」）:
+      launchctl bootout gui/$(id -u)/com.kitamura.daily-digest   # 旧(23:30単発・cp配置)を止める
+      rm ~/Library/LaunchAgents/com.kitamura.daily-digest.plist  # 旧cpファイルを削除
+      ln -s '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-digest/com.kitamura.daily-digest.plist' \
+        ~/Library/LaunchAgents/com.kitamura.daily-digest.plist
+      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.kitamura.daily-digest.plist
+      launchctl enable gui/$(id -u)/com.kitamura.daily-digest
+    停止:
+      launchctl bootout gui/$(id -u)/com.kitamura.daily-digest
+      rm ~/Library/LaunchAgents/com.kitamura.daily-digest.plist   # symlink化後はこれでrepo編集との紐付けも外れる
+    手動実行（当日・実機の登録状態に関わらずいつでも可）:
+      cd <このフォルダ> && scripts/run.sh            # 従来どおり（final+digest）
+      cd <このフォルダ> && scripts/run.sh --snapshot  # 昼夕スナップ相当
+    RunAtLoad は付けない（ロード時ではなく上記3時刻のみ実行）。run.sh は冪等・非破壊。
+  -->
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-digest' &amp;&amp; if [ "$(date +%H)" = "23" ]; then scripts/run.sh; else scripts/run.sh --snapshot; fi</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-digest</string>
+
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Hour</key>
+      <integer>12</integer>
+      <key>Minute</key>
+      <integer>30</integer>
+    </dict>
+    <dict>
+      <key>Hour</key>
+      <integer>18</integer>
+      <key>Minute</key>
+      <integer>30</integer>
+    </dict>
+    <dict>
+      <key>Hour</key>
+      <integer>23</integer>
+      <key>Minute</key>
+      <integer>30</integer>
+    </dict>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>/Users/kitamuranaohiro</string>
+    <key>PATH</key>
+    <string>/Users/kitamuranaohiro/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>TZ</key>
+    <string>Asia/Tokyo</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-digest/output/logs/launchd.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-digest/output/logs/launchd.err.log</string>
+</dict>
+</plist>

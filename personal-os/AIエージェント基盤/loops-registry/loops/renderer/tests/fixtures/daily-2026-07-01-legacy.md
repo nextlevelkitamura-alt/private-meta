@@ -1,0 +1,52 @@
+# デイリー 2026-07-01（Wed）
+
+親: ../../../年間計画/2026.md ／ ../../../3年計画.md
+
+## 長期軸の目標との逆算
+<!-- auto:goal:begin — 朝loop: 3年/年間の的を自動表示。人間はマーカー外に書く -->
+🎯 2026年の的（今日のTODOはここに繋げる）:
+- ai運用: personal-OSでアイディア→実行→納品をAI化 ／ AIプロジェクト複数立ち上げ ／ 商用化・focusmap連携の検討
+- money: 月70万を目指す ／ 200万貯める ／ 家計簿・支出管理をAIで始める
+- work: ⚠️ 未記入 ── 埋めると逆算が効く
+- health: ⚠️ 未記入 ── 埋めると逆算が効く
+<!-- auto:goal:end -->
+<!-- auto:align:begin — 夜loop: 逆算の判定（概ね良い ／ 少し外れている） -->
+- [auto] 集計（2026-07-01）: 対話ログ 5 件／ai-jobs done 0 件。年間/3年目標との整合は上の各行で人間が判定する（このloopは件数集計のみの補助）。
+<!-- auto:align:end -->
+
+## 本日のTODO
+- [ ]
+
+## 実行したこと
+-
+<!-- auto:done:begin — 夜loop: ログ＋done カードから自動まとめ。人間の実績は上の "- " 側に書く -->
+- [auto] 対話セッション 2026-07-01 23:28 JST: nextlevel-career-site (main) / session=9442d07d-95f1-4a03-9aea-c4969b4adbf2
+  - 22a682e 相談求人LP: 職種背景違いのヒーロー案を追加
+  - fec9652 相談求人LP: 手軽さ安定訴求のヒーロー案を追加
+  - 612d428 相談求人LP: 安定収入訴求のヒーロー案を追加
+  - f925a38 相談求人LP: ヒーローCTA上寄せ案を追加
+  - 71663c6 相談求人LP: ヒーロー案のチップ配置版を追加
+  - 8a3df1b 相談求人LP: ヒーロー案の短縮版画像を追加
+  - 7bcbc19 相談求人LP: 未経験向けヒーローを追加
+- [auto] 対話セッション 2026-07-01 18:48 JST: Private (main) / session=0cefd196-6355-4501-9604-3072411ce55e
+- [auto] 対話セッション 2026-07-01 22:33 JST: Private (main) / session=428d4cde-c143-4936-90ec-ebacdbd86a39
+- [auto] 対話セッション 2026-07-01 22:55 JST: design-skill-orchestration (nextlevelkitamura-alt/design-skill-orchestration) / session=03c7232b-df00-4da3-9e7b-f6d6214e4e30
+- [auto] 対話セッション 2026-07-01 23:24 JST: design-daily-analysis (nextlevelkitamura-alt/design-daily-analysis) / session=4f2e2c9f-0656-4422-9f71-bd03514c6388
+<!-- auto:done:end -->
+
+## 明日への繰越タスク
+<!-- auto:carry:begin — 夜loop: 未完了TODO＋走行中ジョブから生成（夜まで空欄） -->
+<!-- auto:carry:end -->
+
+## 目標に関する進捗
+<!-- auto:progress:begin — 夜loop: ゴールと突き合わせた進捗 -->
+<!-- auto:progress:end -->
+
+## ログ（自動）
+<!-- auto:log:begin — hook: セッション終了時にポインタ1行を upsert。人間はここに書かない -->
+2026-07-01 23:53 JST | cwd=/Users/kitamuranaohiro/Work/W dev/LP/nextlevel-career-site | repo=nextlevel-career-site | branch=main | dirty=63 | commits=22a682e,fec9652,612d428,f925a38,71663c6,8a3df1b,7bcbc19 | session=9442d07d-95f1-4a03-9aea-c4969b4adbf2 | transcript=/Users/kitamuranaohiro/.claude/projects/-Users-kitamuranaohiro-Work-W-dev-LP-nextlevel-career-site/9442d07d-95f1-4a03-9aea-c4969b4adbf2.jsonl
+2026-07-01 18:48 JST | cwd=/Users/kitamuranaohiro/Private | repo=Private | branch=main | dirty=1 | commits= | session=0cefd196-6355-4501-9604-3072411ce55e | transcript=/Users/kitamuranaohiro/.claude/projects/-Users-kitamuranaohiro-Private/0cefd196-6355-4501-9604-3072411ce55e.jsonl
+2026-07-01 22:33 JST | cwd=/Users/kitamuranaohiro/Private/personal-os/my-brain/areas | repo=Private | branch=main | dirty=1 | commits= | session=428d4cde-c143-4936-90ec-ebacdbd86a39 | transcript=/Users/kitamuranaohiro/.claude/projects/-Users-kitamuranaohiro-Private/428d4cde-c143-4936-90ec-ebacdbd86a39.jsonl
+2026-07-01 22:55 JST | cwd=/Users/kitamuranaohiro/orca/workspaces/Private/design-skill-orchestration/personal-os/my-brain/areas/ai運用/plans/active/2026-07-01-スキル実行オーケストレーション | repo=design-skill-orchestration | branch=nextlevelkitamura-alt/design-skill-orchestration | dirty=1 | commits= | session=03c7232b-df00-4da3-9e7b-f6d6214e4e30 | transcript=/Users/kitamuranaohiro/.claude/projects/-Users-kitamuranaohiro-orca-workspaces-Private-design-skill-orchestration/03c7232b-df00-4da3-9e7b-f6d6214e4e30.jsonl
+2026-07-01 23:33 JST | cwd=/Users/kitamuranaohiro/orca/workspaces/Private/design-daily-analysis | repo=design-daily-analysis | branch=nextlevelkitamura-alt/design-daily-analysis | dirty=1 | commits= | session=4f2e2c9f-0656-4422-9f71-bd03514c6388 | transcript=/Users/kitamuranaohiro/.claude/projects/-Users-kitamuranaohiro-orca-workspaces-Private-design-daily-analysis/4f2e2c9f-0656-4422-9f71-bd03514c6388.jsonl
+<!-- auto:log:end -->

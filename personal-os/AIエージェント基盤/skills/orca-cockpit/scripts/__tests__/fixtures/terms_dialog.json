@@ -1,0 +1,10 @@
+{
+  "id": "synthetic",
+  "ok": true,
+  "result": {
+    "terminals": [
+      {"handle": "term_synthetic_a1", "worktreePath": "/synthetic/lane-a", "preview": "合成テスト出力\n■ You've hit your usage limit. Visit ...\nSwitch to gpt-5.4-mini? Press enter to confirm or esc to go back"},
+      {"handle": "term_synthetic_b1", "worktreePath": "/synthetic/lane-b", "preview": "通常の作業ログ行"}
+    ]
+  }
+}

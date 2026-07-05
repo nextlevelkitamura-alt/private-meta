@@ -1,0 +1,9 @@
+{
+  "id": "synthetic",
+  "ok": true,
+  "result": {
+    "terminals": [
+      {"handle": "term_synthetic_a1", "worktreePath": "/synthetic/lane-a", "preview": "テスト実行中: 12 pass / 0 fail\nWorking(120s) 通常の長時間処理"}
+    ]
+  }
+}

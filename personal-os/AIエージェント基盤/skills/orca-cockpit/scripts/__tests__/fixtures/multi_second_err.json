@@ -1,0 +1,22 @@
+{
+  "id": "synthetic",
+  "ok": true,
+  "result": {
+    "worktrees": [
+      {
+        "path": "/synthetic/lane-a",
+        "status": "working",
+        "agents": [
+          {"agentType": "claude", "state": "working", "lastAssistantMessage": "合成テスト: 実装を継続中です"}
+        ]
+      },
+      {
+        "path": "/synthetic/lane-b",
+        "status": "working",
+        "agents": [
+          {"agentType": "codex", "state": "error", "lastAssistantMessage": "合成テスト用の2レーン目エラーです"}
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skill-creator-custom — Skill説明書</title>
+<style>
+  :root{
+    --ground:#ECEEF3; --surface:#FFFFFF; --surface-2:#F5F6FA;
+    --ink:#19212F; --muted:#5F6879; --line:#DBDFEA;
+    --accent:#2C3A8C; --accent-ink:#202C6E; --accent-soft:#E9ECFA;
+    --go:#2E7D5B; --go-ink:#1E5A40; --go-soft:#E3F1EA;
+    --warn:#B4472B; --warn-ink:#8C3620; --warn-soft:#F7E8E2;
+    --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP","Segoe UI",sans-serif;
+    --mono:"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased;padding:40px 20px 72px}
+  .wrap{max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 10px}
+  h1{font-size:29px;font-weight:600;letter-spacing:-.01em;margin:0;line-height:1.2}
+  .lede{margin:12px 0 0;font-size:15.5px;color:var(--muted);max-width:64ch}
+  h2{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 14px}
+  section{display:flex;flex-direction:column}
+  p{margin:0 0 10px;font-size:14px}
+  ul{margin:0;padding-left:20px;font-size:14px}
+  li{margin-bottom:7px}
+  figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px;overflow-x:auto}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);padding:1px 6px;border-radius:6px}
+  .rule{border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:0 10px 10px 0;padding:12px 16px;font-size:13.5px}
+  .rule ol{margin:0;padding-left:20px}
+  .wf,.ref{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 18px;margin-bottom:12px}
+  .wf-h{margin:0 0 6px;font-size:14px;font-weight:600}
+  .wf-d{margin:0 0 10px;font-size:13.5px;color:var(--muted)}
+  .wf-c{margin:10px 0 0;font-size:13px;color:var(--muted)}
+  .steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+  .steps .step{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:4px 10px}
+  .steps .step.gate{background:var(--warn-soft);border-color:var(--warn);color:var(--warn-ink);font-weight:600}
+  .steps .arr{color:var(--muted)}
+  .ref ul{margin:0;padding-left:18px;font-size:13px}
+  .ref li{margin-bottom:4px}
+  .foot{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- ① 何をするSkillか -->
+    <header>
+      <p class="eyebrow">Skill説明書 · meta · AIエージェント基盤</p>
+      <h1>skill-creator-custom</h1>
+      <p class="lede">Skillの作成・改善・棚卸し・移行の窓口。依頼の内容で該当workflowを1つ選んで進める。判断基準は <code>references/</code>、実行手順は <code>workflows/</code> にある。</p>
+    </header>
+
+    <!-- ② いつ発火するか -->
+    <section>
+      <h2>いつ使うか（発火する発話例）</h2>
+      <ul>
+        <li>「新しいSkillを作りたい」「この手順をSkill化して」</li>
+        <li>「このSkill重いから直したい」「descriptionを改善して」「レビューして」</li>
+        <li>「Skillを棚卸しして」「重複しているSkillがないか見て」</li>
+        <li>「Skillを移して / 改名して / runtime露出を変えて」</li>
+      </ul>
+    </section>
+
+    <!-- ③ 構造図 -->
+    <section>
+      <h2>構造</h2>
+      <figure>
+<pre style="margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.9">skill-creator-custom/
+├── SKILL.md            router（34行）。振り分け＋絶対ルール5つ
+├── SKILL.html          この人間向け説明書（SKILL.mdから生成）
+├── workflows/          4本（実行手順だけ持つ）
+│   ├── create-new.md   作る
+│   ├── review-skill.md 直す（承認→修正実行まで）
+│   ├── scan.md         棚卸し（Global / repo-local 分岐）
+│   └── migrate-skill.md 移す・改名・露出変更
+├── references/         2本（判断基準の唯一の正）
+│   ├── create-rules.md 作る/直すの判断基準
+│   └── review-rules.md レビュー観点カタログ A〜F
+└── assets/             同名ペア
+    ├── skill-template.md   SKILL.md の雛形
+    └── skill-template.html SKILL.html の雛形</pre>
+      </figure>
+    </section>
+
+    <!-- ④ 各workflowの中身 -->
+    <section>
+      <h2>各workflowの中身（何を・どんなStepで）</h2>
+
+      <div class="wf">
+        <p class="wf-h"><code>create-new.md</code> — 新しく作る・既存手順をSkill化する（対象がまだ存在しない時）</p>
+        <p class="wf-d">依頼を確認し、create-rules で近い既存Skill・矛盾・作る/直すの境界を判断してから、最小構成で新Skillを作る。既存Skillの修正が答えなら review-skill へ渡す。</p>
+        <div class="steps">
+          <span class="step">1 依頼確認（入力/出力/副作用/scope）</span><span class="arr">→</span>
+          <span class="step">2 create-rulesで判断（既存・矛盾）</span><span class="arr">→</span>
+          <span class="step">3 方針提示</span><span class="arr">→</span>
+          <span class="step">4 最小構成で作る（フォルダ別作り込みを自問）</span><span class="arr">→</span>
+          <span class="step">5 構成ゲート＋SKILL.html</span><span class="arr">→</span>
+          <span class="step">6 logs/catalog更新</span><span class="arr">→</span>
+          <span class="step">7 報告</span>
+        </div>
+        <p class="wf-c"><b>完了条件:</b> 構成ゲート通過・logs/catalog更新・SKILL.html生成。近い既存Skillを見ずに作らない。</p>
+      </div>
+
+      <div class="wf">
+        <p class="wf-h"><code>review-skill.md</code> — 既存Skillを直す・軽くする・description改善・レビュー</p>
+        <p class="wf-d">観点カタログA〜Fでレビューし、改善案を提示していったん停止。人間の承認を得てから修正を実行し、構成ゲートとSKILL.html再生成まで一本で持つ（レビューだけで終わる／修正まで進むを同じworkflow内で分岐）。</p>
+        <div class="steps">
+          <span class="step">1 読む</span><span class="arr">→</span>
+          <span class="step">2 観点A〜Fでレビュー</span><span class="arr">→</span>
+          <span class="step">3 改善案を提示（停止）</span><span class="arr">→</span>
+          <span class="step">4 規模判定・計画化</span><span class="arr">→</span>
+          <span class="step gate">5 人間承認ゲート</span><span class="arr">→</span>
+          <span class="step">6 修正を実行</span><span class="arr">→</span>
+          <span class="step">7 構成ゲート＋SKILL.html</span><span class="arr">→</span>
+          <span class="step">8 外部整合</span><span class="arr">→</span>
+          <span class="step">9 報告</span>
+        </div>
+        <p class="wf-c"><b>完了条件:</b> 承認された範囲だけを編集・SKILL.html再生成。承認なしにStep6（修正実行）へ進まない。</p>
+      </div>
+
+      <div class="wf">
+        <p class="wf-h"><code>scan.md</code> — 横断スキャンで重複・矛盾・統合候補を洗い出す（読み取り専用）</p>
+        <p class="wf-d">対象を Global（skills/ 同士）か repo-local（projects/ 配下）で分岐。索引→軽量index→候補探索→候補だけ正本精読→分類の順で、危険操作は候補提示のみ（自動実行しない）。Global時は skills実体×catalog×deletedログ の三点照合、description総量、SKILL.html更新漏れも見る。</p>
+        <div class="steps">
+          <span class="step">1 対象決定（Global/repo-local）</span><span class="arr">→</span>
+          <span class="step">2 索引を読む（三点照合／repo探索）</span><span class="arr">→</span>
+          <span class="step">3 軽量index</span><span class="arr">→</span>
+          <span class="step">4 重複候補探索</span><span class="arr">→</span>
+          <span class="step">5 候補だけ正本精読</span><span class="arr">→</span>
+          <span class="step">6 分類</span><span class="arr">→</span>
+          <span class="step">7 報告</span>
+        </div>
+        <p class="wf-c"><b>完了条件:</b> 候補の提示まで。削除・改名・移行・symlink変更は実行せず migrate-skill / skill-delete へ渡す。</p>
+      </div>
+
+      <div class="wf">
+        <p class="wf-h"><code>migrate-skill.md</code> — 移す・改名・runtime露出変更（不可逆操作を含む）</p>
+        <p class="wf-d">対象と危険操作を確認し、正本ルールを読んでから正本へ移し、runtime露出を direct symlink で整え、検証とログを書く。承認ゲートが独立しているため他workflowに吸収しない。</p>
+        <div class="steps">
+          <span class="step gate">1 対象と危険操作確認（人間承認）</span><span class="arr">→</span>
+          <span class="step">2 正本ルールを読む</span><span class="arr">→</span>
+          <span class="step">3 旧実体確認</span><span class="arr">→</span>
+          <span class="step">4 正本へ移す</span><span class="arr">→</span>
+          <span class="step">5 runtime露出</span><span class="arr">→</span>
+          <span class="step">6 検証とログ＋SKILL.html再生成</span><span class="arr">→</span>
+          <span class="step">7 報告</span>
+        </div>
+        <p class="wf-c"><b>完了条件:</b> logs/catalog/所有repo側導線の更新・SKILL.html再生成（改名時は旧HTMLを残さない）。危険操作は人間の明示承認が必須。</p>
+      </div>
+    </section>
+
+    <!-- ⑤ referencesの中身 -->
+    <section>
+      <h2>referencesの中身（各判断基準に何があるか）</h2>
+
+      <div class="ref">
+        <p class="wf-h"><code>create-rules.md</code> — 作る/直すの判断基準の唯一の正</p>
+        <ul>
+          <li><b>§1 作る前の判断</b>: 近い既存Skill確認、作る/直すの境界、吸収判断（似ているだけでは吸収しない等）</li>
+          <li><b>§2 矛盾チェック</b>: 発火の奪い合い・安全方針のずれ・分類矛盾の見分け</li>
+          <li><b>§3 分類と配置</b>: meta / applied、Global / repo-local（迷ったらrepo-local）</li>
+          <li><b>§4 構成の絶対ルール</b>: フォルダ固定・router70行・150行分割トリガー・参照1階層。<b>§4.1</b> workflow分割判断（唯一の置き場）、<b>§4.2</b> フォルダ別作り込み基準、<b>§4.3</b> サイズ目安、<b>§4.4</b> 構成ゲート</li>
+          <li><b>§5〜§7 書き方 / description設計 / frontmatter拡張</b>: 用語統一・時限情報禁止、第三人称と否定トリガー、disable-model-invocation 等</li>
+          <li><b>§8〜§11 outputs / SKILL.html / 記録と計画 / 提示物</b>: 出力先規約の参照、SKILL.htmlの義務と6節、修正規模判定、作成前チェックリスト</li>
+        </ul>
+        <p class="wf-c"><b>いつ読む:</b> create-new と review-skill の両方から。作る・直すの判断は必ずここを唯一の正とする。</p>
+      </div>
+
+      <div class="ref">
+        <p class="wf-h"><code>review-rules.md</code> — レビュー観点カタログ A〜F ＋ 頻度3段階</p>
+        <ul>
+          <li><b>A 発火精度</b>: descriptionが想定発話を拾い近接Skillで誤爆しないか</li>
+          <li><b>B 構造の健全性</b>: router70行・参照1階層・分割粒度</li>
+          <li><b>C 重複・矛盾</b>: 用語揺れ・他Skillとの守備範囲・正本の二重管理</li>
+          <li><b>D 安全性</b>: 副作用の承認ゲート・allowed-tools最小・secret混入</li>
+          <li><b>E 保守性</b>: 参照鮮度・時限情報・SKILL.html更新日の突合</li>
+          <li><b>F 実測評価</b>: 発火テスト（should/should-not各8〜10件）と出力テスト（あり/なし比較）</li>
+          <li><b>頻度3段階</b>: 毎回見る / 大きな変更時 / 年次棚卸し（scan.mdが担当）</li>
+        </ul>
+        <p class="wf-c"><b>いつ読む:</b> review-skill のレビューStepから。scan.md の棚卸しは「年次棚卸し」列を使う。</p>
+      </div>
+    </section>
+
+    <!-- ⑥ 絶対ルール・安全方針＋更新日 -->
+    <section>
+      <h2>絶対ルール・安全方針</h2>
+      <div class="rule">
+        <ol>
+          <li>フォルダは <code>SKILL.md</code> ＋ <code>workflows/ references/ assets/ scripts/</code> 以外を作らない（<code>evals/</code> は評価ツール実行時のみ例外・<code>SKILL.html</code> は唯一の例外ファイル）。</li>
+          <li><code>SKILL.md</code> はrouterに徹し70行以内。判断基準は references、手順は workflows へ。</li>
+          <li>正本（plans・logs・catalog・配置）の運用ルールをこのSkillにコピーしない。参照のみ。</li>
+          <li>削除・移動・改名・symlink変更は人間の明示承認が必須。</li>
+          <li>Skill編集の完了条件は <code>SKILL.html</code> の再生成まで。</li>
+          <li>委譲: 削除は <code>skill-delete</code>、Codex専用Skillは <code>skill-creator-codex</code> へ。</li>
+        </ol>
+      </div>
+    </section>
+
+    <p class="foot">更新日: 2026-07-03 ／ 正本: <code>SKILL.md</code>（この説明書はSKILL.mdから生成した人間向け表示。編集はmd側で行う）</p>
+
+  </div>
+</body>
+</html>

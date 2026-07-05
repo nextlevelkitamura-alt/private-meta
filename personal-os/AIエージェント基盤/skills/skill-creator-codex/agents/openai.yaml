@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Creator Codex"
+  short_description: "Codex用Skillの作成・更新・検証を支援するワークフロー"
+  default_prompt: "Use $skill-creator-codex to create or improve a Codex skill for this repository."

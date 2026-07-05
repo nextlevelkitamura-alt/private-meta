@@ -1,0 +1,15 @@
+{
+  "id": "synthetic",
+  "ok": true,
+  "result": {
+    "worktrees": [
+      {
+        "path": "/synthetic/lane-a",
+        "status": "working",
+        "agents": [
+          {"agentType": "claude", "state": "working", "lastAssistantMessage": "合成テスト: 完了したら「CHILD07_DONE」を出します。\nCHILD07_DONE\nと出す前にまだ作業が残っています"}
+        ]
+      }
+    ]
+  }
+}

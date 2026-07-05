@@ -1,0 +1,23 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.log
+tmp/
+output/
+outputs/
+.env
+.env.*
+
+# ai-jobs spool: 構造とルールだけ追跡、run-card（中身）は非追跡（揮発状態）
+/loops-registry/ai-jobs/*/*
+!/loops-registry/ai-jobs/*/.gitkeep
+
+# cockpit段階イベント（実行時状態・追記のみ・非git管理。置き場/ローテーション方針は
+# loops-registry/loops/renderer/loop.md 参照）
+/skills/orca-cockpit/state/
+
+# notion-push（N1）: search APIで自動発見したparent page idの実行時キャッシュ（secretではないが非git管理）
+/loops-registry/loops/renderer/state/
+
+# watch-keeper: 検知履歴(alerts.jsonl)・再通知防止リスト(seen.txt)の実行時状態（非git管理。loop.md参照）
+/loops-registry/loops/watch-keeper/state/

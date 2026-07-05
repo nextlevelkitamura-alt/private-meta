@@ -1,0 +1,15 @@
+{
+  "id": "synthetic",
+  "ok": true,
+  "result": {
+    "worktrees": [
+      {
+        "path": "/synthetic/lane-a",
+        "status": "done",
+        "agents": [
+          {"agentType": "codex", "state": "done", "lastAssistantMessage": "合成テスト: 完了条件5項目すべて充足を確認。\nREVIEW_RESULT: PASS"}
+        ]
+      }
+    ]
+  }
+}

@@ -1,10 +1,10 @@
 # git-registry — 全体git構成の一望
 
-このMacのAIエージェント運用の**横断的なgit構成**（2repo・追跡範囲・push・スマホ閲覧）を一望する正本を置く。
+このMacのAIエージェント運用の**横断的なgit構成**（1repo・追跡範囲・push・スマホ閲覧）を一望する正本を置く。
 
 ## 役割
 
-- `git-overview.md` … 2repo（private-meta / ai-agent-foundation）の全体像の正本。
+- `git-overview.md` … `~/Private` 単一repo（private-meta）の全体像の正本（2026-07-05に旧 ai-agent-foundation を統合）。
 
 ## 境界（二重管理しない）
 

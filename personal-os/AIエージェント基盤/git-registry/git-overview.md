@@ -1,43 +1,41 @@
-# 全体のgit管理（2repo構成の一望正本）
+# 全体のgit管理（1repo構成の一望正本）
 
-このMacのAIエージェント運用は **2つの独立したgit repo** に分かれている。
-どこに何があり・どこを追跡し・どこへpushするかを、ここで一望する。
-（repoの現在地は `~/Private/projects/{active,paused,archive}/` の実体、移動履歴は `../repo-registry/logs/` が正本。ここは横断の全体像だけ。）
+このMacのAIエージェント運用は **`~/Private` の単一git repo（private-meta）** で管理する。
+（2026-07-05に旧 `ai-agent-foundation`（基盤の別repo）を統合。1repoに一本化して「基盤の変更がprivate-metaに出ない」ややこしさを解消した。）
+repoの現在地は `~/Private/projects/{active,paused,archive}/` の実体、移動履歴は `../repo-registry/logs/` が正本。ここは横断の全体像だけ。
 
-## 2つのrepo
+## repo
 
-- **private-meta** … `~/Private` の外側repo。
+- **private-meta** … `~/Private` の唯一のrepo。
   - remote: `github.com/nextlevelkitamura-alt/private-meta`（private）／branch `main`
-  - 追跡範囲: 入口 `AGENTS.md`/`CLAUDE.md`・`personal-os/AGENTS.md`・`説明書/`・`my-brain/`（ゴール・areasのAGENTS.md・plans など `.gitignore` で再includeした分）・`projects/` 等。
-  - **AIエージェント基盤フォルダは追跡しない**（下記）。
-- **ai-agent-foundation** … `personal-os/AIエージェント基盤/` を実体とする別repo。
-  - remote: `github.com/nextlevelkitamura-alt/ai-agent-foundation`（private）／branch `main`
-  - 追跡範囲: `hooks/`・`skills/`・`loops-registry/`・`repo-registry/`・`global-skill-registry/`・`git-registry/`・`GLOBAL_AGENTS.md` 等、AIエージェント基盤配下すべて。
-  - **hooks/session-board 等の基盤作業はすべてこのrepoに入る**。
+  - 追跡範囲: 入口 `AGENTS.md`/`CLAUDE.md`・`personal-os/`（`AIエージェント基盤/`全体＋`説明書`・`my-brain`の`.gitignore`許可分）・`projects/` 等。
+  - **AIエージェント基盤（hooks / skills / loops-registry / repo-registry / git-registry / global-skill-registry / GLOBAL_AGENTS.md 等）もこのrepoに入る**。
 
-## なぜ基盤の変更が private-meta に出ないか
+## 追跡範囲（.gitignore方針）
 
-- `~/Private/.gitignore` が `/personal-os/*` を無視し、必要な一部mdだけ `!` で再includeしている。**AIエージェント基盤は再includeしていない**。
-- かつ `personal-os/AIエージェント基盤/` は自前の `.git` を持つ**別repo**。
-- よって private-meta が追跡する基盤ファイルは **0件**。GitHubアプリで private-meta を開いても基盤フォルダは出ない。基盤の変更は **ai-agent-foundation** 側に出る。
+- `~/Private/.gitignore` は `/*`（トップレベル全無視）から `!` で許可を積む allowlist 方式。
+- `personal-os/*` を無視し、必要分だけ再include（入口AGENTS・説明書・ゴール・areasのAGENTS/plans）。
+- **`personal-os/AIエージェント基盤/**` は全追跡**（2026-07-05統合）。基盤内の揮発物（tmp/outputs/state/run-card/`__pycache__`）はネストした `AIエージェント基盤/.gitignore` が除外する。
+- 新しいareaを足したら `.gitignore` に同じ許可ブロックを追記する（忘れると新規ファイルが静かに無視される）。
 
-## push先・ブランチ・2repoにまたがる変更
+## push先・ブランチ・またぐ変更
 
-- 両repoとも `main`。**push は明示依頼があるときだけ**（session-board の終了確認①②③④での人間OKも明示依頼にあたる）。
+- `private-meta` の `main` のみ。**push は明示依頼があるときだけ**（session-board の終了確認①②③④での人間OKも明示依頼にあたる）。
 - commit前確認: `main`直か作業branchか・`git add -A`を避けパス指定・secret混入なし・push可否。
-- 1つの作業が2repoにまたがることがある。**各repoで別々にcommitし、本文で相手repoの変更に触れて束ねる**（例: 基盤側にhook実装commit＋private-meta側に計画記録commit）。
-- area計画のrepo卒業は2コミット（移行先で作成commit → area側で削除＋移行ログcommit）。詳細は `~/Private/personal-os/my-brain/areas/AGENTS.md` §5。
+- area計画の実装repoへの卒業は、移行先repoとまたがる2コミットになる（移行先で作成commit → area側で削除＋移行ログcommit）。詳細は `~/Private/personal-os/my-brain/areas/AGENTS.md` §5。
 
 ## スマホ（GitHubアプリ）での見方
 
-- 見たい対象のrepoを**個別に開く**（2repoは別々に表示される）。
-- **「コミット」** … push直後に最新が並ぶ（＝リアルタイム確認）。
-- **「コード」** … フォルダ構成をブラウズ。
-- hooks/基盤の変更を見るなら **ai-agent-foundation** を★Starして固定。private-metaは `~/Private` 全体（デイリー・計画・projects）の履歴。
+- `private-meta` を開けば **全部**見える（基盤も含め1repoに一本化）。★Starして固定。
+- **「コミット」** … push直後に最新が並ぶ（＝リアルタイム確認）。**「コード」** … フォルダ構成をブラウズ。
+
+## 履歴の注記（統合前）
+
+- 2026-07-05以前、`personal-os/AIエージェント基盤/` は別repo `ai-agent-foundation`（remote 同アカウント）だった。過去履歴はGitHubの同repo（**archive・参照専用**）とローカル退避 `personal-os/.aaf-git-backup-20260705/`（非追跡）に残る。統合後の `private-meta` の履歴には引き継いでいない（「シンプル」統合）。
 
 ## 正本の切り分け（二重管理しない）
 
-- **このdoc** … 横断の全体像（2repo構成・追跡範囲・push・閲覧）の正本。
+- **このdoc** … git構成（1repo・追跡範囲・push・閲覧）の正本。
 - `../repo-registry/logs/` … repo移動・登録・削除の履歴ログ。
 - `~/Private/projects/{active,paused,archive}/` … repoの現在地の正本（実体配置）。
-- 各repoの `AGENTS.md` … そのrepo内のgit運用。基盤 `../AGENTS.md` のgit節はこのdocへのポインタ。
+- 基盤 `../AGENTS.md` のgit節はこのdocへのポインタ。

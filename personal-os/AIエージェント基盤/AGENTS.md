@@ -20,11 +20,10 @@ global に使うもの（Skill・loop・hook）は、実体をここに登録し
   - `~/.codex/AGENTS.md`
   - `~/.config/opencode/AGENTS.md`
 
-## git（この基盤は別repo）
-- ここだけ独立した git repo（remote `nextlevelkitamura-alt/ai-agent-foundation`・branch `main`）。`~/Private` 本体（`private-meta`）とは別repo。
-- 本体の `.gitignore` が `/personal-os/*` を無視するため、この基盤は本体からは**非追跡**（二重commitされない）。2repoの全体構成・追跡範囲・スマホ閲覧の一望正本は `git-registry/git-overview.md`。
-- 1つの変更が2repoにまたがることがある。各repoで別々にcommitし、本文で相手repoの変更に触れて束ねる。
+## git（`~/Private` 単一repoに統合済み）
+- この基盤は 2026-07-05 に `~/Private`（`private-meta`・remote `nextlevelkitamura-alt/private-meta`・branch `main`）へ**統合済み**。もう別repoではない（旧 `ai-agent-foundation` はGitHub archiveに履歴が残る・参照専用）。
 - commit前に確認: `main`直か作業branchか、`git add -A`を避けパス指定、secret混入、push可否（pushは明示依頼時のみ）。
+- git構成（1repo・`.gitignore`方針・push先・スマホ閲覧）の一望正本は `git-registry/git-overview.md`。
 
 ## フォルダ（どこに何があるか。詳細は各 AGENTS.md）
 - `skills/` … Global Skill 本体

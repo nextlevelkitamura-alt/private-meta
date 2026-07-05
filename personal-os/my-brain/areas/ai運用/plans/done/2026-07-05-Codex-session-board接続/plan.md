@@ -24,3 +24,12 @@ session-board を Codex にも接続し、Codexセッションを当日ボード
 
 実Codexで各1回実測：(1)開始で🟢登録 (2)Stopで⏸ (3)サブで🔵自動 (4)⏸→🟢復帰 (5)subagent/headless(`AIJOBS_RUN`)は非登録。
 実装側の詳細・設計は master 計画（`../active/2026-07-04-セッション宣言型ボードとplans規約/plan.md` の2026-07-05追記）と `AIエージェント基盤/hooks/references/codex-hooks.md`（実務マニュアル）を参照（本節に重複させない）。
+
+## 検証結果（2026-07-05・成功／保留解除）
+
+- Codex再起動＋`/hooks` trust の後、実Codexで**検証成功**。`~/.codex/config.toml` の `[hooks.state]` に5フックの `trusted_hash` が入り、当日ボードに Codexセッション行が登録された:
+  `15:46 | Private | その他 | 現在時刻の確認 | ⏸停止・確認待ち <!-- s:019f3107 -->`
+- 確認できた完了条件: **(1) 開始で🟢登録 ✅**（UserPromptSubmit・要約=プロンプト先頭）／**(2) Stopで⏸ ✅**（Stop hook）。SessionStartも trust済みで発火。
+- 通常運用で観測予定: (3) サブで🔵自動（サブを使うCodexタスク時）／(4) ⏸→🟢復帰（次プロンプト時）／(5) subagent/headless非登録。
+- 原因だった「モデル空エラー」はCodex**再起動で解消**。残ゲートは **trust だけ**だった（ChatGPTの指摘＝「再起動不足より未trust」と実測が一致）。
+- → 保留解除。coreは実機で動作確認済みのため `done/` へ移す。

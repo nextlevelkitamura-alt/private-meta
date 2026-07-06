@@ -16,15 +16,15 @@
 - `session-start.md` … 開始時の宣言手順（runtime中立）【共有】
 - `session-end.md` … 完了・git仕上げ手順（節目のみ）【共有】
 - `README.md` … 登録スニペット・`board.py`コマンド・状態の意味・制約【共有】
-- `claude/` … Claude Code 受け口
+- `claude/` … Claude Code 受け口（詳細は `claude/AGENTS.md`）
   - `session-start.py`（SessionStart→手順注入）／`prompt-register.py`（UserPromptSubmit→登録・🟢復帰）／`session-end.py`（Stop→🟢→⏸ flip）／`milestone.md`（Stop prompt型→節目確認・Claude専用）
-- `codex/` … Codex 受け口【P3・未実装】
+- `codex/` … Codex 受け口【実装・登録・trust 済み／サブ🔵自動は未実測】（詳細は `codex/AGENTS.md`）
   - `session-start.py`／`prompt-register.py`／`session-end.py`／`subagent.py`（SubagentStart/Stop→🔵/🟢 自動）／`hooks.json`（`~/.codex/hooks.json` へ merge する雛形）
 
 ## Claude と Codex の共通運用
 
 - エンジンと手順は1つ: ボード形式・宣言/完了手順は `board.py`＋手順md に集約。両runtimeの入出力はほぼ同型（hook入力=stdinのJSON／文脈注入=`hookSpecificOutput.additionalContext`）なので、受け口はほぼ写しで動く。
-- Codex固有の差分（prompt型hook無し・trust承認・notify回避・Subagent自動flip）の仕組みは `../references/codex-hooks.md` に集約する。ここでは重複させない。
+- 各runtimeの hook 一般知識（型・trust・入出力・イベント）は `../references/claude-hooks.md` / `../references/codex-hooks.md` に runtime 別で集約する。session-board 固有の受け口説明は `claude/AGENTS.md` / `codex/AGENTS.md`。ここでは重複させない。
 
 ## 触るときの規律
 

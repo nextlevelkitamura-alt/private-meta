@@ -70,6 +70,6 @@ board.py check  --key K            # missing|run|wait|sub
 - 強制終了（ウィンドウkill）では Stop が走らず🟢が残る → 掃引は朝夜会。
 - 日付跨ぎで前日の⏸行が残る → 掃引は朝夜会。
 - 節目判定はHaiku依存＝確率的。迷ったら素通し設計で「聞かなさすぎ」に倒す。
-- Codex接続（codex/）は P3・未実装。board.py と手順md は runtime非依存で共用可。
+- Codex接続（codex/）は実装・登録・trust 済み（開始🟢/Stop⏸ 実測PASS・サブ🔵自動は未実測）。board.py と手順md は runtime非依存で共用。詳細は `codex/AGENTS.md`。
 
 計画: `~/Private/personal-os/my-brain/areas/ai運用/plans/active/2026-07-04-セッション宣言型ボードとplans規約/plan.md`

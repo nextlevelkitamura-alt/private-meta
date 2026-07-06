@@ -25,6 +25,24 @@
 - **独立レビュー（Sonnet5・read-only・spawn無し）: 総合 PASS（9/9）**。軽微3件（registered.sh の trust確認補助→対応済／サブ🔵の実Codex実測残／scratchpad一時物）。
 - 残（人間）: **Codex `/hooks` 再 trust → 実Codexで実測 → done/ へ**。
 
+### 追記: 受け口をイベント別folderへ再編（2026-07-06・第2次）
+
+claude/codex 箱の内部を「機構folder → **イベントfolder**」に入れ替え、ファイル名を自己記述型 `<機構>-<イベント>` に。
+
+最終レイアウト:
+
+```
+hooks-registry/
+├── hooks/session-board/   共有（board.py・common.py・手順md）
+├── claude/<イベント>/session-board-<イベント>.{py,md}   （session-start/prompt-register/session-end/milestone）
+├── codex/<イベント>/session-board-<イベント>.py ＋ codex/hooks.json （session-start/prompt-register/session-end/subagent）
+└── references/ ・ research/
+```
+
+- 窓（`agent-hooks`）と相対import（`../../hooks/session-board`）は**深さ不変＝無変更**。
+- 変わったのは登録パス（`settings.json` 3・codex `hooks.json` 5）／doc／`~/.codex/hooks.json` の symlink 先（→ `codex/hooks.json`）。
+- 検証: 窓越し全経路＋一時ボードで状態遷移 PASS。**残: Codex `/hooks` 再 trust**（パス変化で再度必要）。
+
 ## 目的
 
 `hooks/` を、他の基盤フォルダ（`loops-registry` / `global-skill-registry` / `repo-registry`）と揃った **`hooks-registry/`** に作り替える。**runtime 別（claude / codex）の受け口を top の「箱」に集約**し、機構の共有部は `hooks/` にまとめる。正本は repo・各 runtime へは **symlink（窓）で露出**する型に統一する。将来フックが増えても「箱に受け口を足す」で済む形にする。
@@ -92,7 +110,7 @@ personal-os/AIエージェント基盤/
 
 正本は repo、runtime 側には「窓（symlink）」と「適用済みの設定」だけを残す。
 
-- **スクリプトの露出**: `~/.claude/agent-hooks → hooks-registry/claude/`、`~/.codex/agent-hooks → hooks-registry/codex/` の symlink を張る。設定内のパスは `~/.claude/agent-hooks/session-board/session-start.py` のような**安定パス**にする（runtime 箱を丸ごと窓にするので、機構が増えても窓は1本のまま）。
+- **スクリプトの露出**: `~/.claude/agent-hooks → hooks-registry/claude/`、`~/.codex/agent-hooks → hooks-registry/codex/` の symlink を張る。設定内のパスは `~/.claude/agent-hooks/session-start/session-board-session-start.py` のような**安定パス**にする（runtime 箱を丸ごと窓にするので、機構が増えても窓は1本のまま）。
 - **Claude 登録**: `~/.claude/settings.json` は hooks 以外の設定も持つため丸ごと symlink 不可。hooks ブロックのパスを agent-hooks 経由に更新（保存で自動反映・trust 不要）。
 - **Codex 登録**: `~/.codex/hooks.json` を repo 正本 `hooks-registry/codex/session-board/hooks.json` への **symlink** にする（repo が正本・1本）。※ session-board が唯一の Codex フックである前提。他ツールが Codex フックを足す運用に変わったら merge 方式へ切替。
 - **Codex 再 trust**: パス・内容が変わるので `/hooks` で再 trust（trust は hash/パスに紐づく）。

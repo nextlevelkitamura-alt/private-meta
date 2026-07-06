@@ -2,7 +2,7 @@
 
 当日デイリーに「動いているエージェントセッション」を宣言・可視化する機構。
 このフォルダ（`hooks-registry/hooks/session-board/`）は **runtime非依存の共有本体**。
-runtime 別の受け口は sibling の箱 `../../claude/session-board/`・`../../codex/session-board/` にある。
+runtime 別の受け口は sibling の箱 `../../claude/`・`../../codex/` に**イベント別folder**で置かれる。
 状態は 🟢動作中・⏸停止確認待ち・🔵サブ稼働中 の3値（意味と遷移は `README.md`）。
 
 ## 共有と分離の層
@@ -12,8 +12,8 @@ runtime 別の受け口は sibling の箱 `../../claude/session-board/`・`../..
   Claude も Codex もこの同じファイルを参照する。二重化しない。
 - **runtime別（受け口の箱）**: フックの入出力・登録先・trust が違うので、受け口だけ箱に分ける。
   受け口は「stdinのJSONを読んで `common.py` 経由で `board.py` を叩く」**薄いシム**に徹する。
-  - `../../claude/session-board/` … Claude 受け口（`session-start.py`/`prompt-register.py`/`session-end.py`＋prompt型 `milestone.md`）
-  - `../../codex/session-board/` … Codex 受け口（＋`subagent.py`／`hooks.json`）
+  - `../../claude/<イベント>/session-board-<イベント>.py` … Claude 受け口（session-start／prompt-register／session-end＋prompt型 milestone）
+  - `../../codex/<イベント>/session-board-<イベント>.py` … Codex 受け口（＋subagent／箱直下 `hooks.json`）
 
 ## フォルダ構成（共有本体）
 

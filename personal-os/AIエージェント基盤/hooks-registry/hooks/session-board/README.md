@@ -13,14 +13,14 @@
 - `registered.sh` … 現況診断（登録・symlink窓の一覧・唯一の `.sh`）
 - 構成・共有/分離の正本は `AGENTS.md`（このフォルダ）。ここでは重複させない。
 
-受け口は箱に分離（`../../claude/session-board/`・`../../codex/session-board/`）。
-対のルール: 受け口 `.py` と手順 `.md` は**同名・拡張子違い**。対の無いもの（`board.py`・`common.py`・`prompt-register.py`・`milestone.md`・template）は単独名。
+受け口は各 runtime 箱の**イベント別folder**に分離（`../../claude/<イベント>/`・`../../codex/<イベント>/`）。
+命名: 受け口は `<機構>-<イベント>`（例 `session-board-session-start.py`・自己記述）。手順md（`session-start.md`等）は共有本体に置きイベント名で対応する。
 
 ## 動作モデル（毎ターン確認は廃止・節目だけ確認）
 
 1. **登録**（UserPromptSubmit / `prompt-register.py`）: 最初のプロンプトで「動いているエージェント」へ🟢1行を機械登録。⏸の行は次プロンプトで🟢復帰。
 2. **状態flip**（Stop / `session-end.py`）: 応答終了で🟢→⏸へ機械flip。**ブロックしない**（毎ターンの往復ゼロ）。
-3. **節目確認**（Stop / prompt型 `../../claude/session-board/milestone.md`・Claude専用）: 毎回「大目標達成＋満足の気配か」を判定。
+3. **節目確認**（Stop / prompt型 `../../claude/milestone/session-board-milestone.md`・Claude専用）: 毎回「大目標達成＋満足の気配か」を判定。
    - 未達 → `{"ok":true}`（普通に停止・確認なし）
    - 節目 → `{"ok":false,"reason":"完了報告手順を実行せよ"}` → `session-end.md` の①②③が注入される
 4. **入れ子記録**: 節目ごとに `board.py log` で「終わったこと」の `### repo` > `- 親` の下へ `  - HH:MM 子` を積む。完了で `finish`（自行削除＋親確定）。
@@ -50,24 +50,24 @@ board.py check  --key K            # missing|run|wait|sub
 
 正本は repo、runtime には **symlink 窓**で露出する。
 
-- **Claude** `~/.claude/settings.json`（パスは窓 `~/.claude/agent-hooks/session-board/…`・trust不要・保存で自動反映）:
+- **Claude** `~/.claude/settings.json`（パスは窓 `~/.claude/agent-hooks/<イベント>/…`・trust不要・保存で自動反映）:
 
 ```json
 { "hooks": {
   "SessionStart":     [{ "matcher":"startup|resume|clear|compact",
-    "hooks":[{"type":"command","command":"~/.claude/agent-hooks/session-board/session-start.py","timeout":10}] }],
+    "hooks":[{"type":"command","command":"~/.claude/agent-hooks/session-start/session-board-session-start.py","timeout":10}] }],
   "UserPromptSubmit": [{ "matcher":"",
-    "hooks":[{"type":"command","command":"~/.claude/agent-hooks/session-board/prompt-register.py","timeout":10}] }],
+    "hooks":[{"type":"command","command":"~/.claude/agent-hooks/prompt-register/session-board-prompt-register.py","timeout":10}] }],
   "Stop": [
-    { "matcher":"", "hooks":[{"type":"command","command":"~/.claude/agent-hooks/session-board/session-end.py","timeout":10}] },
-    { "hooks":[{"type":"prompt","prompt":"<claude/session-board/milestone.md の内容>"}] }
+    { "matcher":"", "hooks":[{"type":"command","command":"~/.claude/agent-hooks/session-end/session-board-session-end.py","timeout":10}] },
+    { "hooks":[{"type":"prompt","prompt":"<claude/milestone/session-board-milestone.md の内容>"}] }
   ]
 }}
 ```
-（実ファイルは絶対パス `/Users/…/.claude/agent-hooks/session-board/…` で記述）
+（実ファイルは絶対パス `/Users/…/.claude/agent-hooks/<イベント>/…` で記述）
 
-- **Codex** `~/.codex/hooks.json` → `../../codex/session-board/hooks.json` への **symlink**（repo が正本）。
-  パスは窓 `~/.codex/agent-hooks/session-board/…`。**hook を変えたら `/hooks` 再 trust**（hash/パスに紐づく）。
+- **Codex** `~/.codex/hooks.json` → `../../codex/hooks.json` への **symlink**（repo が正本）。
+  パスは窓 `~/.codex/agent-hooks/<イベント>/…`。**hook を変えたら `/hooks` 再 trust**（hash/パスに紐づく）。
 
 窓の実体: `~/.claude/agent-hooks → hooks-registry/claude/`、`~/.codex/agent-hooks → hooks-registry/codex/`。現況は `registered.sh`。
 
@@ -78,13 +78,13 @@ board.py check  --key K            # missing|run|wait|sub
 ## テスト用 env
 
 - `GOAL_BASE`（デイリー基点）／ `SESSION_BOARD_DATE`（YYYY-MM-DD）／ `SESSION_BOARD_TEMPLATE`。
-- 受け口は窓越しに叩いて検証できる（例: `echo '{...}' | ~/.claude/agent-hooks/session-board/prompt-register.py`）。`realpath` で共有本体を解決するので窓経由でも `board.py` を正しく指す。
+- 受け口は窓越しに叩いて検証できる（例: `echo '{...}' | ~/.claude/agent-hooks/prompt-register/session-board-prompt-register.py`）。`realpath` で共有本体を解決するので窓経由でも `board.py` を正しく指す。
 
 ## 既知の制約
 
 - 強制終了（ウィンドウkill）では Stop が走らず🟢が残る → 掃引は朝夜会。
 - 日付跨ぎで前日の⏸行が残る → 掃引は朝夜会。
 - 節目判定はモデル依存＝確率的。迷ったら素通し設計で「聞かなさすぎ」に倒す。
-- Codex接続（`codex/session-board/`）は実装・登録・trust 済み（開始🟢/Stop⏸ 実測PASS・サブ🔵自動は未実測）。`board.py`・`common.py`・手順md は runtime非依存で共用。詳細は `../../codex/session-board/AGENTS.md`。
+- Codex接続（`codex/`）は実装・登録・trust 済み（開始🟢/Stop⏸ 実測PASS・サブ🔵自動は未実測）。`board.py`・`common.py`・手順md は runtime非依存で共用。詳細は `../../codex/AGENTS.md`。
 
 計画: `~/Private/personal-os/my-brain/areas/ai運用/plans/`（registry再編は `planning/2026-07-06-hooks-registry再編とsymlink露出/`）。

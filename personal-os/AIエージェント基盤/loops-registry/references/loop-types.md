@@ -17,14 +17,14 @@
 **判断軸（いつ選ぶ）**: 処理が**定型で安定**していて**人間の関与が要らない**もの。定時/間隔で回してよい・低リスク・結果が予測できる。→ **①キューで安定した処理を卒業させる先**。
 
 - やり方: launchd が時間/間隔で自動起動。runner: `ai`（判断要）/ `script`（機械処理）。
-- 現状: `loops/daily-digest`（夜loop・毎日 23:30 目安・当日デイリーの `auto:done`/`auto:align` を生成）。状態: 稼働中（launchd `com.kitamura.daily-digest` 登録済み）。
+- 現状: 稼働中の headless loop は無し。旧例 `loops/daily-digest`（夜loop・`auto:done`/`auto:align` 生成）は 2026-07-06 廃止（session-board へ統一）。
 
 ## ③ hook（イベント発火）
 
 **判断軸（いつ選ぶ）**: 何かの**イベント直後に軽い決まった処理**を挟むだけのもの。判断不要・高速・非ブロッキング（記録／通知など）。
 
 - やり方: ランタイムの hook で発火。
-- 現状: `hooks/session-daily-log`（Claude Code の `Stop` → 当日デイリー `auto:log` にセッションのポインタを記録）。状態: 登録済み（`~/.claude/settings.json`）。
+- 現状: `hooks/session-board/`（Claude Code の `SessionStart`/`UserPromptSubmit`/`Stop` → 当日デイリーの「動いているエージェント」節を宣言型で機械管理）。状態: 登録済み（`~/.claude/settings.json`）。旧 `hooks/session-daily-log` は 2026-07-06 削除（session-board へ統一）。
 
 ## 選び方（まとめ）
 

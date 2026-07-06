@@ -1,5 +1,5 @@
 ---
-稼働状態: 停止（2026-07-04 hook(session-daily-log)撤去・lanes-syncもbootout。経緯は ../../実行一覧/personal-os.md）
+稼働状態: 廃止（2026-07-06 引退。旧・日次自動ログ subsystem＝session-daily-log(削除)/renderer/daily-digest を session-board へ統一。元は 2026-07-04 停止。経緯は ../../実行一覧/personal-os.md）
 設計: v1本体（auto:goal/log/done/align）はworktree renderer-v1でのdraft実装。3区画拡張
 （auto:board-now/board-wait/board-plans・統合program子04a）はworktree board-live-v1でのdraft実装。
 cockpit段階イベント連携（auto:board-nowの「イベント段階:…」併記・統合program子04b）はworktree

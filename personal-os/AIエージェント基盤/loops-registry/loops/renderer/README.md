@@ -1,5 +1,7 @@
 # renderer（統合デイリーレンダラ v1）
 
+> **廃止（2026-07-06）**: 旧・日次自動ログ subsystem（session-daily-log / renderer / daily-digest）を session-board へ統一。以下は当時のロールアウトdraftの凍結記録で、参照する `hooks/session-daily-log/session-daily-log.sh` は削除済み。稼働状態は `loop.md` frontmatter を正とする。
+
 当日デイリーの生成〜自動集計（`auto:goal` / `auto:tomorrow-carry`（前日「## 明日へ」の朝転記） /
 `auto:log` バックフィル / `auto:done` / `auto:align`）を1本のスクリプト群に統合したもの。実行スペックは
 `loop.md`、見出しテンプレ契約（末尾に人間手書き欄「## 明日へ」を含む）は `templates/デイリー.md` が正本。

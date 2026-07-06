@@ -107,4 +107,4 @@ description: 依頼インボックスの未処理1行を読み、領域判定(ai
 - 規模判定（フル/ライト/サクッと）の適用手順: `../plan-triage/SKILL.md` §2
 - 計画テンプレ・レビュー項目の正本: `~/Private/personal-os/my-brain/areas/AGENTS.md` §3
 - 段階語彙・規模定義・人間ゲートの正本: `~/Private/personal-os/説明書/運用契約.md` §2
-- 親計画: `~/Private/personal-os/my-brain/areas/ai運用/plans/active/2026-07-02-状態と記録の統合設計/plans/06-依頼インボックスloop.md`
+- 親計画: `~/Private/personal-os/my-brain/areas/ai運用/plans/done/2026-07-02-状態と記録の統合設計/plans/06-依頼インボックスloop.md`

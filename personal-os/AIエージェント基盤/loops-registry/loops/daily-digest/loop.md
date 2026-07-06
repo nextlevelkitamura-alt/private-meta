@@ -1,5 +1,5 @@
 ---
-稼働状態: 停止（2026-07-04 全停止・bootout済み。経緯と再開手順は ../../実行一覧/personal-os.md）
+稼働状態: 廃止（2026-07-06 引退。旧・日次自動ログ subsystem を session-board へ統一。元は 2026-07-04 停止。経緯と再開手順は ../../実行一覧/personal-os.md）
 設計: /Users/kitamuranaohiro/Private/personal-os/my-brain/areas/ai運用/plans/active/2026-06-30-目的管理ハーネス/plans/04-実行レーン自動化とデイリー自動ログ.md
 起動: launchd `com.kitamura.daily-digest`（12:30/18:30/23:30 JSTの3回・StartCalendarInterval 3本・
   `~/Library/LaunchAgents/`へはsymlink登録=repo正本と同一実体。12:30/18:30は`--snapshot`・23:30は従来final＋digest。

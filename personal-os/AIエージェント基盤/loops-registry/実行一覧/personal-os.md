@@ -15,7 +15,7 @@
 - `exec-audit`（月・木 10:00） ── launchd ドリフト検出。
 - `ai-jobs-dispatcher` ── 元から休眠（モードB裁定）。変更なし。
 
-hook 側も同日撤去済み: Claude Code Stop hook（`hooks/session-daily-log/`）を `~/.claude/settings.json` から除去（hooks は空）。スクリプト本文は repo に残置。詳細は `../../hooks/AGENTS.md`。
+hook 側も同日撤去済み: Claude Code Stop hook（`hooks/session-daily-log/`）を `~/.claude/settings.json` から除去（hooks は空）。スクリプト本文は当初 repo に残置したが、2026-07-06 に削除（renderer/daily-digest も廃止し session-board へ統一）。詳細は `../../hooks/AGENTS.md`。
 
 ## 実機の状態
 

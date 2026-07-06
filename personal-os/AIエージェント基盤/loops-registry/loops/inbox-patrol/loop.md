@@ -89,5 +89,5 @@ secret / token は使わない。
 - トリアージ手順の正本: `../../../skills/inbox-triage/SKILL.md`（複製しない・ここから参照のみ）。
 - headless起動系統の参考実装: `../ai-jobs-dispatcher/scripts/common.ts`（`buildWorkerCommand`）。
 - インボックス見出し・マーカー流儀の正本: `../renderer/templates/デイリー.md`。
-- 親計画: `~/Private/personal-os/my-brain/areas/ai運用/plans/active/2026-07-02-状態と記録の統合設計/plans/06-依頼インボックスloop.md`（完了条件はここが正本）。
-- 統合program 方針§8: `~/Private/personal-os/my-brain/areas/ai運用/plans/active/2026-07-02-状態と記録の統合設計/program.md`。
+- 親計画: `~/Private/personal-os/my-brain/areas/ai運用/plans/done/2026-07-02-状態と記録の統合設計/plans/06-依頼インボックスloop.md`（完了条件はここが正本）。
+- 統合program 方針§8: `~/Private/personal-os/my-brain/areas/ai運用/plans/done/2026-07-02-状態と記録の統合設計/program.md`。

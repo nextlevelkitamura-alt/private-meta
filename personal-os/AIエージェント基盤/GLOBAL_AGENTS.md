@@ -44,5 +44,5 @@
 - push は明示依頼がある時だけ行う（session-board の終了確認①②③④で人間がOKした場合は明示依頼にあたる）。
 
 ## 6. セッション運用と計画の置き場
-- セッションの開始と終了は `session-board` の手順に従う（開始=当日デイリー「動いているエージェント」へ宣言、終了=完了判断→人間確認①②③④→「終わったこと」へ入れ子で報告＋git仕上げ）。正本は `personal-os/AIエージェント基盤/hooks/session-board/`（skillは廃止・2026-07-05）。フックが注入・強制する。**完了確認は毎ターンではなく節目**（大目標達成＋満足の気配）でのみ（prompt型フックが判定・2026-07-05）。一区切りは `board.py log` で時刻付きの子を積む。subagent・headlessは登録しない。
+- セッションの開始と終了は `session-board` の手順に従う（開始=当日デイリー「動いているエージェント」へ宣言、終了=完了判断→人間確認①②③④→「終わったこと」へ入れ子で報告＋git仕上げ）。正本は `personal-os/AIエージェント基盤/hooks-registry/hooks/session-board/`（skillは廃止・2026-07-05）。フックが注入・強制する。**完了確認は毎ターンではなく節目**（大目標達成＋満足の気配）でのみ（prompt型フックが判定・2026-07-05）。一区切りは `board.py log` で時刻付きの子を積む。subagent・headlessは登録しない。
 - 計画の置き場: 実作業repoでは `<repo>/plans/planning|active|paused|done/`（無ければ作る）。personal-os / my-brain 系は `my-brain/areas/<領域>/plans/` の同バケット。フォルダ=状態で、md内に状態や「実行中」マークを書かない。

@@ -30,5 +30,5 @@ global に使うもの（Skill・loop・hook）は、実体をここに登録し
 - `global-skill-registry/` … Skill の索引・履歴・runtime露出・skill計画
 - `loops-registry/` … loop 運用の一式（実行レーン・loop本体・共通参照・loop計画）
 - `repo-registry/` … repo と repo-local Skill の履歴
-- `hooks/` … runtime フック本体
+- `hooks-registry/` … runtime フック本体（機構共有 `hooks/`＋runtime受け口 `claude/`・`codex/`）
 - `git-registry/` … 全体git構成（2repo・追跡範囲・push・スマホ閲覧）の一望正本

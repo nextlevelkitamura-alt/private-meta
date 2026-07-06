@@ -4,7 +4,7 @@
 判断した節目でのみ**注入される（毎ターンではない・2026-07-05）。
 状態の⏸への機械flipは claude/session-end.py が毎ターン行う（この手順とは独立）。
 
-`<board>` = `~/Private/personal-os/AIエージェント基盤/hooks/session-board/board.py`。
+`<board>` = `~/Private/personal-os/AIエージェント基盤/hooks-registry/hooks/session-board/board.py`。
 
 ## 1. 完了判断
 

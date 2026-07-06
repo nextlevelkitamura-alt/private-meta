@@ -8,6 +8,6 @@
 
 - 大目標（例: サイト制作・機能実装・調査・設計）が一通り達成され、かつユーザーが満足の気配
   （修正要求が止まった／肯定的反応／「ありがとう」「いいね」「OK」等の締めの気配）→
-  {"ok": false, "reason": "session-board の完了報告手順（~/Private/personal-os/AIエージェント基盤/hooks/session-board/session-end.md）を実行せよ。完了判断→人間に①記載②コミット③マージ&push④続けるを確認→OKならboard.py finish＋git仕上げ。"}
+  {"ok": false, "reason": "session-board の完了報告手順（~/Private/personal-os/AIエージェント基盤/hooks-registry/hooks/session-board/session-end.md）を実行せよ。完了判断→人間に①記載②コミット③マージ&push④続けるを確認→OKならboard.py finish＋git仕上げ。"}
 
 迷ったら {"ok": true}（未達側に倒し、人間に委ねる）。1往復ごとの細かい完了では false にしない。

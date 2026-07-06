@@ -1,10 +1,10 @@
 # session-start — 開始時の宣言手順
 
-SessionStartフック（claude/session-start.py）がこの手順を注入する。
-行の登録自体は UserPromptSubmit フック（claude/prompt-register.py）が最初のプロンプトで機械的に済ませる
+SessionStartフック（各 runtime の session-start.py 受け口）がこの手順を注入する。
+行の登録自体は UserPromptSubmit フック（各 runtime の prompt-register.py 受け口）が最初のプロンプトで機械的に済ませる
 （要約=プロンプト先頭24字・種別=その他）。エージェントは種別・要約を正す。
 
-`<board>` = `~/Private/personal-os/AIエージェント基盤/hooks/session-board/board.py`。キーは注入メッセージに記載。
+`<board>` = `~/Private/personal-os/AIエージェント基盤/hooks-registry/hooks/session-board/board.py`。キーは注入メッセージに記載。
 
 ## エージェントの仕事
 

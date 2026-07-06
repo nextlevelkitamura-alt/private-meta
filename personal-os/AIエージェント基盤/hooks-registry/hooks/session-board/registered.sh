@@ -18,8 +18,14 @@ PY
 echo ""
 echo "== Codex（~/.codex/config.toml の notify / hooks.state）=="
 grep -nE '^notify|^\[hooks' ~/.codex/config.toml 2>/dev/null | sed 's/^/  /' || echo "  (なし)"
+echo "  ※ hooks.json の内容変更後は Codex で /hooks 再trust（trusted_hash が変わるまで旧hookは不許可）"
 echo ""
 echo "== launchd（com.kitamura.*）=="
 launchctl list 2>/dev/null | grep kitamura | sed 's/^/  /' || echo "  (なし＝全停止中)"
 echo ""
-echo "注: session-board は skill廃止済み（2026-07-05）。正本は hooks/session-board/（全py＋手順md）。"
+echo "== symlink 露出（窓） =="
+for L in "$HOME/.claude/agent-hooks" "$HOME/.codex/agent-hooks" "$HOME/.codex/hooks.json"; do
+  if [ -L "$L" ]; then printf '  %s -> %s [%s]\n' "$L" "$(readlink "$L")" "$([ -e "$L" ] && echo OK || echo BROKEN)"; else echo "  $L （symlinkでない）"; fi
+done
+echo ""
+echo "注: session-board は skill廃止済み（2026-07-05）。正本は hooks-registry/（機構共有 hooks/＋受け口 claude/・codex/／窓は ~/.claude・~/.codex の agent-hooks）。"

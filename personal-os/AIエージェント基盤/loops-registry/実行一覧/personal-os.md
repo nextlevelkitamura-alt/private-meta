@@ -1,10 +1,14 @@
 # 実行一覧 — personal-os（`com.kitamura.*`）
 
-実測確認: `launchctl list | grep com.kitamura` ／ 最終更新: 2026-07-04（全停止）
+実測確認: `launchctl list | grep com.kitamura` ／ 最終更新: 2026-07-08（session-board 保険 loop 1本を稼働開始）
 
 ## 1行で
 
-**2026-07-04、自動実行を全停止した（稼働0本）。** デイリー自動ログ・レンダリング系の設計見直し（人間のデイリーが91%機械生成になり読めなくなったため）と、Orca運用の作り直しに合わせた白紙化。新設計（セッション宣言型ボード）は別計画で起こす。
+**2026-07-04、旧レンダリング系を全停止した。** 人間のデイリーが91%機械生成になり読めなくなったための白紙化。新設計（セッション宣言型 session-board）は稼働中（主経路は hook 駆動・launchd不使用）で、その生存照合の**保険**だけを launchd に1本置いている（下記 board-reconcile）。
+
+## ジョブ（稼働中・2026-07-08〜）
+
+- `board-reconcile`（5分毎 StartInterval） ── session-board の生存照合（🟢/🔵の沈黙→⏸）の保険。通常は Stop/SessionStart 相乗りで照合されるため、**全セッションを閉じて放置した間の古い🟢残留だけ**を埋める。実体は瞬時・非LLM・API呼び出しなし。plist 正本・停止手順は `../loops/board-reconcile/loop.md`（symlink＋bootstrap・daily-notion-sync と同型）。2026-07-08 kickstart 実測 exit0。
 
 ## 停止したもの（2026-07-04・全て bootout 済み）
 

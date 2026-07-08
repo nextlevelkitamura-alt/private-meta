@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # session-board SessionStart（Claude受け口・薄いシム）。
-# 共通ロジックは ../../hooks/session-board/common.py。Claude は additionalContext を
-# 「plain text を stdout に print」する契約（Codex は JSON で返す＝差はここだけ）。
+# 実処理は ../../hooks/session-board/common.py の start_register（生存照合＋行の枠登録＋キー通知1行）。
+# Claude は additionalContext を「plain text を stdout に print」する契約（Codex は JSON＝差はここだけ）。
 import os
 import sys
 
@@ -14,11 +14,9 @@ def main():
     d = common.load_input()
     if d is None:
         return
-    key = common.session_key(d)
-    if not key:
-        return
-    repo = common.repo_of(d.get("cwd") or "")
-    print("\n".join(common.start_lines(key, repo)))
+    txt = common.start_register(d, "claude")
+    if txt:
+        print(txt)
 
 
 if __name__ == "__main__":

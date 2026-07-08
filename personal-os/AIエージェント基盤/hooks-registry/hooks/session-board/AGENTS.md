@@ -18,7 +18,7 @@ runtime 別の受け口は sibling の箱 `../../claude/`・`../../codex/` に**
 ## フォルダ構成（共有本体）
 
 - `board.py` … エンジン（当日デイリーの行を key で操作・flock付き・冪等）
-- `common.py` … 受け口の共通ロジック（`load_input`／`session_key`／`repo_of`／`start_lines`／`register_prompt`／`stop_flip` 等）。受け口が `realpath` で解決して import する。
+- `common.py` … 受け口の共通ロジック（`load_input`／`session_key`／`repo_of`／`start_register`／`register_prompt`／`stop_flip`／`board_reconcile`＋注入文の生成 等）。受け口が `realpath` で解決して import する。
 - `session-start.md` … 開始時の宣言手順（runtime中立）
 - `session-end.md` … 完了・git仕上げ手順（節目のみ）
 - `daily-template.md` … デイリー雛形
@@ -36,7 +36,8 @@ runtime 別の受け口は sibling の箱 `../../claude/`・`../../codex/` に**
 
 - 本文の正本はこの共有本体と各受け口の箱。runtime登録（`~/.claude/settings.json`・`~/.codex/hooks.json`）は
   窓（`~/.claude`・`~/.codex` の `agent-hooks`／hooks.json symlink）経由＝露出。session-board の登録・露出は包括承認（ルールB）。Codex の trust は別途 `/hooks`。
-- `board.py` の行フォーマット（`LINE_RE`）を割る変更をしない。状態は3値で増やさない。
+- `board.py` の行フォーマット（`LINE_RE`・2026-07-08〜の2列新形式）を割る変更をしない。旧形式（`OLD_LINE_RE`）は読み取り互換のみ・書き込みは常に新形式。状態は3値で増やさない（生存照合 `reconcile` も死体を⏸へ落とすだけで新状態を作らない）。
+- 生存照合は**実体トランスクリプトのmtime**を真実とする（パスにキーを含む `.jsonl` を照合＝サブ実体も親の生存に数える。閾値は🟢=`STALE_MIN`(10分)・🔵=`STALE_MIN_SUB`(30分)）。発火は Stop / SessionStart（開始=UserPromptSubmit には乗せない）＋保険 loop `loops-registry/loops/board-reconcile/`（未ロード）。詳細は `README.md` の「生存照合と並び替え」。
 - 受け口を増やすときは共通を `common.py` に寄せ、シムには runtime 差だけ残す。
 - 上位の索引・構造は `../../AGENTS.md`。設計判断の経緯は `../../research/2026-07-05/`。
 - `CLAUDE.md` は `AGENTS.md` への相対symlink。

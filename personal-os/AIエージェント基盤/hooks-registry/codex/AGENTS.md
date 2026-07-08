@@ -6,8 +6,8 @@ SubagentStart / SubagentStop** の hooks を持つ。受け口を **イベント
 
 ## レイアウト
 
-- `session-start/session-board-session-start.py` … SessionStart: 手順注入（**JSON**）
-- `prompt-register/session-board-prompt-register.py` … UserPromptSubmit: 未登録→🟢登録／⏸→🟢復帰
+- `session-start/session-board-session-start.py` … SessionStart: 行の枠登録＋キー通知1行（**JSON**）
+- `prompt-register/session-board-prompt-register.py` … UserPromptSubmit: 登録保険／⏸→🟢復帰／「今」初回仮置き＋二段注入（目標未記入=フルガイド／記入済み=ミラー・**JSON** `additionalContext`）
 - `session-end/session-board-session-end.py` … Stop: run のとき⏸へ flip
 - `subagent/session-board-subagent.py` … SubagentStart→🔵 / SubagentStop→🟢（**Codex専用**・自動flip）
 - `hooks.json` … **Codex 登録の索引**（イベント→受け口）。`~/.codex/hooks.json` はこれへの symlink。
@@ -25,7 +25,7 @@ SubagentStart / SubagentStop** の hooks を持つ。受け口を **イベント
 
 - `~/.codex/hooks.json` → `codex/hooks.json`（このファイル）への **symlink**。
   パスは窓 `~/.codex/agent-hooks/<イベント>/<機構>-<イベント>.py`。`[hooks.state]` に trust。
-- **hooks.json を変えたら `/hooks` で再 trust**（hash 変化で信頼が外れる）。※ イベントfolder再編（2026-07-06）で**要再 trust**。
-- 実測: 開始🟢 / Stop⏸ PASS（`019f3107`・2026-07-05）。サブ🔵自動は未実測。
+- **hooks.json を変えたら `/hooks` で再 trust**（hash 変化で信頼が外れる）。※ 受け口の2列ボード対応（2026-07-08）で**要再 trust**。
+- 実測: 開始🟢 / Stop⏸ PASS（`019f3107`・2026-07-05・旧設計時）。サブ🔵自動・UPS注入（JSON）は未実測（シム単体テストはPASS 2026-07-08）。
 
 対の Claude 箱は `../claude/AGENTS.md`、共有本体は `../hooks/session-board/AGENTS.md`、Codex hooks 契約は `../references/codex-hooks.md`。`CLAUDE.md` は `AGENTS.md` への相対symlink。

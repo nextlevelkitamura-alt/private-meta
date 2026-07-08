@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kitamura.board-reconcile</string>
+
+  <!--
+    5分毎（StartInterval 300）に session-board の生存照合（board.py reconcile）を1回実行する保険loop。
+    通常は Stop / SessionStart 相乗りで照合されるが、全セッションを閉じて放置した間の
+    古い🟢の残留を埋める（閾値🟢=10分/🔵=30分に対し、5分間隔で表示遅れは最悪〜15分）。
+
+    draft。置くだけ・未ロード（有効化は人間ゲート）。
+    有効化する場合（symlink方式。lanes-sync と同じ実運用パターン）:
+      ln -s '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-reconcile/com.kitamura.board-reconcile.plist' \
+        ~/Library/LaunchAgents/com.kitamura.board-reconcile.plist
+      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.kitamura.board-reconcile.plist
+      launchctl enable gui/$(id -u)/com.kitamura.board-reconcile
+    停止:
+      launchctl bootout gui/$(id -u)/com.kitamura.board-reconcile
+    手動実行: cd <このフォルダ> && scripts/reconcile.sh
+
+    RunAtLoad は付けない（起動直後の連打を避ける。既存draft plistと同じ方針）。
+    board.py 自身が flock を持つため多重起動しても安全（処理は瞬時・非LLM・API呼び出しなし）。
+  -->
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-reconcile' &amp;&amp; scripts/reconcile.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-reconcile</string>
+
+  <key>StartInterval</key>
+  <integer>300</integer>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>/Users/kitamuranaohiro</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>TZ</key>
+    <string>Asia/Tokyo</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-reconcile/output/logs/board-reconcile.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-reconcile/output/logs/board-reconcile.err.log</string>
+</dict>
+</plist>

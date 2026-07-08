@@ -2,8 +2,13 @@
 # session-board 受け口の共通ロジック（Claude / Codex 両受け口が import する）。
 # 実体は hooks-registry/hooks/session-board/common.py（runtime非依存の共有本体）。
 # 受け口（claude/・codex/ の各 .py）は realpath で自分の実体を解決し、ここを import する。
-#   → symlink 窓（~/.claude/agent-hooks 等）経由で起動されても board.py を正しく指す。
-# runtime 差（SessionStart 出力が plain か JSON か・Codex 専用の subagent）だけを各受け口に残す。
+#
+# 役割分担（2026-07-08 再設計・Python=枠と機械処理／AI=意味づけ）:
+#   SessionStart     = start_register(): 生存照合＋行の「枠」を登録（add・既存行は不変）＋キー通知1行
+#   UserPromptSubmit = register_prompt(): 未登録保険／⏸→🟢復帰／「今」初回仮置き＋二段注入
+#                      （目標未記入=フルガイド／記入済み=2〜3行ミラー）のテキストを返す
+#   Stop             = stop_flip(): run→⏸＋reconcile
+# 受け口は返ったテキストを runtime の契約（Claude=plain stdout / Codex=JSON）で出すだけ。
 import json
 import os
 import re
@@ -13,6 +18,13 @@ import sys
 # common.py 自身の実体ディレクトリ＝共有本体（board.py・手順md）の置き場。
 CORE_DIR = os.path.dirname(os.path.realpath(__file__))
 BOARD = os.path.join(CORE_DIR, "board.py")
+REPO_SUMMARY = os.path.expanduser(
+    "~/Private/personal-os/AIエージェント基盤/repo-registry/repo概要.md")
+PLACEHOLDER = "?"
+TYPES = "計画|実装|リサーチ|レビュー|その他"
+# 種別の一言定義（詳細・境界例の正本は README.md。ここは注入用の最小コピー）
+TYPE_DEFS = ("種別: 計画=進め方を決め文書化／実装=変更して動かす／リサーチ=調べてまとめる（何も変えない）／"
+             "レビュー=評価して指摘（自分で直さない）／迷ったら その他（後で update で直すのが正常）")
 
 
 def load_input():
@@ -48,66 +60,146 @@ def repo_of(cwd):
     return os.path.basename(r.stdout.strip()) if r.returncode == 0 else os.path.basename(cwd)
 
 
-def _ref(name):
-    """共有本体ディレクトリ内の手順md等の絶対パス。"""
-    return os.path.join(CORE_DIR, name)
-
-
-def start_lines(key, repo):
-    """開始時に注入する共通本文（案内3行＋空行＋session-start.md）。runtime 共通。"""
-    lines = [
-        f"[session-board] このセッションのボードキー: s:{key}（repo推定: {repo or '不明'}）",
-        "最初の依頼を理解したら、開始手順を実行する。種別・要約を正す例:",
-        f'  {BOARD} update --key {key} --repo "{repo or "<repo>"}" '
-        '--type <計画|実装|レビュー|その他> --summary "<依頼の1行要約>"',
-        "",
-    ]
-    try:
-        lines.append(open(_ref("session-start.md"), encoding="utf-8").read())
-    except OSError:
-        pass
-    return lines
-
+# ---- board.py 呼び出し（すべて非ブロッキング・失敗は無視） ----
 
 def board_check(key):
     return subprocess.run([BOARD, "check", "--key", key],
                           capture_output=True, text=True).stdout.strip()
 
 
-def board_add(key, repo, summary):
-    subprocess.run([BOARD, "add", "--key", key, "--repo", repo or "?",
-                    "--type", "その他", "--summary", summary], capture_output=True)
+def board_show(key):
+    """行の中身を dict で（state/goal/now/type/repo/who）。無ければ None。"""
+    out = subprocess.run([BOARD, "show", "--key", key],
+                         capture_output=True, text=True).stdout.rstrip("\n")
+    if not out or out == "missing":
+        return None
+    parts = out.split("\t")
+    if len(parts) < 6:
+        return None
+    return dict(zip(("state", "goal", "now", "type", "repo", "who"), parts))
+
+
+def board_goals():
+    """現在ボードにある目標の一覧（重複なし・未記入除外）。"""
+    out = subprocess.run([BOARD, "goals"], capture_output=True, text=True).stdout
+    return [g for g in out.splitlines() if g.strip()]
+
+
+def board_add(key, repo, who):
+    subprocess.run([BOARD, "add", "--key", key, "--repo", repo or "?", "--who", who],
+                   capture_output=True)
+
+
+def board_update(key, **kw):
+    cmd = [BOARD, "update", "--key", key]
+    for k, v in kw.items():
+        cmd += [f"--{k}", v]
+    subprocess.run(cmd, capture_output=True)
 
 
 def board_flip(key, state):
     subprocess.run([BOARD, "flip", "--key", key, "--state", state], capture_output=True)
 
 
+def board_reconcile():
+    """🟢/🔵を実体トランスクリプトで照合し沈黙行を⏸へ＋整列（board.py reconcile）。
+    掃除は start-latency に乗らない経路（Stop / SessionStart）からのみ呼ぶ。失敗は無視。"""
+    subprocess.run([BOARD, "reconcile"], capture_output=True)
+
+
+# ---- hook 本体 ----
+
+def start_register(d, runtime):
+    """SessionStart 共通: 生存照合＋枠登録＋キー通知1行（注入テキストを返す。対象外は None）。
+    枠＝時刻・🟢・repo・runtime/?。意味づけ（目標・種別・今・モデル）は AI が後で update する。"""
+    key = session_key(d)
+    if not key or is_subagent(d):
+        return None
+    repo = repo_of(d.get("cwd") or "")
+    board_reconcile()
+    board_add(key, repo, f"{runtime}/{PLACEHOLDER}")
+    return (f"[session-board] ボードキー s:{key}（{repo or '?'}・行は登録済み）。"
+            "依頼を理解したら update で目標・種別・今・モデルを正す（手順は最初のプロンプト時に注入される）。")
+
+
 def _summarize(prompt):
     return re.sub(r"\s+", " ", prompt).replace("|", "／").replace("<", "＜").replace(">", "＞")[:24]
 
 
-def register_prompt(d):
-    """UserPromptSubmit 共通: 未登録→登録／⏸(wait)→🟢(run)。🔵(sub) は触らない。
-    subagent／スラッシュ／空・添付のみは対象外。stdout は出さない。"""
+def _first_guide(key, repo, runtime):
+    """初回注入（目標が未記入の間）: 記入コマンド・種別定義・既存目標一覧・計画チェーン。"""
+    goals = board_goals()
+    lines = [
+        f"[session-board] s:{key} | {repo or '?'} | {runtime}",
+        "最初の依頼を理解したら、ボード行を正す（Bash 1コマンド・このセッションで1回）:",
+        f"  {BOARD} update --key {key} --type <{TYPES}> "
+        "--goal \"<達成したらこのセッションを閉じられる1行・30字以内>\" "
+        "--now \"<いま着手する一歩・20字以内>\" --model <自分のモデル名（小文字短縮 例: fable5）>",
+        TYPE_DEFS,
+    ]
+    if goals:
+        lines += [
+            "いま動いている他の目標: " + "／".join(f"「{g}」" for g in goals[:6]),
+            "  → 自分の依頼がどれかと同じ目的なら、その文言をそのまま --goal にコピーして合流"
+            "（親名=目標名で成果が1つの親に集まる）。無関係なら新しい目標を立てる。",
+        ]
+    lines += [
+        f"計画種別なら: {REPO_SUMMARY} でどのrepoの計画かを判定（cwdでなく依頼の中身で）"
+        "→ そのrepoの AGENTS.md → <repo>/plans/<バケット>/ へ（GLOBAL_AGENTS.md §6）。",
+        f"節目: {BOARD} log --key {key} --repo <repo> --parent <目標名> --entry <成果1行>"
+        "（時刻・所要は自動付与）。サブエージェント起動中: flip --state sub／復帰: flip --state run。"
+        f"完了は人間確認後に finish。詳細: {os.path.join(CORE_DIR, 'session-start.md')}",
+    ]
+    return "\n".join(lines)
+
+
+def _mirror(key, row):
+    """2回目以降の注入（毎プロンプト・最小2〜3行）: 行のミラー＋ズレ回収の催促。"""
+    lines = [
+        f"[session-board] 目標:{row['goal']} | 今:{row['now']} | 種別:{row['type']}",
+        f"→ 実態とズレていたら {BOARD} update --key {key} --now \"<今の一歩>\""
+        "（目標・種別が変われば --goal/--type も）。節目なら log。",
+    ]
+    if row.get("type") == "計画":
+        lines.append("計画の置き場: repo概要.md→所属repoを判定→<repo>/plans/"
+                     "（cwdでなく依頼の中身で・GLOBAL_AGENTS.md §6）。")
+    return "\n".join(lines)
+
+
+def register_prompt(d, runtime):
+    """UserPromptSubmit 共通: 未登録→枠登録（SessionStart失敗時の保険）／⏸→🟢復帰／
+    「今」が未記入なら先頭24字を初回だけ仮置き（以降 Python は「今」を上書きしない）。
+    注入テキストを返す（subagent／スラッシュ／空・添付のみ は None）。🔵(sub) は触らない。"""
     key = session_key(d)
     if not key or is_subagent(d):
-        return
+        return None
     prompt = d.get("prompt") or ""
     p = prompt.strip() if isinstance(prompt, str) else ""
     if not p or p.startswith("/") or p.startswith("<"):
-        return
-    state = board_check(key)
-    if state == "missing":
-        board_add(key, repo_of(d.get("cwd") or ""), _summarize(p))
-    elif state == "wait":
+        return None
+    repo = repo_of(d.get("cwd") or "")
+    row = board_show(key)
+    if row is None:
+        board_add(key, repo, f"{runtime}/{PLACEHOLDER}")
+        row = board_show(key) or {"state": "run", "goal": PLACEHOLDER, "now": PLACEHOLDER,
+                                  "type": "その他", "repo": repo or "?",
+                                  "who": f"{runtime}/{PLACEHOLDER}"}
+    if row["state"] == "wait":
         board_flip(key, "run")
+    if row["now"] == PLACEHOLDER:      # 初回だけの仮置き（枠を空にしない）。意味づけはAIの update --now
+        board_update(key, now=_summarize(p))
+        row["now"] = _summarize(p)
+    if row["goal"] == PLACEHOLDER:
+        return _first_guide(key, row.get("repo") or repo, runtime)
+    return _mirror(key, row)
 
 
 def stop_flip(d):
-    """Stop 共通: run のときだけ⏸(wait)へ。sub／wait／missing は触らない。ブロックしない。"""
+    """Stop 共通: run のときだけ⏸(wait)へ。sub／wait／missing は触らない。ブロックしない。
+    併せてボード全体を生存照合＋整列（Stop=ターン終了なので開始レイテンシに無関係）。"""
     key = session_key(d)
     if not key or is_subagent(d):
         return
     if board_check(key) == "run":
         board_flip(key, "wait")
+    board_reconcile()

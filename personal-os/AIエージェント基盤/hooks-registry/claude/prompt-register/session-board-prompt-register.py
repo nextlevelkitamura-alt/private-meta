@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # session-board UserPromptSubmit（Claude受け口・薄いシム）。
-# 実処理は common.register_prompt（未登録→登録／⏸→🟢）。stdout は空。
+# 実処理は common.register_prompt（未登録保険／⏸→🟢／「今」初回仮置き＋二段注入）。
+# Claude の UserPromptSubmit は stdout(plain) が context に追加される契約（Codex は JSON）。
 import os
 import sys
 
@@ -12,4 +13,6 @@ import common  # noqa: E402
 if __name__ == "__main__":
     d = common.load_input()
     if d is not None:
-        common.register_prompt(d)
+        txt = common.register_prompt(d, "claude")
+        if txt:
+            print(txt)

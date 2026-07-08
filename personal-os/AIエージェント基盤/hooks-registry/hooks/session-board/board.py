@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 # session-board board.py — 当日デイリーボードの行操作（flock付き・冪等）
 # 使い方:
-#   board.py add    --key K --repo R [--type T] [--goal G] [--now N] [--who W] [--time HH:MM]
-#                   # 既存行があれば何もしない（枠のみ・内容を上書きしない）
-#   board.py update --key K [--repo R] [--type T] [--goal G] [--now N] [--model M] [--who W]
+#   board.py add    --key K --repo R [--type T] [--goal G] [--now N] [--who W] [--plan P] [--time HH:MM]
+#                   # 既存行があれば何もしない（枠のみ・内容を上書きしない）。--plan 既定は ?
+#   board.py update --key K [--repo R] [--type T] [--goal G] [--now N] [--model M] [--who W] [--plan P]
 #                   # --summary は --goal の別名（旧互換）。--model は who の「/」以降だけ置換
+#                   # --plan は拠り所/置き先の計画（?＝未記入・なし＝サクッと宣言・短縮参照）
 #   board.py flip   --key K --state run|wait|sub   # sub=🔵（バックグラウンドのサブ実行中）
 #   board.py log    --key K --repo R --parent P --entry E [--entry E ...]  # 節目: 入れ子で子を追記
 #   board.py finish --key K --repo R --parent P [--entry E ...]            # 完了: 自行削除＋子を追記
 #   board.py reconcile         # 🟢/🔵を実体トランスクリプトで照合し沈黙(🟢≥10分/🔵≥30分)を⏸へ
 #   board.py check  --key K    # stdout: missing|run|wait|sub
-#   board.py show   --key K    # stdout: state/goal/now/type/repo/who のタブ区切り（無ければ "missing"）
+#   board.py show   --key K    # stdout: state/goal/now/type/repo/who/plan のタブ区切り7列（無ければ "missing"）
 #   board.py goals             # stdout: 現在の目標一覧（重複なし・未記入除外・表示順）
-# 行フォーマット（2026-07-08〜・状態絵文字先頭の2列ボード）:
-#   - 🟢 HH:MM | <目標> | 今:<今> | <repo> | <種別> | <runtime/model> <!-- s:KEY -->
-#   旧形式（1要約列・状態語末尾）は読み取り互換。書き込みは常に新形式（全書き込みで自然移行）。
+# 行フォーマット v2.2（2026-07-08〜・状態絵文字先頭の2列ボード＋計画参照列）:
+#   - 🟢 HH:MM | <目標> | 今:<今> | <repo> | <種別> | <runtime/model> | 計画:<計画> <!-- s:KEY -->
+#   計画値の語彙: ?＝未記入(催促対象)／なし＝サクッと作業の宣言／短縮参照＝企画名[/NN]・ai運用:企画名[/NN]。
+#   v2（計画列なし）・v1（旧1要約列・状態語末尾）は読み取り互換。書き込みは常に v2.2（全書き込みで自然移行）。
 # 「終わったこと」の構造（親＝目標名／子＝時刻＋所要(+Nm)付き節目・入れ子）:
 #   ### repo
 #   - 親タスク名
@@ -42,7 +44,11 @@ AGENTS_H = "## 動いているエージェント"
 DONE_H = "## 終わったこと"
 GS_OPEN = "<!-- goals-summary -->"
 GS_CLOSE = "<!-- /goals-summary -->"
-LINE_RE = re.compile(
+LINE_RE = re.compile(   # v2.2: who の後に「| 計画:<計画>」を持つ現行フォーマット
+    r'^- (?P<state>🟢|⏸|🔵) (?P<time>\d{2}:\d{2}) \| (?P<goal>[^|]*?) \| 今:(?P<now>[^|]*?) \| '
+    r'(?P<repo>[^|]+?) \| (?P<type>[^|]+?) \| (?P<who>[^|]+?) \| 計画:(?P<plan>[^|]*?) '
+    r'<!-- s:(?P<key>[0-9a-zA-Z-]+) -->\s*$')
+V2_LINE_RE = re.compile(   # v2: 計画列なし（読み互換・parse_line で plan=? を補完・書き込みで v2.2 へ移行）
     r'^- (?P<state>🟢|⏸|🔵) (?P<time>\d{2}:\d{2}) \| (?P<goal>[^|]*?) \| 今:(?P<now>[^|]*?) \| '
     r'(?P<repo>[^|]+?) \| (?P<type>[^|]+?) \| (?P<who>[^|]+?) <!-- s:(?P<key>[0-9a-zA-Z-]+) -->\s*$')
 OLD_LINE_RE = re.compile(
@@ -50,6 +56,13 @@ OLD_LINE_RE = re.compile(
     r'(?P<state>🟢動作中|⏸停止・確認待ち|🔵サブ稼働中) <!-- s:(?P<key>[0-9a-zA-Z-]+) -->\s*$')
 OLD_STATE = {"🟢動作中": RUN, "⏸停止・確認待ち": WAIT, "🔵サブ稼働中": SUB}
 CHILD_RE = re.compile(r'^  - (\d{2}:\d{2})')
+PLAN_MARK = " ‹計画:"   # log/finish が親行末尾へ転記する計画マーカーの開始（先勝ち・親照合で無視）
+
+
+def strip_plan_mark(text):
+    """親行本体から末尾の ' ‹計画: …›' を除いた文字列（転記後も親行を同一視するため）。"""
+    i = text.find(PLAN_MARK)
+    return text[:i] if i != -1 else text
 
 
 def daily_path():
@@ -105,22 +118,28 @@ def section_bounds(lines, header):
 
 
 def parse_line(ln):
-    """ボード行を dict（state/time/goal/now/repo/type/who/key）に。新旧両形式を読む。"""
-    m = LINE_RE.match(ln)
+    """ボード行を dict（state/time/goal/now/repo/type/who/plan/key）に。v2.2/v2/v1 を読む。"""
+    m = LINE_RE.match(ln)          # v2.2（計画列あり）
     if m:
         return m.groupdict()
-    m = OLD_LINE_RE.match(ln)
+    m = V2_LINE_RE.match(ln)       # v2（計画列なし）: plan=? を補って読む
+    if m:
+        r = m.groupdict()
+        r["plan"] = PLACEHOLDER
+        return r
+    m = OLD_LINE_RE.match(ln)      # v1（旧1要約列・状態語末尾）
     if m:
         return {"state": OLD_STATE[m.group("state")], "time": m.group("time"),
                 "goal": m.group("summary") or PLACEHOLDER, "now": PLACEHOLDER,
                 "repo": m.group("repo"), "type": m.group("type"),
-                "who": PLACEHOLDER, "key": m.group("key")}
+                "who": PLACEHOLDER, "plan": PLACEHOLDER, "key": m.group("key")}
     return None
 
 
 def fmt(r):
+    plan = r.get("plan") or PLACEHOLDER
     return (f"- {r['state']} {r['time']} | {r['goal']} | 今:{r['now']} | "
-            f"{r['repo']} | {r['type']} | {r['who']} <!-- s:{r['key']} -->")
+            f"{r['repo']} | {r['type']} | {r['who']} | 計画:{plan} <!-- s:{r['key']} -->")
 
 
 def find_line(lines, key):
@@ -293,7 +312,7 @@ def _base_time_for(lines, repo, parent, row):
                     break
             pidx = None
             for j in range(hidx + 1, bend):
-                if lines[j].rstrip() == f"- {parent}":
+                if strip_plan_mark(lines[j].rstrip()) == f"- {parent}":
                     pidx = j
                     break
             if pidx is not None and pidx + 1 < bend:
@@ -326,7 +345,7 @@ def add_children(lines, repo, parent, children):
             break
     pidx = None
     for j in range(hidx + 1, bend):
-        if lines[j].rstrip() == f"- {parent}":
+        if strip_plan_mark(lines[j].rstrip()) == f"- {parent}":
             pidx = j
             break
     if pidx is None:
@@ -335,6 +354,35 @@ def add_children(lines, repo, parent, children):
     for k2, ch in enumerate(children):
         lines.insert(pidx + 1 + k2, f"  - {ch}")
     return lines
+
+
+def annotate_parent_plan(lines, repo, parent, plan):
+    """log/finish: 自行の計画値が参照（?/なし 以外）なら ### repo > - parent 行の末尾へ
+    ' ‹計画: <plan>›' を付与。既に ‹計画: を含む親行には付けない（先勝ち・重複禁止）。
+    add_children の直後に呼ぶ（対象親行は必ず存在する）。"""
+    if not plan or plan in (PLACEHOLDER, "なし"):
+        return
+    s, e = section_bounds(lines, DONE_H)
+    if s is None:
+        return
+    head = f"### {repo}"
+    hidx = None
+    for j in range(s + 1, e):
+        if lines[j].strip() == head:
+            hidx = j
+            break
+    if hidx is None:
+        return
+    bend = len(lines)
+    for j in range(hidx + 1, len(lines)):
+        if lines[j].startswith("### ") or lines[j].startswith("## "):
+            bend = j
+            break
+    for j in range(hidx + 1, bend):
+        if strip_plan_mark(lines[j].rstrip()) == f"- {parent}":
+            if PLAN_MARK not in lines[j]:
+                lines[j] = f"{lines[j].rstrip()} ‹計画: {plan}›"
+            return
 
 
 def main():
@@ -370,7 +418,7 @@ def main():
             print(STATE_WORD.get(r["state"], "wait"))
         else:
             print("\t".join([STATE_WORD.get(r["state"], "wait"), r["goal"], r["now"],
-                             r["type"], r["repo"], r["who"]]))
+                             r["type"], r["repo"], r["who"], r.get("plan") or PLACEHOLDER]))
         return
 
     if cmd == "reconcile" and not os.path.exists(path):
@@ -395,7 +443,8 @@ def main():
                      "now": clean(args.get("now")) or PLACEHOLDER,
                      "repo": clean(args.get("repo")) or "?",
                      "type": clean(args.get("type")) or "その他",
-                     "who": clean(args.get("who")) or PLACEHOLDER, "key": key}
+                     "who": clean(args.get("who")) or PLACEHOLDER,
+                     "plan": clean(args.get("plan")) or PLACEHOLDER, "key": key}
                 s, e = section_bounds(lines, AGENTS_H)
                 ins = e
                 while ins > s + 1 and lines[ins - 1].strip() == "":
@@ -418,6 +467,8 @@ def main():
                 base = row["who"].split("/")[0] if "/" in row["who"] else ""
                 model = clean(args["model"])
                 row["who"] = f"{base}/{model}" if base and model else (model or row["who"])
+            if "plan" in args:         # ?＝未記入・なし＝サクッと宣言・短縮参照。空は ? へ
+                row["plan"] = clean(args["plan"]) or PLACEHOLDER
             lines[idx] = fmt(row)
         elif cmd == "flip":
             if idx is None:
@@ -431,6 +482,7 @@ def main():
             repo = clean(args.get("repo")) or (row["repo"] if row else "?")
             parent = clean(args.get("parent") or args.get("summary")) or \
                 (row["goal"] if row else "作業")
+            plan = (row.get("plan") if row else None) or PLACEHOLDER   # 転記元＝自行の計画値
             t = args.get("time") or now
             base = _base_time_for(lines, repo, parent, row)
             mark = _fmt_elapsed(_minutes_between(base, t)) if base else ""
@@ -439,6 +491,7 @@ def main():
             children = [f"{t} {mark} {en}" if (i == 0 and mark) else f"{t} {en}"
                         for i, en in enumerate(entries)]
             add_children(lines, repo, parent, children)
+            annotate_parent_plan(lines, repo, parent, plan)   # 参照計画なら親行へ ‹計画:›（先勝ち）
         elif cmd == "reconcile":
             reconcile_rows(lines)
         else:

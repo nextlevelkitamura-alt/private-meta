@@ -12,7 +12,7 @@
 
 ## 目的
 
-朝夜ルーティン（`../../../my-brain/ゴール/朝夜ルーティン.md`）の「夜」を補完する。
+朝会・夜会（Global Skill `morning-routine`）の「夜」を補完する。
 
 ⚠️ **現況（2026-07-03時点）**: 以下で説明する「12:30/18:30/23:30の3回」はrepo正本plist（draft）の
 設計であり、実機`~/Library/LaunchAgents/com.kitamura.daily-digest.plist`はまだ**旧・毎日23:30単発**の
@@ -186,4 +186,4 @@ rm ~/Library/LaunchAgents/com.kitamura.daily-digest.plist
   参照し、`~/Private/.../my-brain/ゴール/templates/デイリー.md` は既定では見ない）。my-brain側は
   人間ゲートで1行ポインタ化する予定（`../renderer/README.md` ロールアウトdraft §2参照。現状は
   旧8見出しの現物のまま残っており、renderer が直接使うことはない）。
-- 朝夜ルーティン: `~/Private/personal-os/my-brain/ゴール/朝夜ルーティン.md`（夜のどこを補完するか）。
+- 朝会・夜会手順: `../../../skills/morning-routine/SKILL.md`（夜のどこを補完するか。旧`my-brain/ゴール/朝夜ルーティン.md`は2026-07-08削除）。

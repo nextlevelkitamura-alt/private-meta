@@ -1,0 +1,285 @@
+<title>計画: セッション宣言型ボードとplans規約 v3</title>
+<style>
+  :root{
+    --ground:#ECEEF3; --surface:#FFFFFF; --surface-2:#F5F6FA;
+    --ink:#19212F; --muted:#5F6879; --line:#DBDFEA;
+    --accent:#2C3A8C; --accent-ink:#202C6E; --accent-soft:#E9ECFA;
+    --go:#2E7D5B; --go-ink:#1E5A40; --go-soft:#E3F1EA;
+    --warn:#B4472B; --warn-ink:#8C3620; --warn-soft:#F7E8E2;
+    --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP","Segoe UI",sans-serif;
+    --mono:"SF Mono","SFMono-Regular","JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .page{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;padding:40px 20px 72px}
+  .wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:42px}
+  .eyebrow{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 12px}
+  h1{font-size:30px;font-weight:600;letter-spacing:-.01em;margin:0;line-height:1.25;text-wrap:balance}
+  .lede{margin:14px 0 0;font-size:16px;color:var(--muted);max-width:60ch}
+  .lede b{color:var(--ink);font-weight:600}
+  h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 6px}
+  .slede{margin:0 0 16px;font-size:14.5px;color:var(--ink);max-width:64ch}
+  section{display:flex;flex-direction:column}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-block;font-size:12px;font-weight:500;padding:5px 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);text-decoration:none;border:1px solid transparent}
+  .chip:hover{border-color:var(--accent)}
+
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:720px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:17px 18px}
+  .card .h{font-size:14px;font-weight:600;margin:0 0 8px}
+  .card p{margin:0;font-size:13.5px;color:var(--muted)}
+  .card p b{color:var(--ink)}
+
+  .pill{display:inline-block;font-size:11.5px;font-weight:500;padding:2px 10px;border-radius:999px;vertical-align:1px}
+  .pill.go{background:var(--go-soft);color:var(--go-ink)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
+  .pill.acc{background:var(--accent-soft);color:var(--accent-ink)}
+
+  figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px}
+  figcaption{font-size:12px;color:var(--muted);margin-top:10px}
+
+  .board{font-family:var(--mono);font-size:12.5px;background:#1E2430;color:#D8DEE9;border-radius:13px;padding:18px 20px;overflow-x:auto;line-height:1.9;margin:0}
+  .board .h1{color:#8FA3C7;font-weight:700}
+  .board .h2{color:#88C0A8;font-weight:700}
+  .board .run{color:#A3E4C1}
+  .board .wait{color:#E8C58A}
+  .board .cm{color:#6B7689}
+
+  .deflist{display:flex;flex-direction:column;gap:10px}
+  .ditem{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 17px}
+  .ditem .dhead{margin:0 0 6px;font-size:14px;font-weight:600;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .ditem .dbody{margin:0;font-size:13.5px;color:var(--muted)}
+  .ditem .dbody b,.ditem li b{color:var(--ink);font-weight:600}
+  .ditem ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--muted)}
+  .ditem li{margin:3px 0}
+
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .steps li{display:flex;gap:14px;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .stepno{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .steps .h{font-size:13.5px;font-weight:600;margin:0}
+  .steps p{margin:0;font-size:13px;color:var(--muted)}
+
+  .tree{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px 20px;overflow-x:auto;line-height:1.9;margin:0}
+  .tree .note{color:var(--muted)}
+  .tree .add{color:var(--go-ink);font-weight:600}
+
+  .callout{border-radius:13px;padding:15px 17px;border:1px solid var(--warn);background:var(--warn-soft)}
+  .callout .ct{margin:0 0 4px;font-size:12.5px;font-weight:700;color:var(--warn-ink);letter-spacing:.04em}
+  .callout p{margin:0;font-size:13.5px}
+  .callout.acc{border-color:var(--accent);background:var(--accent-soft)}
+  .callout.acc .ct{color:var(--accent-ink)}
+  .callout.go{border-color:var(--go);background:var(--go-soft)}
+  .callout.go .ct{color:var(--go-ink)}
+
+  details.disc{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px 17px}
+  details.disc summary{cursor:pointer;font-size:13.5px;font-weight:500;color:var(--accent-ink)}
+  details.disc[open] summary{margin-bottom:8px}
+  details.disc .dbody{font-size:13.5px;color:var(--muted);margin:0}
+
+  .checks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+  .checks li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
+  .checks .no{flex:none;font-family:var(--mono);font-size:11.5px;color:var(--accent-ink);background:var(--accent-soft);border-radius:6px;padding:1px 7px;margin-top:3px}
+  .checks li b{color:var(--ink)}
+
+  .source{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted)}
+  .source b{color:var(--ink);font-weight:600}
+</style>
+
+<div class="page">
+  <div class="wrap">
+
+    <header>
+      <p class="eyebrow">計画 · ai運用/plans/active · 2026-07-04 · v4 · 優先◎ · <span class="pill go">実装済み（Claude側＋plans敷設）</span> <span class="pill acc">残: Codex実測(P3)・Notion(P4)</span></p>
+      <h1>セッション宣言型ボードとplans規約</h1>
+      <p class="lede">デイリーは<b>「動いているエージェント」「終わったこと」の2節だけ</b>。ボードには<b>今生きているセッションだけが並び</b>、完了は人間確認を経て行ごと「終わったこと」へ移動。確実性は<b>hooks/正本のスクリプトをClaude・Codex両方へsymlinkで接続</b>して保証する。正本は <code>plan.md</code>（このHTMLは表示用）。</p>
+    </header>
+
+    <nav class="chips">
+      <a class="chip" href="#board">新書式</a>
+      <a class="chip" href="#lifecycle">行の一生</a>
+      <a class="chip" href="#skill">skill構造</a>
+      <a class="chip" href="#hooks">フック</a>
+      <a class="chip" href="#plans">plans規約</a>
+      <a class="chip" href="#phases">段階</a>
+      <a class="chip" href="#review">レビュー項目</a>
+    </nav>
+
+    <section>
+      <h2>要点</h2>
+      <div class="cards">
+        <div class="card"><p class="h">ボードは生きている行だけ</p><p><b>チェックボックス廃止</b>。完了＝行を削除して「終わったこと」へ移動。1日100セッションでも完了分は消えるので<b>並ばない</b>。</p></div>
+        <div class="card"><p class="h">完了は人間が一言確認</p><p>AIが完了判断→<b>「終わったことに入れてよいですか？」</b>と確認→OKで移動。確認が取れなければ⏸のまま残し朝夜会で掃引。</p></div>
+        <div class="card"><p class="h">手順は分割・発動は機械</p><p>SKILL.mdは索引。<b>開始/終了の手順はreferences 2枚に分割</b>し、フックのスクリプトが対応する1枚だけを確実に注入。</p></div>
+      </div>
+    </section>
+
+    <section id="lifecycle">
+      <h2>行の一生：登録 → flip → 人間確認 → 移動</h2>
+      <figure>
+        <svg width="100%" viewBox="0 0 680 300" role="img" aria-label="セッション開始で行を登録、停止でフックが⏸へflip、完了ならAIが判断して人間確認、OKで行削除と終わったことへ移動。報告漏れはstopブロックで強制。">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+            <marker id="arg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--go)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+
+          <rect x="16" y="30" width="140" height="50" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="86" y="51" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="600" fill="var(--accent-ink)">セッション開始</text>
+          <text x="86" y="68" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">start-inject.sh が手順注入</text>
+
+          <rect x="210" y="30" width="180" height="50" rx="10" fill="var(--go-soft)" stroke="var(--go)" stroke-width="1.2"/>
+          <text x="300" y="51" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--go-ink)">🟢動作中 で行を登録</text>
+          <text x="300" y="68" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">時刻|repo|種別|依頼|状態</text>
+          <line x1="156" y1="55" x2="210" y2="55" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <rect x="444" y="30" width="220" height="50" rx="10" fill="var(--warn-soft)" stroke="var(--warn)"/>
+          <text x="554" y="51" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="600" fill="var(--warn-ink)">停止 → ⏸停止・確認待ち</text>
+          <text x="554" y="68" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">stop-guard.sh が機械flip（指示不要）</text>
+          <line x1="390" y1="55" x2="444" y2="55" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <rect x="210" y="140" width="180" height="56" rx="10" fill="var(--surface)" stroke="var(--accent)"/>
+          <text x="300" y="161" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="600" fill="var(--accent-ink)">AIが完了を判断</text>
+          <text x="300" y="180" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">「終わったことに入れてよいですか？」</text>
+          <line x1="500" y1="80" x2="340" y2="140" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+          <text x="452" y="118" font-family="var(--sans)" font-size="10" fill="var(--muted)">完了と判断した時</text>
+
+          <rect x="444" y="230" width="220" height="50" rx="10" fill="var(--go-soft)" stroke="var(--go)" stroke-width="1.2"/>
+          <text x="554" y="251" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="600" fill="var(--go-ink)">行を削除 → 終わったことへ</text>
+          <text x="554" y="268" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">repo見出しに成果を箇条書き（git照合済）</text>
+          <line x1="390" y1="180" x2="444" y2="240" stroke="var(--go)" stroke-width="1.6" marker-end="url(#arg)"/>
+          <text x="404" y="216" font-family="var(--sans)" font-size="10.5" font-weight="600" fill="var(--go-ink)">人間OK</text>
+
+          <rect x="16" y="230" width="240" height="50" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+          <text x="136" y="251" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--ink)">⏸のまま残す</text>
+          <text x="136" y="268" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">未完了／確認取れず → 朝夜会で掃引</text>
+          <line x1="240" y1="196" x2="170" y2="230" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+          <text x="152" y="212" font-family="var(--sans)" font-size="10" fill="var(--muted)">未完了/無応答</text>
+        </svg>
+        <figcaption>ボードに残るのは🟢と⏸の行だけ。緑の太線（完了→移動）だけが「終わったこと」を増やす。報告なしのstopは stop-guard.sh が1回ブロックして終了手順を強制。</figcaption>
+      </figure>
+    </section>
+
+    <section id="board">
+      <h2>新書式：2節・チェックボックスなし</h2>
+      <p class="slede">行の型は <b>時刻 | repo | 種別 | 依頼1行 | 状態</b>。完了した行はここに残らない（削除して移動）ので、ボードは常に「今」だけを映す。</p>
+      <pre class="board"><span class="h1"># デイリー 2026-07-05</span>
+
+<span class="h2">## 動いているエージェント</span>
+- 10:32 | AIエージェント基盤 | 実装 | Hooks整理と全停止 | <span class="run">🟢動作中</span> <span class="cm">&lt;!-- s:ab12cd34 --&gt;</span>
+- 09:15 | 仕事 | レビュー | 求人原稿の校正 | <span class="wait">⏸停止・確認待ち</span> <span class="cm">&lt;!-- s:9f8e7d6c --&gt;</span>
+
+<span class="h2">## 終わったこと</span>
+<span class="h2">### AIエージェント基盤</span>
+- Hooks全撤去（LINE・cockpit・Orca）と launchd 5本停止
+<span class="h2">### 仕事</span>
+- 求人原稿3本の校正   <span class="cm"># SHA・session ID・transcriptパスは書かない</span></pre>
+      <div style="height:12px"></div>
+      <details class="disc">
+        <summary>語彙と書かないもの</summary>
+        <p class="dbody">種別＝<b>計画/実装/レビュー/その他</b>。状態＝<b>🟢動作中/⏸停止・確認待ち</b>の2値のみ。行末の <code>&lt;!-- s:xxxxxxxx --&gt;</code> はフックが自行を特定して機械flipするための短キー（session id先頭8桁・mdレンダリングでは非表示）。<b>完全なsession ID・transcriptパス・SHA羅列・secretは書かない</b>（git/transcriptが正本）。subagent・headless・雑談は登録しない。</p>
+      </details>
+    </section>
+
+    <section id="skill">
+      <h2>skill構造：SKILL.mdは索引、手順は開始/終了で分割</h2>
+      <p class="slede">開始時と終了時で読むものが違うので references を2枚に分ける。フックは対応する1枚だけを注入する＝コンテキストが小さく、手順が混ざらない。</p>
+      <pre class="tree"><span class="add">skills/session-board/</span>                <span class="note"># 新設（手順の正本）</span>
+├── SKILL.md                     <span class="note"># 索引＋共通語彙（行の型・種別/状態・書かないもの）。手順本文は書かない</span>
+├── references/
+│   ├── <span class="add">session-start.md</span>         <span class="note"># 開始手順: repo特定→種別判定→1行要約→board.sh add</span>
+│   └── <span class="add">session-end.md</span>           <span class="note"># 終了手順: 完了判断→人間確認→行削除＋終わったこと追記(git照合)</span>
+└── assets/
+    └── daily-template.md        <span class="note"># 2節テンプレ</span></pre>
+      <div style="height:12px"></div>
+      <div class="callout go">
+        <p class="ct">完了確認の文言（session-end.md の核）</p>
+        <p>依頼（最初＋途中追加分）が終わったとAIが判断したら——<b>「この依頼は完了と判断しました。デイリーの『終わったこと』に入れてよいですか？」</b>（成果の箇条書き案を添えて確認）。OKで行削除＋移動。返答なし/NGなら⏸のまま残す。</p>
+      </div>
+    </section>
+
+    <section id="hooks">
+      <h2>フック：正本は hooks/、Claude・Codex両方へ symlink 接続</h2>
+      <p class="slede">スクリプト本文はツール側にコピーしない。今朝整理した「本文=hooks/正本／登録=人間ゲート」の方針のまま、目的を持った最小構成だけを戻す。</p>
+      <pre class="tree"><span class="add">hooks/session-board/</span>                 <span class="note"># 機構の正本</span>
+├── <span class="add">start-inject.sh</span>                  <span class="note"># SessionStart: session-start.md を機械注入</span>
+├── <span class="add">stop-guard.sh</span>                    <span class="note"># Stop: (a)自行を⏸へ機械flip (b)報告なしなら1回ブロックし session-end.md 注入</span>
+├── <span class="add">board.sh</span>                         <span class="note"># 行upsert・flip・報告検査（flock）。skillからも同じものを使う</span>
+└── README.md                    <span class="note"># 登録スニペット（両ツール）・テスト手順</span>
+
+接続（登録は人間ゲート）
+├── Claude: ~/.claude/settings.json の SessionStart / Stop → 正本を参照（symlink可）
+└── Codex : config.toml notify(turn-ended) → stop-guard.sh 相当   <span class="note"># 開始注入の可否はP3実測</span></pre>
+      <div style="height:12px"></div>
+      <details class="disc">
+        <summary>なぜこれで「長いセッションでも確実」なのか</summary>
+        <p class="dbody">状態flipと報告有無の検査は<b>LLMを介さないスクリプト</b>なので、文脈圧縮や忘却の影響を受けない。判断が要る部分（完了判断・成果要約）だけをセッションにやらせ、やっていなければ<b>stopを1回ブロックして手順書を注入</b>する（公式のdecision:block機構・無限ループ防止付き）。フックから別AIを呼ばないのでトークン追加コストなし。subagent/headlessは環境変数ガードで除外。</p>
+      </details>
+    </section>
+
+    <section id="plans">
+      <h2>plans規約：置き場をバケットで統一（planningを全側に）</h2>
+      <p class="slede">計画・実装セッションは開始時にrepoを判定して置き場を決める。<b>フォルダ位置＝状態</b>で、md内に状態を書かない。</p>
+      <pre class="tree">実作業repo（仕事・focusmap 等）/
+└── <span class="add">plans/</span>                <span class="note"># 無ければセッションが作る</span>
+    ├── <span class="add">planning/</span>         <span class="note"># 計画セッション: まずここに計画mdを書く</span>
+    ├── <span class="add">active/</span>           <span class="note"># 実行に移る時フォルダ移動</span>
+    ├── <span class="add">paused/</span>
+    └── <span class="add">done/</span>             <span class="note"># 完了で移動</span>
+
+personal-os / my-brain 系
+└── my-brain/areas/&lt;領域&gt;/plans/
+    └── <span class="add">planning/</span>          <span class="note"># 新設: my-brain側にも追加（areas/AGENTS.md §3・§4.1 改訂）</span></pre>
+    </section>
+
+    <section id="phases">
+      <h2>段階：P1土台 → P2 Claude接続 → P3 Codexとplans → P4 Notion</h2>
+      <ol class="steps">
+        <li><span class="stepno">1</span><div><p class="h">P1 書式と土台</p><p>2節テンプレ・session-board skill（SKILL.md＋references 2枚）・hooks/session-board/（board.sh先行）・当日デイリーを新書式で1枚。</p></div></li>
+        <li><span class="stepno">2</span><div><p class="h">P2 フック接続・Claude <span class="pill warn">人間ゲート</span></p><p>start-inject.sh / stop-guard.sh 作成 → settings.json登録＋GLOBAL_AGENTS.md追記 → 開始登録・機械flip・完了確認→移動・報告ガードを実測。</p></div></li>
+        <li><span class="stepno">3</span><div><p class="h">P3 Codexとplans敷設</p><p>Codex notify(turn-ended)の機械flip実測・開始注入手段の実測 → 仕事/focusmapに plans/ 生成・my-brain全領域に planning/ 追加（areas/AGENTS.md改訂）・フォルダ移動1件実測。</p></div></li>
+        <li><span class="stepno">4</span><div><p class="h">P4 Notion同期の再開 <span class="pill warn">人間ゲート</span></p><p>新書式md正本→Notionの薄いsync（60秒から・30秒化とDB構造は後で調整）。</p></div></li>
+      </ol>
+    </section>
+
+    <section id="review">
+      <h2>完了条件＝レビュー項目（11項目・検証可能）</h2>
+      <p class="slede">「やったか」でなく「こうなっていれば正しい」で判定。正本は plan.md。</p>
+      <ul class="checks">
+        <li><span class="no">R1</span><span>デイリーが<b>2節のみ</b>・skills/session-board/（SKILL.md＋references2枚＋テンプレ）と hooks/session-board/（3スクリプト）が存在</span></li>
+        <li><span class="no">R2</span><span>ボード行に<b>チェックボックスが無く</b>、時刻|repo|種別|依頼|状態 型である</span></li>
+        <li><span class="no">R3</span><span>Claude開始で<b>🟢の1行が登録</b>される（実測1回）</span></li>
+        <li><span class="no">R4</span><span>終了時、<b>stop-guard.shの機械flipだけで⏸</b>になる（指示への依存なし・実測1回）</span></li>
+        <li><span class="no">R5</span><span>完了時、<b>人間確認→OK後に行が削除</b>され、成果が「終わったこと」に入り<b>git実体と矛盾しない</b>（実測1回）</span></li>
+        <li><span class="no">R6</span><span>報告未記入のstopで<b>ブロックが1回働き</b>、session-end.md実行後に終了（実測1回）</span></li>
+        <li><span class="no">R7</span><span><b>Codex</b>でも開始登録（またはP3確定の代替）と終了機械flipが各1回実測できる</span></li>
+        <li><span class="no">R8</span><span>仕事/focusmapに plans/ が、<b>my-brain全領域に planning/</b> が存在し、フォルダ移動1件実測＋areas/AGENTS.md改訂済み</span></li>
+        <li><span class="no">R9</span><span><b>subagent・headless実行の行が無い</b>（環境変数ガードの実測含む）</span></li>
+        <li><span class="no">R10</span><span>ボード・計画mdに<b>完全なsession ID・transcriptパス・SHA羅列・secretが無い</b>（s:短キーのみ許容）</span></li>
+        <li><span class="no">R11</span><span>（P4）Notionに新書式ボードが同期されている</span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>未確定・正本</h2>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">未確定</span>後続で詰めるもの</p>
+          <ul>
+            <li><b>旧デイリー人間節</b>（逆算・TODO・依頼インボックス）の行き先と朝夜会の読み替え（⏸滞留行の掃引含む）</li>
+            <li><b>Codexの開始注入手段</b>（SessionStart相当の有無。P3実測）</li>
+            <li><b>Notion</b> DB構造・間隔（60s/30s）・送信範囲</li>
+            <li><b>cockpit/監督系の作り直し</b>（別計画。本ボードの語彙と整合させる）</li>
+          </ul>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">正本</span>ドキュメント</p>
+          <p class="dbody"><code>my-brain/areas/ai運用/plans/active/2026-07-04-セッション宣言型ボードとplans規約/plan.md</code>（このHTMLは表示用・同期義務なし）。停止の経緯は <code>AIエージェント基盤/loops-registry/実行一覧/personal-os.md</code>。</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>

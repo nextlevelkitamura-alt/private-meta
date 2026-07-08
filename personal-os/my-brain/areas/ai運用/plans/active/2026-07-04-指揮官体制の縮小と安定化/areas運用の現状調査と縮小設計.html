@@ -1,0 +1,335 @@
+<title>areas運用の現状調査と縮小設計</title>
+<style>
+  :root{
+    --ground:#ECEEF3; --surface:#FFFFFF; --surface-2:#F5F6FA;
+    --ink:#19212F; --muted:#5F6879; --line:#DBDFEA;
+    --accent:#2C3A8C; --accent-ink:#202C6E; --accent-soft:#E9ECFA;
+    --go:#2E7D5B; --go-ink:#1E5A40; --go-soft:#E3F1EA;
+    --warn:#B4472B; --warn-ink:#8C3620; --warn-soft:#F7E8E2;
+    --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP","Segoe UI",sans-serif;
+    --mono:"SF Mono","SFMono-Regular","JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .page{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;padding:40px 20px 72px}
+  .wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:42px}
+  .eyebrow{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 12px}
+  h1{font-size:32px;font-weight:600;letter-spacing:-.01em;margin:0;line-height:1.2;text-wrap:balance}
+  .lede{margin:14px 0 0;font-size:16px;color:var(--muted);max-width:60ch}
+  .lede b{color:var(--ink);font-weight:600}
+  h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 6px}
+  .slede{margin:0 0 16px;font-size:14.5px;color:var(--ink);max-width:64ch}
+  section{display:flex;flex-direction:column}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-block;font-size:12px;font-weight:500;padding:5px 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);text-decoration:none;border:1px solid transparent}
+  .chip:hover{border-color:var(--accent)}
+
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:720px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:17px 18px}
+  .card .h{font-size:14px;font-weight:600;margin:0 0 8px}
+  .card p{margin:0;font-size:13.5px;color:var(--muted)}
+  .card p b{color:var(--ink)}
+
+  .pill{display:inline-block;font-size:11.5px;font-weight:500;padding:2px 10px;border-radius:999px;vertical-align:1px}
+  .pill.go{background:var(--go-soft);color:var(--go-ink)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
+  .pill.acc{background:var(--accent-soft);color:var(--accent-ink)}
+
+  figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px}
+  figcaption{font-size:12px;color:var(--muted);margin-top:10px}
+
+  .deflist{display:flex;flex-direction:column;gap:10px}
+  .ditem{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 17px}
+  .ditem .dhead{margin:0 0 6px;font-size:14px;font-weight:600;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .ditem .dbody{margin:0;font-size:13.5px;color:var(--muted)}
+  .ditem .dbody b,.ditem li b{color:var(--ink);font-weight:600}
+  .ditem ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--muted)}
+  .ditem li{margin:3px 0}
+
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .steps li{display:flex;gap:14px;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .stepno{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .steps .h{font-size:13.5px;font-weight:600;margin:0}
+  .steps p{margin:0;font-size:13px;color:var(--muted)}
+
+  .tree{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px 20px;overflow-x:auto;line-height:1.9;margin:0}
+  .tree .note{color:var(--muted)}
+  .tree .add{color:var(--go-ink);font-weight:600}
+  .tree .mod{color:var(--accent-ink);font-weight:600}
+  .tree .bad{color:var(--warn-ink);font-weight:600}
+
+  .callout{border-radius:13px;padding:15px 17px;border:1px solid var(--warn);background:var(--warn-soft)}
+  .callout .ct{margin:0 0 4px;font-size:12.5px;font-weight:700;color:var(--warn-ink);letter-spacing:.04em}
+  .callout p{margin:0;font-size:13.5px}
+  .callout.acc{border-color:var(--accent);background:var(--accent-soft)}
+  .callout.acc .ct{color:var(--accent-ink)}
+
+  details.disc{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px 17px}
+  details.disc summary{cursor:pointer;font-size:13.5px;font-weight:500;color:var(--accent-ink)}
+  details.disc[open] summary{margin-bottom:8px}
+  details.disc .dbody{font-size:13.5px;color:var(--muted);margin:0}
+
+  .compare2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.compare2{grid-template-columns:1fr}}
+  .ccol{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:16px;min-width:0}
+  .ccol .h{font-size:13px;font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .ccol .tree{border:0;padding:0;background:transparent}
+
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px;background:var(--surface)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  tbody tr:last-child td{border-bottom:0}
+
+  .source{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted)}
+  .source b{color:var(--ink);font-weight:600}
+</style>
+
+<div class="page">
+  <div class="wrap">
+
+    <header>
+      <p class="eyebrow">2026-07-04 ／ 指揮官体制の縮小と安定化・第1弾 ／ 調査=サブエージェント3体</p>
+      <h1>areas運用の現状調査と縮小設計</h1>
+      <p class="lede">計画運用は<b>「読ませすぎ・分けすぎ・流れの停止」</b>の3点で肥大している。対策は5本柱：<b>AGENTS.mdダイエット</b>・<b>AGENTS.html対ルール</b>・<b>分割上限（子3〜4本）</b>・<b>レビュー項目ゲート</b>・<b>ナレッジと卒業受け皿の一本化</b>。</p>
+    </header>
+
+    <nav class="chips">
+      <a class="chip" href="#sec1">調査① AGENTS.md</a>
+      <a class="chip" href="#sec2">調査② 計画の分割</a>
+      <a class="chip" href="#sec3">調査③ 卒業とナレッジ</a>
+      <a class="chip" href="#sec4">設計5本柱</a>
+      <a class="chip" href="#sec5">Before → After</a>
+      <a class="chip" href="#sec6">要裁定と実装順</a>
+      <a class="chip" href="#sec7">出典</a>
+    </nav>
+
+    <section>
+      <h2>要点</h2>
+      <div class="cards">
+        <div class="card"><p class="h">読ませすぎ</p><p>areas/AGENTS.md <b>190行のうち約75行</b>が上位の再掲と冗長説明。work/money/health は各23行がほぼ同型で固有部分は8行。</p></div>
+        <div class="card"><p class="h">分けすぎ</p><p>program 2本が<b>子18本</b>（平均15〜26行のスタブ）を抱え、program.md 本体に裁定ログが堆積（161〜201行）。</p></div>
+        <div class="card"><p class="h">流れの停止</p><p><b>卒業実績0</b>（移行ログ0・卒業先バケット未生成・repo側受け皿なし）。ナレッジ置き場の規約は<b>存在しない</b>。</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>全体像 — AGENTS.mdは積み上げ式に読まれる</h2>
+      <figure>
+        <svg width="100%" viewBox="0 0 860 250" role="img" aria-label="AGENTS.mdチェーンと行数目標の図">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#5F6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+          <text x="14" y="24" font-family="var(--sans)" font-size="12.5" fill="#5F6879">AIは上から順に全部読む → 下位ほど「そのフォルダ固有の説明」だけに絞る</text>
+
+          <rect x="14" y="44" width="150" height="46" rx="10" fill="#F5F6FA" stroke="#DBDFEA"/>
+          <text x="89" y="63" text-anchor="middle" font-size="12" fill="#19212F">global</text>
+          <text x="89" y="80" text-anchor="middle" font-size="11" fill="#5F6879">~/.claude/CLAUDE.md</text>
+
+          <line x1="164" y1="67" x2="186" y2="67" stroke="#5F6879" stroke-width="1.5" marker-end="url(#ar)"/>
+          <rect x="188" y="44" width="140" height="46" rx="10" fill="#F5F6FA" stroke="#DBDFEA"/>
+          <text x="258" y="63" text-anchor="middle" font-size="12" fill="#19212F">Private/</text>
+          <text x="258" y="80" text-anchor="middle" font-size="11" fill="#5F6879">AGENTS.md</text>
+
+          <line x1="328" y1="67" x2="350" y2="67" stroke="#5F6879" stroke-width="1.5" marker-end="url(#ar)"/>
+          <rect x="352" y="44" width="150" height="46" rx="10" fill="#F5F6FA" stroke="#DBDFEA"/>
+          <text x="427" y="63" text-anchor="middle" font-size="12" fill="#19212F">personal-os/</text>
+          <text x="427" y="80" text-anchor="middle" font-size="11" fill="#5F6879">AGENTS.md</text>
+
+          <line x1="502" y1="67" x2="524" y2="67" stroke="#5F6879" stroke-width="1.5" marker-end="url(#ar)"/>
+          <rect x="526" y="44" width="140" height="46" rx="10" fill="#F5F6FA" stroke="#DBDFEA"/>
+          <text x="596" y="63" text-anchor="middle" font-size="12" fill="#19212F">my-brain/</text>
+          <text x="596" y="80" text-anchor="middle" font-size="11" fill="#5F6879">AGENTS.md</text>
+
+          <line x1="666" y1="67" x2="688" y2="67" stroke="#5F6879" stroke-width="1.5" marker-end="url(#ar)"/>
+          <rect x="690" y="44" width="156" height="46" rx="10" fill="#E9ECFA" stroke="#2C3A8C"/>
+          <text x="768" y="63" text-anchor="middle" font-size="12" fill="#202C6E" font-weight="600">areas/AGENTS.md</text>
+          <text x="768" y="80" text-anchor="middle" font-size="11.5" fill="#8C3620">190行 → <tspan fill="#1E5A40" font-weight="700">110行以下</tspan></text>
+
+          <line x1="768" y1="90" x2="768" y2="120" stroke="#5F6879" stroke-width="1.2"/>
+          <line x1="140" y1="120" x2="768" y2="120" stroke="#5F6879" stroke-width="1.2"/>
+          <line x1="140" y1="120" x2="140" y2="142" stroke="#5F6879" stroke-width="1.2" marker-end="url(#ar)"/>
+          <line x1="349" y1="120" x2="349" y2="142" stroke="#5F6879" stroke-width="1.2" marker-end="url(#ar)"/>
+          <line x1="558" y1="120" x2="558" y2="142" stroke="#5F6879" stroke-width="1.2" marker-end="url(#ar)"/>
+          <line x1="768" y1="120" x2="768" y2="142" stroke="#5F6879" stroke-width="1.2" marker-end="url(#ar)"/>
+
+          <rect x="52" y="146" width="176" height="46" rx="10" fill="#FFFFFF" stroke="#DBDFEA"/>
+          <text x="140" y="165" text-anchor="middle" font-size="12" fill="#19212F">ai運用/AGENTS.md</text>
+          <text x="140" y="182" text-anchor="middle" font-size="11.5" fill="#8C3620">51行 → <tspan fill="#1E5A40" font-weight="700">30行以下</tspan></text>
+
+          <rect x="261" y="146" width="176" height="46" rx="10" fill="#FFFFFF" stroke="#DBDFEA"/>
+          <text x="349" y="165" text-anchor="middle" font-size="12" fill="#19212F">work/AGENTS.md</text>
+          <text x="349" y="182" text-anchor="middle" font-size="11.5" fill="#8C3620">23行 → <tspan fill="#1E5A40" font-weight="700">12行以下</tspan></text>
+
+          <rect x="470" y="146" width="176" height="46" rx="10" fill="#FFFFFF" stroke="#DBDFEA"/>
+          <text x="558" y="165" text-anchor="middle" font-size="12" fill="#19212F">money/AGENTS.md</text>
+          <text x="558" y="182" text-anchor="middle" font-size="11.5" fill="#8C3620">23行 → <tspan fill="#1E5A40" font-weight="700">12行以下</tspan></text>
+
+          <rect x="680" y="146" width="176" height="46" rx="10" fill="#FFFFFF" stroke="#DBDFEA"/>
+          <text x="768" y="165" text-anchor="middle" font-size="12" fill="#19212F">health/AGENTS.md</text>
+          <text x="768" y="182" text-anchor="middle" font-size="11.5" fill="#8C3620">23行 → <tspan fill="#1E5A40" font-weight="700">12行以下</tspan></text>
+
+          <rect x="52" y="210" width="794" height="30" rx="8" fill="#E3F1EA"/>
+          <text x="449" y="230" text-anchor="middle" font-size="12" fill="#1E5A40">新設: areas/AGENTS.html（人間用の対）＋ グローバル§3に「md更新時は対の.htmlも同じ作業で更新」を1行追加</text>
+        </svg>
+        <figcaption>行数の現状→目標。上位で定義済みのルール（secret・削除承認・二重管理禁止など）は下位に再掲しない。</figcaption>
+      </figure>
+    </section>
+
+    <section id="sec1">
+      <h2>調査① areas/AGENTS.md 190行の約4割は削れる</h2>
+      <p class="slede">行単位の帰属分析では、固有コア約110行に対し、上位再掲＋冗長説明が約75行を占める。</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>帰属</th><th>行数(約)</th><th>処置</th></tr></thead>
+        <tbody>
+          <tr><td>A: areas固有コア</td><td>110</td><td><span class="pill go">残す</span> 圧縮して整形</td></tr>
+          <tr><td>B: 上位チェーンの再掲</td><td>40</td><td><span class="pill warn">削除</span></td></tr>
+          <tr><td>D: 冗長な逐語説明</td><td>35</td><td><span class="pill warn">圧縮</span> 図・箇条書き化</td></tr>
+          <tr><td>C: 他正本の内容</td><td>—</td><td><span class="pill go">済み</span> 大半ポインタ化済み</td></tr>
+          <tr><td>E: 廃止経緯の説明</td><td>2+</td><td><span class="pill warn">削除</span> 履歴はgitへ</td></tr>
+        </tbody>
+      </table></div>
+      <div style="height:12px"></div>
+      <details class="disc">
+        <summary>B（上位再掲）の代表例を見る</summary>
+        <p class="dbody">「areaで育て卒業する」原則（my-brain/AGENTS.md §1-2と重複）／レンダラ自動描画・ダッシュボード廃止（my-brain §2と同一）／ai-jobs run-card詳細（my-brain §4.2と同一）／CLAUDE.md symlink規約（personal-os §3・グローバル§3と重複）。下位4ファイルも同様で、work/money/health の各23行はほぼ同型テンプレ（固有は各8行程度）、「置かないもの: secret」等は全て上位定義済み。</p>
+      </details>
+    </section>
+
+    <section id="sec2">
+      <h2>調査② program 2本に子18本 — 分割がオーケストレーションを重くしている</h2>
+      <p class="slede">active 13本のうち、program 2本の子は平均15〜26行のスタブで、本体の情報は親に堆積している。</p>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill warn">過剰分割</span>2026-07-02 状態と記録の統合設計</p>
+          <p class="dbody">program.md <b>201行</b>＋子8本（平均<b>15.4行</b>・最短8行）。子は単発plan.mdの方針節で書ける薄さ。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill warn">過剰分割</span>2026-07-03 マルチ指揮官体制</p>
+          <p class="dbody">program.md <b>161行</b>＋子10本（平均<b>26.4行</b>）。親の8割が時系列の「ユーザー裁定」ログで、<b>索引・履歴・状態が混在</b>。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill warn">情報の分散</span>平置き資料と実行ゲート不備</p>
+          <ul>
+            <li><b>平置き</b>: 再編ドラフト.md 157行（plan.md 32行より厚い）、図解HTML同梱など、正本が不明確な追加ファイルが直下に混在</li>
+            <li><b>レビュー項目未確定のままactive</b>: 2本（repo構造の標準化構想ほか）。done滞留11本のうち6本は反映先の記載なし</li>
+          </ul>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">健全な参考例</span>1枚で完結する計画</p>
+          <p class="dbody"><b>見張り番キーパー</b>・<b>デイリーダイジェスト</b>: plan.md 1枚・検証可能な完了条件6項目・全チェック済み。この形が既定であるべき。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec3">
+      <h2>調査③ 卒業は一度も稼働しておらず、ナレッジ規約は存在しない</h2>
+      <p class="slede">育成→卒業のライフサイクルは規約だけあり、出口側の実体が全て未整備だった。</p>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill warn">未稼働</span>卒業の出口</p>
+          <ul>
+            <li><b>移行済みログ 0件</b>: <code>plans/移行済み/</code> フォルダ自体が未作成</li>
+            <li><b>卒業先バケット未生成</b>: <code>global-skill-registry/plans/</code>・<code>loops-registry/plans/loop/</code> とも実体なし（「初回卒業で生やす」のまま）</li>
+            <li><b>repo側受け皿なし</b>: focusmap・仕事repo に <code>plans/</code> なし。repo-create も plans/ は「必要な場合だけ」</li>
+          </ul>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill warn">規約なし</span>ナレッジの置き場</p>
+          <p class="dbody">調査ナレッジ専用の規約は<b>どこにも存在しない</b>。現状は references/ 同梱（2計画）・plan.md方針へ追記・draft.md平置き・HTML平置きの<b>4パターンが混在</b>。生成物規約（outputs/）はあるがナレッジはカバーしていない。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">使える部品</span>plan-ops はすでに自動化済み</p>
+          <p class="dbody"><b>new-plan.sh が mkdir -p で親フォルダを自動作成</b>し、テンプレにはレビュー項目のチェックボックスが組み込み済み。program-lint・check-section など機械チェックも揃っている。足りないのは規約と受け皿だけ。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec4">
+      <h2>設計 — 縮小の5本柱（plan.md 方針に反映済み）</h2>
+      <p class="slede">「動く小ささ」へ寄せる。詳細の正本は plan.md の方針節、ここはその見取り図。</p>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">柱1</span>AGENTS.md ダイエット（読ませすぎない）</p>
+          <p class="dbody"><b>上位で定義済みのルールを再掲しない。そのフォルダ固有の説明だけを書く</b>。areas=110行以下／ai運用=30行以下／work・money・health=各12行以下。廃止経緯の説明は正本から外す。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">柱2</span>人間向けHTML（AGENTS.html・計画HTML）</p>
+          <p class="dbody"><b>areas/AGENTS.html を新設</b>（正本は常にmd）。同時更新ルールはグローバル§3へ1行追加し本文は二重記載しない。plan/programのHTML化は<b>節目のみ</b>（起票・方針確定・完了/刷新）義務。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">柱3</span>計画の過剰分割の抑制</p>
+          <p class="dbody"><b>子＝独立に卒業/実行される単位のみ・最大3〜4本</b>。30行未満の内容は子にしない。program.mdは索引に徹し、裁定ログはデイリー/決定ログへ。計画フォルダ直下は plan.md＋対HTMLのみ、資料は references/ へ。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">柱4</span>レビュー項目ゲートと評価サブエージェント</p>
+          <p class="dbody"><b>レビュー項目未確定の計画は実行に出さない</b>（plan-triage/構成カードで確認）。実装完了後は<b>実装者と別のサブエージェントが計画のレビュー項目に対して判定</b>し、項目自体に欠陥があれば修正案ごと差し戻す。契約§2へ1行で接続。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">柱5</span>ナレッジと卒業の受け皿</p>
+          <p class="dbody">計画付随ナレッジは <b>references/ に一本化</b>、恒常的な判断軸は identity.md（現行どおり）。卒業時に受け皿（repo/plans/・卒業先バケット）が無ければ<b>卒業手順の中で生成</b>する。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec5">
+      <h2>Before → After（計画フォルダの標準形）</h2>
+      <p class="slede">直下を「本文＋対HTML」だけにし、資料の置き場を1つに固定する。</p>
+      <div class="compare2">
+        <div class="ccol">
+          <p class="h"><span class="pill warn">Before</span>現状の混在</p>
+          <pre class="tree">2026-07-03-〇〇計画/
+├── plan.md            <span class="note">32行</span>
+├── <span class="bad">再編ドラフト.md</span>     <span class="note">157行・実質本体</span>
+├── <span class="bad">図解.html</span>          <span class="note">平置き</span>
+└── (program時: 子10本)  <span class="note">平均26行のスタブ</span></pre>
+        </div>
+        <div class="ccol">
+          <p class="h"><span class="pill go">After</span>新標準</p>
+          <pre class="tree">2026-07-04-〇〇計画/
+├── plan.md            <span class="mod">本文の正本・レビュー項目必須</span>
+├── <span class="add">plan.html</span>          <span class="note">人間用の対・節目で更新</span>
+└── <span class="add">references/</span>        <span class="note">調査・資料はすべてhere</span>
+    └── 調査メモ.md
+<span class="note">program化は子が卒業単位で3〜4本の時だけ</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec6">
+      <h2>要裁定3点と実装順（GO後に着手）</h2>
+      <p class="slede">実装はすべて正本変更のため人間GO待ち。先に3点だけ裁定がほしい。</p>
+      <div class="callout acc">
+        <p class="ct">要裁定</p>
+        <p>① HTML同時更新ルールの<b>areas側への二重記載</b>（推奨: しない。グローバル§3の1箇所＋areasは対の存在だけ記載）　② 既存2program（子8＋10本）は<b>legacyとして完走</b>させ作り直さない（推奨: 賛成）　③ repo-create最小構成への plans/ 追加（推奨: 含めず<b>卒業時に生やす</b>）</p>
+      </div>
+      <div style="height:12px"></div>
+      <ol class="steps">
+        <li><span class="stepno">1</span><div><p class="h">グローバルCLAUDE.md §3 に同時更新ルールを1行追加</p><p>「対の .html を持つ md を更新したら、同じ作業で .html も更新する」</p></div></li>
+        <li><span class="stepno">2</span><div><p class="h">areas/AGENTS.md をスリム化（110行以下）</p><p>上位再掲40行削除・冗長35行圧縮。program節へ「子3〜4本上限・索引に徹する」、計画フォルダ規約、卒業手順へ「受け皿が無ければ生成」を追記。</p></div></li>
+        <li><span class="stepno">3</span><div><p class="h">下位4本（ai運用・work・money・health）をスリム化</p><p>固有内容のみ各12行以下（ai運用は30行以下）へ。</p></div></li>
+        <li><span class="stepno">4</span><div><p class="h">areas/AGENTS.html を生成</p><p>スリム化後のmdと同期した人間用の1枚。</p></div></li>
+        <li><span class="stepno">5</span><div><p class="h">plan-triage と契約§2へレビュー項目ゲートを接続</p><p>構成カードに存在確認・評価=レビュー項目判定（実装者≠評価者）を各1行。</p></div></li>
+        <li><span class="stepno">6</span><div><p class="h">active計画の平置き資料を references/ へ移動</p><p>移動系のため個別に承認を取って実施（legacy programの既存構造は触らない）。</p></div></li>
+      </ol>
+    </section>
+
+    <section id="sec7">
+      <h2>根拠・出典</h2>
+      <ul class="source">
+        <li><b>計画正本</b> — my-brain/areas/ai運用/plans/active/2026-07-04-指揮官体制の縮小と安定化/plan.md（方針・完了条件を本日更新）</li>
+        <li><b>調査① AGENTS.md重複分析</b> — サブエージェント: areas/AGENTS.md 190行の行単位帰属、上位チェーン4ファイルとの突き合わせ、下位4ファイルの同型性</li>
+        <li><b>調査② plans実態</b> — サブエージェント: areas配下 全33計画（active15・done11・archive7）の形態・行数・完了条件品質・HTML/references実態</li>
+        <li><b>調査③ 卒業先とナレッジ</b> — サブエージェント: projects/active各repo・基盤卒業先バケット・plan-opsテンプレ/scripts・repo-create規約の確認</li>
+        <li><b>関連正本</b> — my-brain/areas/AGENTS.md ／ 説明書/運用契約.md §2・§8 ／ AIエージェント基盤/AGENTS.md §1.1 ／ ~/.claude/CLAUDE.md §3</li>
+      </ul>
+    </section>
+
+  </div>
+</div>

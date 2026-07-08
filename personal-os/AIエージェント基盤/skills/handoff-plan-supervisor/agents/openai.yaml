@@ -1,0 +1,4 @@
+interface:
+  display_name: "Handoff Plan Supervisor"
+  short_description: "全体計画から引き継ぎ書と実装プロンプトまで作成する"
+  default_prompt: "Use $handoff-plan-supervisor to turn this request into a full implementation plan, handoff note, and worker prompt."

@@ -21,3 +21,7 @@ outputs/
 
 # watch-keeper: 検知履歴(alerts.jsonl)・再通知防止リスト(seen.txt)の実行時状態（非git管理。loop.md参照）
 /loops-registry/loops/watch-keeper/state/
+
+# daily-notion-sync: DB id/parent page idキャッシュ・signature・last-count・mkdirロックの
+# 実行時状態（secretではないが非git管理。loop.md参照）
+/loops-registry/loops/daily-notion-sync/state/

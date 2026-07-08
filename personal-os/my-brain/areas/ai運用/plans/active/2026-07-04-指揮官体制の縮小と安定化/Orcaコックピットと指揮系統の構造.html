@@ -1,0 +1,418 @@
+<title>Orcaコックピットと指揮系統の構造</title>
+<style>
+  :root{
+    --ground:#ECEEF3; --surface:#FFFFFF; --surface-2:#F5F6FA;
+    --ink:#19212F; --muted:#5F6879; --line:#DBDFEA;
+    --accent:#2C3A8C; --accent-ink:#202C6E; --accent-soft:#E9ECFA;
+    --go:#2E7D5B; --go-ink:#1E5A40; --go-soft:#E3F1EA;
+    --warn:#B4472B; --warn-ink:#8C3620; --warn-soft:#F7E8E2;
+    --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP","Segoe UI",sans-serif;
+    --mono:"SF Mono","SFMono-Regular","JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .page{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;padding:40px 20px 72px}
+  .wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:42px}
+  .eyebrow{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 12px}
+  h1{font-size:32px;font-weight:600;letter-spacing:-.01em;margin:0;line-height:1.2;text-wrap:balance}
+  .lede{margin:14px 0 0;font-size:16px;color:var(--muted);max-width:66ch}
+  .lede b{color:var(--ink);font-weight:600}
+  h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 6px}
+  .slede{margin:0 0 16px;font-size:14.5px;color:var(--ink);max-width:66ch}
+  section{display:flex;flex-direction:column}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-block;font-size:12px;font-weight:500;padding:5px 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);text-decoration:none;border:1px solid transparent}
+  .chip:hover{border-color:var(--accent)}
+
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:720px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:17px 18px}
+  .card .h{font-size:14px;font-weight:600;margin:0 0 8px}
+  .card p{margin:0;font-size:13.5px;color:var(--muted)}
+  .card p b{color:var(--ink)}
+
+  .pill{display:inline-block;font-size:11.5px;font-weight:500;padding:2px 10px;border-radius:999px;vertical-align:1px}
+  .pill.go{background:var(--go-soft);color:var(--go-ink)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
+  .pill.acc{background:var(--accent-soft);color:var(--accent-ink)}
+
+  figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px}
+  figcaption{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}
+
+  .deflist{display:flex;flex-direction:column;gap:10px}
+  .ditem{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 17px}
+  .ditem .dhead{margin:0 0 6px;font-size:14px;font-weight:600;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .ditem .dbody{margin:0;font-size:13.5px;color:var(--muted)}
+  .ditem .dbody b,.ditem li b{color:var(--ink);font-weight:600}
+  .ditem ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--muted)}
+  .ditem li{margin:3px 0}
+
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .steps li{display:flex;gap:14px;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .stepno{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .steps .h{font-size:13.5px;font-weight:600;margin:0}
+  .steps p{margin:0;font-size:13px;color:var(--muted)}
+  .steps code{font-size:11.5px}
+
+  .tree{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px 20px;overflow-x:auto;line-height:1.95;margin:0}
+  .tree .note{color:var(--muted)}
+  .tree .add{color:var(--go-ink);font-weight:600}
+  .tree .mod{color:var(--accent-ink);font-weight:600}
+  .tree .warnx{color:var(--warn-ink);font-weight:600}
+
+  .callout{border-radius:13px;padding:15px 17px;border:1px solid var(--warn);background:var(--warn-soft)}
+  .callout .ct{margin:0 0 6px;font-size:12.5px;font-weight:700;color:var(--warn-ink);letter-spacing:.04em}
+  .callout p{margin:0;font-size:13.5px}
+  .callout ul{margin:4px 0 0;padding-left:20px;font-size:13.5px}
+  .callout li{margin:5px 0}
+  .callout li b{font-weight:600}
+  .callout.acc{border-color:var(--accent);background:var(--accent-soft)}
+  .callout.acc .ct{color:var(--accent-ink)}
+  .callout.go{border-color:var(--go);background:var(--go-soft)}
+  .callout.go .ct{color:var(--go-ink)}
+
+  details.disc{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px 17px}
+  details.disc summary{cursor:pointer;font-size:13.5px;font-weight:500;color:var(--accent-ink)}
+  details.disc[open] summary{margin-bottom:8px}
+  details.disc .dbody{font-size:13.5px;color:var(--muted);margin:0}
+  details.disc .dbody b{color:var(--ink)}
+  details.disc ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--muted)}
+  details.disc li{margin:4px 0}
+  details.disc li b{color:var(--ink)}
+
+  .compare2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.compare2{grid-template-columns:1fr}}
+  .ccol{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:16px;min-width:0}
+  .ccol .h{font-size:13.5px;font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .ccol .sub{font-size:12px;color:var(--muted);font-weight:500}
+  .ccol ul{margin:0;padding-left:18px;font-size:13px;color:var(--muted)}
+  .ccol li{margin:5px 0}
+  .ccol li b{color:var(--ink);font-weight:600}
+
+  .source{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted)}
+  .source b{color:var(--ink);font-weight:600}
+  .source code{font-size:11.5px}
+</style>
+
+<div class="page">
+  <div class="wrap">
+
+    <!-- ① 見出し -->
+    <header>
+      <p class="eyebrow">Personal OS ・ AIエージェント基盤 ・ 2026-07-03</p>
+      <h1>Orcaコックピットと指揮系統の構造</h1>
+      <p class="lede">Orca上でAIエージェントを「実装／レビューの2ペイン」で回す<b>コックピット</b>と、それを動かす<b>中央管理職（人間ゲート → 全体管理者 → 指揮官 → ワーカー）</b>の構成・正本の在り処を1枚に。操作する道具は <b>orca-cockpit</b>（機構）と <b>cockpit-supervisor</b>（判断）の2スキル。正本は <b>説明書2枚</b>、スキルはそれを指すポインタ。</p>
+    </header>
+
+    <!-- ② アンカーチップ -->
+    <nav class="chips">
+      <a class="chip" href="#sec-hier">5層の指揮系統</a>
+      <a class="chip" href="#sec-gate">人間ゲート</a>
+      <a class="chip" href="#sec-skills">2つのスキル</a>
+      <a class="chip" href="#sec-cli">CLI操作</a>
+      <a class="chip" href="#sec-watch">見張り番</a>
+      <a class="chip" href="#sec-loc">正本と場所</a>
+      <a class="chip" href="#sec-ref">参照の3層</a>
+      <a class="chip" href="#sec-note">注意点</a>
+    </nav>
+
+    <!-- ③ 要点カード -->
+    <section>
+      <h2>要点</h2>
+      <div class="cards">
+        <div class="card">
+          <p class="h">道具は2スキル</p>
+          <p><b>orca-cockpit</b>＝コックピット構築・駆動の機構（<code>cockpit.sh</code>／<code>watch.sh</code>）。<b>cockpit-supervisor</b>＝「起きたら何を判断するか」の手順。<b>機構と判断を分離</b>している。</p>
+        </div>
+        <div class="card">
+          <p class="h">中央管理職は5層</p>
+          <p><b>人間ゲート → 全体管理者A → GM／中間指揮官 → ワーカー</b>。人間は承認だけで日常のペイン監督はしない。停滞の<b>一次対応はGM/指揮官</b>。</p>
+        </div>
+        <div class="card">
+          <p class="h">正本は説明書2枚</p>
+          <p><b>運用契約.md</b>（契約§2）と<b>指揮官ロースター.md</b>が権限・編成の正本。スキルはそれを指す<b>ポインタ</b>、runtimeは<b>symlink露出</b>。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ④ 図1: 指揮系統の全体像 -->
+    <section id="sec-hier">
+      <h2>全体像 — 指揮の下りと監督ループ</h2>
+      <p class="slede">人間から下へ指揮が流れ、右側で見張り番 <code>watch.sh</code> がワーカーを監視し、節目でGM/指揮官を起こす。コックピットはこの図の「GM/指揮官 → ワーカー」の1レーンを立てる装置。</p>
+      <figure>
+        <svg width="100%" viewBox="0 0 720 340" role="img" aria-label="指揮系統の全体像。人間・全体管理者A・GM/中間指揮官・ワーカーの4段と、右側の見張り番watch.shによる監視ループ。">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+            <marker id="arw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--warn)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+
+          <!-- 人間 -->
+          <rect x="200" y="16" width="310" height="42" rx="10" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/>
+          <text x="355" y="42" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="600" fill="var(--accent-ink)">人間 — 裁定・承認・人間ゲートのみ</text>
+          <line x1="355" y1="58" x2="355" y2="80" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <!-- 全体管理者A -->
+          <rect x="200" y="82" width="310" height="50" rx="10" fill="var(--accent-soft)" stroke="var(--accent-ink)" stroke-width="1.3"/>
+          <text x="355" y="103" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="600" fill="var(--ink)">全体管理者A ＝ 采配の単一writer</text>
+          <text x="355" y="121" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="var(--muted)">Fable 5 ／ personal-os 正本・編成・契約の変更権</text>
+          <line x1="355" y1="132" x2="355" y2="152" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <!-- GM/中間指揮官 -->
+          <rect x="200" y="154" width="310" height="50" rx="10" fill="var(--surface)" stroke="var(--line)" stroke-width="1"/>
+          <text x="355" y="175" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="600" fill="var(--ink)">GM（連邦制）／ 中間指揮官</text>
+          <text x="355" y="193" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="var(--muted)">レーン起動・レビュー配布・一次対応 ／ Opus 4.8</text>
+          <line x1="355" y1="204" x2="355" y2="224" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <!-- ワーカー -->
+          <rect x="200" y="226" width="310" height="94" rx="10" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1"/>
+          <text x="355" y="245" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="var(--muted)">ワーカー ＝ worktree上の実装／レビュー 2ペイン</text>
+          <rect x="216" y="256" width="132" height="52" rx="8" fill="var(--go-soft)" stroke="var(--go)" stroke-width="1"/>
+          <text x="282" y="278" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="600" fill="var(--go-ink)">実装ペイン</text>
+          <text x="282" y="295" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="var(--go-ink)">claude sonnet5</text>
+          <rect x="362" y="256" width="132" height="52" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/>
+          <text x="428" y="278" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="600" fill="var(--accent-ink)">レビューペイン</text>
+          <text x="428" y="295" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="var(--accent-ink)">codex gpt-5.5</text>
+
+          <!-- 見張り番 watch.sh -->
+          <rect x="556" y="154" width="150" height="166" rx="10" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <text x="631" y="182" text-anchor="middle" font-family="var(--sans)" font-size="12.5" font-weight="700" fill="var(--warn-ink)">見張り番</text>
+          <text x="631" y="200" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--warn-ink)">watch.sh</text>
+          <text x="631" y="224" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">60秒周期でpoll</text>
+          <text x="631" y="239" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">マーカー検知</text>
+          <text x="631" y="254" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">→ 1行返してWAKE</text>
+          <!-- 監視: watch → ワーカー -->
+          <line x1="556" y1="288" x2="512" y2="288" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#ar)"/>
+          <text x="534" y="281" text-anchor="middle" font-family="var(--sans)" font-size="9" fill="var(--muted)">監視</text>
+          <!-- WAKE: watch → GM段 -->
+          <line x1="600" y1="154" x2="512" y2="182" stroke="var(--warn)" stroke-width="1.4" marker-end="url(#arw)"/>
+          <text x="566" y="156" text-anchor="middle" font-family="var(--sans)" font-size="9" font-weight="600" fill="var(--warn-ink)">WAKE</text>
+
+          <!-- 左ラベル -->
+          <text x="150" y="140" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="var(--muted)" transform="rotate(-90 150 140)">指揮の下り　↓</text>
+        </svg>
+        <figcaption><b>読み方</b>：指揮は上から下へ。<code>watch.sh</code> はワーカーを監視し、完了/レビュー/停滞などの節目でGM/指揮官を <b>WAKE</b> する（判断はせず「1行返してexit」するだけ）。マージ・push は必ずワーカー→人間の<b>人間ゲート</b>（承認のみ）。</figcaption>
+      </figure>
+    </section>
+
+    <!-- ⑤ 節: 5層の指揮系統 -->
+    <section>
+      <h2>各層は誰が・何を・どこまで</h2>
+      <p class="slede">正式名は「マルチ指揮官体制（連邦制）」。上位ほど権限が広く、破壊操作だけは全層を貫いて人間に留保される。</p>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">承認のみ</span>人間（ユーザー）</p>
+          <p class="dbody"><b>最上位</b>。裁定・承認と人間ゲート項目だけを担当。<b>日常のペイン監督・解除はしない</b>のが明文原則。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">単一writer</span>全体管理者A ＝ personal-os GM</p>
+          <p class="dbody">Claude Codeデスクトップ・<b>Fable 5</b>。<b>采配（振り分け）の唯一の書き手</b>で、実行の割り当ては必ずAを通す。<b>personal-os の正本・編成・契約の変更権はAだけ</b>（他GMへ委任しない）。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead">GM ＝ プロジェクト別 全体管理者（連邦制）</p>
+          <p class="dbody"><b>人間が直接対話する主経路</b>。第1号＝仕事GM。domain内の<b>企画・計画確定・レーン起動・レビュー配布・repo内commit</b>まで委任され、ペイン停滞の一次対応義務も持つ。push／merge／削除／外部送信は不可。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead">中間指揮官</p>
+          <p class="dbody">orca司令部ペイン・<b>Opus 4.8</b>。Aの采配下で<b>割り当てられた管轄</b>のレーンを回す。commit・テストまで。企画・裁定権はなく、采配外の玉は勝手に着手せず <code>kickoff</code> で起票してAへ回す。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead">ワーカー（実装／レビュー 2ペイン）</p>
+          <ul>
+            <li><b>実装ペイン</b>：claude sonnet5（acceptEdits）。worktree内の実装のみ。</li>
+            <li><b>レビューペイン</b>：codex gpt-5.5 xhigh（read中心）。<b>異系統でクロスチェック</b>を各段で維持。</li>
+            <li>push・main反映・削除はしない。対話的質問ツール禁止（自走・保守的既定で進める）。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑤ 節: 人間ゲート -->
+    <section id="sec-gate">
+      <h2>人間は「承認」と「止めない設計」だけを持つ</h2>
+      <p class="slede">人間ゲートは破壊操作の承認に限定され、ペインの停滞対応はGM/指揮官へ降ろされている。これが「指示しないと止まる」を作らないための2026-07-03の裁定。</p>
+      <div class="callout acc">
+        <p class="ct">人間ゲート ＋ 認証エスカレーション標準（契約§2・§7）</p>
+        <ul>
+          <li><b>人間ゲート＝承認のみ</b>：削除・履歴改変・hook/launchd登録・<code>git push</code>・main反映・外部公開・本番データ/DB migration。パイプラインの<b>入口（企画・計画レビュー）と出口（人間確認）の2点</b>だけが人間。中間（実装⇄レビュー）はAIが自動で進める。</li>
+          <li><b>停滞の一次対応者はGM/指揮官</b>：権限確認・質問・利用上限などで止まったペインは、人間でなく<b>管轄GM/指揮官が watch WAKE経由で目安2分以内に解除</b>。人間がペインを直接突くのは例外運用。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ⑤ 節: 2つのスキル -->
+    <section id="sec-skills">
+      <h2>コックピットを動かす2スキル ＝ 機構と判断の分離</h2>
+      <p class="slede">同じコックピットを、片方が「機械的に組み立て」、もう片方が「起きたら何を判断するか」で受け持つ。両者は互いに「正本はそちら」と参照し合い、本文を複製しない。</p>
+      <div class="compare2">
+        <div class="ccol">
+          <p class="h"><span class="pill go">機構</span>orca-cockpit</p>
+          <p class="sub">決定的な構築・駆動（scripts）</p>
+          <ul>
+            <li><b>cockpit.sh</b>：worktree作成→画面分割→agent起動→プロンプト注入を一括実行（723行）</li>
+            <li><b>watch.sh</b>：見張り番。節目マーカーを検知しWAKE理由を返す（348行）</li>
+            <li><b>role-prompts.md</b>：各ペイン役割の定型プロンプト（正本）</li>
+            <li><b>worktree-sweep.sh</b>：夜締めのクローズ候補検知（削除はしない）</li>
+          </ul>
+        </div>
+        <div class="ccol">
+          <p class="h"><span class="pill acc">判断</span>cockpit-supervisor</p>
+          <p class="sub">監督の判断手順（メタスキル）</p>
+          <ul>
+            <li><b>WAKE理由別の対応</b>：完了→配布／PASS→人間ゲート／FAIL→差し戻し</li>
+            <li><b>構成カード基準</b>：2ペイン既定・3ペイン例外の見極め</li>
+            <li><b>差し戻し上限</b>：フル2回・ライト1回、超過で人間へ</li>
+            <li>決定的処理は持たない＝「起きたら何をするか」だけ</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑤ 節: CLI操作 -->
+    <section id="sec-cli">
+      <h2>構築から撤収までのCLI操作フロー</h2>
+      <p class="slede"><code>cockpit.sh</code> のサブコマンドで、構成カード提示→起動→監督→撤収を回す。起動は「プロンプトを起動引数に畳み込む」方式で、別途 send しないため送信レースが構造的に起きない。</p>
+      <ol class="steps">
+        <li><span class="stepno">1</span><div><p class="h"><code>plan</code> — 構成カードを提示</p><p>worktree作成も分割もせず、レーン名／repo・branch／ペイン構成／権限モード／起動コマンド案を stdout に出すだけ。<b>人間OKの前段</b>。</p></div></li>
+        <li><span class="stepno">2</span><div><p class="h"><code>up</code> — レーンを一括起動</p><p>worktree作成＋画面分割＋agent起動＋プロンプト注入を1コマンドで。既存repoに1ペインだけ最速で立てるなら <code>spawn --no-mcp</code>（MCP無効で高速）。</p></div></li>
+        <li><span class="stepno">3</span><div><p class="h"><code>send</code> / <code>status</code> — 指示追加と監督</p><p>追加指示を送る、状態を確認する。<code>orca terminal read</code> で盤面（ペインのpreview）を直接読む。</p></div></li>
+        <li><span class="stepno">4</span><div><p class="h"><code>watch.sh</code>（自動） — 見張り番</p><p>60秒周期でポーリングし、節目マーカーでWAKE。<b>ここから cockpit-supervisor の判断へ</b>。</p></div></li>
+        <li><span class="stepno">5</span><div><p class="h"><code>down</code> — レーン撤収</p><p>レビューPASS＆人間のマージ承認後に後片付け。</p></div></li>
+      </ol>
+    </section>
+
+    <!-- ⑤ 節: 見張り番WAKE -->
+    <section id="sec-watch">
+      <h2>見張り番が指揮官を起こす「節目」</h2>
+      <p class="slede">watch.sh は「grepと時計だけ」で判断はしない。最終行のマーカーと経過時間で、優先度順に次の理由でWAKEする。</p>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill warn">即WAKE</span>エラー ／ 人間確認待ち</p>
+          <p class="dbody">agentが error/failed系、または最終行が「<b>段階: 人間確認待ち</b>」。前者はログ確認して原因が明確なら是正、不明なら人間へ。後者は<b>AIだけで進めず人間判断</b>。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead">完了 ／ レビューマーカー</p>
+          <ul>
+            <li><code>&lt;ID&gt;_DONE</code> → レビューペインへ<b>自動で配布</b>（受け渡し自動化v1）</li>
+            <li><code>REVIEW_RESULT: PASS</code> → マージは<b>人間ゲート</b></li>
+            <li><code>REVIEW_RESULT: FAIL</code> → 差し戻し（上限フル2回・ライト1回）</li>
+          </ul>
+        </div>
+        <div class="ditem">
+          <p class="dhead">停滞（waiting／idle／working偽装）</p>
+          <p class="dbody">権限ダイアログ無音（約2分）・完了なきidle（約4分）・利用上限で working のまま固まる（約5分・画面シグネチャ検知）。いずれも<b>一次対応で解除</b>して再開を促す。</p>
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <details class="disc">
+        <summary>残りのWAKE理由（busy継続・タイムアウト）を見る</summary>
+        <ul>
+          <li><b>busy 約25分継続</b>：長時間稼働だが異常ではない。ハートビート通知として受理、<b>対応不要</b>。</li>
+          <li><b>3時間タイムアウト</b>（<code>WATCH_MAX=10800</code>）：進捗未達。<code>orca worktree ps</code> とログで全体点検し、続行／中断／仕切り直しを判断。</li>
+          <li>優先度と閾値は <code>watch.sh</code> 内の <code>WATCH_WAIT_N</code>／<code>WATCH_STALL_N</code>／<code>WATCH_BUSY_N</code> 等で調整。</li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- ⑤ 節: 正本と場所（tree） -->
+    <section id="sec-loc">
+      <h2>正本と管理場所 — どこに何があるか</h2>
+      <p class="slede">起点は <code>~/Private/personal-os/</code>。権限・編成の正本は <b>説明書/</b> の2枚、体制設計は <b>plans/</b> の親program、機構は <b>AIエージェント基盤/skills/</b>（ここだけ別git repo）。</p>
+      <pre class="tree">~/Private/personal-os/
+├── <span class="mod">説明書/</span>
+│   ├── 運用契約.md            <span class="mod">← 契約の正本（§2＝パイプライン・人間ゲート・エスカレーション）</span>
+│   ├── 指揮官ロースター.md     <span class="mod">← 編成・管轄・権限の正本</span>
+│   └── README.md             <span class="note">運用モデルの入口</span>
+├── my-brain/areas/ai運用/
+│   ├── 決定ログ.md            <span class="note">裁定の履歴（規約変更の証跡）</span>
+│   └── plans/active/2026-07-03-マルチ指揮官体制/
+│       ├── program.md        <span class="mod">← 体制設計の正本（子01〜10）</span>
+│       └── plans/10-連邦制の判断軸.md   <span class="mod">←「子10」GM判断軸</span>
+├── my-brain/ゴール/デイリー/2026/07/2026-07-03.md
+│                             <span class="note">## 依頼インボックス（起票先）／## 計画ボード（自動描画）</span>
+└── <span class="add">AIエージェント基盤/</span>   <span class="note">※ここだけ別git repo（ai-agent-foundation）</span>
+    ├── skills/
+    │   ├── <span class="add">orca-cockpit/</span>       <span class="note">コックピット機構の正本（cockpit.sh / watch.sh / role-prompts.md）</span>
+    │   └── <span class="add">cockpit-supervisor/</span>  <span class="note">監督判断の正本（SKILL.md）</span>
+    └── loops-registry/
+        ├── ai-jobs/          <span class="warnx">run-card置き場 ＝ 現在は休眠</span>
+        └── loops/renderer/   <span class="note">デイリー計画ボードの自動描画</span></pre>
+      <div style="height:12px"></div>
+      <details class="disc">
+        <summary>ai-jobs はなぜ「休眠」なのか</summary>
+        <p class="dbody"><b>ai-jobs（ready/running/review/… の待ち行列）は物理的に空</b>で、AGENTS.md 冒頭に「休眠」と明記。理由は現在が<b>モードB＝全体管理者Aという単一の振り分け役</b>がテキストで采配しているため。調停者が1人いる間は「複数ワーカーがアトミックに列を取り合う」ai-jobs本来の機能が不要。再開条件は、同じ列を取り合う定型処理が2本以上＋dispatcherスモーク合格＋人間承認。</p>
+      </details>
+    </section>
+
+    <!-- ④ 図2: 参照の3層 -->
+    <section id="sec-ref">
+      <h2>参照は3層 — 正本・ポインタ・ビュー</h2>
+      <p class="slede">「正本は1か所」を徹底し、スキルは正本を指すだけ、デイリーや計画ボードは正本から自動描画されるビュー。二重管理（同じ本文のコピー）を禁止している。</p>
+      <figure>
+        <svg width="100%" viewBox="0 0 720 300" role="img" aria-label="参照の3層。中央の正本に対し、左からスキルが参照し、右からruntimeがsymlink露出し、下へビューが自動描画される。">
+          <defs>
+            <marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+          <!-- 中央: 正本 -->
+          <rect x="268" y="104" width="184" height="90" rx="12" fill="var(--accent-soft)" stroke="var(--accent-ink)" stroke-width="1.3"/>
+          <text x="360" y="133" text-anchor="middle" font-family="var(--sans)" font-size="15" font-weight="700" fill="var(--accent-ink)">正本（1か所）</text>
+          <text x="360" y="155" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="var(--ink)">運用契約 ／ 指揮官ロースター</text>
+          <text x="360" y="172" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="var(--ink)">program ／ 決定ログ ／ skills</text>
+
+          <!-- 左: スキル(ポインタ) -->
+          <rect x="24" y="118" width="176" height="62" rx="10" fill="var(--surface)" stroke="var(--line)" stroke-width="1"/>
+          <text x="112" y="143" text-anchor="middle" font-family="var(--sans)" font-size="12.5" font-weight="600" fill="var(--ink)">スキル SKILL.md</text>
+          <text x="112" y="161" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="var(--muted)">ポインタ（本文複製せず）</text>
+          <line x1="200" y1="149" x2="266" y2="149" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar2)"/>
+          <text x="233" y="142" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">参照</text>
+
+          <!-- 右: runtime露出 -->
+          <rect x="520" y="118" width="176" height="62" rx="10" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1"/>
+          <text x="608" y="143" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--ink)">~/.claude/skills 他</text>
+          <text x="608" y="161" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="var(--muted)">runtime露出</text>
+          <line x1="520" y1="149" x2="454" y2="149" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar2)"/>
+          <text x="487" y="142" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">symlink</text>
+
+          <!-- 下: ビュー -->
+          <rect x="230" y="238" width="260" height="48" rx="10" fill="var(--go-soft)" stroke="var(--go)" stroke-width="1"/>
+          <text x="360" y="260" text-anchor="middle" font-family="var(--sans)" font-size="12.5" font-weight="600" fill="var(--go-ink)">ビュー：デイリー ／ 計画ボード ／ Notion</text>
+          <text x="360" y="277" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="var(--go-ink)">状態の第2保管庫にしない（表示専用）</text>
+          <line x1="360" y1="194" x2="360" y2="236" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar2)"/>
+          <text x="360" y="222" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="var(--muted)">レンダラが自動描画</text>
+        </svg>
+        <figcaption><b>正本</b>だけが書き場所。<b>スキル</b>は正本を参照するポインタ（各SKILL.md冒頭に「正本ポインタ・本文複製しない」と明記）、<b>runtime</b>（<code>~/.claude/skills</code> 等）は正本skillへのsymlink露出、<b>ビュー</b>はレンダラが正本から冪等生成する表示層。この分離が「二重管理禁止（契約§5）」の実装。</figcaption>
+      </figure>
+    </section>
+
+    <!-- ⑤ 節: 注意点 -->
+    <section id="sec-note">
+      <h2>正確に見るための注意点（率直に）</h2>
+      <p class="slede">この構造は「完成品」ではなく移行の途中で、ドキュメントと実装の食い違いも実在する。鵜呑みにせず次の3点を前提に読む。</p>
+      <div class="callout">
+        <p class="ct">移行中・未完・ズレ</p>
+        <ul>
+          <li><b>2026-07-03はまさに移行当日</b>：マルチ指揮官体制へ切替中。ロースターの「今日の編成」はスナップショットで<b>流動的</b>（指揮官B/Cは閉鎖予定・司令部方式への全面切替は翌朝会がゲート）。編成の現在値は日々変わる。</li>
+          <li><b>GM標準権限セットは未完</b>：子10の完了条件は<b>すべて未チェック</b>。反映済みは「停滞の一次対応義務」だけで、GM権限の独立節はまだ正本文書に無い（規約はロースターと子10本文に分散）。</li>
+          <li><b>ドキュメントと実装のズレ2点</b>：①既定モデルが SKILL.md本文＝codex medium、<code>cockpit.sh</code>実装＝claude sonnet5／codex xhigh（<b>実装側が新しい</b>・本文の更新漏れの可能性）。②「受け渡し自動化v1」は SKILL.md では「未実装（手動）」だが <code>watch.sh</code> では<b>既に有効化済み</b>。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ⑥ 根拠・出典 -->
+    <section>
+      <h2>根拠・出典</h2>
+      <ul class="source">
+        <li><b>運用契約</b> — <code>~/Private/personal-os/説明書/運用契約.md</code>（§2 パイプライン・人間ゲート・認証エスカレーション標準／§5 二重管理禁止／§7 セキュリティ）</li>
+        <li><b>指揮官ロースター</b> — <code>~/Private/personal-os/説明書/指揮官ロースター.md</code>（編成・管轄・連邦制/GM規約・キャパ規約）</li>
+        <li><b>体制設計・子10</b> — <code>~/Private/personal-os/my-brain/areas/ai運用/plans/active/2026-07-03-マルチ指揮官体制/</code>（program.md ＋ plans/10-連邦制の判断軸.md）</li>
+        <li><b>決定ログ</b> — <code>~/Private/personal-os/my-brain/areas/ai運用/決定ログ.md</code></li>
+        <li><b>コックピット機構</b> — <code>…/AIエージェント基盤/skills/orca-cockpit/</code>（SKILL.md ／ scripts/cockpit.sh ／ scripts/watch.sh ／ references/role-prompts.md）</li>
+        <li><b>監督判断</b> — <code>…/AIエージェント基盤/skills/cockpit-supervisor/SKILL.md</code></li>
+        <li><b>調査方法</b> — Sonnet 5 サブエージェント3本による実地調査（Read/Grep、2026-07-03）。本ページは Opus が統合・解釈。</li>
+      </ul>
+    </section>
+
+  </div>
+</div>

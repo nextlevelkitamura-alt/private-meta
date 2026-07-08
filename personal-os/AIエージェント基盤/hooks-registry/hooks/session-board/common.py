@@ -4,8 +4,8 @@
 # 受け口（claude/・codex/ の各 .py）は realpath で自分の実体を解決し、ここを import する。
 #
 # 役割分担（2026-07-08 再設計・Python=枠と機械処理／AI=意味づけ）:
-#   SessionStart     = start_register(): 生存照合＋行の「枠」を登録（add・既存行は不変）＋キー通知1行
-#   UserPromptSubmit = register_prompt(): 未登録保険／⏸→🟢復帰／「今」初回仮置き＋二段注入
+#   SessionStart     = start_register(): 生存照合＋キー通知1行のみ（枠登録はしない＝初回プロンプトへ一本化・幽霊枠掃除）
+#   UserPromptSubmit = register_prompt(): 枠登録（初回・主経路）／⏸→🟢復帰／「今」初回仮置き＋二段注入
 #                      （目標未記入=フルガイド／記入済み=2〜3行ミラー）のテキストを返す
 #   Stop             = stop_flip(): run→⏸＋reconcile
 # 受け口は返ったテキストを runtime の契約（Claude=plain stdout / Codex=JSON）で出すだけ。
@@ -108,16 +108,17 @@ def board_reconcile():
 # ---- hook 本体 ----
 
 def start_register(d, runtime):
-    """SessionStart 共通: 生存照合＋枠登録＋キー通知1行（注入テキストを返す。対象外は None）。
-    枠＝時刻・🟢・repo・runtime/?。意味づけ（目標・種別・今・モデル）は AI が後で update する。"""
+    """SessionStart 共通: 生存照合＋キー通知1行のみ（枠登録はしない・注入テキストを返す。対象外は None）。
+    枠登録は初回プロンプト時（register_prompt の保険 add）へ一本化した（2026-07-08 幽霊枠掃除）。
+    プロンプトを持たない/ガードで弾かれる補助セッションは枠が載らなくなる。意味づけは AI が後で update する。"""
     key = session_key(d)
     if not key or is_subagent(d):
         return None
     repo = repo_of(d.get("cwd") or "")
     board_reconcile()
-    board_add(key, repo, f"{runtime}/{PLACEHOLDER}")
-    return (f"[session-board] ボードキー s:{key}（{repo or '?'}・行は登録済み）。"
-            "依頼を理解したら update で目標・種別・今・モデルを正す（手順は最初のプロンプト時に注入される）。")
+    return (f"[session-board] ボードキー s:{key}（{repo or '?'}）。"
+            "行は最初のプロンプト時に登録される。依頼を理解したら "
+            "update で目標・種別・今・モデルを正す（手順もその時に注入）。")
 
 
 def _summarize(prompt):
@@ -182,7 +183,7 @@ def _mirror(key, row):
 
 
 def register_prompt(d, runtime):
-    """UserPromptSubmit 共通: 未登録→枠登録（SessionStart失敗時の保険）／⏸→🟢復帰／
+    """UserPromptSubmit 共通: 未登録→枠登録（初回プロンプトで枠を作る主経路・2026-07-08）／⏸→🟢復帰／
     「今」が未記入なら先頭24字を初回だけ仮置き（以降 Python は「今」を上書きしない）。
     注入テキストを返す（subagent／スラッシュ／空・添付のみ は None）。🔵(sub) は触らない。"""
     key = session_key(d)

@@ -41,6 +41,7 @@ hook は「イベント直後に軽い決まった処理を挟む」もの（記
 
 - 本文はここが正本。runtime登録（settings.json/hooks.json/trust）は露出＝人間ゲート。**例外**: session-board の hook 登録・更新・**symlink 露出**は包括承認済み（2026-07-05・承認ルールB）。他フックの追加・削除は人間ゲート。
 - hook は**非ブロッキング**（内部失敗でも本体セッションを止めない）。secret/token/値を書かない（ポインタのみ）。
+- **フックの実装言語＝既定 Python。** hook本体は stdin の JSON を読み・状態を構造化編集し（flock/原子的書き込み）・単体テストで守るため、ロジックを持つものは Python（`board.py`・`common.py`・受け口 `.py`）。shell を使ってよいのは launchd/cron の入口（`cd` して `.py` を呼ぶ薄い起動役）／繋ぐだけのグルー／ワンショット診断（`registered.sh`）／パイプ集計 のみ。**迷ったら Python。** テストも原則 Python（`board.py` を import して関数を直接検証／通しの E2E だけ `tests/*.sh`）。パースやロジックが要る所は loop でも `.py`（例: `notion_helper.py`）。
 - 記録の住み分け: dispatch されたジョブ（`AIJOBS_RUN=1`）・subagent（`agent-*`／`*/subagents/*`）は記録しない。ad-hoc な対話だけ拾う。
 - global 運用ルール（Claude/Codex 共通の動き方）は `GLOBAL_AGENTS.md` が正本・各 runtime へ symlink 済み。**hook 側にコピーしない**（二重管理禁止）。
 - `CLAUDE.md` は `AGENTS.md` への相対symlink。

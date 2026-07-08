@@ -5,7 +5,7 @@ set -u
 SB="$(cd "$(dirname "$0")/.." && pwd)"
 CL="$(cd "$(dirname "$0")/../../../claude" && pwd)"
 CX="$(cd "$(dirname "$0")/../../../codex" && pwd)"
-SP="$(cd "$(dirname "$0")" && pwd)/sbtest2"
+SP="$(mktemp -d)/sbtest2"   # 作業ゴミは tests/ でなく tmp へ（tests/ を汚さない）
 rm -rf "$SP"; mkdir -p "$SP/goal" "$SP/tx/proj"
 export GOAL_BASE="$SP/goal" SESSION_BOARD_DATE="2099-01-02" SESSION_BOARD_TX_ROOTS="$SP/tx"
 BOARD="$SB/board.py"

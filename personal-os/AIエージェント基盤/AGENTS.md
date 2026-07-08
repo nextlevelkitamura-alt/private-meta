@@ -19,6 +19,7 @@ global に使うもの（Skill・loop・hook）は、実体をここに登録し
   - `~/.claude/CLAUDE.md`
   - `~/.codex/AGENTS.md`
   - `~/.config/opencode/AGENTS.md`
+- `AIモデル一覧.md` … 契約サブスクと用途別モデル使い分けの正本（2026-07-08新設・決定ログ#11のレーン規約を集約）。各計画・Skill・フローは本文をコピーせずここを参照する。
 
 ## git（`~/Private` 単一repoに統合済み）
 - この基盤は 2026-07-05 に `~/Private`（`private-meta`・remote `nextlevelkitamura-alt/private-meta`・branch `main`）へ**統合済み**。もう別repoではない（旧 `ai-agent-foundation` はGitHub archiveに履歴が残る・参照専用）。

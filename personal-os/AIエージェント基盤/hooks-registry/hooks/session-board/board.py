@@ -40,6 +40,7 @@ STATE_WORD = {RUN: "run", WAIT: "wait", SUB: "sub"}
 STALE_MIN = 10        # 🟢: 実体トランスクリプトがN分超沈黙なら死体→⏸へ降格
 STALE_MIN_SUB = 30    # 🔵: サブ委託は長引くので閾値を緩く（実体照合はサブのファイルも見る）
 STALE_MIN_NOFILE = 15 # 🟢/🔵: 実体が探索ルートに1つも無い枠は開始からN分「超」で幽霊枠→⏸（補助セッション掃除・行は消さない）
+NOFILE_MAX = 720      # 実体皆無の掃除が有効なのは開始からこの分数「未満」まで（逆行クロックの +1440≈1439 を弾く上限・12h）
 PLACEHOLDER = "?"     # goal/now/who の未記入プレースホルダ（AIが update で正す）
 AGENTS_H = "## 動いているエージェント"
 DONE_H = "## 終わったこと"
@@ -272,8 +273,11 @@ def reconcile_rows(lines):
         if files is None:                 # 遅延: 🟢/🔵が1つも無ければツリーを走査しない
             files = _list_transcripts()
         f = _newest_for(r["key"], files)
-        if f is None:                     # 実体皆無の枠: 開始から15分超で幽霊枠→⏸（日跨ぎは _minutes_between が +1440）
-            if _minutes_between(r["time"], now_hhmm) > STALE_MIN_NOFILE:
+        if f is None:                     # 実体皆無の枠: 幽霊枠掃除（誤爆を防ぐガード付き）
+            m = _minutes_between(r["time"], now_hhmm)
+            limit = STALE_MIN_SUB if r["state"] == SUB else STALE_MIN_NOFILE
+            # files空→探索不能につき抑止（全行一括⏸を防ぐ）／🔵は30分猶予／上限NOFILE_MAXで逆行クロック(+1440≈1439)を弾く
+            if files and limit < m < NOFILE_MAX:
                 r["state"] = WAIT
                 lines[j] = fmt(r)
             continue

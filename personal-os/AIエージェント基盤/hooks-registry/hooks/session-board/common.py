@@ -18,8 +18,6 @@ import sys
 # common.py 自身の実体ディレクトリ＝共有本体（board.py・手順md）の置き場。
 CORE_DIR = os.path.dirname(os.path.realpath(__file__))
 BOARD = os.path.join(CORE_DIR, "board.py")
-REPO_SUMMARY = os.path.expanduser(
-    "~/Private/personal-os/AIエージェント基盤/repo-registry/repo概要.md")
 PLACEHOLDER = "?"
 TYPES = "計画|実装|リサーチ|レビュー|その他"
 # 種別の一言定義（詳細・境界例の正本は README.md。ここは注入用の最小コピー）
@@ -68,7 +66,7 @@ def board_check(key):
 
 
 def board_show(key):
-    """行の中身を dict で（state/goal/now/type/repo/who）。無ければ None。"""
+    """行の中身を dict で（state/goal/now/type/repo/who/plan）。無ければ None。"""
     out = subprocess.run([BOARD, "show", "--key", key],
                          capture_output=True, text=True).stdout.rstrip("\n")
     if not out or out == "missing":
@@ -76,7 +74,7 @@ def board_show(key):
     parts = out.split("\t")
     if len(parts) < 6:
         return None
-    return dict(zip(("state", "goal", "now", "type", "repo", "who"), parts))
+    return dict(zip(("state", "goal", "now", "type", "repo", "who", "plan"), parts))
 
 
 def board_goals():
@@ -127,15 +125,18 @@ def _summarize(prompt):
 
 
 def _first_guide(key, repo, runtime):
-    """初回注入（目標が未記入の間）: 記入コマンド・種別定義・既存目標一覧・計画チェーン。"""
+    """初回注入（目標が未記入の間）: 記入コマンド・種別/計画列定義・既存目標一覧・既存計画確認・計画3判定。"""
     goals = board_goals()
     lines = [
         f"[session-board] s:{key} | {repo or '?'} | {runtime}",
         "最初の依頼を理解したら、ボード行を正す（Bash 1コマンド・このセッションで1回）:",
         f"  {BOARD} update --key {key} --type <{TYPES}> "
         "--goal \"<達成したらこのセッションを閉じられる1行・30字以内>\" "
-        "--now \"<いま着手する一歩・20字以内>\" --model <自分のモデル名（小文字短縮 例: fable5）>",
+        "--now \"<いま着手する一歩・20字以内>\" --model <自分のモデル名（小文字短縮 例: fable5）> "
+        "--plan \"<企画名[/NN] か なし>\"",
         TYPE_DEFS,
+        "計画列: 計画=これから置く先／実装・レビュー=拠り所の計画／リサーチ=任意。"
+        "①1〜2ファイル ②容易に戻せる ③人間ゲート無し の全YESなら --plan なし でよい（運用契約§2のサクッと）。",
     ]
     if goals:
         lines += [
@@ -144,8 +145,16 @@ def _first_guide(key, repo, runtime):
             "（親名=目標名で成果が1つの親に集まる）。無関係なら新しい目標を立てる。",
         ]
     lines += [
-        f"計画種別なら: {REPO_SUMMARY} でどのrepoの計画かを判定（cwdでなく依頼の中身で）"
-        "→ そのrepoの AGENTS.md → <repo>/plans/<バケット>/ へ（GLOBAL_AGENTS.md §6）。",
+        "置く前に ls <repo>/plans/{planning,active} で既存計画・親programを確認（重複新設しない）。",
+        "計画種別なら、置く前に3判定（詳細: 運用契約§2・areas/AGENTS.md §3）:",
+        " ①規模: ①1〜2ファイル ②容易に戻せる ③人間ゲート無し が全YES=サクッと → "
+        "計画ファイル不要（--plan なし・ボードとlogで足りる）。1つでもNOなら plan.md 必須。",
+        " ②形: 独立に完了する子計画を2本以上生む → program化（program.md＋plans/NN-子.md）。"
+        "それ以外は単発 plan.md。",
+        " ③完了条件: レビュー項目（「こうなっていれば正しい」形式・対象明示）を書いてから着手。"
+        "雛形: plan-ops new-plan.sh",
+        " 置き場: repo概要.md で所属repoを判定（cwdでなく依頼の中身で）→ そのrepo AGENTS.md → "
+        "<repo>/plans/。決めたら update --plan で宣言。",
         f"節目: {BOARD} log --key {key} --repo <repo> --parent <目標名> --entry <成果1行>"
         "（時刻・所要は自動付与）。サブエージェント起動中: flip --state sub／復帰: flip --state run。"
         f"完了は人間確認後に finish。詳細: {os.path.join(CORE_DIR, 'session-start.md')}",
@@ -154,15 +163,21 @@ def _first_guide(key, repo, runtime):
 
 
 def _mirror(key, row):
-    """2回目以降の注入（毎プロンプト・最小2〜3行）: 行のミラー＋ズレ回収の催促。"""
+    """2回目以降の注入（毎プロンプト・最小2〜3行）: 行のミラー＋ズレ回収の催促。
+    3行目は優先順で出し分け（種別=計画 ＞ 計画:? 催促 ＞ 2行のみ）。両該当は計画3判定のみ。"""
+    plan = row.get("plan") or PLACEHOLDER
     lines = [
-        f"[session-board] 目標:{row['goal']} | 今:{row['now']} | 種別:{row['type']}",
+        f"[session-board] 目標:{row['goal']} | 今:{row['now']} | 種別:{row['type']} | 計画:{plan}",
         f"→ 実態とズレていたら {BOARD} update --key {key} --now \"<今の一歩>\""
-        "（目標・種別が変われば --goal/--type も）。節目なら log。",
+        "（目標・種別・計画が変われば --goal/--type/--plan も）。節目なら log。",
     ]
     if row.get("type") == "計画":
-        lines.append("計画の置き場: repo概要.md→所属repoを判定→<repo>/plans/"
-                     "（cwdでなく依頼の中身で・GLOBAL_AGENTS.md §6）。")
+        lines.append("計画3判定: ①サクッと（3条件全YES）→ --plan なし ②子2本以上→program化 "
+                     "③レビュー項目を書いてから着手 → 置き場: repo概要.md→<repo>/plans/"
+                     "（運用契約§2・areas§3）。")
+    elif plan == PLACEHOLDER:
+        lines.append("計画:? → 拠り所（実装・レビュー）/置き先（計画）を update --plan で。"
+                     "①1〜2ファイル②容易に戻せる③人間ゲート無し 全YESなら --plan なし。")
     return "\n".join(lines)
 
 
@@ -183,7 +198,7 @@ def register_prompt(d, runtime):
         board_add(key, repo, f"{runtime}/{PLACEHOLDER}")
         row = board_show(key) or {"state": "run", "goal": PLACEHOLDER, "now": PLACEHOLDER,
                                   "type": "その他", "repo": repo or "?",
-                                  "who": f"{runtime}/{PLACEHOLDER}"}
+                                  "who": f"{runtime}/{PLACEHOLDER}", "plan": PLACEHOLDER}
     if row["state"] == "wait":
         board_flip(key, "run")
     if row["now"] == PLACEHOLDER:      # 初回だけの仮置き（枠を空にしない）。意味づけはAIの update --now

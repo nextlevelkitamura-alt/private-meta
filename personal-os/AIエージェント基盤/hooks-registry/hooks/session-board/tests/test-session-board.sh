@@ -67,6 +67,9 @@ echo "=== 9. finish: 行削除＋子追記 ==="
 ok "finish行削除" bash -c "! grep -qF 's:dddd0004' '$DAILY'"
 ok "finish子追記(+5m)" grepq "  - 00:15 (+5m) 締め"
 
+# aaaa0001/bbbb0002 は実働セッション＝実体トランスクリプトあり（幽霊枠掃除の対象外・以降のreconcileはmtimeで判定）
+touch "$SP/tx/proj/aaaa0001-x.jsonl" "$SP/tx/proj/bbbb0002-y.jsonl"
+
 echo "=== 10. 旧形式の読み互換と自動移行 ==="
 cat >> "$DAILY" <<'EOF'
 EOF
@@ -169,6 +172,20 @@ touch "$SP/tx/proj/plan0005-v2.jsonl"   # 実体あり(新しい)→reconcileで
 "$BOARD" reconcile
 ok "D3 reconcile1回でv2.2化" grepq "- 🟢 08:00 | v2混在行 | 今:確認 | V2Repo | 実装 | claude/? | 計画:? <!-- s:plan0005 -->"
 ok "D3 v2行(計画列なし)が残らない" bash -c "! grep -qF -- '| claude/? <!-- s:plan0005 -->' '$DAILY'"
+
+echo "=== 13. reconcile: 実体皆無の幽霊枠掃除（遅延登録の取りこぼし対策）==="
+# 補助セッション等で実体トランスクリプトが1つも無い枠。開始15分超→⏸、15分未満→維持（行削除はしない・⏸止まり）
+GHOST_OLD=$(date -v-16M +%H:%M)   # 16分前開始（>15分）→掃除対象
+GHOST_NEW=$(date -v-5M +%H:%M)    # 5分前開始（<15分）→維持
+"$BOARD" add --key gho5t001 --repo GhostRepo --who "claude/?" --time "$GHOST_OLD"
+"$BOARD" update --key gho5t001 --goal "実体なし枠(古)" --now "放置"
+"$BOARD" add --key gho5t002 --repo GhostRepo --who "claude/?" --time "$GHOST_NEW"
+"$BOARD" update --key gho5t002 --goal "実体なし枠(新)" --now "起動直後"
+# 実体ファイルは作らない（探索ルートに gho5t001/gho5t002 を含む .jsonl は無い）
+"$BOARD" reconcile
+[ "$("$BOARD" check --key gho5t001)" = "wait" ]; ok "実体なし15分超→⏸(幽霊枠掃除)" test $? -eq 0
+[ "$("$BOARD" check --key gho5t002)" = "run" ];  ok "実体なし15分未満→維持" test $? -eq 0
+ok "幽霊枠は行削除でなく⏸止まり（行は残る）" bash -c "grep -qF 's:gho5t001' '$DAILY'"
 
 echo; echo "== 結果: PASS=$PASS FAIL=$FAIL =="
 [ "$FAIL" -eq 0 ]

@@ -16,14 +16,18 @@ ok(){ local name="$1"; shift; if "$@" >/dev/null 2>&1; then PASS=$((PASS+1)); ec
 J_SS='{"session_id":"beefcafe-0000-1111-2222-333344445555","transcript_path":"'$SP'/tx/proj/beefcafe-0000.jsonl","cwd":"/tmp/repoZ","hook_event_name":"SessionStart"}'
 J_UP='{"session_id":"beefcafe-0000-1111-2222-333344445555","transcript_path":"'$SP'/tx/proj/beefcafe-0000.jsonl","cwd":"/tmp/repoZ","prompt":"セッションボードを再設計して実装まで進めたい"}'
 
-echo "=== 1. Claude SessionStart: 枠登録＋1行通知 ==="
+echo "=== 1. Claude SessionStart: 枠登録しない＋1行通知（遅延登録） ==="
 OUT=$(echo "$J_SS" | python3 "$CL/session-start/session-board-session-start.py")
 echo "$OUT" | grep -q "ボードキー s:beefcafe"; ok "SS通知1行" test $? -eq 0
 [ "$(echo "$OUT" | wc -l | tr -d ' ')" = "1" ]; ok "SS注入は1行だけ" test $? -eq 0
-grep -qF "| ? | 今:? | repoZ | その他 | claude/? | 計画:? <!-- s:beefcafe -->" "$DAILY"; ok "枠行が登録される" test $? -eq 0
+echo "$OUT" | grep -q "最初のプロンプト時に登録"; ok "SS通知は遅延登録を告知" test $? -eq 0
+# 遅延登録なので初回SS時点ではデイリー自体が未作成（reconcileは無ファイルなら何もしない）→ 枠は載らない
+! grep -qF "s:beefcafe" "$DAILY" 2>/dev/null; ok "SessionStartでは枠行が増えない" test $? -eq 0
 
-echo "=== 2. Claude UPS 初回: フルガイド＋今の仮置き ==="
+echo "=== 2. Claude UPS 初回: 枠を登録＋フルガイド＋今の仮置き ==="
 OUT=$(echo "$J_UP" | python3 "$CL/prompt-register/session-board-prompt-register.py")
+grep -qF "<!-- s:beefcafe -->" "$DAILY"; ok "初回プロンプトで枠が登録される（遅延登録の実体化）" test $? -eq 0
+grep -qF "| repoZ | その他 | claude/? | 計画:? <!-- s:beefcafe -->" "$DAILY"; ok "登録される枠は既定値（repo/runtime確定・意味づけは?）" test $? -eq 0
 echo "$OUT" | grep -q "最初の依頼を理解したら"; ok "初回=フルガイド" test $? -eq 0
 echo "$OUT" | grep -q "種別: 計画=進め方を決め文書化"; ok "種別5定義を含む" test $? -eq 0
 echo "$OUT" | grep -q "リサーチ"; ok "リサーチ語彙" test $? -eq 0
@@ -62,14 +66,15 @@ OUT=$(echo "$J2_UP" | python3 "$CL/prompt-register/session-board-prompt-register
 echo "$OUT" | grep -q "いま動いている他の目標: 「ボード再設計」"; ok "既存目標一覧の注入" test $? -eq 0
 echo "$OUT" | grep -q "コピーして合流"; ok "合流規約の案内" test $? -eq 0
 
-echo "=== 8. Codex 受け口: JSON契約 ==="
+echo "=== 8. Codex 受け口: JSON契約（枠は初回プロンプトで登録）==="
 J3_SS='{"session_id":"c0dec0de-0000-1111-2222-333344445555","transcript_path":"'$SP'/tx/proj/c0dec0de-0000.jsonl","cwd":"/tmp/repoZ","hook_event_name":"SessionStart"}'
 J3_UP='{"session_id":"c0dec0de-0000-1111-2222-333344445555","transcript_path":"'$SP'/tx/proj/c0dec0de-0000.jsonl","cwd":"/tmp/repoZ","prompt":"Codexからの依頼テスト"}'
 OUT=$(echo "$J3_SS" | python3 "$CX/session-start/session-board-session-start.py")
 echo "$OUT" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert "ボードキー s:c0dec0de" in d["hookSpecificOutput"]["additionalContext"]'; ok "Codex SS=JSON" test $? -eq 0
-grep -qF "| codex/? | 計画:? <!-- s:c0dec0de -->" "$DAILY"; ok "Codex枠行(runtime=codex)" test $? -eq 0
+! grep -qF "s:c0dec0de" "$DAILY" 2>/dev/null; ok "Codex SS時点では枠なし(遅延登録)" test $? -eq 0
 OUT=$(echo "$J3_UP" | python3 "$CX/prompt-register/session-board-prompt-register.py")
 echo "$OUT" | python3 -c 'import json,sys; d=json.load(sys.stdin); c=d["hookSpecificOutput"]["additionalContext"]; assert "最初の依頼" in c and d["hookSpecificOutput"]["hookEventName"]=="UserPromptSubmit"'; ok "Codex UPS=JSONガイド" test $? -eq 0
+grep -qF "| codex/? | 計画:? <!-- s:c0dec0de -->" "$DAILY"; ok "Codex枠行(初回プロンプトで登録・runtime=codex)" test $? -eq 0
 
 echo "=== 9. ガード: スラッシュ・subagent・headless・空 ==="
 OUT=$(echo '{"session_id":"badbad01-0000-1111-2222-333344445555","transcript_path":"'$SP'/tx/proj/x.jsonl","cwd":"/tmp","prompt":"/compact"}' | python3 "$CL/prompt-register/session-board-prompt-register.py")

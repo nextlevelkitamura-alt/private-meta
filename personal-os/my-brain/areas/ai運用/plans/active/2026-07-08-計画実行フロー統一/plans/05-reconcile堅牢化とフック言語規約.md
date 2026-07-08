@@ -44,13 +44,19 @@ W4評価（2026-07-08）で出た reconcile の潜在リスクを最小追補（
 
 ## 完了条件（レビュー項目）
 
-- [ ] reconcile: `files` が空なら幽霊掃除をしない／🔵は30分閾値／逆行クロック（>720分）では降格しない
+- [x] reconcile: `files` が空なら幽霊掃除をしない／🔵は30分閾値／逆行クロック（>720分）では降格しない
       （Python テストで直接確認）
-- [ ] 既存 bash 87本＋新 Python テストが全緑
-- [ ] `tests/` に実行時の作業ゴミ（sbtest等）が残らない（tmp退避）
-- [ ] `hooks-registry/AGENTS.md` に上記フック言語規約が入り、実態（本体py／loop入口sh／テスト方針）と一致
-- [ ] 受け口シム・`hooks.json` に diff なし（再trust不要の担保）
-- [ ] ②④を直さない判断と根拠が本計画に明記され、②は記録削除loop（別計画）へ引き継がれている
+- [x] 既存 bash 87本＋新 Python テストが全緑
+- [x] `tests/` に実行時の作業ゴミ（sbtest等）が残らない（tmp退避）
+- [x] `hooks-registry/AGENTS.md` に上記フック言語規約が入り、実態（本体py／loop入口sh／テスト方針）と一致
+- [x] 受け口シム・`hooks.json` に diff なし（再trust不要の担保）
+- [x] ②④を直さない判断と根拠が本計画に明記され、②は記録削除loop（別計画）へ引き継がれている
+
+レビュー結果（2026-07-08・worktree `wt/05-reconcile` → main マージ済み）: 全項目OK。**テスト97本緑**
+（Python `test_reconcile.py` 10本＋既存 bash 87本）。reconcile NOFILE分岐を4行に統合（`files`空→抑止／
+🔵は30分／上限720で逆行クロックの+1440を除外）。`hooks-registry/AGENTS.md` §規律に言語規約を追記（runtime窓へも反映確認）。
+`tests/*.sh` の作業ゴミは tmp 退避。シム・hooks.json 無変更（再trust不要・git diff担保）。実地スモーク
+（本番 board.py: show 7フィールド・reconcile exit0・Python test緑）OK。人間確認待ち。
 
 ## 依存
 

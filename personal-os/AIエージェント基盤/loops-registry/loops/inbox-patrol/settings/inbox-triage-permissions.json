@@ -1,5 +1,5 @@
 {
-  "_comment": "inbox-patrol → headless inbox-triage 専用の役割別許可設定（patrol.sh が --settings で渡す正本）。読み=広く／書き=plans/planning 配下とデイリー（処理印の行の置換）のみ／push・削除・git破壊・keychain・任意ネットワークは deny。--setting-sources '' と併用し、ユーザー/プロジェクト設定の allow がここへ混入しない。dontAsk のため allow に無いツールは全て自動拒否される。",
+  "_comment": "inbox-patrol → headless inbox-triage 専用の役割別許可設定（patrol.sh が --settings で渡す正本）。読み=広く／書き（Write/Editツール）=plans/planning 配下とデイリー（処理印の行の置換）のみ。Bash経由の書込は new-plan-planning.sh ラッパ（--out を planning 配下へ強制）だけに限定（敵対的レビュー2026-07-09: 素の new-plan.sh と mkdir の allow 無制限は planning 外へ書ける穴だったため撤去）。push・削除・git破壊・keychain・任意ネットワークは deny。--setting-sources '' と併用し、ユーザー/プロジェクト設定の allow がここへ混入しない。dontAsk のため allow に無いツールは全て自動拒否される。",
   "permissions": {
     "defaultMode": "dontAsk",
     "disableBypassPermissionsMode": "disable",
@@ -8,9 +8,8 @@
       "Glob",
       "Grep",
       "Bash(ls:*)",
-      "Bash(mkdir:*)",
-      "Bash(/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/skills/plan-ops/scripts/new-plan.sh:*)",
-      "Bash(bash /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/skills/plan-ops/scripts/new-plan.sh:*)",
+      "Bash(/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/inbox-patrol/scripts/new-plan-planning.sh:*)",
+      "Bash(bash /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/inbox-patrol/scripts/new-plan-planning.sh:*)",
       "Edit(//Users/kitamuranaohiro/Private/personal-os/my-brain/ゴール/デイリー/**)",
       "Edit(//Users/kitamuranaohiro/Private/**/plans/planning/**)",
       "Write(//Users/kitamuranaohiro/Private/**/plans/planning/**)"

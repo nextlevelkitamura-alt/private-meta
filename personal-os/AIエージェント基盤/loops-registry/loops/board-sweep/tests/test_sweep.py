@@ -451,11 +451,11 @@ def test_shipped_ledger_parses_all_draft_and_matches_focusmap():
     real = os.path.join(sweep_mod.board_dir(), "routine-ledger.md")
     entries = sweep_mod.parse_ledger(read(real))
     names = {e["name"] for e in entries}
-    assert {"朝架電J列", "印刷更新", "focusmapリモートスレッド"} <= names
+    assert {"架電", "印刷", "focusmap定期"} <= names  # 2026-07-09 カテゴリ名へリネーム（人間要望）
     assert all(e["draft"] for e in entries), "初期エントリにドラフト明記が無い"
     row = mkrow(goal="?", now="# Overview Generate 0 to", repo="?", who="codex/?")
     m = sweep_mod.match_ledger(entries, row, has_tx=False)
-    assert m and m["name"] == "focusmapリモートスレッド"
+    assert m and m["name"] == "focusmap定期"
     assert sweep_mod.match_ledger(entries, row, has_tx=True) is None  # 実体ありは不一致
 
 

@@ -6,8 +6,9 @@
   <string>com.kitamura.session-record-prune</string>
 
   <!--
-    日次（StartInterval 86400）に、~/.codex/sessions と ~/.claude/projects 配下の *.jsonl のうち
-    保持日数（既定30日）を超えたものを ~/.Trash へ移す。内蔵ディスク逼迫の抑制。
+    平日 月・水・金 18:00（StartCalendarInterval・約2日おき）に、~/.codex/sessions と
+    ~/.claude/projects 配下の *.jsonl のうち保持日数（既定30日）を超えたものを ~/.Trash へ移す。
+    内蔵ディスク逼迫の抑制。就寝・電源断で18:00を逃した回は、次に起きた時に1度だけ発火する（launchd仕様）。
     board の生存判定は直近30分の mtime しか見ないため、古い記録の除去は board に無害。
 
     draft。置くだけ・未ロード（有効化は人間ゲート）。**初回は必ず dry-run をログ確認してから**。
@@ -34,8 +35,13 @@
   <key>WorkingDirectory</key>
   <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/session-record-prune</string>
 
-  <key>StartInterval</key>
-  <integer>86400</integer>
+  <!-- 平日 月(1)・水(3)・金(5) の 18:00。Weekday: 0/7=日, 1=月 … 6=土。約2日おき（金→月のみ週末で3日空く）。 -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
+  </array>
 
   <key>EnvironmentVariables</key>
   <dict>

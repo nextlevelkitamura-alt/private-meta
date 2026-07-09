@@ -15,13 +15,17 @@ Claude / Codex のセッション記録（`.jsonl`）は放置で膨張し続け
 
 - 保持日数 **30日**（board 生存判定は直近30分しか見ないため十分安全）。
 - 削除でなく **~/.Trash へ移動**（復旧余地を残す・OSが後で空にする）。
-- 対象は `~/.codex/sessions`・`~/.claude/projects` 配下の `*.jsonl` のみ。**その2ディレクトリ以外は触らない**
-  （`prune.py` が realpath で配下判定し、外付けへ退避された実体＝realpath が外に出るものは対象外）。
+- 対象は `~/.codex/sessions`・`~/.claude/projects` 配下の `*.jsonl` のみ。**その2ディレクトリ以外は触らない**。
+  安全ガード（2026-07-09 敵対的評価で堅牢化）: ①ファイル symlink は触らない ②`os.walk(followlinks=False)` で
+  symlink サブディレクトリへは降りない ③**Trash と同じボリューム上のファイルだけ移動**（`st_dev` 一致）。
+  → 外付けSSDへ**ディレクトリごと**退避しても、別ボリュームなので触らない＝内蔵ディスクへ逆流させない。
 - 記録の中身は読まない（stat と move のみ）。ログは件数・容量・ディレクトリのみ。
+- 全件移動に失敗したら `exit 1`（Trash が書けない等の恒久無動作を launchd 側で検知できるように）。
 
 ## 各回の実行
 
-- launchd `com.kitamura.session-record-prune`・`StartInterval 86400`（日次）。
+- launchd `com.kitamura.session-record-prune`・`StartCalendarInterval` 月・水・金 18:00（約2日おき・2026-07-09 裁定）。
+  就寝/電源断で 18:00 を逃した回は、次に起きた時に1度だけ発火（launchd 仕様）。
 - `scripts/prune.sh` → `scripts/prune.py --apply` を1回。`RunAtLoad` なし。
 
 ## 安全運用
@@ -29,7 +33,10 @@ Claude / Codex のセッション記録（`.jsonl`）は放置で膨張し続け
 - **既定は dry-run**（`python3 scripts/prune.py` は何も動かさない・件数と容量だけ報告）。
   launchd 入口だけが `--apply` を付ける。
 - 有効化する前に必ず手動 dry-run のログを人間が確認する。
-- テストは `tests/test_prune.py`（Python・env で対象/ゴミ箱/保持日数を差し替え・実運用に非接触）。
+- テストは `tests/test_prune.py`（Python・env で対象/ゴミ箱/保持日数を差し替え・実運用に非接触・13本）。
+- **前提**（2026-07-09 評価で明文化）: (a) 容量が実際に戻るのは **Trash を空にした時**（macOS の30日自動削除
+  `FXRemoveOldTrashItems` が有効なら自動・現状ON）。移動だけでは同一ボリュームのため空き容量は増えない。
+  (b) 発火時刻 18:00 は**システムTZ基準**（現状 JST）。plist の `TZ` はログ表示にしか効かない。
 
 ## ログ先
 

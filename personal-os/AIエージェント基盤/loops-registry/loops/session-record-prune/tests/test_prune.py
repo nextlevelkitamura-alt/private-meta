@@ -27,7 +27,7 @@ def ok(name, cond):
 def touch(path, age_days):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
-        f.write("x")                       # 中身は使わない（サイズ1）
+        f.write("SECRET-should-never-be-read")   # 中身は使わない（読まれないことの確認用）
     t = time.time() - age_days * 86400
     os.utime(path, (t, t))
 
@@ -40,6 +40,7 @@ def main():
         outside = os.path.join(tmp, "outside")   # 対象外ディレクトリ
         trash = os.path.join(tmp, "trash")
         targets = [codex, claude]
+        dev = os.stat(tmp).st_dev                # temp と同一ボリュームを基準に
 
         touch(os.path.join(codex, "old.jsonl"), 40)          # 消える
         touch(os.path.join(codex, "sub", "old2.jsonl"), 31)  # 再帰・消える
@@ -49,20 +50,24 @@ def main():
         touch(os.path.join(claude, "old3.jsonl"), 60)        # 消える
         touch(os.path.join(outside, "old4.jsonl"), 99)       # 対象外＝残る
 
-        old = prune.find_old(now, 30, targets)
-        names = sorted(os.path.basename(f) for f, _ in old)
+        old = prune.find_old(now, 30, targets, dev)
+        names = sorted(os.path.basename(f) for f, _, _ in old)
         ok("30日超の.jsonlだけ検出", names == ["old.jsonl", "old2.jsonl", "old3.jsonl"])
         ok("新しいファイルは対象外", "fresh.jsonl" not in names)
         ok("ちょうど30日は残す(strict)", "boundary.jsonl" not in names)
         ok(".jsonl以外は対象外", "note.txt" not in names)
         ok("対象2ディレクトリ外は検出しない", "old4.jsonl" not in names)
 
+        # 別ボリューム相当: ref_dev をありえない値にすると全件除外（whole-root offload 対策の核）
+        old_otherdev = prune.find_old(now, 30, targets, ref_dev=-1)
+        ok("別ボリュームのファイルは対象外(st_devガード)", old_otherdev == [])
+
         # dry-run 相当（find_old のみ・move しない）＝ファイルはそのまま
         ok("dry-runでは何も動かない(old.jsonl残存)",
            os.path.exists(os.path.join(codex, "old.jsonl")))
 
         # apply 相当: move_to_trash
-        for f, _ in old:
+        for f, _, _ in old:
             prune.move_to_trash(f, trash)
         ok("古いものはTrashへ移動された",
            not os.path.exists(os.path.join(codex, "old.jsonl"))
@@ -78,14 +83,21 @@ def main():
         d2 = prune.move_to_trash(os.path.join(claude, "dup.jsonl"), trash)
         ok("同名衝突は連番付与", os.path.basename(d2) == "dup-1.jsonl")
 
-        # symlink 逃げ: 対象dir内に外部へのsymlinkがあっても realpath 判定で対象外
+        # symlink 逃げ(ファイル): 対象dir内に外部への symlink があっても触らない
         ext = os.path.join(tmp, "ext_real.jsonl")
         touch(ext, 99)
-        link = os.path.join(codex, "escape.jsonl")
-        os.symlink(ext, link)
-        old2 = prune.find_old(now, 30, targets)
-        ok("symlinkで外へ逃げる実体は対象外",
-           all("escape.jsonl" not in os.path.basename(f) for f, _ in old2))
+        os.symlink(ext, os.path.join(codex, "escape.jsonl"))
+        old2 = prune.find_old(now, 30, targets, dev)
+        ok("ファイルsymlinkは対象外",
+           all("escape.jsonl" not in os.path.basename(f) for f, _, _ in old2))
+
+        # symlink サブディレクトリへは降りない（循環・逃げ防止）
+        os.makedirs(os.path.join(tmp, "elsewhere"), exist_ok=True)
+        touch(os.path.join(tmp, "elsewhere", "deep.jsonl"), 99)
+        os.symlink(os.path.join(tmp, "elsewhere"), os.path.join(codex, "linkdir"))
+        old3 = prune.find_old(now, 30, targets, dev)
+        ok("symlinkサブdirへは降りない",
+           all("deep.jsonl" not in os.path.basename(f) for f, _, _ in old3))
 
     print(f"\n== 結果: PASS={PASS} FAIL={FAIL} ==")
     return 1 if FAIL else 0

@@ -12,7 +12,7 @@
 
 ## draft（未ロード・有効化は人間ゲート）
 
-- `session-record-prune`（日次 StartInterval 86400・**未ロード**） ── 古いセッション記録（`.jsonl`）を保持30日超で `~/.Trash` へ移す（削除でなく移動＝復旧余地）。内蔵ディスク逼迫（95%）の抑制。2026-07-09 新設・Python テスト11本緑・実物 dry-run 実測 **213件/1.08GB** が対象。**初回 dry-run を人間が確認してから有効化**（board の生存判定は直近30分しか見ないため古い除去は無害）。plist 正本・手順は `../loops/session-record-prune/loop.md`。
+- `session-record-prune`（平日 月水金 18:00・StartCalendarInterval・**未ロード**） ── 古いセッション記録（`.jsonl`）を保持30日超で `~/.Trash` へ移す（削除でなく移動＝復旧余地）。内蔵ディスク逼迫（95%）の抑制。2026-07-09 新設・Python テスト11本緑・実物 dry-run 実測 **213件/1.08GB** が対象。**初回 dry-run を人間が確認してから有効化**（board の生存判定は直近30分しか見ないため古い除去は無害）。plist 正本・手順は `../loops/session-record-prune/loop.md`。
 
 ## 停止したもの（2026-07-04・全て bootout 済み）
 

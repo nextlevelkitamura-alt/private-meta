@@ -56,7 +56,7 @@ developer_instructions = """
 
 ## 6. approval_policy
 
-承認方針。値はバージョンで異なるため公式で確認する。reviewer は承認を要さない read-only 構成に寄せる。
+承認方針。値の例: `never` / `on-request` / `on-failure`（値はバージョンで変わりうるため実装時に公式で確認する）。reviewer は承認を要さない read-only 構成に寄せる。
 
 ## 7. 推奨 agent
 

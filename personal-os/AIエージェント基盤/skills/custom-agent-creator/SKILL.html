@@ -74,6 +74,7 @@
 │   ├── claude-code.md   Claude Code subagent
 │   ├── codex.md         Codex custom agent（TOML）
 │   ├── opencode.md      OpenCode / OpenCode Go agent
+│   ├── quality-gate.md  reviewer/quality-gate 共通指針
 │   └── checklist.md     安全確認リスト
 └── SKILL.html        この説明書（人間向け・正本はSKILL.md）</pre>
       </figure>
@@ -116,6 +117,14 @@
           <li><b>推奨agent / テンプレート</b>: go-planner / go-builder / go-executor-fast / go-quality-gate / go-security-auditor。</li>
         </ul>
         <p class="wf-c"><b>いつ読む:</b> OpenCode が対象のとき。model ID を断定せず確認する。</p>
+      </div>
+
+      <div class="ref">
+        <p class="wf-h"><code>quality-gate.md</code> — reviewer / quality-gate 共通指針</p>
+        <ul>
+          <li><b>read-only 徹底 / 出力フォーマット / 評価観点 / テンプレへのポインタ</b>: reviewer 系を3ツール横断で作る共通パターン。各ツールでの read-only 化の書き方を1枚に集約。</li>
+        </ul>
+        <p class="wf-c"><b>いつ読む:</b> reviewer / evaluator / quality-gate を作るとき（対象ツールの reference と併読）。</p>
       </div>
 
       <div class="ref">

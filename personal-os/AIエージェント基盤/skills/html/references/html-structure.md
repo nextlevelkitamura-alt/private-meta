@@ -60,6 +60,7 @@
 
 1. 色・フォント・余白・部品のトークンは `assets/artifact-template.html` を基準にする。
 2. 揃えたい場合は `CLAUDE.md` にデザイントークンを置く（Anthropic公式のビルトイン design skill も同じ場所を見る）。
+3. 配色はライト単色に意図的にコミットする。dark分岐（`prefers-color-scheme`・`data-theme`）は書かない。quick/fullどちらのモードでも同じ。
 
 ## 9. いつHTML / いつMarkdown
 

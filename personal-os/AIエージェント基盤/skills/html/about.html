@@ -30,7 +30,7 @@
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chip{display:inline-block;font-size:12px;font-weight:500;padding:5px 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);text-decoration:none;border:1px solid transparent}
   .chip:hover{border-color:var(--accent)}
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
   @media(max-width:680px){.cards{grid-template-columns:1fr}}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 16px}
   .card .lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 7px;font-weight:500}
@@ -96,6 +96,7 @@
         <div class="card"><p class="lab">発火</p><p class="val"><code>/html</code><span class="sub">呼んだ時だけ動く（誤爆しない）</span></p></div>
         <div class="card"><p class="lab">出し先</p><p class="val">Artifact<span class="sub">PC前提・self-contained・残る</span></p></div>
         <div class="card"><p class="lab">2モード</p><p class="val">quick / full<span class="sub">軽い使い捨て / しっかり恒久</span></p></div>
+        <div class="card"><p class="lab">配色</p><p class="val">ライト単色<span class="sub">darkは意図的に書かない（2026-07-08確定）</span></p></div>
       </div>
     </section>
 

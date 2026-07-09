@@ -24,6 +24,7 @@ description: 回答や作業結果を、人間が見るための1枚もののHTM
 1. 既定 = Artifact（PC前提・self-contained・残る・共有できる）。
 2. インライン widget は使わない（スマホでスクロール不可のため。PCのArtifactに寄せる）。
 3. 作成したらからならずチャット表題をつけたURLを出力する（スマホ環境でもアクセスしやすいようにするため）
+4. 配色はライト単色に意図的にコミットする。`prefers-color-scheme`のdark分岐・`data-theme="dark"`切替は書かない（トークンは`assets/artifact-template.html`のものだけを使う）。
 
 ## 4. 2つのモードを選ぶ（判断基準）
 

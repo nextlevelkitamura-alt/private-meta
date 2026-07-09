@@ -1,6 +1,6 @@
 # 実行一覧 — personal-os（`com.kitamura.*`）
 
-実測確認: `launchctl list | grep com.kitamura` ／ 最終更新: 2026-07-09（記録削除 loop 1本を draft 追加・未ロード）
+実測確認: `launchctl list | grep com.kitamura` ／ 最終更新: 2026-07-09（記録削除 loop を有効化・launchd 稼働＝board-reconcile と2本）
 
 ## 1行で
 
@@ -10,9 +10,7 @@
 
 - `board-reconcile`（5分毎 StartInterval） ── session-board の生存照合（🟢/🔵の沈黙→⏸）の保険。通常は Stop/SessionStart 相乗りで照合されるため、**全セッションを閉じて放置した間の古い🟢残留だけ**を埋める。実体は瞬時・非LLM・API呼び出しなし。plist 正本・停止手順は `../loops/board-reconcile/loop.md`（symlink＋bootstrap・daily-notion-sync と同型）。2026-07-08 kickstart 実測 exit0。
 
-## draft（未ロード・有効化は人間ゲート）
-
-- `session-record-prune`（平日 月水金 18:00・StartCalendarInterval・**未ロード**） ── 古いセッション記録（`.jsonl`）を保持30日超で `~/.Trash` へ移す（削除でなく移動＝復旧余地）。内蔵ディスク逼迫（95%）の抑制。2026-07-09 新設・Python テスト11本緑・実物 dry-run 実測 **213件/1.08GB** が対象。**初回 dry-run を人間が確認してから有効化**（board の生存判定は直近30分しか見ないため古い除去は無害）。plist 正本・手順は `../loops/session-record-prune/loop.md`。
+- `session-record-prune`（平日 月水金 18:00・StartCalendarInterval・**2026-07-09 ロード・稼働中**） ── 古いセッション記録（`.jsonl`）を保持30日超で `~/.Trash` へ移す（削除でなく移動＝復旧余地・**別ボリューム＝外付け退避は触らない**＝st_devガード）。内蔵ディスク逼迫（95%）の抑制。Python テスト13本緑＋サブエージェント敵対的評価で堅牢化済み。有効化時に初回 apply 実測 **213件/1.08GB** を Trash へ移動（Codex203/Claude10・実数で裏取り）。以後は次の月/水/金 18:00 に自動。plist 正本・停止手順は `../loops/session-record-prune/loop.md`。**容量は Trash を空にした時に回収**。
 
 ## 停止したもの（2026-07-04・全て bootout 済み）
 

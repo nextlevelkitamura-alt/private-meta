@@ -6,6 +6,10 @@
   <string>com.kitamura.inbox-patrol</string>
 
   <!--
+    【旧経路・使わない】2026-07-09 デイリー運用刷新 子06で com.kitamura.inbox-tick.plist
+    （60秒tick: pull＋patrol統合）に置き換えられた。新規の有効化はtick側plistで行い、
+    本plistはロードしない（削除は人間承認待ちのため温存）。2026-07-04にbootout済み。
+
     draft。置くだけ・未ロード（有効化は人間ゲート＝運用契約§2・§7の破壊操作ゲート対象）。
     有効化する場合:
       cp com.kitamura.inbox-patrol.plist ~/Library/LaunchAgents/

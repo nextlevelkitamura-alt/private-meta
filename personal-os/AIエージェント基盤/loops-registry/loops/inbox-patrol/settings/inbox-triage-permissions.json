@@ -1,0 +1,48 @@
+{
+  "_comment": "inbox-patrol → headless inbox-triage 専用の役割別許可設定（patrol.sh が --settings で渡す正本）。読み=広く／書き=plans/planning 配下とデイリー（処理印の行の置換）のみ／push・削除・git破壊・keychain・任意ネットワークは deny。--setting-sources '' と併用し、ユーザー/プロジェクト設定の allow がここへ混入しない。dontAsk のため allow に無いツールは全て自動拒否される。",
+  "permissions": {
+    "defaultMode": "dontAsk",
+    "disableBypassPermissionsMode": "disable",
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/skills/plan-ops/scripts/new-plan.sh:*)",
+      "Bash(bash /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/skills/plan-ops/scripts/new-plan.sh:*)",
+      "Edit(//Users/kitamuranaohiro/Private/personal-os/my-brain/ゴール/デイリー/**)",
+      "Edit(//Users/kitamuranaohiro/Private/**/plans/planning/**)",
+      "Write(//Users/kitamuranaohiro/Private/**/plans/planning/**)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)",
+      "Bash(git reset:*)",
+      "Bash(git restore:*)",
+      "Bash(git checkout:*)",
+      "Bash(git clean:*)",
+      "Bash(git rebase:*)",
+      "Bash(git merge:*)",
+      "Bash(git rm:*)",
+      "Bash(git mv:*)",
+      "Bash(git stash:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(sudo:*)",
+      "Bash(launchctl:*)",
+      "Bash(security:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(osascript:*)",
+      "WebFetch",
+      "WebSearch",
+      "Edit(//Users/kitamuranaohiro/Private/**/plans/active/**)",
+      "Write(//Users/kitamuranaohiro/Private/**/plans/active/**)",
+      "Read(//Users/kitamuranaohiro/.ssh/**)",
+      "Read(//Users/kitamuranaohiro/**/.env)",
+      "Read(//Users/kitamuranaohiro/**/.env.*)"
+    ]
+  }
+}

@@ -1,12 +1,13 @@
 ---
 name: inbox-triage
-description: 依頼インボックスの未処理1行を読み、領域判定(ai運用/work/money/health)→規模判定(plan-triage経由でフル/ライト/サクッと)→該当areaのplans/active/への計画起案→元の行への処理済み印、を行う。起案までが仕事で、実装・実行はしない。Use when 依頼インボックス巡回loop(inbox-patrol)からheadlessで対象行を渡されたとき、または人間が「このインボックス行をトリアージして」と直接依頼したとき。
+description: 依頼インボックスの未処理1行を読み、経路判定(対象repo→plans/planning/)→規模判定(plan-triage経由でフル/ライト/サクッと)→対象repoのplans/planning/への計画ドラフト起案→元の行への処理済み印、を行う。起案までが仕事で、実装・実行・active化はしない(自動はplanningドラフトまで・active化は人間承認)。Use when 依頼インボックス巡回loop(inbox-patrol)からheadlessで対象行を渡されたとき、または人間が「このインボックス行をトリアージして」と直接依頼したとき。
 ---
 
 # inbox-triage
 
-当日デイリーの「依頼インボックス」に人間が書いた1行の思いつきを、実行可能な計画に変換するSkill。
+当日デイリーの「依頼インボックス」に人間が書いた1行の思いつきを、実行可能な計画ドラフトに変換するSkill。
 **起案までが仕事。実装・実行は一切しない**（運用契約 §2 の入口ゲート＝計画レビューを迂回しない）。
+**起案先は `plans/planning/` バケット。`plans/active/` には置かない**（2026-07-09 デイリー運用刷新program 裁定Q3: 自動はplanningドラフトまで・active化は人間承認）。
 
 ## 入力契約
 
@@ -25,16 +26,15 @@ description: 依頼インボックスの未処理1行を読み、領域判定(ai
 
 ## 手順
 
-### 1. 領域判定（ai運用 / work / money / health）
+### 1. 経路判定（対象repo → 起案先）
 
-各areaの `identity.md`（`~/Private/personal-os/my-brain/areas/<area>/identity.md`）の「置くもの／置かないもの」を判定基準にする。
+`../plan-triage/SKILL.md` §3 の経路判定を適用する（基準本文はここに複製しない）。**repo判定の起点は `../../repo-registry/repo概要.md`**（現在動いているrepoの固定リスト。各repoの詳細はそのrepoの `AGENTS.md`）。
 
-- **ai運用**: personal-os基盤・Global Skill・repo・loop・CLI（Orca等）の運営に関する依頼。
-- **work**: 仕事・キャリア・案件・転職・働き方に関する依頼。
-- **money**: お金・資産・家計・収支・投資・トレードに関する依頼。
-- **health**: 健康・生活リズム・運動・食事・睡眠・コンディションに関する依頼。
-
-判定に迷う場合（複数areaにまたがる／どれにも明確に属さない）は、最も具体的で実行主体が明確な領域を選び、plan.md の `現状` に判定理由と代替候補を1行残す。ここで処理を止めない（是正は人間の計画レビューに委ねる）。
+1. 依頼が repo概要.md にあるどのrepoの実装・計画・運用を指すかを判定する。
+   - **特定repoの作業** → 起案先はそのrepoの `plans/planning/`（例: `~/Private/projects/active/仕事/plans/planning/`。`plans/` バケットが無ければ作る）。
+   - **personal-os構造・横断・Global Skill / loop** → 起案先は ai運用 area の `~/Private/personal-os/my-brain/areas/ai運用/plans/planning/`。
+   - **どのrepoにも属さない生活領域の依頼**（仕事・お金・健康など） → 該当areaの `~/Private/personal-os/my-brain/areas/<area>/plans/planning/`（work / money / health。各 `identity.md` の「置くもの／置かないもの」を判定基準にする）。
+2. 判定に迷う場合（複数repoにまたがる／どれにも明確に属さない）は、最も具体的で実行主体が明確な置き場を選び、plan.md の `現状` に判定理由と代替候補を1行残す。ここで処理を止めない（是正は人間の計画レビューに委ねる）。
 
 ### 2. 規模判定（フル / ライト / サクッと）
 
@@ -45,24 +45,27 @@ description: 依頼インボックスの未処理1行を読み、領域判定(ai
 - **フル/ライト**判定の場合は手順3へ進み、`規模:` 行にその判定結果をそのまま書く。
 - 迷ったら**フル**（人間確認ゲートを増やす側に倒す。運用契約は「省略時フル」）。
 
-### 3. plan.md起案
+### 3. plan.md起案（planningドラフト）
 
-判定した area 配下に `plans/active/<YYYY-MM-DD-日本語企画名>/plan.md` を新規作成する。
+手順1で決めた起案先に `plans/planning/<YYYY-MM-DD-日本語企画名>/plan.md` を新規作成する。
 
-- フォルダ名: 作成日（今日, `YYYY-MM-DD`）＋日本語企画名（15〜20字目安）。既存フォルダと衝突する場合は企画名をより具体的にして回避する（既存フォルダを上書きしない）。
-- テンプレは `~/Private/personal-os/my-brain/areas/AGENTS.md` §3「plan.md統一テンプレ」に厳密準拠する。
-  - 冒頭: `分類:`（skill/repo/loop/横断。判断できなければ `横断`） ／ `種別:`（新規作成/既存改善/統合整理） ／ `規模:`（フル/ライト。手順2の判定を必ず明記する）。
-  - 必須セクション: `目的` / `現状` / `方針` / `完了条件（レビュー項目）`。
-  - `現状` にインボックス原文と出所（デイリーファイルの絶対パス＋対象日）を1行残す。
-  - `完了条件` は検証可能なレビュー項目で書く。未確定なら「未確定」と明記する（空欄テンプレは禁止）。
-- 複数の子計画に分かれると判断してもここで program 化はしない（親子層の要否は人間の計画レビューで判断する。トリアージは単発 plan.md に留める）。
-- plan.md 以外のファイル（ops/、コード等）は作らない。
+1. **起案前の重複チェック（必須）**: 起案先の `plans/planning/` と `plans/active/` の既存フォルダ一覧を確認する（`ls <起案先>/plans/planning <起案先>/plans/active` 相当。無いバケットはスキップ）。
+   - 同じ依頼を指す計画が既にあれば、新規起案はせず対象行を手順4の重複分岐で処理する（`→計画作成済み(<既存plan.mdの絶対パス>)` を付ける）。
+   - **類似**（同領域・目的が近いが同一とは言い切れない）計画があれば、起案は続行し、新しい plan.md の `現状` に `類似計画あり: <絶対パス>` を1行書く（統合判断は人間の計画レビューに委ねる）。
+2. **雛形生成**: `~/Private/personal-os/AIエージェント基盤/skills/plan-ops/scripts/new-plan.sh --out <plan.mdの絶対パス> --class <分類> --kind <種別>` を使う（テンプレ正本 `skills/plan-ops/templates/` からの生成・既存ファイルは上書き拒否の安全設計）。フォルダ名は作成日（今日, `YYYY-MM-DD`）＋日本語企画名（15〜20字目安）。既存フォルダと衝突する場合は企画名をより具体的にして回避する（既存フォルダを上書きしない）。
+3. **中身の記入**（テンプレ規約の正本は `~/Private/personal-os/my-brain/areas/AGENTS.md` §3）:
+   - 冒頭: `分類:`（skill/repo/loop/横断。判断できなければ `横断`） ／ `種別:`（新規作成/既存改善/統合整理） ／ `規模:`（フル/ライト。手順2の判定を必ず明記する）。
+   - 必須セクション: `目的` / `現状` / `方針` / `完了条件（レビュー項目）`。
+   - **`現状` に出所を必ず残す（省略禁止）**: インボックス原文（bullet本文そのまま）＋出所（Notion行由来ならその旨、デイリー直書きならデイリーファイルの絶対パス）＋対象日（`YYYY-MM-DD`）。
+   - `完了条件` は検証可能なレビュー項目で書く。未確定なら「未確定」と明記する（空欄テンプレは禁止）。
+4. 複数の子計画に分かれると判断してもここで program 化はしない（親子層の要否は人間の計画レビューで判断する。トリアージは単発 plan.md に留める）。
+5. plan.md 以外のファイル（ops/、コード等）は作らない。**git commit もしない**（headless由来のcommitはゼロ。生成物はuntrackedのまま人間のレビューを待つ）。
 
 ### 4. インボックス行に処理済み印
 
 対象デイリーファイルの、入力で渡された行（文字列完全一致）を、手順2の規模判定結果に応じて次のいずれかで更新する。
 
-**フル/ライト判定（plan.mdを起案した場合）**:
+**フル/ライト判定（plan.mdを起案した場合。手順3-1の「同一計画が既にある」場合も既存パスで同様）**:
 
 - **対象行が `→処理中(` で終わっている場合（`inbox-patrol` 経由の通常ケース）**: その `→処理中(...)` の部分を丸ごと次に**置き換える**（追記しない）。
   ```
@@ -94,17 +97,25 @@ description: 依頼インボックスの未処理1行を読み、領域判定(ai
 
 **進捗注記（`→計画作成済み(` の後ろへ**追記**する2状態・既存マーカーを置換しない）**: `→着手(担当X)` ／ `→完了`。send采配した全体管理者または着手した指揮官が `→計画作成済み(<パス>)` の後ろへ追記する（置換しない）。**`→着手`/`→完了` は `patrol.sh` の非対象マーカーにも独立に含める**（2026-07-03 采配9玉B・事故ts=1783057581の修正）＝通常は `→計画作成済み(` を持つ行に付くが、計画を伴わず `→完了` だけが付く行（例「確認できている？ →完了(...)」）を `patrol.sh` が再claimしていた事故を防ぐため。`inbox-triage` 自身はこの2状態を書かない（起案＝`→計画作成済み(` ／ `→サクッと判定(` まで。着手・完了は下流の采配/実装で付与）。語彙の正本は `../../loops-registry/loops/inbox-patrol/loop.md` の行末注記語彙（2026-07-03子03裁定で統一）。
 
+## 通知（このSkillの外側）
+
+起案完了後のPC通知とNotion行の「起案済み」PATCH（計画パスのプロパティ記載）は、呼び出し元 `inbox-patrol` の `scripts/notify-drafted.sh` が行う（`loop.md` §通知が正本）。**このSkillは通知を送らない**（osascript・Notion APIに触れない。役割別許可設定でも拒否される）。
+
 ## やらないこと（境界）
 
 - 計画の実装・実行・ai-jobsへのrun-card投入はしない。plan.md を起案するところまで。
-- push／main反映／削除／launchd登録などの破壊操作はしない（運用契約 §2・§7）。
-- secret／token／認証値を plan.md や行マーカーに書かない。
+- `plans/active/` への配置・既存planのactive化はしない（planningドラフトまで。active化は人間承認）。
+- git commit／push／main反映／削除／launchd登録などの破壊操作はしない（運用契約 §2・§7。headless時は `inbox-patrol` の役割別許可設定が機械的にも拒否する）。
+- secret／token／認証値を plan.md や行マーカーに書かない。keychain（`security`）にも触れない。
 - 起案先やマーカー以外のファイルを編集しない。
 
 ## 関連
 
-- 巡回loop（呼び出し元）: `../../loops-registry/loops/inbox-patrol/loop.md`
+- 巡回loop（呼び出し元・権限/通知の正本）: `../../loops-registry/loops/inbox-patrol/loop.md`
+- 経路判定（対象repo→計画置き場）の正本: `../plan-triage/SKILL.md` §3 ／ repo一覧の起点: `../../repo-registry/repo概要.md`
 - 規模判定（フル/ライト/サクッと）の適用手順: `../plan-triage/SKILL.md` §2
+- 雛形生成script: `../plan-ops/scripts/new-plan.sh`（使い方は `../plan-ops/SKILL.md` §2.2）
 - 計画テンプレ・レビュー項目の正本: `~/Private/personal-os/my-brain/areas/AGENTS.md` §3
 - 段階語彙・規模定義・人間ゲートの正本: `~/Private/personal-os/説明書/運用契約.md` §2
-- 親計画: `~/Private/personal-os/my-brain/areas/ai運用/plans/done/2026-07-02-状態と記録の統合設計/plans/06-依頼インボックスloop.md`
+- 設計（2026-07-09改修）: `~/Private/personal-os/my-brain/areas/ai運用/plans/active/2026-07-09-デイリー運用刷新/plans/06-インボックス即時起案.md`
+- 旧親計画: `~/Private/personal-os/my-brain/areas/ai運用/plans/done/2026-07-02-状態と記録の統合設計/plans/06-依頼インボックスloop.md`

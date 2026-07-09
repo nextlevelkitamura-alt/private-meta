@@ -46,10 +46,13 @@ new_workdir() {
   local d
   d="$(mktemp -d "${TMPDIR:-/tmp}/renderer-test.XXXXXX")"
   workdirs+=("$d")
-  mkdir -p "$d/loops-registry/loops/renderer" "$d/loops-registry/loops/daily-digest"
+  mkdir -p "$d/loops-registry/loops/renderer" "$d/loops-registry/loops/daily-digest" "$d/loops-registry/loops/inbox-patrol"
   cp -R "$RENDERER_DIR/scripts" "$d/loops-registry/loops/renderer/scripts"
   cp -R "$RENDERER_DIR/templates" "$d/loops-registry/loops/renderer/templates"
   cp -R "$LOOPS_DIR/daily-digest/scripts" "$d/loops-registry/loops/daily-digest/scripts"
+  # 2026-07-09 デイリー運用刷新 子06: render.sh が呼ぶ notion-inbox-pull.sh は inbox-patrol/scripts へ
+  # 移設されたため、sandboxにも同じ相対配置で複製する（render.sh のステップ(i)を従来どおり通すため）。
+  cp -R "$LOOPS_DIR/inbox-patrol/scripts" "$d/loops-registry/loops/inbox-patrol/scripts"
   printf '%s' "$d"
 }
 

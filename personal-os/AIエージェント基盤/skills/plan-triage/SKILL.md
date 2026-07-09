@@ -87,7 +87,7 @@ repo/branch  : <repo> / <branch案>   (base: <base>)
 
 ### 6.2 計画スケルトン（ライト以上）
 
-テンプレ生成の自動scriptは無い（`../plan-ops/SKILL.md` はrun-card等の機械手続きのみを持ち、plan.mdの雛形生成は「まだ自動化していない」対象）。手動で `~/Private/personal-os/my-brain/areas/AGENTS.md` §3「コピペ用テンプレ」を使う。
+雛形生成は `../plan-ops/scripts/new-plan.sh --out <plan.mdの絶対パス> [--program] [--class <分類>] [--kind <種別>]` を使う（テンプレ正本 `../plan-ops/templates/` からの生成・既存ファイルは上書き拒否。使い方の正本は `../plan-ops/SKILL.md` §2.2。2026-07-09修正: 旧記述「自動scriptは無い」はstaleだった＝new-plan.sh は2026-07-02子07で実在する）。手動で書く場合のテンプレ規約は `~/Private/personal-os/my-brain/areas/AGENTS.md` §3。
 
 冒頭 `分類:`／`種別:`／`規模:`（判断1の結果をそのまま書く）／`優先:`（任意）。必須セクション `目的`／`現状`／`方針`／`完了条件（レビュー項目）`。`現状` に元の「やりたいこと」1行と出所を残す。
 
@@ -96,6 +96,7 @@ repo/branch  : <repo> / <branch案>   (base: <base>)
 - **フル**: 構成カード＋計画スケルトンを人間へ提示し、OKを得てから起動する。
 - **ライト・サクッと**: 起動後の事後報告でよい（構成カード〔ライトのみ〕＋判断根拠を一言添える）。
 - 起動経路: 人間依頼と巡回（`../inbox-triage/SKILL.md`）の両方が本Skillを通す。巡回は構成カード起案までが自動。レーン起動は指揮官/人間が行う。
+- headless時の読み替え（inbox-triage経由・2026-07-09裁定Q3）: 「人間へ提示」は「起案先の `plans/planning/` にドラフトを置いて通知する＝提示」と読み替える（対話相手がいないため。active化・レーン起動はその後の人間承認）。
 
 ## 8. やらないこと（境界）
 

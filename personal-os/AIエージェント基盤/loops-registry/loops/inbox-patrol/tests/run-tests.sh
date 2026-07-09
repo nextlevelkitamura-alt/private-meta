@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# inbox-patrol / tests / run-tests.sh — 抽出・処理済みスキップ・冪等性・二重起案防止・後始末の安全性を検証。
+# inbox-patrol / tests / run-tests.sh — 抽出・処理済みスキップ・冪等性・二重起案防止・後始末の安全性に加え、
+# 権限契約（役割別settings・skip-permissions廃止・t13）・1tick件数上限（t14）・起案完了通知（PC通知/
+# Notion PATCH・t15〜t17）を検証（2026-07-09 デイリー運用刷新 子06で拡張）。
 # 実HOME（~/Private等）には一切書き込まない。各テストは独立の fixture $HOME / ロックパスを patrol.sh に渡す。
 # AI呼び出しはすべてstub（tests/内で組み立てる偽AI script）に差し替え、実際のclaude/codexは一切起動しない。
+# 通知(osascript)・keychain(security)・Notion API(curl)もすべてstub＝実機の通知・実API・実トークンに触れない。
 # 終了コードで全体の合否を表す（0=全PASS／非0=1件以上FAIL）。
 #
 # 後始末の安全性（差し戻し1回目・指摘1対応）:
@@ -47,6 +50,18 @@ cleanup_all() {
   safe_rm_rf "$TEST_ROOT"
 }
 trap cleanup_all EXIT
+
+# --- 通知・Notionの安全既定（全テスト共通・2026-07-09子06） ---
+# patrol.sh は起案成功（→計画作成済み）時に notify-drafted.sh を呼ぶ。テストでは実osascript・
+# 実keychain・実Notion API・実state（repo配下 inbox-patrol/state/）に一切触れないよう、既定で
+# 無音stubとTEST_ROOT配下の空stateへ差し替える（通知系の個別テストは記録用stubで上書きする）。
+DEFAULT_NOTIFY_STUB="$TEST_ROOT/default-notify-stub.sh"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$DEFAULT_NOTIFY_STUB"
+chmod +x "$DEFAULT_NOTIFY_STUB"
+export INBOX_NOTIFY_CMD="$DEFAULT_NOTIFY_STUB"
+export NOTION_PUSH_STATE_DIR="$TEST_ROOT/default-notion-state"  # 出所マップ無し＝Notion PATCH経路に入らない
+export NOTION_SECURITY_CMD="false"                              # 万一入ってもkeychainに触れない
+export NOTION_CURL_CMD="false"                                  # 万一入っても実APIに触れない
 
 pass_count=0
 fail_count=0
@@ -112,6 +127,35 @@ if [ "$mark_on_call" -eq 1 ]; then
   ' "\$daily_file" > "\$tmp"
   mv "\$tmp" "\$daily_file"
 fi
+exit 0
+STUB
+  chmod +x "$stub"
+  printf '%s' "$stub"
+}
+
+# 通知呼び出しを「title<TAB>body」で$1に記録するstubを作る（watch-keeperテストと同じ流儀）。
+new_notify_stub() {
+  local log="$1" d stub
+  d="$(mktemp -d "$TEST_ROOT/notify.XXXXXX")"
+  stub="$d/notify-stub.sh"
+  cat > "$stub" <<STUB
+#!/usr/bin/env bash
+printf '%s\t%s\n' "\$1" "\$2" >> "$log"
+exit 0
+STUB
+  chmod +x "$stub"
+  printf '%s' "$stub"
+}
+
+# claude起動引数を1行1引数で$1へ記録するstub（INBOX_PATROL_CLAUDE_CMD差し替え用。
+# 実claudeは一切起動しない。exit 0＝AI成功として扱われる）。
+new_claude_recorder() {
+  local log="$1" d stub
+  d="$(mktemp -d "$TEST_ROOT/claude.XXXXXX")"
+  stub="$d/claude-recorder.sh"
+  cat > "$stub" <<STUB
+#!/usr/bin/env bash
+for a in "\$@"; do printf '%s\n' "\$a" >> "$log"; done
 exit 0
 STUB
   chmod +x "$stub"
@@ -546,6 +590,249 @@ t12_done_and_started_lines_are_not_reextracted() (
 )
 
 # ============================================================
+# t13: 権限契約（2026-07-09子06） — headless AIは skip-permissions で起動されず、役割別許可設定
+#      （--settings＋--setting-sources ""＋--permission-mode dontAsk＋--max-budget-usd）で起動される。
+#      INBOX_PATROL_CLAUDE_CMD の記録stubで実際の起動引数を検証する（実claudeは起動しない）。
+#      あわせて settings JSON の中身（deny に push/削除系・defaultMode=dontAsk）も機械チェックする。
+# ============================================================
+t13_claude_invocation_uses_role_settings() (
+  set -euo pipefail
+  local daily_single
+  daily_single='## 依頼インボックス
+- 権限契約テストの依頼
+
+## 今やっていること
+'
+  home="$(new_fake_home_with_daily "$daily_single")"
+  args_log="$(mktemp "$home/claude-args.XXXXXX")"
+  recorder="$(new_claude_recorder "$args_log")"
+
+  # TRIAGE_AI_CMD を敢えて使わず、実起動系統（invoke_ai の claude 分岐）を recorder で通す。
+  out="$(HOME="$home" TRIAGE_AI_CMD= INBOX_PATROL_CLAUDE_CMD="$recorder" \
+    INBOX_PATROL_LOCK_DIR="$home/lock" bash "$PATROL_SH" "$DATE" 2>&1)"; rc=$?
+  [ "$rc" -eq 0 ] || { echo "exit非0 ($rc): $out"; return 1; }
+
+  grep -qx -- "-p" "$args_log" || { echo "-p が渡されていない: $(cat "$args_log")"; return 1; }
+  grep -qx -- "--settings" "$args_log" || { echo "--settings が渡されていない: $(cat "$args_log")"; return 1; }
+  grep -q "settings/inbox-triage-permissions.json$" "$args_log" \
+    || { echo "役割別settingsのパスが渡されていない: $(cat "$args_log")"; return 1; }
+  grep -qx -- "--permission-mode" "$args_log" || { echo "--permission-mode が無い"; return 1; }
+  grep -qx -- "dontAsk" "$args_log" || { echo "dontAsk が無い"; return 1; }
+  grep -qx -- "--max-budget-usd" "$args_log" || { echo "--max-budget-usd が無い"; return 1; }
+  grep -q -- "dangerously-skip-permissions" "$args_log" \
+    && { echo "skip-permissions が残っている: $(cat "$args_log")"; return 1; }
+  # --setting-sources の直後に空文字列が渡っている（ユーザー/プロジェクト設定の遮断）
+  LC_ALL=C awk 'prev == "--setting-sources" && $0 == "" { found = 1 } { prev = $0 } END { exit found ? 0 : 1 }' "$args_log" \
+    || { echo "--setting-sources \"\" が渡されていない: $(cat "$args_log")"; return 1; }
+
+  # patrol.sh 本文にも skip-permissions が残っていない（静的契約）
+  grep -q -- "dangerously-skip-permissions" "$PATROL_SH" \
+    && { echo "patrol.sh に skip-permissions の文字列が残っている"; return 1; }
+
+  # settings JSON の中身: defaultMode=dontAsk・denyに push/rm/launchctl/security・allowに書込の限定
+  python3 - "$LOOP_DIR/settings/inbox-triage-permissions.json" <<'PY' || return 1
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))["permissions"]
+assert p["defaultMode"] == "dontAsk", "defaultModeがdontAskでない"
+deny = set(p["deny"])
+for must in ["Bash(git push:*)", "Bash(git commit:*)", "Bash(rm:*)", "Bash(launchctl:*)", "Bash(security:*)"]:
+    assert must in deny, "denyに必須項目が無い: " + must
+assert any("plans/active" in d for d in deny), "plans/active への書込denyが無い"
+allow = p["allow"]
+for a in allow:
+    assert "dangerously" not in a and "bypass" not in a.lower(), "allowに危険項目: " + a
+writes = [a for a in allow if a.startswith(("Write(", "Edit("))]
+assert writes, "書込allowが1つも無い"
+for w in writes:
+    assert ("plans/planning" in w) or ("デイリー" in w), "書込allowが planning/デイリー以外に開いている: " + w
+PY
+
+  return 0
+)
+
+# ============================================================
+# t14: 1tickの処理件数上限（INBOX_PATROL_MAX_PER_TICK） — 上限で頭打ちし、残りは次tickへ持ち越す
+#      （取りこぼしなし: 2tick目で残りが処理される）
+# ============================================================
+t14_max_per_tick_limits_ai_invocations() (
+  set -euo pipefail
+  local daily_four
+  daily_four='## 依頼インボックス
+- 上限テストの依頼1
+- 上限テストの依頼2
+- 上限テストの依頼3
+- 上限テストの依頼4
+
+## 今やっていること
+'
+  home="$(new_fake_home_with_daily "$daily_four")"
+  stub="$(new_stub_ai 1)"
+  log="$(mktemp "$home/log.XXXXXX")"
+
+  out="$(HOME="$home" STUB_LOG="$log" TRIAGE_AI_CMD="$stub" INBOX_PATROL_MAX_PER_TICK=2 \
+    INBOX_PATROL_LOCK_DIR="$home/lock" bash "$PATROL_SH" "$DATE" 2>&1)"; rc=$?
+  [ "$rc" -eq 0 ] || { echo "exit非0 ($rc): $out"; return 1; }
+
+  local n1
+  n1=$(wc -l < "$log" | tr -d ' ')
+  [ "$n1" -eq 2 ] || { echo "1tick目のAI起動が2件でない (${n1}件): $(cat "$log")"; return 1; }
+  echo "$out" | grep -q "1tick上限" || { echo "上限到達のログが出ていない: $out"; return 1; }
+
+  # 残り2件は未処理のまま（--dry-runで再抽出できる＝取りこぼしなし）
+  local remain
+  remain="$(HOME="$home" INBOX_PATROL_LOCK_DIR="$home/lock2" bash "$PATROL_SH" "$DATE" --dry-run 2>&1 | grep -c '^- ')"
+  [ "$remain" -eq 2 ] || { echo "持ち越しが2件でない (${remain}件)"; return 1; }
+
+  # 2tick目で残りが処理される
+  HOME="$home" STUB_LOG="$log" TRIAGE_AI_CMD="$stub" INBOX_PATROL_MAX_PER_TICK=2 \
+    INBOX_PATROL_LOCK_DIR="$home/lock3" bash "$PATROL_SH" "$DATE" >/dev/null 2>&1
+  local n2
+  n2=$(wc -l < "$log" | tr -d ' ')
+  [ "$n2" -eq 4 ] || { echo "2tick累計のAI起動が4件でない (${n2}件): $(cat "$log")"; return 1; }
+
+  local daily marked
+  daily="$(daily_file_of "$home")"
+  marked=$(grep -c '→計画作成済み(' "$daily")
+  [ "$marked" -eq 4 ] || { echo "処理済み印が4件になっていない (${marked}件)"; return 1; }
+
+  return 0
+)
+
+# ============================================================
+# t15: 起案完了通知 — PC通知が1回だけ呼ばれ、出所マップ一致のNotion行へ 状態=起案済み＋計画パスが
+#      PATCHされる（DBスキーマの冪等PATCHは初回のみ）。トークンはどの出力・ログにも現れない。
+# ============================================================
+t15_notify_patches_notion_and_notifies_once() (
+  set -euo pipefail
+  local daily_single
+  daily_single='## 依頼インボックス
+- 依頼テキストA
+
+## 今やっていること
+'
+  home="$(new_fake_home_with_daily "$daily_single")"
+  stub="$(new_stub_ai 1)"
+  log="$(mktemp "$home/log.XXXXXX")"
+
+  # 出所マップ・DB idキャッシュを持つ専用state（Notion経由でpull済みの行を模す）
+  state_dir="$home/notion-state"
+  mkdir -p "$state_dir"
+  printf 'row-1\t依頼テキストA\n' > "$state_dir/notion-inbox-origin-ids"
+  printf 'db-1' > "$state_dir/notion-inbox-database-id"
+
+  notify_log="$(mktemp "$home/notify.XXXXXX")"
+  notify_stub="$(new_notify_stub "$notify_log")"
+  curl_log="$(mktemp "$home/curl.XXXXXX")"
+  security_ok="$home/security-ok.sh"
+  printf '#!/usr/bin/env bash\nprintf %%s fake-token-t15\n' > "$security_ok"
+  chmod +x "$security_ok"
+
+  out="$(HOME="$home" STUB_LOG="$log" TRIAGE_AI_CMD="$stub" INBOX_PATROL_LOCK_DIR="$home/lock" \
+    NOTION_PUSH_STATE_DIR="$state_dir" INBOX_NOTIFY_CMD="$notify_stub" \
+    NOTION_SECURITY_CMD="$security_ok" NOTION_CURL_CMD="python3 $TESTS_DIR/fixtures/curl-record-stub.py" \
+    NOTION_CURL_STUB_LOG="$curl_log" bash "$PATROL_SH" "$DATE" 2>&1)"; rc=$?
+  [ "$rc" -eq 0 ] || { echo "exit非0 ($rc): $out"; return 1; }
+
+  # PC通知はちょうど1回・本文に計画パスと依頼テキストが入る
+  local n
+  n=$(wc -l < "$notify_log" | tr -d ' ')
+  [ "$n" -eq 1 ] || { echo "PC通知が1回でない (${n}回): $(cat "$notify_log")"; return 1; }
+  grep -qF -- "/fixture/plan.md" "$notify_log" || { echo "通知本文に計画パスが無い: $(cat "$notify_log")"; return 1; }
+  grep -qF -- "依頼テキストA" "$notify_log" || { echo "通知本文に依頼テキストが無い: $(cat "$notify_log")"; return 1; }
+
+  # Notion: DBスキーマPATCH（起案済み選択肢＋計画パス）1回 ＋ 行PATCH（起案済み＋計画パス）1回
+  local schema_calls row_calls
+  schema_calls=$(grep -c "/databases/db-1" "$curl_log")
+  [ "$schema_calls" -eq 1 ] || { echo "スキーマPATCHが1回でない (${schema_calls}回): $(cat "$curl_log")"; return 1; }
+  row_calls=$(grep -c "/pages/row-1" "$curl_log")
+  [ "$row_calls" -eq 1 ] || { echo "行PATCHが1回でない (${row_calls}回): $(cat "$curl_log")"; return 1; }
+  grep "/pages/row-1" "$curl_log" | grep -qF "起案済み" || { echo "行PATCHに状態=起案済みが無い"; return 1; }
+  grep "/pages/row-1" "$curl_log" | grep -qF "/fixture/plan.md" || { echo "行PATCHに計画パスが無い"; return 1; }
+  grep "/pages/row-1" "$curl_log" | grep -qF "計画パス" || { echo "行PATCHに計画パスプロパティが無い"; return 1; }
+  [ -f "$state_dir/notion-inbox-schema-planpath" ] || { echo "スキーママーカーが書かれていない"; return 1; }
+
+  # secret規律: トークン値がpatrol出力・通知ログ・curlログのどこにも現れない
+  { echo "$out"; cat "$notify_log" "$curl_log"; } | grep -qF "fake-token-t15" \
+    && { echo "トークン値が出力/ログに漏れている"; return 1; }
+
+  # スキーマPATCHは初回のみ（マーカー済みなら2回目のnotifyで /databases を再PATCHしない）
+  daily="$(daily_file_of "$home")"
+  HOME="$home" NOTION_PUSH_STATE_DIR="$state_dir" INBOX_NOTIFY_CMD="$notify_stub" \
+    NOTION_SECURITY_CMD="$security_ok" NOTION_CURL_CMD="python3 $TESTS_DIR/fixtures/curl-record-stub.py" \
+    NOTION_CURL_STUB_LOG="$curl_log" bash "$LOOP_DIR/scripts/notify-drafted.sh" "$daily" "- 依頼テキストA" >/dev/null 2>&1
+  schema_calls=$(grep -c "/databases/db-1" "$curl_log")
+  [ "$schema_calls" -eq 1 ] || { echo "スキーマPATCHが冪等でない (${schema_calls}回)"; return 1; }
+
+  return 0
+)
+
+# ============================================================
+# t16: 出所マップに無い行（デイリー直書き・kickoff起票） — PC通知のみでNotionには一切触れない
+# ============================================================
+t16_notify_without_origin_is_local_only() (
+  set -euo pipefail
+  local daily_single
+  daily_single='## 依頼インボックス
+- 直書きの依頼
+
+## 今やっていること
+'
+  home="$(new_fake_home_with_daily "$daily_single")"
+  stub="$(new_stub_ai 1)"
+  log="$(mktemp "$home/log.XXXXXX")"
+  state_dir="$home/notion-state-empty"
+  mkdir -p "$state_dir"
+  notify_log="$(mktemp "$home/notify.XXXXXX")"
+  notify_stub="$(new_notify_stub "$notify_log")"
+  curl_log="$(mktemp "$home/curl.XXXXXX")"
+
+  out="$(HOME="$home" STUB_LOG="$log" TRIAGE_AI_CMD="$stub" INBOX_PATROL_LOCK_DIR="$home/lock" \
+    NOTION_PUSH_STATE_DIR="$state_dir" INBOX_NOTIFY_CMD="$notify_stub" \
+    NOTION_CURL_CMD="python3 $TESTS_DIR/fixtures/curl-record-stub.py" \
+    NOTION_CURL_STUB_LOG="$curl_log" bash "$PATROL_SH" "$DATE" 2>&1)"; rc=$?
+  [ "$rc" -eq 0 ] || { echo "exit非0 ($rc): $out"; return 1; }
+
+  local n
+  n=$(wc -l < "$notify_log" | tr -d ' ')
+  [ "$n" -eq 1 ] || { echo "PC通知が1回でない (${n}回): $(cat "$notify_log")"; return 1; }
+  [ ! -s "$curl_log" ] || { echo "出所マップ無しなのにNotion APIが呼ばれた: $(cat "$curl_log")"; return 1; }
+
+  return 0
+)
+
+# ============================================================
+# t17: 通知失敗はベストエフォート — PC通知コマンドが失敗してもpatrolはexit 0で、起案結果
+#      （→計画作成済み）はそのまま残る
+# ============================================================
+t17_notify_failure_does_not_break_patrol() (
+  set -euo pipefail
+  local daily_single
+  daily_single='## 依頼インボックス
+- 通知失敗テストの依頼
+
+## 今やっていること
+'
+  home="$(new_fake_home_with_daily "$daily_single")"
+  stub="$(new_stub_ai 1)"
+  log="$(mktemp "$home/log.XXXXXX")"
+  failing_notify="$home/notify-fail.sh"
+  printf '#!/usr/bin/env bash\nexit 1\n' > "$failing_notify"
+  chmod +x "$failing_notify"
+
+  out="$(HOME="$home" STUB_LOG="$log" TRIAGE_AI_CMD="$stub" INBOX_PATROL_LOCK_DIR="$home/lock" \
+    INBOX_NOTIFY_CMD="$failing_notify" bash "$PATROL_SH" "$DATE" 2>&1)"; rc=$?
+  [ "$rc" -eq 0 ] || { echo "通知失敗でpatrolが失敗した ($rc): $out"; return 1; }
+  echo "$out" | grep -q "PC通知コマンドが失敗" || { echo "通知失敗の警告が出ていない: $out"; return 1; }
+
+  local daily marked
+  daily="$(daily_file_of "$home")"
+  marked=$(grep -c '→計画作成済み(' "$daily")
+  [ "$marked" -eq 1 ] || { echo "起案結果の最終マーカーが残っていない (${marked}件)"; return 1; }
+
+  return 0
+)
+
+# ============================================================
 run_test t1_dry_run_extracts_only_unprocessed
 run_test t2_dry_run_is_deterministic_and_idempotent
 run_test t3_missing_daily_file_skips_cleanly
@@ -558,6 +845,11 @@ run_test t9_cleanup_never_deletes_outside_own_root
 run_test t10_duplicate_leftovers_never_stay_claimed
 run_test t11_sakutto_marked_line_is_not_reextracted
 run_test t12_done_and_started_lines_are_not_reextracted
+run_test t13_claude_invocation_uses_role_settings
+run_test t14_max_per_tick_limits_ai_invocations
+run_test t15_notify_patches_notion_and_notifies_once
+run_test t16_notify_without_origin_is_local_only
+run_test t17_notify_failure_does_not_break_patrol
 
 echo "=== 結果: PASS=$pass_count FAIL=$fail_count ==="
 if [ "$fail_count" -gt 0 ]; then

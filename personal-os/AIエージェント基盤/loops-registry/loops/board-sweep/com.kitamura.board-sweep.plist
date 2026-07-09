@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kitamura.board-sweep</string>
+
+  <!--
+    60分毎（StartInterval 3600）に board-sweep（⏸停止行の自動判定）を1回実行する。
+    当日＋前日ボードの⏸行を 実体transcript照合 → 定型台帳マッチ → headless LLM判定 で弁別し、
+    既定は dry-run（判定ログのみ・ボード無変更）。
+
+    draft。置くだけ・未ロード（有効化は人間ゲート）。導入順は loop.md 参照:
+      1. 手動 dry-run 確認: cd <このフォルダ> && python3 scripts/sweep.py
+      2. dry-run のままロードして1週間実測（symlink方式・board-reconcile と同型）:
+        ln -s '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-sweep/com.kitamura.board-sweep.plist' \
+          ~/Library/LaunchAgents/com.kitamura.board-sweep.plist
+        launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.kitamura.board-sweep.plist
+        launchctl enable gui/$(id -u)/com.kitamura.board-sweep
+      3. 誤判定率を人間確認 → 台帳のドラフト行を消す → 下の ProgramArguments 末尾を
+         「scripts/sweep.sh --apply」に変えて再ロード（流し込み有効化・人間ゲート）。
+    停止:
+      launchctl bootout gui/$(id -u)/com.kitamura.board-sweep
+
+    RunAtLoad は付けない（ロード直後の連打回避・既存draft plistと同方針）。
+    board.py 側が flock を持つため board-reconcile 等との多重起動でも安全。
+    sweep.sh が AIJOBS_RUN=1 を export し、自分と headless LLM の自己登録を防ぐ。
+    失敗はすべて exit 0・ボード無変更（ログのみ）。
+  -->
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-sweep' &amp;&amp; scripts/sweep.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-sweep</string>
+
+  <key>StartInterval</key>
+  <integer>3600</integer>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>/Users/kitamuranaohiro</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>TZ</key>
+    <string>Asia/Tokyo</string>
+    <!-- headless LLM判定（stdin=プロンプト/stdout=JSON）。空にすると LLM 判定をスキップし unknown 扱い。 -->
+    <key>SWEEP_LLM_CMD</key>
+    <string>claude -p</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-sweep/output/logs/board-sweep.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-sweep/output/logs/board-sweep.err.log</string>
+</dict>
+</plist>

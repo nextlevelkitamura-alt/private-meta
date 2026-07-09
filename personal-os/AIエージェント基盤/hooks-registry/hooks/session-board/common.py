@@ -14,6 +14,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 # common.py 自身の実体ディレクトリ＝共有本体（board.py・手順md）の置き場。
 CORE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -116,9 +117,15 @@ def start_register(d, runtime):
         return None
     repo = repo_of(d.get("cwd") or "")
     board_reconcile()
-    return (f"[session-board] ボードキー s:{key}（{repo or '?'}）。"
+    return (f"[session-board] ボードキー s:{key}（{repo or '?'}・現在 {_now()}）。"
             "行は最初のプロンプト時に登録される。依頼を理解したら "
             "update で目標・種別・今・モデルを正す（手順もその時に注入）。")
+
+
+def _now():
+    """現在時刻の短表記。AIは自前の時計を持たず開始時点の時刻感覚のまま判断しがちなので、
+    毎注入に現在時刻を含めて把握させる（2026-07-09 人間要望・刷新program子02先行分）。"""
+    return time.strftime("%m-%d %H:%M")
 
 
 def _summarize(prompt):
@@ -129,7 +136,7 @@ def _first_guide(key, repo, runtime):
     """初回注入（目標が未記入の間）: 記入コマンド・種別/計画列定義・既存目標一覧・既存計画確認・計画3判定。"""
     goals = board_goals()
     lines = [
-        f"[session-board] s:{key} | {repo or '?'} | {runtime}",
+        f"[session-board] s:{key} | {repo or '?'} | {runtime} | 現在:{_now()}",
         "最初の依頼を理解したら、ボード行を正す（Bash 1コマンド・このセッションで1回）:",
         f"  {BOARD} update --key {key} --type <{TYPES}> "
         "--goal \"<達成したらこのセッションを閉じられる1行・30字以内>\" "
@@ -168,7 +175,7 @@ def _mirror(key, row):
     3行目は優先順で出し分け（種別=計画 ＞ 計画:? 催促 ＞ 2行のみ）。両該当は計画3判定のみ。"""
     plan = row.get("plan") or PLACEHOLDER
     lines = [
-        f"[session-board] 目標:{row['goal']} | 今:{row['now']} | 種別:{row['type']} | 計画:{plan}",
+        f"[session-board] 現在:{_now()} | 目標:{row['goal']} | 今:{row['now']} | 種別:{row['type']} | 計画:{plan}",
         f"→ 実態とズレていたら {BOARD} update --key {key} --now \"<今の一歩>\""
         "（目標・種別・計画が変われば --goal/--type/--plan も）。節目なら log。",
     ]

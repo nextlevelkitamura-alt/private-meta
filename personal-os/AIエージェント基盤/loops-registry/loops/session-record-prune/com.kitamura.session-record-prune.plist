@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kitamura.session-record-prune</string>
+
+  <!--
+    日次（StartInterval 86400）に、~/.codex/sessions と ~/.claude/projects 配下の *.jsonl のうち
+    保持日数（既定30日）を超えたものを ~/.Trash へ移す。内蔵ディスク逼迫の抑制。
+    board の生存判定は直近30分の mtime しか見ないため、古い記録の除去は board に無害。
+
+    draft。置くだけ・未ロード（有効化は人間ゲート）。**初回は必ず dry-run をログ確認してから**。
+    手動 dry-run（何も動かさない・まずこれで確認）:
+      cd <このフォルダ> && python3 scripts/prune.py
+    有効化（symlink方式・board-reconcile と同型。scripts/prune.sh が --apply で実移動）:
+      ln -s '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/session-record-prune/com.kitamura.session-record-prune.plist' \
+        ~/Library/LaunchAgents/com.kitamura.session-record-prune.plist
+      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.kitamura.session-record-prune.plist
+      launchctl enable gui/$(id -u)/com.kitamura.session-record-prune
+    停止:
+      launchctl bootout gui/$(id -u)/com.kitamura.session-record-prune
+
+    RunAtLoad は付けない（ロード直後の即削除を避け、まず日次まで人間が観察できるように）。
+  -->
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/session-record-prune' &amp;&amp; scripts/prune.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/session-record-prune</string>
+
+  <key>StartInterval</key>
+  <integer>86400</integer>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>/Users/kitamuranaohiro</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>TZ</key>
+    <string>Asia/Tokyo</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/session-record-prune/output/logs/session-record-prune.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/session-record-prune/output/logs/session-record-prune.err.log</string>
+</dict>
+</plist>

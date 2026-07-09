@@ -50,3 +50,12 @@ Claude / Codex のセッション記録（`.jsonl`）の肥大を、一定期間
 - 引き金: W4評価の指摘②（外付けSSD退避リスク）／`plans/active/2026-07-08-計画実行フロー統一/plans/05-…`
 - 雛形: `loops-registry/loops/board-reconcile/`（plist・scripts・loop.md の型）
 - 卒業先: 成熟したら `loops-registry/plans/loop/` → loop本体（areas/AGENTS.md §5）
+
+## 実装状況（2026-07-09）
+
+- loop一式を実装済み: `loops-registry/loops/session-record-prune/`（`scripts/prune.py`・`scripts/prune.sh`・
+  plist・`loop.md`・`tests/test_prune.py`）。Python テスト **11本緑**（保持境界・.jsonl限定・対象外ディレクトリ
+  非接触・Trash移動・同名衝突連番・symlink逃げ非対象 を検証）。
+- 実物 **dry-run 実測**: 保持30日超 = **213件 / 1.08GB**（Codex 203 / Claude 10）。dry-run のため実ファイルは不変。
+- **未ロード**（launchd 有効化は人間ゲート・未実施）。残: 人間が dry-run ログを確認 → `loop.md` の手順で有効化。
+  頻度は日次で実装済み。有効化すれば完了条件を全て満たす見込み。

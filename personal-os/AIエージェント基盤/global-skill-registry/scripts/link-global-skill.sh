@@ -9,11 +9,13 @@ Creates direct symlinks from runtime global Skill entries to:
   AIエージェント基盤/skills/<skill-name>
 
 Targets:
-  ~/.agents/skills/<skill-name>
-  ~/.codex/skills/<skill-name>
-  ~/.claude/skills/<skill-name>
-  ~/.gemini/config/skills/<skill-name>
-  ~/.gemini/antigravity-cli/skills/<skill-name>
+  ~/.agents/skills/<skill-name>                  # npx skills共通ハブ（opencode等 .skill-lock.json lastSelectedAgents をカバー）
+  ~/.codex/skills/<skill-name>                   # Codex
+  ~/.claude/skills/<skill-name>                  # Claude Code
+  ~/.gemini/config/skills/<skill-name>           # Gemini CLI
+  ~/.gemini/antigravity-cli/skills/<skill-name>  # Antigravity CLI
+
+Note: opencode has no dedicated skills dir (~/.config/opencode/skills); it is covered via ~/.agents/skills.
 USAGE
 }
 

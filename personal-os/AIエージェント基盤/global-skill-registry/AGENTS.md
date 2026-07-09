@@ -11,7 +11,11 @@ Global Skill本文の正本は `/Users/kitamuranaohiro/Private/personal-os/AIエ
 3. `scripts/`: Global Skillのruntime露出などの補助script（各runtimeの `skills/` へ正本から direct symlink）。
 4. `plans/`: 卒業してきた skill 計画（`plans/<状態>/<YYYY-MM-DD-日本語企画名>/plan.md`。状態は6バケット。未生成は初回卒業で生やす）。
 
-- runtime露出先: `~/.agents/skills`・`~/.codex/skills`・`~/.claude/skills`・`~/.gemini/config/skills`・`~/.gemini/antigravity-cli/skills`。露出先は正本にしない・コピー同期しない（symlinkは各runtimeから正本へ直接）。
+- runtime露出先（正本にしない・コピー同期しない。symlinkは各runtimeから正本へ直接。機械露出は `scripts/link-global-skill.sh`）:
+  - `~/.claude/skills` … Claude Code。
+  - `~/.codex/skills` … Codex。
+  - `~/.gemini/config/skills` / `~/.gemini/antigravity-cli/skills` … Gemini CLI / Antigravity CLI。
+  - `~/.agents/skills` … `npx skills`（skills.sh）の共通Agent Skillsハブ。`~/.agents/.skill-lock.json` の `lastSelectedAgents`（opencode / cursor / zed / cline / warp / kimi-code-cli / amp / antigravity / deepagents / gemini-cli / github-copilot / codex / antigravity-cli）の配布元。**opencodeは専用の `~/.config/opencode/skills` を持たず、この共通ハブ経由で露出する**（opencode CLI自体はskillコマンドを持たず `opencode agent` と `~/.config/opencode/agents/` のみ）。
 - Global Skillの新規作成・既存改善・統合整理の計画（育成中）は `/Users/kitamuranaohiro/Private/personal-os/my-brain/areas/ai運用/plans/` を見る。
 
 ## 2. 境界

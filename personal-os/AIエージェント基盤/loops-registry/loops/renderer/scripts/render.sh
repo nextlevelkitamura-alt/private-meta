@@ -99,7 +99,8 @@ build_and_apply board-plans "build-board-plans.sh" "$work/board-plans.txt" "$SCR
 # (i) Notion依頼インボックスpull（N2・先。ベストエフォート。失敗しても render.sh 自体の
 #     成否($status)には影響させない。push/boardより先に走らせ、当日中に取り込んだ依頼が
 #     同じレンダで auto:board-* へも反映され得るようにする）
-"$SCRIPT_DIR/notion-inbox-pull.sh" "$daily_file" || true
+#     2026-07-09 デイリー運用刷新 子06: notion-inbox-pull.sh は inbox-patrol/scripts へ移設（パスのみ更新）。
+"$SCRIPT_DIR/../../inbox-patrol/scripts/notion-inbox-pull.sh" "$daily_file" || true
 
 # (j) Notion一方向push（N1・ベストエフォート。失敗しても render.sh 自体の成否($status)には影響させない）
 "$SCRIPT_DIR/notion-push.sh" "$daily_file" || true

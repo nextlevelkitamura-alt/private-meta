@@ -22,6 +22,18 @@
 #   サフィックスへ書き換える（finalize_duplicate_leftovers）。重複が無い（一致行が最初から1件だけ）場合は
 #   Skillの書き換えで既に0件になっているため、この後処理は何もしない（冪等・no-op）。
 #
+# 権限（2026-07-09 デイリー運用刷新 子06で強化）:
+#   headless AIは skip-permissions で起動しない。役割別の許可設定 settings/inbox-triage-permissions.json
+#   （読み=広く／書き=plans/planning配下とデイリーの処理印行のみ／push・削除・git破壊deny）を
+#   --settings で渡し、--setting-sources "" でユーザー/プロジェクト設定の混入を遮断、
+#   --permission-mode dontAsk で「allowlist外は黙って拒否」に固定する。-pモードは不正なsettingsを
+#   黙って無視する仕様のため、起動前にJSONとして読めることを検証し、読めなければAIを起動しない
+#   （クレームはロールバックされ次tickで再挑戦）。1tickの処理件数は INBOX_PATROL_MAX_PER_TICK
+#   （既定3）で頭打ちにする（暴走・費用の上限。残りは次tickが拾う）。
+#
+# 通知（子06追加）: 起案成功（→計画作成済み）の行ごとに notify-drafted.sh を1回呼ぶ
+# （PC通知＋Notion行の状態=起案済みPATCH。ベストエフォート・失敗してもpatrol自体は失敗にしない）。
+#
 # usage: patrol.sh [YYYY-MM-DD] [--dry-run]
 set -uo pipefail
 
@@ -30,6 +42,11 @@ LOOP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DAILY_DIGEST_SCRIPTS="$(cd "$SCRIPT_DIR/../../daily-digest/scripts" && pwd)"
 # shellcheck source=/dev/null
 source "$DAILY_DIGEST_SCRIPTS/_paths.sh"
+
+# 役割別許可設定（正本はこのloop配下。差し替えは INBOX_PATROL_SETTINGS）
+SETTINGS_FILE="${INBOX_PATROL_SETTINGS:-$LOOP_DIR/settings/inbox-triage-permissions.json}"
+# 1tickあたりのheadless AI起動数の上限（費用・暴走の上限。残りは次tickへ持ち越す）
+MAX_PER_TICK="${INBOX_PATROL_MAX_PER_TICK:-3}"
 
 FINAL_MARKER='→計画作成済み('
 CLAIM_MARKER='→処理中('
@@ -202,13 +219,14 @@ build_prompt() {
 $claimed_line
 
 この行は patrol.sh が先に「${CLAIM_MARKER}...)」というクレーム印を付けたあとの状態です。
-領域判定→規模判定（plan-triage経由でフル/ライト/サクッと）を行い、結果に応じてこの行の末尾にある
-「${CLAIM_MARKER}...)」の部分を次のいずれかに置き換えてください（追記ではなく置換。手順の正本 §4 を参照）。
+経路判定（対象repo→起案先は対象repoの plans/planning/）→規模判定（plan-triage経由でフル/ライト/サクッと）を
+行い、結果に応じてこの行の末尾にある「${CLAIM_MARKER}...)」の部分を次のいずれかに置き換えてください
+（追記ではなく置換。手順の正本 §3〜§4 を参照）。
 
-- 規模判定が**フル/ライト**: plan.mdを起案してから「→計画作成済み(<plan.mdの絶対パス>)」に置き換える。
+- 規模判定が**フル/ライト**: 対象repoの plans/planning/ に plan.md を起案してから「→計画作成済み(<plan.mdの絶対パス>)」に置き換える。
 - 規模判定が**サクッと**: plan.mdは起案せず「${SAKUTTO_MARKER}<1行理由>)」に置き換える（実行はしない・指揮官/人間が拾う）。
 
-いずれの場合も実装・実行は一切しない。
+いずれの場合も実装・実行・git commit・plans/active/ への配置は一切しない（自動は planning ドラフトまで・active化は人間承認）。
 EOF
 }
 
@@ -219,11 +237,30 @@ invoke_ai() {
     "$TRIAGE_AI_CMD" "$daily_file" "$claimed_line" "$prompt"
     return $?
   fi
-  claude -p "$prompt" --dangerously-skip-permissions --output-format text --max-budget-usd 5
+  # -pモードは不正なsettingsファイルを黙って無視する（=権限が意図せず既定へ広がる）ため、
+  # JSONとして読めることを確認できない限りAIを起動しない（呼び出し元がクレームを剥がして次tickへ）。
+  if ! python3 -c 'import json,sys; json.load(open(sys.argv[1], encoding="utf-8"))' "$SETTINGS_FILE" 2>/dev/null; then
+    echo "[inbox-patrol] 役割別許可設定が読めない/不正のためAI起動を中止: $SETTINGS_FILE" >&2
+    return 1
+  fi
+  # INBOX_PATROL_CLAUDE_CMD はテスト用の差し替え口（起動引数の契約を検証するため）。本番は claude。
+  ${INBOX_PATROL_CLAUDE_CMD:-claude} -p "$prompt" \
+    --settings "$SETTINGS_FILE" \
+    --setting-sources "" \
+    --permission-mode dontAsk \
+    --output-format text \
+    --max-budget-usd "${INBOX_PATROL_MAX_BUDGET_USD:-5}"
 }
 
 status=0
+invoked=0
 for orig_line in "${unprocessed[@]}"; do
+  # 1tickの処理件数上限（AI起動回数で数える。残りは未処理のまま次tickが拾う＝取りこぼしなし）
+  if [ "$invoked" -ge "$MAX_PER_TICK" ]; then
+    echo "[inbox-patrol] 1tick上限（${MAX_PER_TICK}件）に達したため残りは次tickへ持ち越す"
+    break
+  fi
+
   claimed_line="$(claim_line "$orig_line")"
   rc=$?
   if [ "$rc" -eq 2 ]; then
@@ -236,11 +273,16 @@ for orig_line in "${unprocessed[@]}"; do
   fi
 
   echo "[inbox-patrol] 起動: $orig_line"
+  invoked=$((invoked + 1))
   if invoke_ai "$claimed_line"; then
     # Skillは対象行だけを書き換える契約のため、同一内容の兄弟行が他にあれば
     # クレーム印のまま取り残っている。終了状態へ書き換えて残留ゼロを保証する（冪等・no-op許容）。
     finalize_duplicate_leftovers "$daily_file" "$claimed_line" \
       || echo "[inbox-patrol] 重複行の終了状態書込に失敗（手動確認が必要）: $orig_line" >&2
+    # 起案完了通知（PC通知＋Notion行PATCH）。ベストエフォート＝失敗してもpatrol自体は失敗にしない。
+    # →計画作成済み( が付いた場合だけ notify 側が実際に通知する（サクッと判定は無通知で即return）。
+    "$SCRIPT_DIR/notify-drafted.sh" "$daily_file" "$orig_line" \
+      || echo "[inbox-patrol] 起案通知に失敗（起案自体は成功・手動確認可）: $orig_line" >&2
   else
     echo "[inbox-patrol] 失敗（継続・クレーム解除してリトライ可能に戻す）: $orig_line" >&2
     replace_matching_lines "$daily_file" "$claimed_line" "$orig_line" \

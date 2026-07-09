@@ -25,3 +25,7 @@ outputs/
 # daily-notion-sync: DB id/parent page idキャッシュ・signature・last-count・mkdirロックの
 # 実行時状態（secretではないが非git管理。loop.md参照）
 /loops-registry/loops/daily-notion-sync/state/
+
+# inbox-patrol: patrol有効化フラグ・pull済みid・出所マップ・DB idキャッシュ・スキーママーカーの
+# 実行時状態（secretではないが非git管理。loop.md参照。2026-07-09 子06 tick統合で新設）
+/loops-registry/loops/inbox-patrol/state/

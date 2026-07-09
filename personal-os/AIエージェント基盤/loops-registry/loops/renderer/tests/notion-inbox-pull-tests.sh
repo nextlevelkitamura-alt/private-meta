@@ -33,13 +33,16 @@ new_workdir() {
   local d
   d="$(mktemp -d "${TMPDIR:-/tmp}/notion-inbox-pull-test.XXXXXX")"
   workdirs+=("$d")
-  mkdir -p "$d/loops-registry/loops/renderer" "$d/loops-registry/loops/daily-digest"
+  mkdir -p "$d/loops-registry/loops/renderer" "$d/loops-registry/loops/daily-digest" "$d/loops-registry/loops/inbox-patrol"
   cp -R "$RENDERER_DIR/scripts" "$d/loops-registry/loops/renderer/scripts"
   cp -R "$LOOPS_DIR/daily-digest/scripts" "$d/loops-registry/loops/daily-digest/scripts"
+  # 2026-07-09 デイリー運用刷新 子06: notion-inbox-pull.sh は inbox-patrol/scripts へ移設
+  # （notion-common.sh 等の共有ライブラリは renderer/scripts の正本を相対参照するため両方を複製する）
+  cp -R "$LOOPS_DIR/inbox-patrol/scripts" "$d/loops-registry/loops/inbox-patrol/scripts"
   printf '%s' "$d"
 }
 
-notion_inbox_pull_bin() { printf '%s/loops-registry/loops/renderer/scripts/notion-inbox-pull.sh' "$1"; }
+notion_inbox_pull_bin() { printf '%s/loops-registry/loops/inbox-patrol/scripts/notion-inbox-pull.sh' "$1"; }
 
 make_security_ok() {
   local path="$1" token="$2"

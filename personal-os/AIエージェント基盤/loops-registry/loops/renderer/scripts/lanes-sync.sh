@@ -79,9 +79,12 @@ fi
 #     駆動する。配置はロック取得前＝lanes-sync本流の排他に関与しない・無変化の早期exitより前なので
 #     毎分必ず走る。同期呼び出しにする理由: バックグラウンド(&)はlaunchdのプロセスグループkill
 #     （AbandonProcessGroup既定false）で親exit時に途中終了し得るため。tick自身は常にexit 0の
-#     フェイルセーフで、失敗はtick内で警告吸収済み（本流を止めない）。統合見張り（子06）が来たら
-#     この1行をsentinel側へ移す（呼び出し口は inbox-tick.sh 1本の契約）。 ---
-"$SCRIPT_DIR/inbox-tick.sh" || true
+#     フェイルセーフで、失敗はtick内で警告吸収済み（本流を止めない）。
+#     2026-07-09 デイリー運用刷新 子06: inbox-tick.sh は inbox-patrol/scripts へ移設し、独立plist
+#     （com.kitamura.inbox-tick・60秒・draft未ロード）が正規の呼び出し元になった。この相乗り呼び出しは
+#     lanes-sync再開時の互換のため残す（パスのみ更新。両方が動いてもpatrolのmkdirロックとpullのid記録で
+#     二重処理はしないが、運用上はどちらか一方だけを有効化する）。 ---
+"$SCRIPT_DIR/../../inbox-patrol/scripts/inbox-tick.sh" || true
 
 # --- 統合見張りtick（子06フェーズ1・毎分）: watch-keeper/keeper.sh のWAKE/error/watch不在検知を
 #     keeper-tick.sh 1本で相乗り駆動する（inbox-tickと同型・plistを増やさない）。keeper.shの

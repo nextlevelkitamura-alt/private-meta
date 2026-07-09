@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# renderer / notion-inbox-pull.sh — Notion「依頼インボックス」DBの立案済行をローカル当日デイリーへ
-# 取り込む一方向pull（統合program N2）。usage: notion-inbox-pull.sh [daily_file_path]
-#   省略時: レンダラと同じ解決（_paths.sh の daily_file_for、実行時点のJST当日）。
+# inbox-patrol / notion-inbox-pull.sh — Notion「依頼インボックス」DBの立案済行をローカル当日デイリーへ
+# 取り込む一方向pull（統合program N2。2026-07-09 デイリー運用刷新 子06で renderer/scripts から移設。
+# 共有Notionライブラリ notion-common.sh / notion_helper.py の正本は renderer/scripts のまま参照する）。
+# usage: notion-inbox-pull.sh [daily_file_path]
+#   省略時: _paths.sh の daily_file_for、実行時点のJST当日。
 #
-# 処理: DB「依頼インボックス」（状態select: 空白=下書き/立案済/回収済み。マルチ指揮官体制
-# program 子03の状態機械）の「状態=立案済」行を取得し、ローカル当日デイリーの
+# 処理: DB「依頼インボックス」（状態select: 空白=下書き/立案済/回収済み/起案済み。回収済み→起案済み
+# は notify-drafted.sh が起案完了時にPATCHする）の「状態=立案済」行を取得し、ローカル当日デイリーの
 # 「## 依頼インボックス」節末尾へ「- <依頼テキスト>」を追記した上で、該当Notion行の状態を
 # 「回収済み」に更新する。状態が空白の行は下書きとして回収しない（人間が「立案済」へ切り替えた
 # 行だけが回収対象。旧「新規」選択肢は廃止・残存行の整理は人間が1回行う）。行の作成はしない
@@ -16,6 +18,10 @@
 # （記録前に失敗すれば次回まるごとリトライ、記録後にNotion patchだけ失敗しても次回はpatchの
 # リトライだけを行い再追記はしない）。
 #
+# 出所マップ（子06追加）: 新規取り込み時に「id<TAB>依頼テキスト」を state/notion-inbox-origin-ids へ
+# 追記する。起案完了時に notify-drafted.sh がこのマップで該当Notion行を逆引きし、状態=起案済み＋
+# 計画パスをPATCHする（マップに無い行＝デイリー直書き/kickoff行はPC通知のみ）。
+#
 # auto:マーカー不可侵: 「## 依頼インボックス」節（マーカー無しの人間節）の末尾にだけ追記する。
 # auto:*:begin/end のどの区画にも触れない（該当セクション自体を経由しない。マーカー内側の
 # 読み書きは daily-digest/scripts/get-marker-block.sh / set-marker-block.sh 専用という契約は
@@ -25,16 +31,20 @@
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DAILY_DIGEST_SCRIPTS="$(cd "$SCRIPT_DIR/../../daily-digest/scripts" && pwd)"
+RENDERER_SCRIPTS="$(cd "$SCRIPT_DIR/../../renderer/scripts" && pwd)"
 # shellcheck source=/dev/null
 source "$DAILY_DIGEST_SCRIPTS/_paths.sh"
 # shellcheck source=/dev/null
-source "$SCRIPT_DIR/notion-common.sh"
+source "$RENDERER_SCRIPTS/notion-common.sh"
 
-HELPER="$SCRIPT_DIR/notion_helper.py"
-CONF_FILE="${NOTION_PUSH_CONF:-$SCRIPT_DIR/../notion-push.conf}"
+HELPER="$RENDERER_SCRIPTS/notion_helper.py"
+CONF_FILE="${NOTION_PUSH_CONF:-$SCRIPT_DIR/../../renderer/notion-push.conf}"
+# STATE_DIR 既定は本loop配下 inbox-patrol/state（gitignore済み）。移設前は renderer/state だった。
+# 旧 state（notion-inbox-pulled-ids）を引き継ぐ場合は人間が有効化時にコピーする（loop.md 有効化手順）。
 STATE_DIR="${NOTION_PUSH_STATE_DIR:-$SCRIPT_DIR/../state}"
 INBOX_DB_STATE_FILE="$STATE_DIR/notion-inbox-database-id"
 PULLED_STATE_FILE="$STATE_DIR/notion-inbox-pulled-ids"
+ORIGIN_STATE_FILE="$STATE_DIR/notion-inbox-origin-ids"
 KEYCHAIN_SERVICE="${NOTION_PUSH_KEYCHAIN_SERVICE:-notion-personal-os}"
 INBOX_HEADING="## 依頼インボックス"
 
@@ -118,12 +128,15 @@ to_append="$work/to-append.txt"
 : > "$to_append"
 fresh_ids="$work/fresh-ids.txt"
 : > "$fresh_ids"
+fresh_origins="$work/fresh-origins.tsv"
+: > "$fresh_origins"
 
 while IFS=$'\t' read -r row_id row_text; do
   [ -n "$row_id" ] || continue
   grep -qxF "$row_id" "$PULLED_STATE_FILE" && continue
   printf -- '- %s\n' "$row_text" >> "$to_append"
   echo "$row_id" >> "$fresh_ids"
+  printf '%s\t%s\n' "$row_id" "$row_text" >> "$fresh_origins"
 done < "$target_rows"
 
 if [ -s "$to_append" ]; then
@@ -160,6 +173,9 @@ if [ -s "$to_append" ]; then
     [ -n "$fresh_id" ] || continue
     echo "$fresh_id" >> "$PULLED_STATE_FILE"
   done < "$fresh_ids"
+
+  # 出所マップ（id<TAB>依頼テキスト）。notify-drafted.sh が起案完了時の逆引きに使う（追記のみ）。
+  cat "$fresh_origins" >> "$ORIGIN_STATE_FILE" || warn_exit0 "出所マップの記録に失敗: $ORIGIN_STATE_FILE"
 fi
 
 # --- 各行の状態を「回収済み」に更新（新規追記分・retry分の両方） ---

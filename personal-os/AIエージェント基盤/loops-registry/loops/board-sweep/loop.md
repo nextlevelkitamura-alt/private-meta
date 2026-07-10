@@ -1,5 +1,5 @@
 ---
-稼働状態: draft（未ロード・2026-07-09 新設／2026-07-10 二重鍵化。既定dry-run＝ボード無変更・判定ログのみ。有効化は人間ゲート・まずdry-run 1週間の実測から）
+稼働状態: 稼働中（2026-07-11 人間GOで --apply ロード・60分毎。判定モデル=gpt-5.6-luna（codex-cli 0.144.1で疎通確認）。安全弁=二重鍵＋SWEEP_APPLY_MAX 3件/回＋台帳ドラフト不流入。初回手動applyで not-done 2件を正しく残置と実測）
 設計: ../../../../my-brain/areas/ai運用/plans/active/2026-07-09-デイリー運用刷新/plans/05-停止行自動判定sweep.md
 二重鍵化: ../../../../my-brain/areas/ai運用/plans/active/2026-07-10-デイリーボード改善/plans/04-board-sweep二重鍵化とLLM接続.md
 ---

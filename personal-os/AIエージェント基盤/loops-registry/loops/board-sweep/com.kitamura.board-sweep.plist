@@ -36,7 +36,7 @@
   <array>
     <string>/bin/zsh</string>
     <string>-lc</string>
-    <string>cd '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-sweep' &amp;&amp; scripts/sweep.sh</string>
+    <string>cd '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-sweep' &amp;&amp; scripts/sweep.sh --apply</string>
   </array>
 
   <key>WorkingDirectory</key>
@@ -61,7 +61,9 @@
          2026-07-10 実測: gpt-5.4-mini は動作OK／gpt-5.6-luna は codex-cli 0.142.5 ではバージョンゲートで不可
          （codex update 後に差し替え可）。候補と根拠は loop.md「LLM接続」。 -->
     <key>SWEEP_LLM_MODEL</key>
-    <string></string>
+    <string>gpt-5.6-luna</string>
+    <!-- 2026-07-11 人間GO: codex-cli 0.144.1 へ更新し gpt-5.6-luna 疎通確認済み・--apply で稼働開始
+         （二重鍵＋SWEEP_APPLY_MAX=3/回＋台帳ドラフト不流入が安全弁）。 -->
   </dict>
 
   <key>StandardOutPath</key>

@@ -1,12 +1,14 @@
 # 実行一覧 — personal-os（`com.kitamura.*`）
 
-実測確認: `launchctl list | grep com.kitamura` ／ 最終更新: 2026-07-09（記録削除 loop を有効化・launchd 稼働＝board-reconcile と2本）
+実測確認: `launchctl list | grep com.kitamura` ／ 最終更新: 2026-07-11（board-sweep を --apply で有効化・launchd 稼働＝3本）
 
 ## 1行で
 
 **2026-07-04、旧レンダリング系を全停止した。** 人間のデイリーが91%機械生成になり読めなくなったための白紙化。新設計（セッション宣言型 session-board）は稼働中（主経路は hook 駆動・launchd不使用）で、その生存照合の**保険**だけを launchd に1本置いている（下記 board-reconcile）。
 
 ## ジョブ（稼働中・2026-07-08〜）
+
+- `board-sweep`（60分毎 StartInterval・**2026-07-11 人間GOで --apply ロード**） ── 当日＋前日ボードの⏸行を自動弁別し、確実に完了したものだけ「終わったこと」へ流す（`[auto]`＋根拠つき・3件/回上限）。適格=①定型台帳一致 ②二重鍵（rollout末尾task_complete＋沈黙 AND LLM会話判定done・モデル=gpt-5.6-luna）。unknown・計画つき行は不変。plist 正本・停止手順は `../loops/board-sweep/loop.md`。
 
 - `board-reconcile`（5分毎 StartInterval） ── session-board の生存照合（🟢/🔵の沈黙→⏸）の保険。通常は Stop/SessionStart 相乗りで照合されるため、**全セッションを閉じて放置した間の古い🟢残留だけ**を埋める。実体は瞬時・非LLM・API呼び出しなし。plist 正本・停止手順は `../loops/board-reconcile/loop.md`（symlink＋bootstrap・daily-notion-sync と同型）。2026-07-08 kickstart 実測 exit0。
 

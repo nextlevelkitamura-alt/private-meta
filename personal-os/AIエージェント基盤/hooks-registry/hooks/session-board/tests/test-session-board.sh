@@ -43,8 +43,10 @@ echo "=== 6. goals-summary と 同目標の隣接ソート ==="
 "$BOARD" add --key cccc0003 --repo RepoB --who "claude/?" --time 11:00
 "$BOARD" update --key cccc0003 --type リサーチ --goal "求人PDF整理" --now "規則確認"
 "$BOARD" flip --key cccc0003 --state wait
-ok "summary目標1" grepq "- ボード再設計 — 2体（🟢2）"
-ok "summary目標2" grepq "- 求人PDF整理 — 1体（⏸1）"
+ok "summary見出し(### 本日の目標)" bash -c "grep -qxF -- '### 本日の目標' '$DAILY'"
+ok "summary目標1(複数体=（N件）)" bash -c "grep -qxF -- '- 🟢 ボード再設計（2件）' '$DAILY'"
+ok "summary目標2(1体=件数なし)" bash -c "grep -qxF -- '- ⏸ 求人PDF整理' '$DAILY'"
+ok "summary旧形式(N体（)なし" bash -c "! grep -qF -- '体（' '$DAILY'"
 # 並び: summaryブロックの後、ボード再設計2行(aaaa,bbbb) → 求人PDF整理(cccc)
 ORDER=$(grep -o 's:[a-z0-9]*' "$DAILY" | head -3 | tr '\n' ' ')
 [ "$ORDER" = "s:aaaa0001 s:bbbb0002 s:cccc0003 " ]; ok "ソート順(生存グループ→時刻)" test $? -eq 0

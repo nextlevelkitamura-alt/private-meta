@@ -194,7 +194,9 @@ def sort_agents(lines):
 
 
 def rebuild_summary(lines):
-    """節先頭に目的別集計（- <目標> — N体（🟢x 🔵y ⏸z））を再生成。行が無ければ出さない。"""
+    """節先頭に「### 本日の目標」＋目的別行（- <代表絵文字> <目標>［（N件）］）を再生成。
+    代表絵文字＝グループ内で最も生きている状態（🟢>🔵>⏸）。件数は2体以上の時だけ付ける。
+    見出しはマーカー内側（strip_summary が丸ごと除去→再生成するため）。行が無ければ出さない。"""
     s, e = section_bounds(lines, AGENTS_H)
     if s is None:
         return lines
@@ -208,13 +210,14 @@ def rebuild_summary(lines):
             agg[g] = {RUN: 0, SUB: 0, WAIT: 0}
             order.append(g)
         agg[g][r["state"]] = agg[g].get(r["state"], 0) + 1
-    block = [GS_OPEN]
+    block = [GS_OPEN, "### 本日の目標"]
     for g in order:
         c = agg[g]
         n = sum(c.values())
-        parts = " ".join(f"{st}{c[st]}" for st in (RUN, SUB, WAIT) if c.get(st))
-        label = g if g != PLACEHOLDER else "（目標未記入）"
-        block.append(f"- {label} — {n}体（{parts}）")
+        emoji = next(st for st in (RUN, SUB, WAIT) if c.get(st))   # STATE_RANK順＝最良状態
+        label = g if g != PLACEHOLDER else "目標未記入"
+        suffix = f"（{n}件）" if n >= 2 else ""
+        block.append(f"- {emoji} {label}{suffix}")
     block.append(GS_CLOSE)
     lines[s + 1:s + 1] = block
     return lines

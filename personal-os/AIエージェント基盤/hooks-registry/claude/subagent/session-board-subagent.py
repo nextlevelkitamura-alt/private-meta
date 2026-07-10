@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-# session-board SubagentStart / SubagentStop（Codex受け口・薄いシム）。
+# session-board SubagentStart / SubagentStop（Claude受け口・薄いシム）。
 # 開始で体数+1・🔵(sub)、停止で体数-1・0になったら🟢(run) へ自動増減（board.py sub-start / sub-end）。
-# hook_event_name で分岐。session_id は親セッション（sid[:8]＝親キー）。
-# Claude 受け口 ../../claude/subagent/session-board-subagent.py と同型。詳細は ../../references/codex-hooks.md。
+# hook_event_name で分岐。payload の session_id は**親セッション**の id（sid[:8]＝親キーで正しい）。
+# transcript_path はサブ側を指しうるので is_subagent ガードは掛けない（このイベントは親の行を操作する）。
+# Codex 受け口 ../../codex/subagent/session-board-subagent.py と同型。詳細は ../../references/claude-hooks.md。
 import os
 import sys
 

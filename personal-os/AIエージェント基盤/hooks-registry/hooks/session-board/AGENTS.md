@@ -12,8 +12,8 @@ runtime 別の受け口は sibling の箱 `../../claude/`・`../../codex/` に**
   Claude も Codex もこの同じファイルを参照する。二重化しない。
 - **runtime別（受け口の箱）**: フックの入出力・登録先・trust が違うので、受け口だけ箱に分ける。
   受け口は「stdinのJSONを読んで `common.py` 経由で `board.py` を叩く」**薄いシム**に徹する。
-  - `../../claude/<イベント>/session-board-<イベント>.py` … Claude 受け口（session-start／prompt-register／session-end＋prompt型 milestone）
-  - `../../codex/<イベント>/session-board-<イベント>.py` … Codex 受け口（＋subagent／箱直下 `hooks.json`）
+  - `../../claude/<イベント>/session-board-<イベント>.py` … Claude 受け口（session-start／prompt-register／session-end／subagent＋prompt型 milestone）
+  - `../../codex/<イベント>/session-board-<イベント>.py` … Codex 受け口（session-start／prompt-register／session-end／subagent／箱直下 `hooks.json`）
 
 ## フォルダ構成（共有本体）
 
@@ -28,7 +28,8 @@ runtime 別の受け口は sibling の箱 `../../claude/`・`../../codex/` に**
 ## Claude と Codex の共通運用
 
 - エンジン・共通ロジック・手順は1つ: `board.py`＋`common.py`＋手順md に集約。両受け口は薄いシムで、差は
-  **SessionStart 出力（Claude=plain / Codex=JSON）**・**Codex専用 `subagent.py`**・**Claude専用 prompt型 `milestone.md`**・**登録/trust** だけ。
+  **SessionStart 出力（Claude=plain / Codex=JSON）**・**Claude専用 prompt型 `milestone.md`**・**登録/trust** だけ
+  （subagent 受け口は両runtime同型＝`sub-start`/`sub-end` でサブ体数を自動増減・2026-07-10 子02）。
 - 各runtimeの hook 一般知識（型・trust・入出力・イベント）は `../../references/claude-hooks.md`／`codex-hooks.md`。
   受け口固有の説明は各箱の `AGENTS.md`。ここでは重複させない。
 
@@ -36,7 +37,7 @@ runtime 別の受け口は sibling の箱 `../../claude/`・`../../codex/` に**
 
 - 本文の正本はこの共有本体と各受け口の箱。runtime登録（`~/.claude/settings.json`・`~/.codex/hooks.json`）は
   窓（`~/.claude`・`~/.codex` の `agent-hooks`／hooks.json symlink）経由＝露出。session-board の登録・露出は包括承認（ルールB）。Codex の trust は別途 `/hooks`。
-- `board.py` の行フォーマット（`LINE_RE`・2026-07-08〜の2列新形式）を割る変更をしない。旧形式（`OLD_LINE_RE`）は読み取り互換のみ・書き込みは常に新形式。状態は3値で増やさない（生存照合 `reconcile` も死体を⏸へ落とすだけで新状態を作らない）。
+- `board.py` の行フォーマット（`LINE_RE`・2026-07-10〜の v3 入れ子形式＝2列ボード＋任意 `sub:N`）を割る変更をしない。旧形式（v2.2/v2/`OLD_LINE_RE`）は読み取り互換のみ・書き込みは常に新形式。状態は3値で増やさない（生存照合 `reconcile` も死体を⏸へ落とすだけで新状態を作らない。🔵→⏸降格では sub体数を0へクリア）。
 - 生存照合は**実体トランスクリプトのmtime**を真実とする（パスにキーを含む `.jsonl` を照合＝サブ実体も親の生存に数える。閾値は🟢=`STALE_MIN`(10分)・🔵=`STALE_MIN_SUB`(30分)）。発火は Stop / SessionStart（開始=UserPromptSubmit には乗せない）＋保険 loop `loops-registry/loops/board-reconcile/`（未ロード）。詳細は `README.md` の「生存照合と並び替え」。
 - 受け口を増やすときは共通を `common.py` に寄せ、シムには runtime 差だけ残す。
 - 上位の索引・構造は `../../AGENTS.md`。設計判断の経緯は `../../research/2026-07-05/`。

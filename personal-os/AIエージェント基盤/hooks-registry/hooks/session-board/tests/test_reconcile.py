@@ -5,6 +5,8 @@
 import os
 import sys
 import datetime
+import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
@@ -30,9 +32,10 @@ def hhmm_ago(mins):
     return t.strftime("%H:%M")
 
 
-def row(state, mins_ago, key="aaaa0001"):
+def row(state, mins_ago, key="aaaa0001", sub=0):
+    tail = f" sub:{sub}" if sub else ""
     return (f"- {state} {hhmm_ago(mins_ago)} | G | 今:N | Repo | 実装 | "
-            f"claude/? | 計画:? <!-- s:{key} -->")
+            f"claude/? | 計画:? <!-- s:{key}{tail} -->")
 
 
 def make(rows):
@@ -44,6 +47,14 @@ def state_of(lines, key="aaaa0001"):
         r = board.parse_line(ln)
         if r and r["key"] == key:
             return r["state"]
+    return None
+
+
+def sub_of(lines, key="aaaa0001"):
+    for ln in lines:
+        r = board.parse_line(ln)
+        if r and r["key"] == key:
+            return int(r.get("sub") or 0)
     return None
 
 
@@ -70,6 +81,26 @@ ok("③ 🔵35分→⏸", state_of(board.reconcile_rows(make([row(SUB, 35)]))) =
 ok("🟢10分→維持(15分未満)", state_of(board.reconcile_rows(make([row(RUN, 10)]))) == RUN)
 # ⑤ 逆行クロック（未来時刻→_minutes_between が +1440≈1437）→ 上限NOFILE_MAXで弾く
 ok("⑤ 逆行クロック(3分未来)→降格しない", state_of(board.reconcile_rows(make([row(RUN, -3)]))) == RUN)
+
+# ---- ⑥ 🔵→⏸降格時に sub を0へクリア（幽霊ガード・子02）----
+# 実体皆無（幽霊枠掃除）経路: files非空・key不一致・🔵35分 → ⏸＋sub=0
+out = board.reconcile_rows(make([row(SUB, 35, key="subx0001", sub=2)]))
+ok("⑥ 実体皆無: 🔵35分 sub:2→⏸", state_of(out, "subx0001") == WAIT)
+ok("⑥ 実体皆無: 降格でsub=0", sub_of(out, "subx0001") == 0)
+ok("⑥ 実体皆無: 行からsub:が消える", not any("sub:" in ln for ln in out))
+# 維持中（閾値内）はsubを保持する
+out = board.reconcile_rows(make([row(SUB, 20, key="subx0001", sub=2)]))
+ok("⑥ 維持中(20分)はsub保持", sub_of(out, "subx0001") == 2 and state_of(out, "subx0001") == SUB)
+# mtime沈黙経路: 実ファイル（キーをパスに含む・35分前mtime）→ ⏸＋sub=0
+_td = tempfile.mkdtemp(prefix="sbtest-reconcile-")
+_f = os.path.join(_td, "subx0002-tx.jsonl")
+open(_f, "w").close()
+_old = time.time() - 35 * 60
+os.utime(_f, (_old, _old))
+board._list_transcripts = lambda: [_f]
+out = board.reconcile_rows(make([row(SUB, 40, key="subx0002", sub=3)]))
+ok("⑥ mtime沈黙: 🔵→⏸", state_of(out, "subx0002") == WAIT)
+ok("⑥ mtime沈黙: 降格でsub=0", sub_of(out, "subx0002") == 0)
 
 board._list_transcripts = _orig
 

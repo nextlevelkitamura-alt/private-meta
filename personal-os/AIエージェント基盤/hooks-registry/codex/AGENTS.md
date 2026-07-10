@@ -9,7 +9,7 @@ SubagentStart / SubagentStop** の hooks を持つ。受け口を **イベント
 - `session-start/session-board-session-start.py` … SessionStart: 行の枠登録＋キー通知1行（**JSON**）
 - `prompt-register/session-board-prompt-register.py` … UserPromptSubmit: 登録保険／⏸→🟢復帰／「今」初回仮置き＋二段注入（目標未記入=フルガイド／記入済み=ミラー・**JSON** `additionalContext`）
 - `session-end/session-board-session-end.py` … Stop: run のとき⏸へ flip
-- `subagent/session-board-subagent.py` … SubagentStart→🔵 / SubagentStop→🟢（**Codex専用**・自動flip）
+- `subagent/session-board-subagent.py` … SubagentStart/SubagentStop: サブ体数を `sub-start`/`sub-end` で自動増減（開始で🔵・全終了で🟢復帰。Claude にも同型受け口 `../claude/subagent/`＝2026-07-10 子02でCodex専用を解除）
 - `hooks.json` … **Codex 登録の索引**（イベント→受け口）。`~/.codex/hooks.json` はこれへの symlink。
   受け口ではなく全イベントを束ねる索引なので、イベントfolderに入れず**箱の直下**に置く。
 

@@ -33,7 +33,7 @@ hook は「イベント直後に軽い決まった処理を挟む」もの（記
 
 - `session-board/` … セッション宣言型ボード（唯一の稼働フック・2026-07-05再構築・skill廃止・2026-07-06 registry再編）。
   - 共有＝`hooks/session-board/`（`board.py` エンジン＋`common.py` 受け口共通＋`session-start.md`/`session-end.md` 手順＋`daily-template.md`＋`README.md`＋`registered.sh`）。
-  - 受け口＝`claude/<イベント>/`・`codex/<イベント>/` にイベント別（session-start／prompt-register／session-end＋claude:milestone／codex:subagent）。ファイル名 `session-board-<イベント>`。codex は `hooks.json` を箱直下に。
+  - 受け口＝`claude/<イベント>/`・`codex/<イベント>/` にイベント別（session-start／prompt-register／session-end／subagent＝両runtime＋claude:milestone）。ファイル名 `session-board-<イベント>`。codex は `hooks.json` を箱直下に。
   - 状態は🟢動作中/⏸停止・確認待ち/🔵サブ稼働中の3値。詳細は各 `session-board/AGENTS.md`、現況は `hooks/session-board/registered.sh`。
 - `session-daily-log/` … **廃止・削除済み（2026-07-06）**。旧 Stop hook（当日デイリー自動ログ）。session-board へ統一。経緯は `../loops-registry/実行一覧/personal-os.md`。
 

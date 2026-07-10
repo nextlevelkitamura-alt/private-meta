@@ -100,6 +100,16 @@ def board_flip(key, state):
     subprocess.run([BOARD, "flip", "--key", key, "--state", state], capture_output=True)
 
 
+def board_sub_start(key):
+    """SubagentStart: サブ体数+1・🔵へ（board.py sub-start。行が無ければ何もしない）。"""
+    subprocess.run([BOARD, "sub-start", "--key", key], capture_output=True)
+
+
+def board_sub_end(key):
+    """SubagentStop: サブ体数-1（0でクランプ）・0になったら🔵→🟢（board.py sub-end）。"""
+    subprocess.run([BOARD, "sub-end", "--key", key], capture_output=True)
+
+
 def board_reconcile():
     """🟢/🔵を実体トランスクリプトで照合し沈黙行を⏸へ＋整列（board.py reconcile）。
     掃除は start-latency に乗らない経路（Stop / SessionStart）からのみ呼ぶ。失敗は無視。"""
@@ -164,7 +174,8 @@ def _first_guide(key, repo, runtime):
         " 置き場: repo概要.md で所属repoを判定（cwdでなく依頼の中身で）→ そのrepo AGENTS.md → "
         "<repo>/plans/。決めたら update --plan で宣言。",
         f"節目: {BOARD} log --key {key} --repo <repo> --parent <目標名> --entry <成果1行>"
-        "（時刻・所要は自動付与）。サブエージェント起動中: flip --state sub／復帰: flip --state run。"
+        "（時刻・所要は自動付与）。サブエージェント起動中: flip --state sub／復帰: flip --state run"
+        "（SubagentStart/Stop 受け口の登録環境では sub-start/sub-end が体数ごと自動増減・手動不要）。"
         f"完了は人間確認後に finish。詳細: {os.path.join(CORE_DIR, 'session-start.md')}",
     ]
     return "\n".join(lines)

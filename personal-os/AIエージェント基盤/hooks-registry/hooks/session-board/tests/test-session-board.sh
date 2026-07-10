@@ -7,20 +7,21 @@ CL="$(cd "$(dirname "$0")/../../../claude" && pwd)"
 CX="$(cd "$(dirname "$0")/../../../codex" && pwd)"
 SP="$(mktemp -d)/sbtest"   # 作業ゴミは tests/ でなく tmp へ（tests/ を汚さない）
 rm -rf "$SP"; mkdir -p "$SP/goal" "$SP/tx/proj"
-export GOAL_BASE="$SP/goal" SESSION_BOARD_DATE="2099-01-01" SESSION_BOARD_TX_ROOTS="$SP/tx"
+export GOAL_BASE="$SP/goal" SESSION_BOARD_DATE="2099-01-01" SESSION_BOARD_TX_ROOTS="$SP/tx" SESSION_BOARD_NO_TURSO=1
 BOARD="$SB/board.py"
 DAILY="$SP/goal/2099/01/2099-01-01.md"
 PASS=0; FAIL=0
 ok(){ local name="$1"; shift; if "$@" >/dev/null 2>&1; then PASS=$((PASS+1)); echo "PASS: $name"; else FAIL=$((FAIL+1)); echo "FAIL: $name"; fi; }
 grepq(){ grep -qF -- "$1" "$DAILY"; }
 
-echo "=== 1. add: 新形式の枠行 ==="
+echo "=== 1. add: 新形式の枠行（v3・2字インデントで親行の下に入る） ==="
 "$BOARD" add --key aaaa0001 --repo RepoA --who "claude/?" --time 14:00
-ok "add新形式行" grepq "- 🟢 14:00 | ? | 今:? | RepoA | その他 | claude/? | 計画:? <!-- s:aaaa0001 -->"
+ok "add新形式行(インデント)" grepq "  - 🟢 14:00 | ? | 今:? | RepoA | その他 | claude/? | 計画:? <!-- s:aaaa0001 -->"
+ok "目標?は親行「目標未記入」" bash -c "grep -qxF -- '- 🟢 目標未記入' '$DAILY'"
 
 echo "=== 2. update: goal/now/type/model 反映・時刻不変 ==="
 "$BOARD" update --key aaaa0001 --type 実装 --goal "ボード再設計" --now "board.py改修" --model fable5
-ok "update反映" grepq "- 🟢 14:00 | ボード再設計 | 今:board.py改修 | RepoA | 実装 | claude/fable5 | 計画:? <!-- s:aaaa0001 -->"
+ok "update反映" grepq "  - 🟢 14:00 | ボード再設計 | 今:board.py改修 | RepoA | 実装 | claude/fable5 | 計画:? <!-- s:aaaa0001 -->"
 
 echo "=== 3. add冪等: 既存行を上書きしない ==="
 "$BOARD" add --key aaaa0001 --repo RepoX --who "codex/?"
@@ -44,12 +45,15 @@ echo "=== 6. goals-summary と 同目標の隣接ソート ==="
 "$BOARD" update --key cccc0003 --type リサーチ --goal "求人PDF整理" --now "規則確認"
 "$BOARD" flip --key cccc0003 --state wait
 ok "summary見出し(### 本日の目標)" bash -c "grep -qxF -- '### 本日の目標' '$DAILY'"
-ok "summary目標1(複数体=（N件）)" bash -c "grep -qxF -- '- 🟢 ボード再設計（2件）' '$DAILY'"
-ok "summary目標2(1体=件数なし)" bash -c "grep -qxF -- '- ⏸ 求人PDF整理' '$DAILY'"
+ok "目標親行1(複数体=（N件）)" bash -c "grep -qxF -- '- 🟢 ボード再設計（2件）' '$DAILY'"
+ok "目標親行2(1体=件数なし)" bash -c "grep -qxF -- '- ⏸ 求人PDF整理' '$DAILY'"
 ok "summary旧形式(N体（)なし" bash -c "! grep -qF -- '体（' '$DAILY'"
-# 並び: summaryブロックの後、ボード再設計2行(aaaa,bbbb) → 求人PDF整理(cccc)
+# 並び: 親行の下に ボード再設計2行(aaaa,bbbb) → 求人PDF整理(cccc)。全行GS_マーカー内・2字インデント
 ORDER=$(grep -o 's:[a-z0-9]*' "$DAILY" | head -3 | tr '\n' ' ')
 [ "$ORDER" = "s:aaaa0001 s:bbbb0002 s:cccc0003 " ]; ok "ソート順(生存グループ→時刻)" test $? -eq 0
+[ "$(grep -cE '^- (🟢|⏸|🔵) [0-9]{2}:[0-9]{2} ' "$DAILY")" = "0" ]; ok "フラットなセッション行が無い(全行入れ子)" test $? -eq 0
+# 親行→直下に自グループのセッション行が隣接している
+grep -A1 -xF -- '- ⏸ 求人PDF整理' "$DAILY" | grep -qF "s:cccc0003"; ok "親行直下に所属セッション行" test $? -eq 0
 
 echo "=== 7. log: (+Nm) 自動付与 ==="
 "$BOARD" log --key aaaa0001 --repo RepoA --parent "ボード再設計" --time 14:38 --entry "board.py改修完了"
@@ -88,7 +92,7 @@ PY
 "$BOARD" show --key eeee0005 | grep -q "旧形式の要約テキスト"; ok "旧形式をshowで読める" test $? -eq 0
 touch "$SP/tx/proj/eeee0005-old.jsonl"   # 実体あり(新しい)→reconcileで降格しない
 "$BOARD" reconcile
-ok "旧→新形式へ移行" grepq "- 🟢 09:15 | 旧形式の要約テキスト | 今:? | OldRepo | 計画 | ? | 計画:? <!-- s:eeee0005 -->"
+ok "旧→新形式(v3)へ移行" grepq "  - 🟢 09:15 | 旧形式の要約テキスト | 今:? | OldRepo | 計画 | ? | 計画:? <!-- s:eeee0005 -->"
 ok "旧形式行が残っていない" bash -c "! grep -qF '| 旧形式の要約テキスト | 🟢動作中' '$DAILY'"
 
 echo "=== 11. reconcile: 生存照合 ==="
@@ -172,7 +176,7 @@ PY
 [ "$("$BOARD" show --key plan0005 | awk -F'\t' '{print $7}')" = "?" ]; ok "D3 v2行のplanは?補完でshow" test $? -eq 0
 touch "$SP/tx/proj/plan0005-v2.jsonl"   # 実体あり(新しい)→reconcileで降格しない
 "$BOARD" reconcile
-ok "D3 reconcile1回でv2.2化" grepq "- 🟢 08:00 | v2混在行 | 今:確認 | V2Repo | 実装 | claude/? | 計画:? <!-- s:plan0005 -->"
+ok "D3 reconcile1回でv3化" grepq "  - 🟢 08:00 | v2混在行 | 今:確認 | V2Repo | 実装 | claude/? | 計画:? <!-- s:plan0005 -->"
 ok "D3 v2行(計画列なし)が残らない" bash -c "! grep -qF -- '| claude/? <!-- s:plan0005 -->' '$DAILY'"
 
 echo "=== 13. reconcile: 実体皆無の幽霊枠掃除（遅延登録の取りこぼし対策）==="
@@ -188,6 +192,60 @@ GHOST_NEW=$(date -v-5M +%H:%M)    # 5分前開始（<15分）→維持
 [ "$("$BOARD" check --key gho5t001)" = "wait" ]; ok "実体なし15分超→⏸(幽霊枠掃除)" test $? -eq 0
 [ "$("$BOARD" check --key gho5t002)" = "run" ];  ok "実体なし15分未満→維持" test $? -eq 0
 ok "幽霊枠は行削除でなく⏸止まり（行は残る）" bash -c "grep -qF 's:gho5t001' '$DAILY'"
+
+echo "=== 14. sub-start / sub-end: サブ体数の機械増減 ==="
+"$BOARD" add --key subb0009 --repo RepoS --who "claude/?"   # 現在時刻で登録（幽霊掃除の対象外）
+"$BOARD" update --key subb0009 --goal "サブ数テスト" --now "委託"
+"$BOARD" sub-start --key subb0009
+"$BOARD" sub-start --key subb0009
+[ "$("$BOARD" check --key subb0009)" = "sub" ]; ok "sub-start×2→🔵" test $? -eq 0
+ok "コメントがsub:2" grepq "<!-- s:subb0009 sub:2 -->"
+ok "派生行 ↳ 🔵 サブ2体(4字インデント)" grepq "    ↳ 🔵 サブ2体"
+"$BOARD" sub-end --key subb0009
+[ "$("$BOARD" check --key subb0009)" = "sub" ]; ok "sub-end×1→🔵維持" test $? -eq 0
+ok "体数1へ減少" grepq "    ↳ 🔵 サブ1体"
+"$BOARD" sub-end --key subb0009
+[ "$("$BOARD" check --key subb0009)" = "run" ]; ok "全end→🟢復帰" test $? -eq 0
+ok "sub:0は書かれない" bash -c "! grep -qF 'sub:0' '$DAILY'"
+ok "体数0で↳行が消える" bash -c "! grep -qE '^    ↳' '$DAILY'"
+"$BOARD" sub-end --key subb0009
+[ "$("$BOARD" check --key subb0009)" = "run" ]; ok "0でクランプ(下回らない)" test $? -eq 0
+"$BOARD" flip --key subb0009 --state wait
+"$BOARD" sub-start --key subb0009
+[ "$("$BOARD" check --key subb0009)" = "sub" ]; ok "⏸からのsub-startも🔵(親生存の合図)" test $? -eq 0
+"$BOARD" sub-end --key subb0009
+"$BOARD" sub-start --key nokey999
+ok "無い行へのsub-startは無害(行を作らない)" bash -c "! grep -qF 's:nokey999' '$DAILY'"
+
+echo "=== 15. finish: 行とsubコメント・↳派生行が消える ==="
+"$BOARD" sub-start --key subb0009
+ok "finish前はsub:1" grepq "<!-- s:subb0009 sub:1 -->"
+"$BOARD" finish --key subb0009 --repo RepoS --parent "サブ数テスト" --entry "締め"
+ok "finishで行消滅" bash -c "! grep -qF 's:subb0009' '$DAILY'"
+ok "finishでsubコメント消滅" bash -c "! grep -qF 'sub:1' '$DAILY'"
+ok "finishで↳派生行も消滅" bash -c "! grep -qE '^    ↳' '$DAILY'"
+
+echo "=== 16. 3世代フラット行 → 1書き込みでv3入れ子へ ==="
+python3 - "$DAILY" <<'PY'
+import sys
+p = sys.argv[1]
+lines = open(p, encoding="utf-8").read().split("\n")
+i = lines.index("## 動いているエージェント")
+lines[i + 1:i + 1] = [
+    "- 🟢 07:00 | v22フラット | 今:x | GenRepo | 実装 | claude/? | 計画:? <!-- s:genv2200 -->",
+    "- 🟢 07:01 | v2フラット | 今:y | GenRepo | 実装 | claude/? <!-- s:genv2000 -->",
+    "- 07:02 | GenRepo | 計画 | v1フラット | 🟢動作中 <!-- s:genv1000 -->",
+]
+open(p, "w", encoding="utf-8").write("\n".join(lines))
+PY
+touch "$SP/tx/proj/genv2200.jsonl" "$SP/tx/proj/genv2000.jsonl" "$SP/tx/proj/genv1000.jsonl"
+"$BOARD" reconcile   # 1書き込み
+ok "v2.2→v3(インデント入れ子)" grepq "  - 🟢 07:00 | v22フラット | 今:x | GenRepo | 実装 | claude/? | 計画:? <!-- s:genv2200 -->"
+ok "v2→v3(計画:?補完)" grepq "  - 🟢 07:01 | v2フラット | 今:y | GenRepo | 実装 | claude/? | 計画:? <!-- s:genv2000 -->"
+ok "v1→v3(全列補完)" grepq "  - 🟢 07:02 | v1フラット | 今:? | GenRepo | 計画 | ? | 計画:? <!-- s:genv1000 -->"
+ok "v2.2/v2フラット行が残らない" bash -c "! grep -qE '^- 🟢 07:0[01] ' '$DAILY'"
+ok "v1フラット行が残らない" bash -c "! grep -qE '^- 07:02 ' '$DAILY'"
+ok "各行に親行が立つ" bash -c "grep -qxF -- '- 🟢 v22フラット' '$DAILY'"
 
 echo; echo "== 結果: PASS=$PASS FAIL=$FAIL =="
 [ "$FAIL" -eq 0 ]

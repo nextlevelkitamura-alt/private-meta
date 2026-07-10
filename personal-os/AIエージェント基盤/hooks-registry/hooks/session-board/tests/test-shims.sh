@@ -7,7 +7,7 @@ CL="$(cd "$(dirname "$0")/../../../claude" && pwd)"
 CX="$(cd "$(dirname "$0")/../../../codex" && pwd)"
 SP="$(mktemp -d)/sbtest2"   # 作業ゴミは tests/ でなく tmp へ（tests/ を汚さない）
 rm -rf "$SP"; mkdir -p "$SP/goal" "$SP/tx/proj"
-export GOAL_BASE="$SP/goal" SESSION_BOARD_DATE="2099-01-02" SESSION_BOARD_TX_ROOTS="$SP/tx"
+export GOAL_BASE="$SP/goal" SESSION_BOARD_DATE="2099-01-02" SESSION_BOARD_TX_ROOTS="$SP/tx" SESSION_BOARD_NO_TURSO=1
 BOARD="$SB/board.py"
 DAILY="$SP/goal/2099/01/2099-01-02.md"
 PASS=0; FAIL=0
@@ -111,6 +111,34 @@ OUT=$(echo "$J4_UP" | python3 "$CL/prompt-register/session-board-prompt-register
 echo "$OUT" | grep -q "計画3判定: ①サクッと"; ok "D10 種別=計画で3判定行" test $? -eq 0
 ! echo "$OUT" | grep -q "計画:? → 拠り所"; ok "D10 ?催促は重複しない" test $? -eq 0
 [ "$(echo "$OUT" | wc -l | tr -d ' ')" = "3" ]; ok "D10 計画時も3行(重複なし)" test $? -eq 0
+
+echo "=== 11. Codexシム: SubagentStart/Stop → sub-start/sub-end（体数増減） ==="
+J3_SUBS='{"session_id":"c0dec0de-0000-1111-2222-333344445555","cwd":"/tmp/repoZ","hook_event_name":"SubagentStart"}'
+J3_SUBE='{"session_id":"c0dec0de-0000-1111-2222-333344445555","cwd":"/tmp/repoZ","hook_event_name":"SubagentStop"}'
+echo "$J3_SUBS" | python3 "$CX/subagent/session-board-subagent.py"
+echo "$J3_SUBS" | python3 "$CX/subagent/session-board-subagent.py"
+[ "$("$BOARD" check --key c0dec0de)" = "sub" ]; ok "Codex SubagentStart×2→🔵" test $? -eq 0
+grep -qF "<!-- s:c0dec0de sub:2 -->" "$DAILY"; ok "Codex sub:2コメント" test $? -eq 0
+grep -qF "    ↳ 🔵 サブ2体" "$DAILY"; ok "Codex ↳サブ2体" test $? -eq 0
+echo "$J3_SUBE" | python3 "$CX/subagent/session-board-subagent.py"
+[ "$("$BOARD" check --key c0dec0de)" = "sub" ]; ok "Codex Stop×1→🔵維持(残1体)" test $? -eq 0
+grep -qF "    ↳ 🔵 サブ1体" "$DAILY"; ok "Codex 体数1へ減少" test $? -eq 0
+echo "$J3_SUBE" | python3 "$CX/subagent/session-board-subagent.py"
+[ "$("$BOARD" check --key c0dec0de)" = "run" ]; ok "Codex 全Stop→🟢復帰" test $? -eq 0
+! grep -qF "s:c0dec0de sub:" "$DAILY"; ok "Codex sub:痕跡なし(0は書かない)" test $? -eq 0
+
+echo "=== 12. Claude受け口シム: SubagentStart/Stop E2E（新設） ==="
+J_SUBS='{"session_id":"beefcafe-0000-1111-2222-333344445555","transcript_path":"'$SP'/tx/proj/beefcafe-0000/subagents/agent-sub1.jsonl","cwd":"/tmp/repoZ","hook_event_name":"SubagentStart"}'
+J_SUBE='{"session_id":"beefcafe-0000-1111-2222-333344445555","transcript_path":"'$SP'/tx/proj/beefcafe-0000/subagents/agent-sub1.jsonl","cwd":"/tmp/repoZ","hook_event_name":"SubagentStop"}'
+echo "$J_SUBS" | python3 "$CL/subagent/session-board-subagent.py"
+[ "$("$BOARD" check --key beefcafe)" = "sub" ]; ok "Claude SubagentStart→🔵" test $? -eq 0
+grep -qF "<!-- s:beefcafe sub:1 -->" "$DAILY"; ok "Claude sub:1コメント" test $? -eq 0
+grep -qF "    ↳ 🔵 サブ1体" "$DAILY"; ok "Claude ↳サブ1体" test $? -eq 0
+echo "$J_SUBE" | python3 "$CL/subagent/session-board-subagent.py"
+[ "$("$BOARD" check --key beefcafe)" = "run" ]; ok "Claude SubagentStop→🟢復帰" test $? -eq 0
+! grep -qF "s:beefcafe sub:" "$DAILY"; ok "Claude sub:痕跡なし" test $? -eq 0
+OUT=$(echo '{"session_id":"agent-xyz","cwd":"/tmp","hook_event_name":"SubagentStart"}' | python3 "$CL/subagent/session-board-subagent.py")
+[ -z "$OUT" ]; ok "Claude subagent自身のsid(agent-*)は無視" test $? -eq 0
 
 echo; echo "== 結果: PASS=$PASS FAIL=$FAIL =="
 [ "$FAIL" -eq 0 ]

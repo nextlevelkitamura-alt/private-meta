@@ -55,23 +55,31 @@ ORDER=$(grep -o 's:[a-z0-9]*' "$DAILY" | head -3 | tr '\n' ' ')
 # 親行→直下に自グループのセッション行が隣接している
 grep -A1 -xF -- '- ⏸ 求人PDF整理' "$DAILY" | grep -qF "s:cccc0003"; ok "親行直下に所属セッション行" test $? -eq 0
 
-echo "=== 7. log: (+Nm) 自動付与 ==="
+echo "=== 7. log: (+Nm) 自動付与・子は時系列（末尾追記） ==="
 "$BOARD" log --key aaaa0001 --repo RepoA --parent "ボード再設計" --time 14:38 --entry "board.py改修完了"
 ok "log初回(+38m/開始14:00起点)" grepq "  - 14:38 (+38m) board.py改修完了"
 "$BOARD" log --key aaaa0001 --repo RepoA --parent "ボード再設計" --time 15:20 --entry "common.py改修完了" --entry "受け口4本更新"
 ok "log2回目(+42m/前節目起点)" grepq "  - 15:20 (+42m) common.py改修完了"
 ok "log複数entry(2つ目はmarkなし)" grepq "  - 15:20 受け口4本更新"
+ok "子2回目が下に付く(時系列・古→新)" bash -c "grep -A1 -F -- '  - 14:38 (+38m) board.py改修完了' '$DAILY' | grep -qF '15:20 (+42m) common.py改修完了'"
+ok "複数entryは記載順(1つ目が上)" bash -c "grep -A1 -F -- '  - 15:20 (+42m) common.py改修完了' '$DAILY' | grep -qF '15:20 受け口4本更新'"
+"$BOARD" log --key aaaa0001 --repo RepoA --parent "ボード再設計" --time 15:30 --entry "テスト整備"
+ok "log3回目(+10m/最後の子15:20起点)" grepq "  - 15:30 (+10m) テスト整備"
+ok "3回目の子も末尾に付く" bash -c "grep -A1 -F -- '  - 15:20 受け口4本更新' '$DAILY' | grep -qF '15:30 (+10m) テスト整備'"
 
 echo "=== 8. 日跨ぎ (+Nm) ==="
 "$BOARD" add --key dddd0004 --repo RepoC --who "claude/?" --time 23:50
 "$BOARD" update --key dddd0004 --goal "夜間バッチ" --now "実行"
 "$BOARD" log --key dddd0004 --repo RepoC --parent "夜間バッチ" --time 00:10 --entry "完了"
 ok "日跨ぎ(+20m)" grepq "  - 00:10 (+20m) 完了"
+ok "新repo見出しは節末尾(RepoAの下にRepoC)" bash -c "awk '/^### RepoA\$/{a=NR} /^### RepoC\$/{c=NR} END{exit !(a && c && a<c)}' '$DAILY'"
 
-echo "=== 9. finish: 行削除＋子追記 ==="
-"$BOARD" finish --key dddd0004 --repo RepoC --parent "夜間バッチ" --time 00:15 --entry "締め"
+echo "=== 9. finish: 行削除＋子追記（複数entryも時系列） ==="
+"$BOARD" finish --key dddd0004 --repo RepoC --parent "夜間バッチ" --time 00:15 --entry "締め" --entry "片付け"
 ok "finish行削除" bash -c "! grep -qF 's:dddd0004' '$DAILY'"
 ok "finish子追記(+5m)" grepq "  - 00:15 (+5m) 締め"
+ok "finish子は既存の子の下(時系列)" bash -c "grep -A1 -F -- '  - 00:10 (+20m) 完了' '$DAILY' | grep -qF '00:15 (+5m) 締め'"
+ok "finish複数entryは記載順(markは1つ目のみ)" bash -c "grep -A1 -F -- '  - 00:15 (+5m) 締め' '$DAILY' | grep -qF '  - 00:15 片付け'"
 
 # aaaa0001/bbbb0002 は実働セッション＝実体トランスクリプトあり（幽霊枠掃除の対象外・以降のreconcileはmtimeで判定）
 touch "$SP/tx/proj/aaaa0001-x.jsonl" "$SP/tx/proj/bbbb0002-y.jsonl"
@@ -163,6 +171,8 @@ ok "D7 ?は親へ転記されない" bash -c "grep -qxF -- '- 未記入計画' '
 "$BOARD" finish --key plan0004 --repo PlanRepo --parent "完了付与" --time 18:10 --entry "締め"
 ok "D6 finishでも‹計画:›付与" grepq "- 完了付与 ‹計画: ai運用:計画実行フロー統一/03›"
 ok "D6 finish自行削除" bash -c "! grep -qF 's:plan0004' '$DAILY'"
+# 時系列: 新しい親はrepoブロック末尾へ（log/finishの発生順＝計画置き→サクッと→未記入計画→完了付与）
+ok "新親はブロック末尾(発生順に上→下)" bash -c "awk '/^- 計画置き/{a=NR} /^- サクッと\$/{b=NR} /^- 未記入計画\$/{c=NR} /^- 完了付与/{d=NR} END{exit !(a&&b&&c&&d && a<b && b<c && c<d)}' '$DAILY'"
 # D3: v2行（計画列なし）混在 → check/show で読める → reconcile 1回で全行 v2.2 化
 python3 - "$DAILY" <<'PY'
 import sys
@@ -224,6 +234,8 @@ ok "finish前はsub:1" grepq "<!-- s:subb0009 sub:1 -->"
 ok "finishで行消滅" bash -c "! grep -qF 's:subb0009' '$DAILY'"
 ok "finishでsubコメント消滅" bash -c "! grep -qF 'sub:1' '$DAILY'"
 ok "finishで↳派生行も消滅" bash -c "! grep -qE '^    ↳' '$DAILY'"
+# 時系列: repo見出しは初出順（RepoA→RepoC→PlanRepo→RepoS＝上→下が古→新）
+ok "repo見出しが初出順で並ぶ(節末尾追記)" bash -c "awk '/^### RepoA\$/{a=NR} /^### RepoC\$/{b=NR} /^### PlanRepo\$/{c=NR} /^### RepoS\$/{d=NR} END{exit !(a&&b&&c&&d && a<b && b<c && c<d)}' '$DAILY'"
 
 echo "=== 16. 3世代フラット行 → 1書き込みでv3入れ子へ ==="
 python3 - "$DAILY" <<'PY'

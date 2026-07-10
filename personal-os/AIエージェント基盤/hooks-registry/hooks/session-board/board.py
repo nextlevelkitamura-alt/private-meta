@@ -22,10 +22,12 @@
 #   計画値の語彙: ?＝未記入(催促対象)／なし＝サクッと作業の宣言／短縮参照＝企画名[/NN]・ai運用:企画名[/NN]。
 #   v2.2（フラット・計画列あり）・v2（計画列なし）・v1（旧1要約列・状態語末尾）は読み取り互換。
 #   書き込みは常に v3（全書き込みで自然移行）。sub体数は sub-start/sub-end が機械増減（AIが手で書かない）。
-# 「終わったこと」の構造（親＝目標名／子＝時刻＋所要(+Nm)付き節目・入れ子）:
+# 「終わったこと」の構造（親＝目標名／子＝時刻＋所要(+Nm)付き節目・入れ子・時系列＝上→下が古→新）:
 #   ### repo
 #   - 親タスク名
 #     - HH:MM (+38m) 子成果
+#   追記は常に末尾方向（新repo見出し=節末尾・新親=repoブロック末尾・新子=親の子リスト末尾・2026-07-11〜）。
+#   (+Nm)＝同じ親の直前（＝最後）の子からの経過（無ければセッション開始時刻から）。
 # goals-summary: 「動いているエージェント」節の入れ子本体を自動再描画（手で編集しない）:
 #   <!-- goals-summary --> … <!-- /goals-summary -->
 # env: GOAL_BASE / SESSION_BOARD_DATE(YYYY-MM-DD) / SESSION_BOARD_TEMPLATE / SESSION_BOARD_TX_ROOTS
@@ -392,7 +394,7 @@ def _fmt_elapsed(mins):
 
 
 def _base_time_for(lines, repo, parent, row):
-    """(+Nm) の基準時刻: 同じ親の直前の子（最新＝親直下の最初の子）→ 無ければセッション行の開始時刻。"""
+    """(+Nm) の基準時刻: 同じ親の直前の子（最新＝親の子リスト末尾の子・時系列）→ 無ければセッション行の開始時刻。"""
     s, e = section_bounds(lines, DONE_H)
     if s is not None:
         head = f"### {repo}"
@@ -412,29 +414,37 @@ def _base_time_for(lines, repo, parent, row):
                 if strip_plan_mark(lines[j].rstrip()) == f"- {parent}":
                     pidx = j
                     break
-            if pidx is not None and pidx + 1 < bend:
-                m = CHILD_RE.match(lines[pidx + 1])
-                if m:
-                    return m.group(1)
+            if pidx is not None:
+                last = None
+                for j in range(pidx + 1, bend):   # 親の入れ子ブロック内で最後の時刻付き子を探す
+                    if not lines[j].startswith("  "):
+                        break
+                    m = CHILD_RE.match(lines[j])
+                    if m:
+                        last = m.group(1)
+                if last:
+                    return last
     return row["time"] if row else None
 
 
 def add_children(lines, repo, parent, children):
-    """「終わったこと」の ### repo > - parent の下に '  - <child>' を最新が上で入れ子挿入。
-    repo見出し・親が無ければ作る（最新が上）。"""
+    """「終わったこと」の ### repo > - parent の下に '  - <child>' を時系列（読み下し＝時間順）で入れ子挿入。
+    新しいrepo見出し=節末尾・新しい親=repoブロック末尾・新しい子=親の子リスト末尾（2026-07-11〜・古→新）。"""
     if DONE_H not in lines:
         lines += ["", DONE_H]
-    s, _ = section_bounds(lines, DONE_H)
+    s, e = section_bounds(lines, DONE_H)
     head = f"### {repo}"
-    _, e = section_bounds(lines, DONE_H)
     hidx = None
     for j in range(s + 1, e):
         if lines[j].strip() == head:
             hidx = j
             break
     if hidx is None:
-        lines.insert(s + 1, head)      # 節先頭＝最新repoが上
-        hidx = s + 1
+        ins = e                        # 節末尾＝新しいrepoが下（節区切りの空行は残す）
+        while ins > s + 1 and lines[ins - 1].strip() == "":
+            ins -= 1
+        lines.insert(ins, head)
+        hidx = ins
     bend = len(lines)
     for j in range(hidx + 1, len(lines)):
         if lines[j].startswith("### ") or lines[j].startswith("## "):
@@ -446,10 +456,16 @@ def add_children(lines, repo, parent, children):
             pidx = j
             break
     if pidx is None:
-        lines.insert(hidx + 1, f"- {parent}")   # repo見出し直下＝最新親が上
-        pidx = hidx + 1
+        ins = bend                     # repoブロック末尾＝新しい親が下（ブロック区切りの空行は残す）
+        while ins > hidx + 1 and lines[ins - 1].strip() == "":
+            ins -= 1
+        lines.insert(ins, f"- {parent}")
+        pidx = ins
+    cend = pidx + 1                    # 親の子リスト末尾＝新しい子が下（複数entryも記載順のまま）
+    while cend < len(lines) and lines[cend].startswith("  "):
+        cend += 1
     for k2, ch in enumerate(children):
-        lines.insert(pidx + 1 + k2, f"  - {ch}")
+        lines.insert(cend + k2, f"  - {ch}")
     return lines
 
 

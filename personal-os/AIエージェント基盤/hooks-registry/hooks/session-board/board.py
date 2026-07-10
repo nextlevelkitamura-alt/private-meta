@@ -30,7 +30,10 @@
 #   (+Nm)＝同じ親の直前（＝最後）の子からの経過（無ければセッション開始時刻から）。
 # goals-summary: 「動いているエージェント」節の入れ子本体を自動再描画（手で編集しない）:
 #   <!-- goals-summary --> … <!-- /goals-summary -->
+# Turso（ベストエフォート・MDが唯一の正本）: add(新規)/flip(変化)/finish/reconcile(⏸降格) は
+#   session_events へ状態遷移イベントも追記（層3・追記式・集計SQLは queries/・詳細はREADME「Turso連携」）。
 # env: GOAL_BASE / SESSION_BOARD_DATE(YYYY-MM-DD) / SESSION_BOARD_TEMPLATE / SESSION_BOARD_TX_ROOTS
+#      / SESSION_BOARD_NO_TURSO(非空でTurso送信スキップ・テスト用ガード)
 import sys
 import os
 import re
@@ -94,9 +97,11 @@ def _ta(v):
 
 
 def _turso_execute(statements):
-    """statements: [(sql, args), ...] を1バッチで実行。失敗は静かに無視（非ブロッキング・
-    MD運用に一切影響させないベストエフォート送信。secret規律によりtoken値は出力しない）。
+    """statements: [(sql, args), ...] を1バッチで実行。空なら何もしない。失敗は静かに無視
+    （非ブロッキング・MD運用に一切影響させないベストエフォート送信。secret規律によりtoken値は出力しない）。
     SESSION_BOARD_NO_TURSO=1 でスキップ（テスト実行が本番Tursoにデータを漏らさないためのガード）。"""
+    if not statements:
+        return
     if os.environ.get("SESSION_BOARD_NO_TURSO"):
         return
     token = _turso_token()
@@ -114,10 +119,13 @@ def _turso_execute(statements):
         pass
 
 
-def turso_sync_session(row):
-    """sessions テーブルへ現在行の状態を upsert（層1・機械送信）。"""
+# ---- Turso文ビルダー（層1=sessions・層2=session_logs・層3=session_events）----
+# 文の組み立てと送信を分離し、main() が1コマンド分の文を1バッチに合流して送る（HTTP往復1回）。
+
+def _stmt_session_upsert(row):
+    """sessions へ現在行の状態を upsert する文（層1・機械送信・上書き式）。row 無しは None。"""
     if not row or not row.get("key"):
-        return
+        return None
     sql = ("INSERT INTO sessions (session_key, goal, now, type, repo, model, plan, state, updated_at) "
            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
            "ON CONFLICT(session_key) DO UPDATE SET goal=excluded.goal, now=excluded.now, "
@@ -129,22 +137,49 @@ def turso_sync_session(row):
             _ta(row.get("type")), _ta(row.get("repo")), _ta(model), _ta(row.get("plan")),
             _ta(STATE_WORD.get(row.get("state"), "run")),
             _ta(datetime.datetime.now().isoformat(timespec="seconds"))]
-    _turso_execute([(sql, args)])
+    return (sql, args)
 
 
-def turso_delete_session(key):
-    """finish: sessions から自行を削除（セッション終了）。"""
-    _turso_execute([("DELETE FROM sessions WHERE session_key = ?", [_ta(f"s:{key}")])])
+def _stmt_session_delete(key):
+    """finish: sessions から自行を削除する文（セッション終了）。"""
+    return ("DELETE FROM sessions WHERE session_key = ?", [_ta(f"s:{key}")])
 
 
-def turso_sync_logs(repo, parent, entries, date_s):
-    """session_logs へ「終わったこと」の子エントリを追記（層2・要約送信）。
+def _stmts_logs(repo, parent, entries, date_s):
+    """session_logs へ「終わったこと」の子エントリを追記する文のリスト（層2・要約送信）。
     entry は呼び出し元のAIが既に人間向けに要約済みの1行なので、追加のLLM API呼び出しはしない。"""
-    if not entries:
-        return
     sql = "INSERT INTO session_logs (repo, parent, entry, session_date, created_at) VALUES (?, ?, ?, ?, ?)"
     created = datetime.datetime.now().isoformat(timespec="seconds")
-    _turso_execute([(sql, [_ta(repo), _ta(parent), _ta(e), _ta(date_s), _ta(created)]) for e in entries])
+    return [(sql, [_ta(repo), _ta(parent), _ta(e), _ta(date_s), _ta(created)]) for e in entries]
+
+
+def _stmts_events(events, date_s):
+    """session_events へ状態遷移イベントを追記する文のリスト（層3・追記式・上書きしない）。
+    events: [(row_dict, state_word, trig), ...]。state_word=run|wait|sub|done、
+    trig=add|flip|finish|reconcile（列名は trigger がSQLite予約語のため trig）。
+    at はバッチ生成時刻（ms精度・同バッチ内は同時刻＝reconcile一括降格は同時とみなす）。
+    実行時間=run区間・待ち時間=wait区間の集計はSQL側（queries/）で行い、mdには時間を書かない。"""
+    if not events:
+        return []
+    at = datetime.datetime.now().isoformat(timespec="milliseconds")
+    sql = ("INSERT INTO session_events "
+           "(session_key, state, at, trig, goal, repo, type, plan, session_date) "
+           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    return [(sql, [_ta(f"s:{r['key']}"), _ta(state), _ta(at), _ta(trig),
+                   _ta(r.get("goal")), _ta(r.get("repo")), _ta(r.get("type")),
+                   _ta(r.get("plan")), _ta(date_s)])
+            for r, state, trig in events]
+
+
+def turso_append_events(events, date_s=None):
+    """session_events だけを1バッチで送信（reconcile 経路・単体送信用）。
+    add/flip/finish のイベントは main() が sessions/logs の文と同一バッチへ合流させる。
+    date_s 省略時は daily_path() と同じ規則で当日（SESSION_BOARD_DATE 尊重）。"""
+    if not events:
+        return
+    if date_s is None:
+        _, date_s = daily_path()
+    _turso_execute(_stmts_events(events, date_s))
 
 
 def strip_plan_mark(text):
@@ -338,12 +373,14 @@ def _newest_for(key, files):
         return None
 
 
-def reconcile_rows(lines):
+def reconcile_rows(lines, changed=None):
     """🟢/🔵の各行を実体トランスクリプトの最終更新で照合し、閾値超の沈黙は⏸へ降格
     （🟢=STALE_MIN・🔵=STALE_MIN_SUB）。実体が探索ルートに1つも無い枠は開始時刻から
     STALE_MIN_NOFILE 分超で⏸（プロンプトを持たない補助セッション等の幽霊枠掃除・
     行削除はせず翌日の新ボードで消える・2026-07-08）。
-    降格時はサブ体数（sub）も0へクリアする（sub-end が届かない前提で仕切り直す幽霊ガード）。"""
+    降格時はサブ体数（sub）も0へクリアする（sub-end が届かない前提で仕切り直す幽霊ガード）。
+    changed（list・省略可）を渡すと降格した行の dict を append する（Tursoイベント送信用・
+    2026-07-11）。戻り値は従来どおり lines。"""
     s, e = section_bounds(lines, AGENTS_H)
     if s is None:
         return lines
@@ -366,6 +403,8 @@ def reconcile_rows(lines):
                 r["state"] = WAIT
                 r["sub"] = 0
                 lines[j] = fmt(r)
+                if changed is not None:
+                    changed.append(dict(r))
             continue
         limit = STALE_MIN_SUB if r["state"] == SUB else STALE_MIN
         try:
@@ -373,6 +412,8 @@ def reconcile_rows(lines):
                 r["state"] = WAIT
                 r["sub"] = 0
                 lines[j] = fmt(r)
+                if changed is not None:
+                    changed.append(dict(r))
         except OSError:
             continue
     return lines
@@ -536,6 +577,7 @@ def main():
 
     if cmd == "reconcile" and not os.path.exists(path):
         return   # ボード未作成なら掃除対象なし（空ファイルを作らない）
+    pending_events = []   # 状態遷移イベント（ロック内で組み立て・flock解放後にTursoへ送る）
     os.makedirs(os.path.dirname(path), exist_ok=True)
     # lockはdot-prefixで不可視に（0バイト・flock用。日付ごとに1個でき、消さないのが安全）
     lock = open(os.path.join(os.path.dirname(path), "." + os.path.basename(path) + ".lock"), "w")
@@ -563,6 +605,7 @@ def main():
                 while ins > s + 1 and lines[ins - 1].strip() == "":
                     ins -= 1
                 lines.insert(ins, fmt(r))
+                pending_events.append((dict(r), "run", "add"))   # 新規挿入時のみ（冪等no-opは打たない）
         elif cmd == "update":
             if idx is None:
                 sys.exit(f"line not found for key {key}")
@@ -589,7 +632,10 @@ def main():
             sv = args.get("state")
             if sv not in ("run", "wait", "sub"):
                 return             # 未知の --state は無変更（打ち間違いで誤って落とさない）
-            row["state"] = RUN if sv == "run" else (SUB if sv == "sub" else WAIT)
+            new_state = RUN if sv == "run" else (SUB if sv == "sub" else WAIT)
+            if new_state != row["state"]:   # 実際に変わる時だけイベント（同状態flipは打たない）
+                row["state"] = new_state
+                pending_events.append((dict(row), sv, "flip"))
             lines[idx] = fmt(row)
         elif cmd in ("sub-start", "sub-end"):
             if idx is None:
@@ -612,13 +658,16 @@ def main():
             base = _base_time_for(lines, repo, parent, row)
             mark = _fmt_elapsed(_minutes_between(base, t)) if base else ""
             if cmd == "finish" and idx is not None:
+                pending_events.append((dict(row), "done", "finish"))   # 削除前にスナップショット
                 del lines[idx]
             children = [f"{t} {mark} {en}" if (i == 0 and mark) else f"{t} {en}"
                         for i, en in enumerate(entries)]
             add_children(lines, repo, parent, children)
             annotate_parent_plan(lines, repo, parent, plan)   # 参照計画なら親行へ ‹計画:›（先勝ち）
         elif cmd == "reconcile":
-            reconcile_rows(lines)
+            demoted = []               # ⏸へ降格した行（flock解放後に wait イベントとして送信）
+            reconcile_rows(lines, changed=demoted)
+            pending_events += [(r, "wait", "reconcile") for r in demoted]
         else:
             sys.exit(f"unknown command: {cmd}")
 
@@ -633,15 +682,20 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_UN)
         lock.close()
 
-    # Turso同期（MD書き込み・flock解放後のベストエフォート送信。失敗はMD運用に一切影響しない）
+    # Turso同期（MD書き込み・flock解放後のベストエフォート送信。失敗はMD運用に一切影響しない）。
+    # 状態遷移イベント（pending_events）は sessions/logs の文と同一バッチに合流＝HTTP往復1回。
     if cmd in ("add", "update", "flip"):
         _, r2 = find_line(lines, key)
-        turso_sync_session(r2)
+        st = _stmt_session_upsert(r2)
+        _turso_execute(([st] if st else []) + _stmts_events(pending_events, date_s))
     elif cmd == "log":
-        turso_sync_logs(repo, parent, entries, date_s)
+        _turso_execute(_stmts_logs(repo, parent, entries, date_s))
     elif cmd == "finish":
-        turso_sync_logs(repo, parent, entries, date_s)
-        turso_delete_session(key)
+        _turso_execute(_stmts_logs(repo, parent, entries, date_s)
+                       + [_stmt_session_delete(key)]
+                       + _stmts_events(pending_events, date_s))
+    elif cmd == "reconcile":
+        turso_append_events(pending_events, date_s)
 
 
 if __name__ == "__main__":

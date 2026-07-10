@@ -84,8 +84,8 @@ mcpServers:
   - github   # 既存サーバー名だけ書くと親セッションの接続を再利用
 ```
 
-型: `stdio` / `http` / `sse` / `ws`。Codex に必要な時だけ相談する agent に向く。
-注意: 長時間作業の進捗確認には向かない。厳密なレビュー基準はファイル化して渡す。Codex 側と Claude 側は文脈を自動共有しない。差分・基準・結果をファイルに保存すると安定する。
+型: `stdio` / `http` / `sse` / `ws`。短い応答の外部ツールを subagent 起動中だけ使う用途に向く。
+注意: 長時間作業に使わない。1回のMCPツール呼び出しはClaude Code側の実質10分タイムアウト（progress通知での延長仕様なし）に支配され、深い調査・実装ほど途中で切れる。`codex mcp-server` の threadId はサーバープロセス内のみ有効で、subagent終了とともに消える（2026-07-10実機確認）。**Codexへの委任（実装・相談とも）は Bash 経由の `codex exec --json`＋`codex exec resume`（文脈ディスク永続）を使う**（詳細は `codex.md` §7）。Codex 側と Claude 側は文脈を自動共有しないので、差分・基準・結果はファイル化して渡す。
 
 ## 8. hooks
 
@@ -109,9 +109,10 @@ subagent を plugin として配布すると、`hooks` / `mcpServers` / `permiss
 ## 10. 推奨 agent
 
 1. `quality-gate`: reviewer と evaluator を統合。普段は分けない（分けると時間が伸びやすい）。
-2. `codex-reviewer`: `codex exec` を Bash 経由で呼び、Codex のレビュー結果をファイルに保存。
-3. `codex-consult`: inline MCP で Codex に継続相談。
-4. `hook-designer`: Stop / SubagentStop / Notification / PreToolUse hooks を設計。
+2. `codex-implementer`: 実装をCodexへ委任。`codex exec --json` で起動し thread_id を捕捉、途中停止は `exec resume` で文脈継続、完了後は git でコミットを裏取り。実例 `~/.claude/agents/codex-implementer.md`。
+3. `codex-reviewer`: `codex exec -s read-only` を Bash 経由で呼び、Codex のレビュー結果をファイルに保存。
+4. `codex-consult`: `codex exec --json -s read-only`＋`exec resume` で Codex に継続相談（旧 inline MCP 方式は10分タイムアウトとスレッド非永続のため2026-07-10に廃止）。実例 `~/.claude/agents/codex-consult.md`。
+5. `hook-designer`: Stop / SubagentStop / Notification / PreToolUse hooks を設計。
 
 ## 11. テンプレート: quality-gate
 

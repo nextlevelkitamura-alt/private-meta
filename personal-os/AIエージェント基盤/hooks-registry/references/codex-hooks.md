@@ -129,6 +129,8 @@ hooks は `[features] hooks = true` で有効（デフォルト有効・`false` 
 
 ### 8.1 定義（`.codex/agents/*.toml`）
 
+> **注記（2026-07-10 実機検証）**: この `.codex/agents/*.toml` 方式は codex-cli 0.142.5 の実機では確認できなかった（`~/.codex/agents/` 不在・CLIヘルプ/doctor/バイナリに読み込み痕跡なし）。§8.1〜8.2 は公式ドキュメント由来の記述として残すが、実装前に現バージョンでの有効性を必ず確認すること。ClaudeからCodexへの委任は `codex exec --json`＋`exec resume` が実機確認済みの経路（`skills/custom-agent-creator/references/codex.md` §7）。
+
 1ファイル1エージェント。標準の Codex セッション設定と同じキーを上書きできる。置き場所は user が `~/.codex/agents/`、project が `<repo>/.codex/agents/`。
 
 ```toml

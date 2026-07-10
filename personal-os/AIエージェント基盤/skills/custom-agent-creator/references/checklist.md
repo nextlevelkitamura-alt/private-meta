@@ -27,11 +27,12 @@
 
 ## Codex
 
-1. TOML 形式か。
-2. `name` / `description` / `developer_instructions` があるか。
-3. `sandbox_mode` は適切か（reviewer は `read-only`）。
-4. `danger-full-access` を使っていないか。
-5. Codex に渡す評価基準は曖昧でないか。
+1. 実在する方式か（`prompts/` カスタムプロンプト・`--profile` 設定・Skill同梱 `agents/`。`~/.codex/agents/*.toml` は 0.142.5 に存在しない）。
+2. カスタムプロンプトに frontmatter `description` と `$ARGUMENTS` があるか。プロファイルのキーは config.toml と同じ公式キーか。
+3. sandbox は適切か（reviewer / 相談役は `read-only`。exec なら `-s read-only` を毎回付ける）。
+4. `danger-full-access` を新たに指定していないか。
+5. Claude からの委任は `codex exec --json`＋`exec resume` になっているか（inline MCP を長時間委任に使っていないか）。
+6. Codex に渡す評価基準・制約は依頼文に自己完結で書かれているか（Claude側と文脈非共有のため）。
 
 ## OpenCode
 

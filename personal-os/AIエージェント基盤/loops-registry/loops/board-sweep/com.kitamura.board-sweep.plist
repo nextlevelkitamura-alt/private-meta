@@ -9,15 +9,19 @@
     60分毎（StartInterval 3600）に board-sweep（⏸停止行の自動判定）を1回実行する。
     当日＋前日ボードの⏸行を 実体transcript照合 → 定型台帳マッチ → headless LLM判定 で弁別し、
     既定は dry-run（判定ログのみ・ボード無変更）。
+    自動finish適格は ①台帳一致 ②二重鍵＝機械証跡（末尾task_complete＋沈黙閾値）AND LLM判定done のみ
+    （2026-07-10 二重鍵化・子04。機械証跡単独／LLM done単独は流さない）。
 
     draft。置くだけ・未ロード（有効化は人間ゲート）。導入順は loop.md 参照:
       1. 手動 dry-run 確認: cd <このフォルダ> && python3 scripts/sweep.py
-      2. dry-run のままロードして1週間実測（symlink方式・board-reconcile と同型）:
+      2. 下の SWEEP_LLM_MODEL に人間確定したモデル実名を記入
+         （空のまま＝LLM判定なし＝台帳ルートしか流れない）。
+      3. dry-run のままロードして1週間実測（symlink方式・board-reconcile と同型）:
         ln -s '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-sweep/com.kitamura.board-sweep.plist' \
           ~/Library/LaunchAgents/com.kitamura.board-sweep.plist
         launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.kitamura.board-sweep.plist
         launchctl enable gui/$(id -u)/com.kitamura.board-sweep
-      3. 誤判定率を人間確認 → 台帳のドラフト行を消す → 下の ProgramArguments 末尾を
+      4. 誤判定率を人間確認 → 台帳のドラフト行を消す → 下の ProgramArguments 末尾を
          「scripts/sweep.sh --apply」に変えて再ロード（流し込み有効化・人間ゲート）。
     停止:
       launchctl bootout gui/$(id -u)/com.kitamura.board-sweep
@@ -49,9 +53,15 @@
     <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>TZ</key>
     <string>Asia/Tokyo</string>
-    <!-- headless LLM判定（stdin=プロンプト/stdout=JSON）。空にすると LLM 判定をスキップし unknown 扱い。 -->
+    <!-- headless LLM判定（stdin=プロンプト/stdout=JSON）。空にすると LLM 判定をスキップし unknown 扱い
+         （二重鍵につき機械証跡があっても不流入＝台帳ルートのみ流れる）。 -->
     <key>SWEEP_LLM_CMD</key>
-    <string>claude -p</string>
+    <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/board-sweep/scripts/llm-judge.sh</string>
+    <!-- 判定モデルの実名（人間確定してから記入・空の間は llm-judge.sh が exit 78 で降りる＝無害）。
+         2026-07-10 実測: gpt-5.4-mini は動作OK／gpt-5.6-luna は codex-cli 0.142.5 ではバージョンゲートで不可
+         （codex update 後に差し替え可）。候補と根拠は loop.md「LLM接続」。 -->
+    <key>SWEEP_LLM_MODEL</key>
+    <string></string>
   </dict>
 
   <key>StandardOutPath</key>

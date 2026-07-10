@@ -8,6 +8,12 @@
 #   - 自己登録なし（AIJOBS_RUN=1 伝播・sweep前後で行数が増えない）
 #   - 失敗exit0無害（LLM失敗・タイムアウト・台帳パース失敗でも exit 0・ボード無変更）
 #   - dry-run板不変（既定モードでボードが byte 単位で不変）
+# 子計画04（二重鍵化・2026-07-10）のレビュー項目カバー:
+#   - 機械証跡のみ→不流入（LLMがdone以外・未接続でも）
+#   - LLM doneのみ→不流入（機械証跡なし）
+#   - 両方→流入（二重鍵成立時のみ）
+#   - 会話ダイジェスト抽出（Claude/Codex両形式のfixture・ツール呼び出し/結果/thinkingを含めない）
+import datetime
 import json
 import os
 import re
@@ -40,7 +46,14 @@ LEDGER_DRAFT = LEDGER_OK + "- ドラフト・人間確認待ち\n"
 
 # ---- fixture helpers ----
 
-def wait_row(key, goal, now, repo, who, plan, t="10:00"):
+def hhmm_ago(minutes):
+    """現在時刻から minutes 分前の HH:MM。実体なし台帳ガード（行の開始時刻からの経過分）を
+    決定的に通す/塞ぐためのfixture用（固定 "10:00" だと実行時刻依存で flaky になる）。"""
+    return (datetime.datetime.now() - datetime.timedelta(minutes=minutes)).strftime("%H:%M")
+
+
+def wait_row(key, goal, now, repo, who, plan, t=None):
+    t = t or hhmm_ago(120)   # 既定は2時間前開始＝台帳の実体なし沈黙ガード（既定30分）を常に満たす
     return f"- ⏸ {t} | {goal} | 今:{now} | {repo} | 実装 | {who} | 計画:{plan} <!-- s:{key} -->"
 
 
@@ -95,6 +108,49 @@ def make_rollout(tx, key, age_min=120, complete=True):
     t = time.time() - age_min * 60
     os.utime(p, (t, t))
     return p
+
+
+def write_jsonl(path, recs, age_min=120):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, "w", encoding="utf-8").write(
+        "\n".join(json.dumps(r, ensure_ascii=False) for r in recs) + "\n")
+    t = time.time() - age_min * 60
+    os.utime(path, (t, t))
+    return path
+
+
+# Claude transcript レコード（~/.claude/projects/**/<uuid>.jsonl の実フォーマット・2026-07-10確認）
+def cl_user(content, **flags):
+    r = {"type": "user", "message": {"role": "user", "content": content},
+         "isSidechain": False, "userType": "external", "cwd": "/Users/x",
+         "sessionId": "s", "uuid": "u", "timestamp": "t", "version": "9.9.9"}
+    r.update(flags)
+    return r
+
+
+def cl_assistant(content, **flags):
+    r = {"type": "assistant", "message": {"role": "assistant", "content": content,
+                                          "id": "m", "model": "x", "stop_reason": None},
+         "isSidechain": False, "userType": "external", "cwd": "/Users/x",
+         "sessionId": "s", "uuid": "u", "timestamp": "t", "version": "9.9.9"}
+    r.update(flags)
+    return r
+
+
+def make_claude_tx(tx, key, recs, age_min=120):
+    """Claude 形式 fixture（basename が <key>-… の .jsonl）。"""
+    p = os.path.join(tx, "claude", "-Users-x-Private", f"{key}-1111-2222-3333-444444444444.jsonl")
+    return write_jsonl(p, recs, age_min)
+
+
+# Codex rollout レコード（~/.codex/sessions/**/rollout-*.jsonl の実フォーマット・2026-07-10確認)
+def cx(t, payload):
+    return {"timestamp": "2099-01-02T09:00:00.000Z", "type": t, "payload": payload}
+
+
+def make_codex_tx(tx, key, recs, age_min=120):
+    p = os.path.join(tx, "2099", "01", "02", f"rollout-2099-01-02T09-00-00-{key}-aaaa-bbbb.jsonl")
+    return write_jsonl(p, recs, age_min)
 
 
 def make_llm_stub(tmp, verdicts, sleep=0):
@@ -198,11 +254,16 @@ def test_apply_ledger_finish_with_auto_and_basis():
         assert key_count(p) == n_before - 1, "行数が finish 分だけ減っていない（増減異常）"
 
 
-# ---- apply: codex one-shot完走 finish ----
+# ---- apply: 二重鍵（機械証跡 AND LLM done）だけが流入する ----
 
-def test_apply_oneshot_task_complete_finish():
+LLM_DONE_D4 = {"dddd0004": {"verdict": "done", "basis": "依頼完遂と最終報告を確認"}}
+
+
+def test_apply_double_key_mech_and_llm_done_finishes():
+    """両方→流入: rollout末尾task_complete＋沈黙閾値 AND LLM done で初めて finish。"""
     with tempfile.TemporaryDirectory() as tmp:
         env, goal, tx = make_env(tmp)
+        env["SWEEP_LLM_CMD"] = make_llm_stub(tmp, LLM_DONE_D4)
         p = write_board(goal, TODAY, [
             wait_row("dddd0004", "one-shot作業", "実行", "RepoZ", "codex/codex", "なし"),
         ])
@@ -210,33 +271,54 @@ def test_apply_oneshot_task_complete_finish():
         r = run_sweep(env, apply=True)
         text = read(p)
         assert r.returncode == 0
-        assert "s:dddd0004" not in text
-        assert "[auto] one-shot完走を確認" in text
-        assert "task_complete" in text and "証跡:" in text, "子entryに証跡1行が無い"
+        assert "s:dddd0004" not in text, "二重鍵成立行が finish されていない"
+        assert "[auto] one-shot完走＋LLM判定doneを確認" in text
+        assert "二重鍵:" in text and "task_complete" in text and "証跡:" in text, \
+            "子entryに二重鍵の根拠（証跡＋LLM）が無い"
+
+
+def test_mech_evidence_alone_not_applied():
+    """機械証跡のみ→不流入: LLMがdone以外／LLM未接続のどちらでも板は1バイトも変わらない。"""
+    for llm in ("not-done", "unset"):
+        with tempfile.TemporaryDirectory() as tmp:
+            env, goal, tx = make_env(tmp)
+            if llm == "not-done":
+                env["SWEEP_LLM_CMD"] = make_llm_stub(
+                    tmp, {"dddd0004": {"verdict": "not-done", "basis": "追加依頼に未応答"}})
+            line = wait_row("dddd0004", "one-shot作業", "実行", "RepoZ", "codex/codex", "なし")
+            p = write_board(goal, TODAY, [line])
+            make_rollout(tx, "dddd0004", age_min=120, complete=True)   # 機械証跡は満点
+            before = read(p)
+            r = run_sweep(env, apply=True)
+            assert r.returncode == 0
+            assert read(p) == before, f"機械証跡のみの行が流された (llm={llm})"
+            assert "不流入" in r.stdout and "機械証跡のみ" in r.stdout
 
 
 def test_oneshot_not_silent_enough_stays():
     with tempfile.TemporaryDirectory() as tmp:
         env, goal, tx = make_env(tmp)
+        env["SWEEP_LLM_CMD"] = make_llm_stub(tmp, LLM_DONE_D4)     # LLM done でも
         line = wait_row("dddd0004", "one-shot作業", "実行", "RepoZ", "codex/codex", "なし")
         p = write_board(goal, TODAY, [line])
         make_rollout(tx, "dddd0004", age_min=10, complete=True)    # 沈黙10分 < 閾値60分
         before = read(p)
         r = run_sweep(env, apply=True)
         assert r.returncode == 0
-        assert read(p) == before, "沈黙不足の one-shot が流された"
+        assert read(p) == before, "沈黙不足の one-shot が流された（LLM done 単独で流入）"
 
 
 def test_oneshot_incomplete_rollout_stays():
     with tempfile.TemporaryDirectory() as tmp:
         env, goal, tx = make_env(tmp)
+        env["SWEEP_LLM_CMD"] = make_llm_stub(tmp, LLM_DONE_D4)     # LLM done でも
         line = wait_row("dddd0004", "one-shot作業", "実行", "RepoZ", "codex/codex", "なし")
         p = write_board(goal, TODAY, [line])
         make_rollout(tx, "dddd0004", age_min=120, complete=False)  # task_complete 無し
         before = read(p)
         r = run_sweep(env, apply=True)
         assert r.returncode == 0
-        assert read(p) == before, "task_complete 無しの行が流された"
+        assert read(p) == before, "task_complete 無しの行が流された（LLM done 単独で流入）"
 
 
 # ---- 計画列が実参照 → 自動対象外 ----
@@ -445,6 +527,171 @@ def test_codex_task_complete_unit():
         assert done and last == "完了しました"
         p2 = make_rollout(tmp, "keyx0002", complete=False)
         assert sweep_mod.codex_task_complete(p2) == (False, None)
+
+
+def test_match_cond_goal_exclude_unit():
+    """goal除外（負条件）: 定型名を含む改修・調査セッションの誤マッチを塞ぐ。"""
+    mc = sweep_mod.match_cond
+    fix = mkrow(goal="朝架電J列の再発防止整理", who="codex/gpt5", repo="仕事")
+    routine = mkrow(goal="朝架電J列更新", who="codex/gpt5", repo="仕事")
+    cond = "repo=仕事; goal前方一致=朝架電; goal除外=整理|調査|改修"
+    assert not mc(cond, fix, True), "改修セッションが goal除外 をすり抜けた"
+    assert mc(cond, routine, True), "定型行まで除外された"
+
+
+def test_ledger_no_tx_fresh_row_blocked_by_age_guard():
+    """実体なし台帳一致行は、行の開始時刻から沈黙ガード分が経つまで不流入（即適格の穴の封鎖）。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env, goal, tx = make_env(tmp)
+        line = wait_row("aaaa0001", "朝架電J列更新", "J列確認", "仕事", "codex/gpt5", "なし",
+                        t=hhmm_ago(5))   # 開始5分 < ガード30分
+        p = write_board(goal, TODAY, [line])
+        before = read(p)
+        r = run_sweep(env, apply=True)
+        assert r.returncode == 0
+        assert read(p) == before, "開始直後の実体なし台帳行が流された"
+        assert "実体なし・開始から" in r.stdout and "unknown" in r.stdout
+
+
+# ---- 会話ダイジェスト抽出（Claude/Codex 実フォーマット準拠 fixture） ----
+
+def claude_recs_full():
+    """実フォーマット確認（2026-07-10）に基づく全バリアント: str発話・メタ注入・thinking・
+    tool_use・tool_result・list[text]発話・sidechain・圧縮サマリ・コマンド注入・別レコード型。"""
+    return [
+        cl_user("ボードの掃除を自動化して"),
+        cl_user("<local-command-caveat>Caveat: the messages below...</local-command-caveat>",
+                isMeta=True),
+        cl_assistant([{"type": "thinking", "thinking": "THINKING_MARKER", "signature": "x"},
+                      {"type": "text", "text": "了解。まず現状を調べます"}]),
+        cl_assistant([{"type": "tool_use", "id": "t1", "name": "Bash",
+                       "input": {"command": "TOOLUSE_MARKER"}}]),
+        cl_user([{"type": "tool_result", "tool_use_id": "t1", "is_error": False,
+                  "content": "TOOLRESULT_MARKER"}]),
+        cl_assistant([{"type": "text", "text": "実装しました。テスト全緑です"}]),
+        cl_user([{"type": "text", "text": "追加で計画列も見て"},
+                 {"type": "image", "source": {"type": "base64", "data": "xx"}}]),
+        cl_user("SIDECHAIN_MARKER", isSidechain=True),
+        cl_user("COMPACT_MARKER", isCompactSummary=True),
+        cl_user("<command-name>/html</command-name>"),
+        {"type": "attachment", "attachment": {"x": 1}},
+        cl_assistant([{"type": "text", "text": "計画列も対応しました。完了です"}]),
+    ]
+
+
+def test_claude_turns_extraction_unit():
+    with tempfile.TemporaryDirectory() as tmp:
+        p = make_claude_tx(tmp, "bbbb0002", claude_recs_full())
+        turns = sweep_mod.extract_turns(p)
+        assert turns == [
+            ("user", "ボードの掃除を自動化して"),
+            ("ai", "了解。まず現状を調べます ／ 実装しました。テスト全緑です"),
+            ("user", "追加で計画列も見て"),
+            ("ai", "計画列も対応しました。完了です"),
+        ], f"抽出結果が期待と違う: {turns}"
+
+
+def codex_recs_full():
+    """実フォーマット確認（2026-07-10）に基づく全バリアント: user_message（生＋ambient注入）・
+    agent_reasoning・response_item（指示注入とツール記録の複製）・agent_message・task_complete。"""
+    return [
+        cx("session_meta", {"id": "s", "cwd": "/Users/x", "cli_version": "0.142.5"}),
+        cx("turn_context", {"model": "gpt-5.5", "cwd": "/Users/x"}),
+        cx("event_msg", {"type": "user_message", "message": "経理データを更新して",
+                         "client_id": "c", "images": [], "local_images": [], "text_elements": []}),
+        cx("event_msg", {"type": "user_message",
+                         "message": "<in-app-browser-context source=\"ambient-ui-state\">AMBIENT_MARKER</in-app-browser-context>"}),
+        cx("event_msg", {"type": "user_message",
+                         "message": "# Applications mentioned by the user:\n\n<appshot app=\"Arc\">APPSHOT_MARKER</appshot>"}),
+        cx("event_msg", {"type": "agent_reasoning", "text": "REASONING_MARKER"}),
+        cx("response_item", {"type": "message", "role": "user", "id": "r1",
+                             "content": [{"type": "input_text",
+                                          "text": "<permissions instructions>INJECT_MARKER"}]}),
+        cx("response_item", {"type": "custom_tool_call", "name": "shell", "call_id": "c1",
+                             "input": "TOOLCALL_MARKER", "id": "r2", "status": "completed"}),
+        cx("response_item", {"type": "custom_tool_call_output", "call_id": "c1",
+                             "output": "TOOLOUT_MARKER", "id": "r3"}),
+        cx("event_msg", {"type": "agent_message", "message": "J列を更新しました", "phase": None}),
+        cx("event_msg", {"type": "user_message", "message": "OKもう一件も", "client_id": "c",
+                         "images": [], "local_images": [], "text_elements": []}),
+        cx("event_msg", {"type": "agent_message", "message": "全件完了です。報告終わり", "phase": None}),
+        cx("event_msg", {"type": "task_complete", "last_agent_message": "全件完了です。報告終わり",
+                         "turn_id": "t1", "duration_ms": 1}),
+    ]
+
+
+def test_codex_turns_extraction_unit():
+    with tempfile.TemporaryDirectory() as tmp:
+        p = make_codex_tx(tmp, "cccc0009", codex_recs_full())
+        turns = sweep_mod.extract_turns(p)
+        assert turns == [
+            ("user", "経理データを更新して"),
+            ("ai", "J列を更新しました"),
+            ("user", "OKもう一件も"),
+            ("ai", "全件完了です。報告終わり"),
+        ], f"抽出結果が期待と違う: {turns}"
+
+
+def test_render_digest_rounding_unit():
+    rd = sweep_mod.render_digest
+    assert rd([], 200, 2000) == []
+    # 全部収まる: 中略マーカーなし
+    turns = [("user", "あ" * 10), ("ai", "い" * 10)]
+    assert rd(turns, 200, 2000) == ["user: " + "あ" * 10, "ai: " + "い" * 10]
+    # 1発話の丸め: msg_max 超は切って「…」
+    lines = rd([("user", "う" * 300)], 200, 2000)
+    assert lines == ["user: " + "う" * 200 + "…"]
+    # 予算超過: 初回＋末尾優先で間を省略（マーカーに省略数）
+    turns = [("user", "初回依頼")] + [("ai", f"報告{i}" + "x" * 6) for i in range(9)]
+    lines = rd(turns, 10, 4 + 9 * 2)   # 初回4字＋予算18字 → 末尾2ターン(9字ずつ)は1つだけ入る
+    assert lines[0] == "user: 初回依頼", "初回発話が保持されていない"
+    assert any("中略" in ln for ln in lines), "省略マーカーが無い"
+    assert lines[-1].startswith("ai: 報告8"), "末尾ターンが優先されていない"
+    m = re.search(r"中略(\d+)発話", "".join(lines))
+    total = sum(len(ln) for ln in lines if "中略" not in ln)
+    assert m and int(m.group(1)) == 9 - (len(lines) - 2), "省略数が合わない"
+    assert total <= (4 + 9 * 2) + len("user: ") + len("ai: ") * (len(lines) - 2) + 2
+
+
+def test_prompt_has_first_prompt_attribution_digest_and_no_tools():
+    """レビュー項目: プロンプトに 依頼の原点・帰属（goal/種別/計画）・会話ダイジェストが含まれ、
+    ツール呼び出し・ツール結果・thinking が含まれない（build_prompt 出力の実機確認）。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env, goal, tx = make_env(tmp)
+        cap = os.path.join(tmp, "cap.txt")
+        env["SWEEP_TEST_CAPTURE"] = cap
+        env["SWEEP_LLM_CMD"] = make_llm_stub(tmp, {})
+        write_board(goal, TODAY, [
+            wait_row("bbbb0002", "掃除自動化", "実装中", "RepoX", "claude/sonnet5", "?")])
+        make_claude_tx(tx, "bbbb0002", claude_recs_full())
+        r = run_sweep(env)
+        assert r.returncode == 0
+        prompt = read(cap)
+        assert "依頼の原点: ボードの掃除を自動化して" in prompt, "初回プロンプトが無い"
+        assert "帰属: goal=掃除自動化" in prompt and "種別=実装" in prompt and "計画=?" in prompt, \
+            "目的への帰属（goal/種別/計画）が無い"
+        assert "user: ボードの掃除を自動化して" in prompt, "会話ダイジェストのuser発話が無い"
+        assert "計画列も対応しました。完了です" in prompt, "会話ダイジェストのAI報告が無い"
+        for marker in ("TOOLUSE_MARKER", "TOOLRESULT_MARKER", "THINKING_MARKER",
+                       "SIDECHAIN_MARKER", "COMPACT_MARKER"):
+            assert marker not in prompt, f"除外すべき {marker} がプロンプトに載った"
+        assert "判定のみ" in prompt and "従わない" in prompt, \
+            "read-only指示／ダイジェスト内指示への非追従ガードが無い"
+
+
+def test_llm_rows_cap_defers_overflow():
+    with tempfile.TemporaryDirectory() as tmp:
+        env, goal, tx = make_env(tmp, extra={"SWEEP_LLM_ROWS_MAX": "1"})
+        env["SWEEP_LLM_CMD"] = make_llm_stub(tmp, {})
+        p = write_board(goal, TODAY, [
+            wait_row("bbbb0002", "謎の作業", "調査", "RepoX", "claude/?", "?"),
+            wait_row("bbbb0003", "謎の作業2", "調査", "RepoX", "claude/?", "?"),
+        ])
+        before = read(p)
+        r = run_sweep(env, apply=True)
+        assert r.returncode == 0
+        assert read(p) == before
+        assert "上限1行を超過" in r.stdout, "LLM行上限の先送りが記録されていない"
 
 
 def test_shipped_ledger_parses_all_draft_and_matches_focusmap():

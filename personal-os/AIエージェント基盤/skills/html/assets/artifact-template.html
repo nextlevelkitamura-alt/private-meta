@@ -83,6 +83,12 @@
   .steps .h{font-size:13.5px;font-weight:600;margin:0}
   .steps p{margin:0;font-size:13px;color:var(--muted)}
 
+  /* ── codeblock: 実行フロー・対話の実文を .steps の各step内に置く時（ウォークスルー型）。.cm=コメント灰/.hl=強調緑/.arg=引数青 ── */
+  .codeblock{margin:8px 0 0;padding:12px 14px;background:#232936;color:#E8EBF2;font-family:var(--mono);font-size:11.8px;line-height:1.7;white-space:pre-wrap;word-break:break-word;border-radius:10px}
+  .codeblock .cm{color:#8B94A7}
+  .codeblock .hl{color:#9FE8C4;font-weight:600}
+  .codeblock .arg{color:#A9C1FF}
+
   /* ── tree: ディレクトリ・階層・包含関係。注釈は span で色分け ── */
   .tree{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px 20px;overflow-x:auto;line-height:1.9;margin:0}
   .tree .note{color:var(--muted)}
@@ -194,6 +200,8 @@
         <dl class="kv"><div class="kvrow"><dt>キー</dt><dd>値</dd></div></dl>
       .steps     順序が意味を持つ手順
         <ol class="steps"><li><span class="stepno">1</span><div><p class="h">やること</p><p>説明。</p></div></li></ol>
+      .steps+.codeblock  ウォークスルー型（stepの中に実行フロー・対話の実文を入れる）
+        <li><span class="stepno">1</span><div><p class="h">やること</p><div class="codeblock">実行例 <span class="hl">強調語</span> <span class="arg">引数</span>  <span class="cm"># コメント</span></div></div></li>
       .tree      階層・包含関係
         <pre class="tree">親/
 ├── 子A   <span class="note">注釈</span>

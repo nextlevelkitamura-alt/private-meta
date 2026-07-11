@@ -1,4 +1,0 @@
-interface:
-  display_name: "Skill Visualizer"
-  short_description: "Turn skill workflows into diagrams and prompts"
-  default_prompt: "Use $skill-visualizer to summarize a skill workflow as a clear diagram and image prompt."

@@ -29,7 +29,7 @@ global に使うもの（Skill・loop・hook）は、実体をここに登録し
 ## フォルダ（どこに何があるか。詳細は各 AGENTS.md）
 - `skills/` … Global Skill 本体
 - `global-skill-registry/` … Skill の索引・履歴・runtime露出・skill計画
-- `loops-registry/` … loop 運用の一式（実行レーン・loop本体・共通参照・loop計画）
+- `loops-registry/` … loop 運用の一式（loop本体・共通参照・loop計画）
 - `repo-registry/` … repo と repo-local Skill の履歴
 - `hooks-registry/` … runtime フック本体（機構共有 `hooks/`＋runtime受け口 `claude/`・`codex/`）
 - `agents-registry/` … Claude カスタムエージェント・コマンドの正本（runtime `~/.claude/agents|commands/` へ symlink 露出。2026-07-11新設）

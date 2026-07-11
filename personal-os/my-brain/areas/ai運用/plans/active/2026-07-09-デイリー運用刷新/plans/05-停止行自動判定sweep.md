@@ -35,5 +35,5 @@
 ## 関連
 
 - 依存: 02（計画列除外・[auto]語彙）。単体でも先行dry-run可。
-- 流用資産: `hooks-registry/hooks/session-board/board.py`（finish/log/parse_line・envサンドボックス）・`loops-registry/loops/board-reconcile/`（plist雛形）・`loops-registry/loops/ai-jobs-dispatcher/scripts/`（headless起動パターン）・`~/.codex/sessions/**/rollout-*.jsonl`（task_complete）
+- 流用資産: `hooks-registry/hooks/session-board/board.py`（finish/log/parse_line・envサンドボックス）・`loops-registry/loops/board-reconcile/`（plist雛形）・`~/.codex/sessions/**/rollout-*.jsonl`（task_complete）
 - 運用契約の更新: session-end.md・README に「定型台帳一致は人間確認なしfinish可」の例外を明記（正本更新・人間承認）

@@ -1,51 +1,69 @@
-# 実行一覧 — personal-os（`com.kitamura.*`）
+# 実行一覧 — personal-os
 
-実測確認: `launchctl list | grep com.kitamura` ／ 最終更新: 2026-07-11（board-sweep を --apply で有効化・launchd 稼働＝3本）
+このMDは、現在 `loops-registry/loops/` に置く現役global loopのcurrent overview正本。
+廃止履歴と生ログは載せず、実機のloaded/disabledは `launchctl print` で確認する。
 
-## 1行で
+最終全体確認: 2026-07-11 11:46 JST。下記4 labelがloaded、削除対象5 loopは未ロードと実測。
 
-**2026-07-04、旧レンダリング系を全停止した。** 人間のデイリーが91%機械生成になり読めなくなったための白紙化。新設計（セッション宣言型 session-board）は稼働中（主経路は hook 駆動・launchd不使用）で、その生存照合の**保険**だけを launchd に1本置いている（下記 board-reconcile）。
+## 現役loop（4本）
 
-## ジョブ（稼働中・2026-07-08〜）
+<!-- LOOP:board-reconcile -->
+### `board-reconcile`
+- 目的: session-boardの生存照合を5分ごとに補完し、沈黙した稼働表示を停止へ戻す
+- 発火: StartInterval 300秒（5分）
+- 発火設定: {"StartInterval":300}
+- runner: script
+- launchd label: com.kitamura.board-reconcile
+- 正本: ../loops/board-reconcile/loop.md
+- 意図状態: 稼働中
+- 最終実機確認: 2026-07-11 11:46 JST loaded
 
-- `board-sweep`（60分毎 StartInterval・**2026-07-11 人間GOで --apply ロード**） ── 当日＋前日ボードの⏸行を自動弁別し、確実に完了したものだけ「終わったこと」へ流す（`[auto]`＋根拠つき・3件/回上限）。適格=①定型台帳一致 ②二重鍵（rollout末尾task_complete＋沈黙 AND LLM会話判定done・モデル=gpt-5.6-luna）。unknown・計画つき行は不変。plist 正本・停止手順は `../loops/board-sweep/loop.md`。
+<!-- LOOP:board-sweep -->
+### `board-sweep`
+- 目的: 当日・前日の停止行を安全弁つきで判定し、確実に完了した行だけを完了へ流す
+- 発火: StartInterval 3600秒（60分）
+- 発火設定: {"StartInterval":3600}
+- runner: script
+- launchd label: com.kitamura.board-sweep
+- 正本: ../loops/board-sweep/loop.md
+- 意図状態: 稼働中
+- 最終実機確認: 2026-07-11 11:46 JST loaded
 
-- `board-reconcile`（5分毎 StartInterval） ── session-board の生存照合（🟢/🔵の沈黙→⏸）の保険。通常は Stop/SessionStart 相乗りで照合されるため、**全セッションを閉じて放置した間の古い🟢残留だけ**を埋める。実体は瞬時・非LLM・API呼び出しなし。plist 正本・停止手順は `../loops/board-reconcile/loop.md`（symlink＋bootstrap・daily-notion-sync と同型）。2026-07-08 kickstart 実測 exit0。
+<!-- LOOP:daily-notion-sync -->
+### `daily-notion-sync`
+- 目的: 当日デイリーの稼働中・完了情報を表示専用のNotion表へミラーする
+- 発火: StartInterval 30秒
+- 発火設定: {"StartInterval":30}
+- runner: script
+- launchd label: com.kitamura.daily-notion-sync
+- 正本: ../loops/daily-notion-sync/loop.md
+- 意図状態: 稼働中
+- 最終実機確認: 2026-07-11 11:46 JST loaded
 
-- `session-record-prune`（平日 月水金 18:00・StartCalendarInterval・**2026-07-09 ロード・稼働中**） ── 古いセッション記録（`.jsonl`）を保持30日超で `~/.Trash` へ移す（削除でなく移動＝復旧余地・**別ボリューム＝外付け退避は触らない**＝st_devガード）。内蔵ディスク逼迫（95%）の抑制。Python テスト13本緑＋サブエージェント敵対的評価で堅牢化済み。有効化時に初回 apply 実測 **213件/1.08GB** を Trash へ移動（Codex203/Claude10・実数で裏取り）。以後は次の月/水/金 18:00 に自動。plist 正本・停止手順は `../loops/session-record-prune/loop.md`。**容量は Trash を空にした時に回収**。
+<!-- LOOP:session-record-prune -->
+### `session-record-prune`
+- 目的: 保持30日を超えたClaude・Codexセッション記録を内蔵ディスク上のTrashへ移す
+- 発火: StartCalendarInterval 月・水・金 18:00（システムTZ）
+- 発火設定: {"StartCalendarInterval":[{"Weekday":1,"Hour":18,"Minute":0},{"Weekday":3,"Hour":18,"Minute":0},{"Weekday":5,"Hour":18,"Minute":0}]}
+- runner: script
+- launchd label: com.kitamura.session-record-prune
+- 正本: ../loops/session-record-prune/loop.md
+- 意図状態: 稼働中
+- 最終実機確認: 2026-07-11 11:46 JST loaded
 
-## 停止したもの（2026-07-04・全て bootout 済み）
+## 実態確認
 
-- `lanes-sync`（renderer・毎分） ── デイリー盤面と Notion レーン実況の同期。
-- `watch-keeper`（5分毎） ── 見張り番の検知通知。cockpitフック撤去（同日）により検知対象も消滅。
-- `inbox-patrol`（30分毎） ── 依頼インボックス未処理行の自動起案。
-- `daily-digest`（12:30/18:30/23:30） ── デイリー集計とダイジェスト（`claude -p` でLLM要約＝トークン消費あり）。
-- `exec-audit`（月・木 10:00） ── launchd ドリフト検出。
-- `ai-jobs-dispatcher` ── 元から休眠（モードB裁定）。変更なし。
+```sh
+for label in \
+  com.kitamura.board-reconcile \
+  com.kitamura.board-sweep \
+  com.kitamura.daily-notion-sync \
+  com.kitamura.session-record-prune
+do
+  launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1 \
+    && echo "loaded $label" \
+    || echo "not-loaded $label"
+done
+```
 
-hook 側も同日撤去済み: Claude Code Stop hook（`hooks/session-daily-log/`）を `~/.claude/settings.json` から除去（hooks は空）。スクリプト本文は当初 repo に残置したが、2026-07-06 に削除（renderer/daily-digest も廃止し session-board へ統一）。詳細は `../../hooks/AGENTS.md`。
-
-## 実機の状態
-
-- `launchctl list | grep com.kitamura` → 0件。
-- `~/Library/LaunchAgents/` の symlink 5本は `_retired-20260704/` へ退避（ログイン時の再ロード防止・plist 正本は各 `loops/<loop>/` に残置）。
-
-## 再開する場合（人間ゲート）
-
-1. `~/Library/LaunchAgents/_retired-20260704/` から対象 symlink を戻す。
-2. `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.kitamura.<loop>.plist`
-3. この一覧を稼働状態に更新する。
-
-## 停止理由の記録（2026-07-04）
-
-- デイリー（2026-07-03）が 674行/141KB・auto区画91%・auto:log 101行（subagent 37／commit無し 78／loop自己記録 21）に肥大し、人間の記入が埋もれた。
-- 記録内容は git log と transcript に既存＝二重管理。hook は renderer の backfill と重複。
-- 方針: 「全部を生記録して後から機械がまとめる」設計をやめ、「各セッションが開始時に意図を宣言し、終了時に完了チェックとプロジェクト別の成果箇条書きを自分で書く」設計へ作り直す（計画は `my-brain/areas/ai運用/plans/` に起こす予定）。
-
-## 実行メニュー（手動オンデマンド・スクリプト自体は健在）
-
-- デイリー集計: `loops/daily-digest/scripts/run.sh [YYYY-MM-DD] [--snapshot]`
-- 実行監査: `loops/exec-audit/scripts/audit.sh`（読み取りのみ）
-- 依頼インボックス巡回: `loops/inbox-patrol/scripts/patrol.sh [YYYY-MM-DD] [--dry-run]`
-- 見張り番キーパー: `loops/watch-keeper/scripts/keeper.sh`（読み取りのみ）
-- 詳細は各 `loop.md` と `loops-registry/ai-jobs/AGENTS.md`。
+構成変更後は、このディレクトリで `python3 verify.py --write-html && python3 verify.py` を実行する。

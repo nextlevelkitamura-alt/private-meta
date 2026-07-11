@@ -10,4 +10,7 @@
   （修正要求が止まった／肯定的反応／「ありがとう」「いいね」「OK」等の締めの気配）→
   {"ok": false, "reason": "session-board の完了報告手順（~/Private/personal-os/AIエージェント基盤/hooks-registry/hooks/session-board/session-end.md）を実行せよ。完了判断→人間に①記載②コミット③マージ&push④続けるを確認→OKならboard.py finish＋git仕上げ。"}
 
+- 種別=実装・計画あり（計画:なし 以外）のセッションで実装が完了扱いになりそうなのに、最終ラウンドの評価md（全PASS）が会話から確認できない →
+  {"ok": false, "reason": "実装完了の気配だがレビュー未確認。plan.mdのレビュー項目で採点し評価NN.mdを作る（impl-reviewer・規約=areas/AGENTS.md §3）。全PASSなら session-end の完了報告手順へ、FAILなら修正NN.mdで差し戻し。"}
+
 迷ったら {"ok": true}（未達側に倒し、人間に委ねる）。1往復ごとの細かい完了では false にしない。

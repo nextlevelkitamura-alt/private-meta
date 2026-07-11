@@ -32,4 +32,5 @@ global に使うもの（Skill・loop・hook）は、実体をここに登録し
 - `loops-registry/` … loop 運用の一式（実行レーン・loop本体・共通参照・loop計画）
 - `repo-registry/` … repo と repo-local Skill の履歴
 - `hooks-registry/` … runtime フック本体（機構共有 `hooks/`＋runtime受け口 `claude/`・`codex/`）
+- `agents-registry/` … Claude カスタムエージェント・コマンドの正本（runtime `~/.claude/agents|commands/` へ symlink 露出。2026-07-11新設）
 - `git-registry/` … 全体git構成（2repo・追跡範囲・push・スマホ閲覧）の一望正本

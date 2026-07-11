@@ -50,14 +50,15 @@ CLI指定は `-s <値>`（対話TUI・execの両方で有効）。
 
 ## 7. ClaudeからCodexへ委任する（exec + resume）
 
-Claude Code の subagent から実装・相談を委任する推奨構成（2026-07-10 実機検証）。
+**既定はメインエージェントが直接 `codex exec` を駆動する**（2026-07-11決定。監督サブエージェントは廃止——優秀なモデルが直接管理する方が粒度の細かい判断を拾える。実践調査でも直接execが多数派・公式原則も「往復が頻繁ならメイン直」）。subagentで包むのは、独立タスクを2本以上並列で走らせ大量ログを隔離したい例外時だけ。以下の手順は両方に共通（2026-07-10 実機検証）。
 
 1. 起動: `codex exec --json -C <作業dir> -o <最終メッセージ用file> "<依頼文>" > <イベントログfile>`。
 2. thread_id: イベントログ先頭行 `{"type":"thread.started","thread_id":"<uuid>"}` から取得。
 3. 継続: `codex exec resume <thread_id> --json ... "<追加指示>"`。文脈は `~/.codex/sessions/` にディスク永続し、プロセス・セッションの寿命に依存しない。`resume --last` は既定でcwdフィルタあり（`--all` で解除）。
 4. read-only委任（相談・レビュー）は `-s read-only` を毎回付ける。
 5. inline MCP（`codex mcp-server` 接続）を長時間委任に使わない理由: MCPツール呼び出しはクライアント側の実質10分タイムアウトに支配され、`codex-reply` の threadId はサーバープロセス内のみ有効（再起動後は "Session not found"。ただし同じIDを `codex exec resume` へ渡せば復元できる）。対話的承認（elicitation）が必要な場合だけMCPに優位性がある。
-6. 生きた実例: `~/.claude/agents/codex-implementer.md`（実装委任・git裏取り）/ `~/.claude/agents/codex-consult.md`（相談役・read-only固定）。
+6. 生きた実例: `~/.claude/commands/codex-impl.md`（/codex-impl・メイン直接駆動の手順書）/ `~/.claude/agents/codex-consult.md`（相談役・read-only固定・exec直接駆動）。旧 `codex-implementer` サブエージェントは2026-07-11廃止（メイン直接駆動へ一本化）。
+7. 実装×評価ペア（2026-07-11）: ライト以上の実装は、実装=Codex（exec）× 評価=`~/.claude/agents/impl-reviewer.md`（claude系sub・read-only）の異系統クロスチェックで回す。採点と差し戻しは口頭でなくMD駆動（plan.md→評価NN.md→修正NN.md→`exec resume`で「修正NN.mdを読め」）。規約は my-brain/areas/AGENTS.md §3「評価・修正文書」、上限・規模判定は運用契約§2。
 
 ## 8. テンプレート: レビュー担当カスタムプロンプト
 

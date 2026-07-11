@@ -170,7 +170,7 @@ def _first_guide(key, repo, runtime):
         " ②形: 独立に完了する子計画を2本以上生む → program化（program.md＋plans/NN-子.md）。"
         "それ以外は単発 plan.md。",
         " ③完了条件: レビュー項目（「こうなっていれば正しい」形式・対象明示）を書いてから着手。"
-        "雛形: plan-ops new-plan.sh",
+        "ライト以上は実装後に評価NN.mdで採点（全PASS=done・areas§3）。雛形: plan-ops new-plan.sh",
         " 置き場: repo概要.md で所属repoを判定（cwdでなく依頼の中身で）→ そのrepo AGENTS.md → "
         "<repo>/plans/。決めたら update --plan で宣言。",
         f"節目: {BOARD} log --key {key} --repo <repo> --parent <目標名> --entry <成果1行>"
@@ -192,8 +192,12 @@ def _mirror(key, row):
     ]
     if row.get("type") == "計画":
         lines.append("計画3判定: ①サクッと（3条件全YES）→ --plan なし ②子2本以上→program化 "
-                     "③レビュー項目を書いてから着手 → 置き場: repo概要.md→<repo>/plans/"
+                     "③レビュー項目を書いてから着手（実装後は評価NN.mdで採点） → 置き場: repo概要.md→<repo>/plans/"
                      "（運用契約§2・areas§3）。")
+    elif row.get("type") == "実装" and plan in (PLACEHOLDER, "なし"):
+        lines.append("実装で計画:" + ("?" if plan == PLACEHOLDER else "なし") +
+                     " → サクッと3条件（①1〜2ファイル②容易に戻せる③人間ゲート無し）を再確認。"
+                     "1つでもNOなら plan.md 必須＋実装後に評価NN.mdで採点（/codex-impl 手順0・areas§3）。")
     elif plan == PLACEHOLDER:
         lines.append("計画:? → 拠り所（実装・レビュー）/置き先（計画）を update --plan で。"
                      "①1〜2ファイル②容易に戻せる③人間ゲート無し 全YESなら --plan なし。")

@@ -6,7 +6,7 @@ description: 計画ライフサイクルの機械手続き（program.md子計画
 # plan-ops
 
 計画ライフサイクルの「機械手続き」を、固定パスのscriptで安全に回す窓口skill。
-**判断（中身の決定）はしない。** 何をやるか・どう直すかは既存の判断系skill（`mokuteki-jisso` / `coding-task-orchestrator` / `grill-me` 等）へ委譲する。ここは手だけ。
+**判断（中身の決定）はしない。** 何をやるか・どう直すかは既存の判断系skill（`mokuteki-jisso` / `plan-triage` / `grill-me` 等）へ委譲する。ここは手だけ。
 
 規約の正本（コピーしない・ここから参照する）:
 - 状態の持ち方（モードA/B）・作業パイプライン段階語彙・人間ゲート: `~/Private/personal-os/説明書/運用契約.md` §1-2。
@@ -25,7 +25,7 @@ description: 計画ライフサイクルの機械手続き（program.md子計画
 1. **子計画マップの機械書換（マップ手動更新が最大の痛点・実測）** → `scripts/progctl.sh`
    「NNブロックの状態変更 → 手でEdit+コミット」が当日コミットの過半を占めた実測を受け、該当NNブロックだけを冪等に書き換える（マップ外・他ブロックはバイト不変）。何を書くか（状態文言・次の一手・参照repo@hash）は指揮官の判断のまま。
 2. **計画テンプレのscaffold（テンプレ正本の二重管理防止）** → `scripts/new-plan.sh` / `scripts/new-child.sh`
-   テンプレ本文の正本を `skills/plan-ops/templates/` の1箇所に集約し、そこから単発plan.md・program.md・子計画.mdを生成する。中身（目的/現状/方針等）は書かない＝雛形のみ。
+   テンプレ本文の正本を `skills/plan-ops/templates/` の1箇所に集約し、そこから単発plan.md・program.md・子計画.mdを生成する。中身（目的/現状/方針等）は書かない＝雛形のみ。実装後のレビューサイクル用に `templates/評価.md`・`templates/修正.md` もここが正本（生成scriptは無し・手でコピーして使う。運用規約は areas/AGENTS.md §3「評価・修正文書」）。
 3. **program.mdの静的整合チェック** → `scripts/program-lint.sh`
    「マップにあるのに実ファイルが無い」「子のbacklinkが解決しない」「状態語彙が崩れている」「完了なのに完了条件未チェック」を機械検出する。ライブなレーン状態（cockpit/watch.sh）は見ない・見るのは静的ファイルのみ。
 4. **ai-jobs の状態遷移（claim/done の mv）を cwd 非依存で安全に** → `scripts/jobctl.sh`

@@ -109,7 +109,7 @@ subagent を plugin として配布すると、`hooks` / `mcpServers` / `permiss
 ## 10. 推奨 agent
 
 1. `quality-gate`: reviewer と evaluator を統合。普段は分けない（分けると時間が伸びやすい）。
-2. `codex-implementer`: 実装をCodexへ委任。`codex exec --json` で起動し thread_id を捕捉、途中停止は `exec resume` で文脈継続、完了後は git でコミットを裏取り。実例 `~/.claude/agents/codex-implementer.md`。
+2. Codexへの実装委任は **agentにしない**（旧 `codex-implementer` は2026-07-11廃止）。既定はメインエージェントが `/codex-impl`（`~/.claude/commands/codex-impl.md`）の手順で直接 `codex exec --json` を駆動し、thread_id捕捉→`exec resume`で継続、git diffを自分で検証する。agentで包むのは独立2本以上の並列時だけ（general-purposeに手順ごと委任）。詳細は `codex.md` §7。
 3. `codex-reviewer`: `codex exec -s read-only` を Bash 経由で呼び、Codex のレビュー結果をファイルに保存。
 4. `codex-consult`: `codex exec --json -s read-only`＋`exec resume` で Codex に継続相談（旧 inline MCP 方式は10分タイムアウトとスレッド非永続のため2026-07-10に廃止）。実例 `~/.claude/agents/codex-consult.md`。
 5. `hook-designer`: Stop / SubagentStop / Notification / PreToolUse hooks を設計。

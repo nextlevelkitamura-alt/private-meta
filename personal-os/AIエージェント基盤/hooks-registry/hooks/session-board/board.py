@@ -82,6 +82,7 @@ TURSO_KEYCHAIN_SERVICE = "turso-personal-os-board"
 TURSO_INBOX_DB_URL = "https://personal-os-inbox-nextlevelkitamura-alt.aws-ap-northeast-1.turso.io"
 TURSO_INBOX_KEYCHAIN_SERVICE = "turso-personal-os-inbox"
 TURSO_TIMEOUT = 3   # 秒。MDが正本・Tursoはベストエフォートのミラーなので短く切る
+TURSO_SPOOL_LIMIT = 50   # 1回の再送上限（statement数。JSONLの行数ではない）
 
 
 def _turso_token(service=TURSO_KEYCHAIN_SERVICE):
@@ -104,28 +105,168 @@ def _ia(v):
     return {"type": "integer", "value": str(int(v))}
 
 
-def _turso_execute(statements, db_url=TURSO_DB_URL, service=TURSO_KEYCHAIN_SERVICE):
-    """statements: [(sql, args), ...] を1バッチで実行。空なら何もしない。失敗は静かに無視
-    （非ブロッキング・MD運用に一切影響させないベストエフォート送信。secret規律によりtoken値は出力しない）。
-    db_url/service で宛先を切替（既定=board・goal-add は inbox DB/トークンを渡して共用）。
-    SESSION_BOARD_NO_TURSO=1 でスキップ（テスト実行が本番Tursoにデータを漏らさないためのガード）。"""
-    if not statements:
-        return
-    if os.environ.get("SESSION_BOARD_NO_TURSO"):
-        return
-    token = _turso_token(service)
-    if not token:
-        return
-    requests = [{"type": "execute", "stmt": {"sql": sql, "args": args}} for sql, args in statements]
-    requests.append({"type": "close"})
-    body = json.dumps({"requests": requests}).encode("utf-8")
-    req = urllib.request.Request(
-        db_url + "/v2/pipeline", data=body, method="POST",
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+def _spool_paths():
+    """board DB用スプールと専用flockのパス。テスト時だけenvでstate dirを隔離できる。"""
+    state_dir = os.environ.get("SESSION_BOARD_STATE_DIR") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "state")
+    return (os.path.join(state_dir, "turso-spool.jsonl"),
+            os.path.join(state_dir, ".turso-spool.lock"))
+
+
+def _spoolable_statements(statements):
+    """追記式の履歴だけを返す。sessions現在値/delete・inbox goalsは自己修復/別系統のため除外。"""
+    out = []
+    for sql, args in statements:
+        normalized = " ".join(sql.lower().split())
+        if ("insert into session_events" in normalized
+                or "insert into session_logs" in normalized):
+            out.append((sql, args))
+    return out
+
+
+def _spool_append_unchecked(statements):
+    """_spool_appendの実処理。呼び出し側が非ブロッキング境界を受け持つ。"""
+    statements = _spoolable_statements(statements)
+    if not statements or os.environ.get("SESSION_BOARD_NO_TURSO"):
+        return 0
+    path, lock_path = _spool_paths()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(lock_path, "a+", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            payload = {"statements": [[sql, args] for sql, args in statements]}
+            with open(path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+    return 1
+
+
+def _spool_append(statements):
+    """失敗したevents/logs文を専用flock下で追記。ローカルI/O失敗もMD運用へ伝播させない。"""
     try:
-        urllib.request.urlopen(req, timeout=TURSO_TIMEOUT)
+        return _spool_append_unchecked(statements)
     except Exception:
-        pass
+        return 0
+
+
+def _turso_send(statements, db_url=TURSO_DB_URL, service=TURSO_KEYCHAIN_SERVICE):
+    """1バッチを実送信し、成功可否だけを返す。失敗理由・token値は一切出力しない。"""
+    if not statements:
+        return True
+    try:
+        token = _turso_token(service)
+        if not token:
+            return False
+        requests = [{"type": "execute", "stmt": {"sql": sql, "args": args}}
+                    for sql, args in statements]
+        requests.append({"type": "close"})
+        body = json.dumps({"requests": requests}).encode("utf-8")
+        req = urllib.request.Request(
+            db_url + "/v2/pipeline", data=body, method="POST",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=TURSO_TIMEOUT)
+        return True
+    except Exception:
+        return False
+
+
+def _turso_execute(statements, db_url=TURSO_DB_URL, service=TURSO_KEYCHAIN_SERVICE):
+    """statementsを1バッチ送信。失敗時はevents/logs文だけをスプールし、追記行数を返す。
+
+    MD運用には一切影響させず、secret/token値も出力しない。goal-addは別DBだが、SQL分類により
+    inbox goalsはスプール対象外。SESSION_BOARD_NO_TURSO時は送信・追記とも行わない。
+    """
+    if not statements or os.environ.get("SESSION_BOARD_NO_TURSO"):
+        return 0
+    if _turso_send(statements, db_url=db_url, service=service):
+        return 0
+    return _spool_append(statements)
+
+
+def _turso_replay_unchecked(skip_tail_lines=0, limit=TURSO_SPOOL_LIMIT):
+    """_turso_replayの実処理。既存スプールを古い順に最大limit文再送する。
+
+    skip_tail_lines は今回の失敗で末尾へ追加した行数。同一実行で即再試行せず、次回実行から
+    対象にする。専用flockは読込〜送信〜置換まで保持し、並行再送による二重insertを避ける。
+    """
+    if os.environ.get("SESSION_BOARD_NO_TURSO") or limit <= 0:
+        return 0
+    path, lock_path = _spool_paths()
+    if not os.path.exists(path):
+        return 0
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(lock_path, "a+", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            if not os.path.exists(path):
+                return 0
+            with open(path, encoding="utf-8") as f:
+                lines = f.read().splitlines()
+            eligible_end = max(0, len(lines) - max(0, int(skip_tail_lines or 0)))
+            selected = []
+            consumed = {}
+            decoded = {}
+            for i in range(eligible_end):
+                try:
+                    raw = json.loads(lines[i]).get("statements")
+                    batch = [(item[0], item[1]) for item in raw]
+                except (AttributeError, IndexError, TypeError, ValueError, json.JSONDecodeError):
+                    return 0   # 壊れた先頭履歴を飛び越さず、順序と原本を保つ
+                if not batch:
+                    return 0
+                take = min(len(batch), limit - len(selected))
+                selected.extend(batch[:take])
+                consumed[i] = take
+                decoded[i] = batch
+                if len(selected) >= limit:
+                    break
+            if not selected or not _turso_send(selected):
+                return 0
+
+            remaining = []
+            for i, line in enumerate(lines):
+                if i not in consumed:
+                    remaining.append(line)
+                    continue
+                rest = decoded[i][consumed[i]:]
+                if rest:
+                    payload = {"statements": [[sql, args] for sql, args in rest]}
+                    remaining.append(json.dumps(
+                        payload, ensure_ascii=False, separators=(",", ":")))
+            fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path))
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    if remaining:
+                        f.write("\n".join(remaining) + "\n")
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp, path)
+            except Exception:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                raise
+            return len(selected)
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def _turso_replay(skip_tail_lines=0, limit=TURSO_SPOOL_LIMIT):
+    """成功時だけスプールを原子的に消費。再送/ローカルI/O失敗はMD運用へ伝播させない。"""
+    try:
+        return _turso_replay_unchecked(skip_tail_lines=skip_tail_lines, limit=limit)
+    except Exception:
+        return 0
+
+
+def _turso_sync(statements, db_url=TURSO_DB_URL, service=TURSO_KEYCHAIN_SERVICE):
+    """現在バッチを送り、送信フェーズ末尾で以前のスプールを再送する。"""
+    spooled = _turso_execute(statements, db_url=db_url, service=service)
+    _turso_replay(skip_tail_lines=spooled or 0)
 
 
 # ---- Turso文ビルダー（層1=sessions・層2=session_logs・層3=session_events）----
@@ -210,7 +351,7 @@ def turso_append_events(events, date_s=None):
         return
     if date_s is None:
         _, date_s = daily_path()
-    _turso_execute(_stmts_events(events, date_s))
+    _turso_sync(_stmts_events(events, date_s))
 
 
 def strip_plan_mark(text):
@@ -578,7 +719,7 @@ def main():
         stmt = _stmt_goal_insert(args.get("name"), args.get("date"), args.get("source", "chat"))
         if stmt is None:
             sys.exit('usage: board.py goal-add --name "<目標>" [--date YYYY-MM-DD] [--source chat]')
-        _turso_execute([stmt], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)
+        _turso_sync([stmt], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)
         return
     key = args.get("key", "").removeprefix("s:")
     if not key and cmd not in ("reconcile", "goals"):
@@ -728,15 +869,15 @@ def main():
     if cmd in ("add", "update", "flip", "sub-start", "sub-end"):
         _, r2 = find_line(lines, key)
         st = _stmt_session_upsert(r2)
-        _turso_execute(([st] if st else []) + _stmts_events(pending_events, date_s))
+        _turso_sync(([st] if st else []) + _stmts_events(pending_events, date_s))
     elif cmd == "log":
-        _turso_execute(_stmts_logs(repo, parent, entries, date_s))
+        _turso_sync(_stmts_logs(repo, parent, entries, date_s))
     elif cmd == "finish":
-        _turso_execute(_stmts_logs(repo, parent, entries, date_s)
-                       + [_stmt_session_delete(key)]
-                       + _stmts_events(pending_events, date_s))
+        _turso_sync(_stmts_logs(repo, parent, entries, date_s)
+                    + [_stmt_session_delete(key)]
+                    + _stmts_events(pending_events, date_s))
     elif cmd == "reconcile":
-        _turso_execute(_stmts_reconcile(pending_events, date_s))
+        _turso_sync(_stmts_reconcile(pending_events, date_s))
 
 
 if __name__ == "__main__":

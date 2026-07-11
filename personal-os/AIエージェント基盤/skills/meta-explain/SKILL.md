@@ -1,6 +1,6 @@
 ---
 name: meta-explain
-description: メタ構造（hook・Skill・loop・registry・runtime露出・AGENTS・計画構造）を、人間が理解しきるまでHTML(Artifact)で説明・反復更新する理解ゲートSkill。現状だけの説明（この仕組みはどう動いているか）にも、変更前の計画説明（現状→before/after→新規・変更ファイルの本文ドラフト全文）にも使う。人間のOKが出るまで同じHTML（同一URL）を更新し続け、対象ファイルの実装・編集はしない。ユーザーが「メタ説明」「meta-explain」「分かるまで説明して」「この仕組みを説明して」「実装前に構成を見せて」と依頼した時に使う。軽い依頼整理は naiyou-suriawase、問いで詰める壁打ちは grill-me を使い、本Skillは使わない。
+description: メタ構造（hook・Skill・loop・registry・runtime露出・AGENTS・計画構造）を、人間が理解しきるまでHTML(Artifact)で説明・反復更新する理解ゲートSkill。現状だけの説明（この仕組みはどう動いているか）にも、変更前の計画説明（現状→before/after→新規・変更ファイルの本文ドラフト全文）にも使う。人間のOKが出るまで同じHTML（同一URL）を更新し続け、対象ファイルの実装・編集はしない。ユーザーが「メタ説明」「meta-explain」「分かるまで説明して」「この仕組みを説明して」「実装前に構成を見せて」と依頼した時に使う。自発起動はしない（必要そうな場面でも使用提案までに留め、発動は明示依頼か人間の確認後のみ）。軽い依頼整理は naiyou-suriawase、問いで詰める壁打ちは grill-me を使い、本Skillは使わない。
 ---
 
 # meta-explain
@@ -22,6 +22,7 @@ description: メタ構造（hook・Skill・loop・registry・runtime露出・AGE
 1. 手順1〜4は読み取りとArtifact公開のみ。対象ファイルを編集しない。
 2. 手順5の計画反映は人間の承認後だけ。実装・削除・移動・改名・symlink変更はどの段階でもしない。
 3. secret・token・credential・認証値をHTMLに載せない。
+4. 自発起動はしない。必要そうな場面でも使用提案までに留め、HTML作成・理解ループの開始は明示依頼か人間の確認後のみ。
 
 ## 3. 関連
 

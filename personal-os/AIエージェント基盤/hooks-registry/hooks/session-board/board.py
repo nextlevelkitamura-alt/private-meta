@@ -15,6 +15,7 @@
 #   board.py check  --key K    # stdout: missing|run|wait|sub
 #   board.py show   --key K    # stdout: state/goal/now/type/repo/who/plan のタブ区切り7列（無ければ "missing"）
 #   board.py goals             # stdout: 現在の目標一覧（重複なし・未記入除外・表示順）
+#   board.py goal-add --name G [--date YYYY-MM-DD] [--source chat]  # 目標宣言をinbox DBへ登録（mdは変更しない）
 # 行フォーマット v3（2026-07-10〜・入れ子ボード。セッション行の列構成は v2.2 と同じ＋任意 sub:N）:
 #   「動いているエージェント」節は goals-summary マーカー内に 目標親行（- <代表絵文字> <目標>［（N件）］）
 #   → 2字インデントのセッション行 → sub>0 なら「    ↳ 🔵 サブN体」の入れ子で機械再描画（render_body）。
@@ -77,15 +78,18 @@ PLAN_MARK = " ‹計画:"   # log/finish が親行末尾へ転記する計画マ
 
 TURSO_DB_URL = "https://personal-os-board-nextlevelkitamura-alt.aws-ap-northeast-1.turso.io"
 TURSO_KEYCHAIN_SERVICE = "turso-personal-os-board"
+# 目標宣言（goal-add）の宛先＝inbox DB（board とは別DB・別トークン）。値は下流で使うだけで出力しない。
+TURSO_INBOX_DB_URL = "https://personal-os-inbox-nextlevelkitamura-alt.aws-ap-northeast-1.turso.io"
+TURSO_INBOX_KEYCHAIN_SERVICE = "turso-personal-os-inbox"
 TURSO_TIMEOUT = 3   # 秒。MDが正本・Tursoはベストエフォートのミラーなので短く切る
 
 
-def _turso_token():
-    """keychainからトークンを取得。値は一切ログ・stdoutへ出さない。失敗時は None。"""
+def _turso_token(service=TURSO_KEYCHAIN_SERVICE):
+    """keychainからトークンを取得（service で board/inbox を切替）。値は一切ログ・stdoutへ出さない。失敗時は None。"""
     try:
         r = subprocess.run(
             ["security", "find-generic-password", "-a", os.environ.get("USER", ""),
-             "-s", TURSO_KEYCHAIN_SERVICE, "-w"],
+             "-s", service, "-w"],
             capture_output=True, text=True, timeout=2)
         return r.stdout.strip() or None
     except Exception:
@@ -96,22 +100,27 @@ def _ta(v):
     return {"type": "text", "value": "" if v is None else str(v)}
 
 
-def _turso_execute(statements):
+def _ia(v):
+    return {"type": "integer", "value": str(int(v))}
+
+
+def _turso_execute(statements, db_url=TURSO_DB_URL, service=TURSO_KEYCHAIN_SERVICE):
     """statements: [(sql, args), ...] を1バッチで実行。空なら何もしない。失敗は静かに無視
     （非ブロッキング・MD運用に一切影響させないベストエフォート送信。secret規律によりtoken値は出力しない）。
+    db_url/service で宛先を切替（既定=board・goal-add は inbox DB/トークンを渡して共用）。
     SESSION_BOARD_NO_TURSO=1 でスキップ（テスト実行が本番Tursoにデータを漏らさないためのガード）。"""
     if not statements:
         return
     if os.environ.get("SESSION_BOARD_NO_TURSO"):
         return
-    token = _turso_token()
+    token = _turso_token(service)
     if not token:
         return
     requests = [{"type": "execute", "stmt": {"sql": sql, "args": args}} for sql, args in statements]
     requests.append({"type": "close"})
     body = json.dumps({"requests": requests}).encode("utf-8")
     req = urllib.request.Request(
-        TURSO_DB_URL + "/v2/pipeline", data=body, method="POST",
+        db_url + "/v2/pipeline", data=body, method="POST",
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
     try:
         urllib.request.urlopen(req, timeout=TURSO_TIMEOUT)
@@ -126,16 +135,17 @@ def _stmt_session_upsert(row):
     """sessions へ現在行の状態を upsert する文（層1・機械送信・上書き式）。row 無しは None。"""
     if not row or not row.get("key"):
         return None
-    sql = ("INSERT INTO sessions (session_key, goal, now, type, repo, model, plan, state, updated_at) "
-           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    sql = ("INSERT INTO sessions (session_key, goal, now, type, repo, model, plan, state, sub_n, updated_at) "
+           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
            "ON CONFLICT(session_key) DO UPDATE SET goal=excluded.goal, now=excluded.now, "
            "type=excluded.type, repo=excluded.repo, model=excluded.model, plan=excluded.plan, "
-           "state=excluded.state, updated_at=excluded.updated_at")
+           "state=excluded.state, sub_n=excluded.sub_n, updated_at=excluded.updated_at")
     who = row.get("who") or ""
     model = who.split("/")[-1] if "/" in who else who
     args = [_ta(f"s:{row['key']}"), _ta(row.get("goal")), _ta(row.get("now")),
             _ta(row.get("type")), _ta(row.get("repo")), _ta(model), _ta(row.get("plan")),
             _ta(STATE_WORD.get(row.get("state"), "run")),
+            _ia(int(row.get("sub") or 0)),
             _ta(datetime.datetime.now().isoformat(timespec="seconds"))]
     return (sql, args)
 
@@ -169,6 +179,27 @@ def _stmts_events(events, date_s):
                    _ta(r.get("goal")), _ta(r.get("repo")), _ta(r.get("type")),
                    _ta(r.get("plan")), _ta(date_s)])
             for r, state, trig in events]
+
+
+def _stmts_reconcile(events, date_s):
+    """reconcile降格行のcurrent upsertとwaitイベントを同一バッチ用に組み立てる。"""
+    upserts = [_stmt_session_upsert(row) for row, _, _ in events]
+    return [stmt for stmt in upserts if stmt] + _stmts_events(events, date_s)
+
+
+def _stmt_goal_insert(name, goal_date=None, source="chat", created_at=None):
+    """inbox.goals へ目標宣言を1行 insert する文。送信と分離して単体検証可能にする。"""
+    name = (name or "").strip()
+    if not name:
+        return None
+    jst = datetime.timezone(datetime.timedelta(hours=9))
+    now = datetime.datetime.now(jst)
+    goal_date = goal_date or now.strftime("%Y-%m-%d")
+    created_at = created_at or now.isoformat(timespec="seconds")
+    source = (source or "").strip() or "chat"
+    sql = ("INSERT INTO goals (name, goal_date, created_at, source, status) "
+           "VALUES (?, ?, ?, ?, ?)")
+    return (sql, [_ta(name), _ta(goal_date), _ta(created_at), _ta(source), _ta("pending")])
 
 
 def turso_append_events(events, date_s=None):
@@ -541,8 +572,14 @@ def annotate_parent_plan(lines, repo, parent, plan):
 
 def main():
     if len(sys.argv) < 2:
-        sys.exit("usage: board.py <add|update|flip|sub-start|sub-end|finish|log|check|show|goals|reconcile> ...")
+        sys.exit("usage: board.py <add|update|flip|sub-start|sub-end|finish|log|check|show|goals|reconcile|goal-add> ...")
     cmd, args, entries = parse_args(sys.argv[1:])
+    if cmd == "goal-add":
+        stmt = _stmt_goal_insert(args.get("name"), args.get("date"), args.get("source", "chat"))
+        if stmt is None:
+            sys.exit('usage: board.py goal-add --name "<目標>" [--date YYYY-MM-DD] [--source chat]')
+        _turso_execute([stmt], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)
+        return
     key = args.get("key", "").removeprefix("s:")
     if not key and cmd not in ("reconcile", "goals"):
         sys.exit("--key required")
@@ -641,13 +678,17 @@ def main():
             if idx is None:
                 return                 # 行が無ければ何もしない（non-blocking・flipと同じ）
             n = int(row.get("sub") or 0)
+            old_state = row["state"]
             if cmd == "sub-start":     # サブ開始: 体数+1・状態は🔵へ。⏸からも🔵にする
                 row["sub"] = n + 1     # （開始イベント＝親が生きている合図。旧シムの flip sub と同じ挙動）
                 row["state"] = SUB
+                if old_state in (RUN, WAIT):
+                    pending_events.append((dict(row), "sub", "sub-start"))
             else:                      # サブ終了: 体数-1（0でクランプ）・全員戻ったら🔵→🟢
                 row["sub"] = max(0, n - 1)
                 if row["sub"] == 0 and row["state"] == SUB:
                     row["state"] = RUN
+                    pending_events.append((dict(row), "run", "sub-end"))
             lines[idx] = fmt(row)
         elif cmd in ("log", "finish"):
             repo = clean(args.get("repo")) or (row["repo"] if row else "?")
@@ -684,7 +725,7 @@ def main():
 
     # Turso同期（MD書き込み・flock解放後のベストエフォート送信。失敗はMD運用に一切影響しない）。
     # 状態遷移イベント（pending_events）は sessions/logs の文と同一バッチに合流＝HTTP往復1回。
-    if cmd in ("add", "update", "flip"):
+    if cmd in ("add", "update", "flip", "sub-start", "sub-end"):
         _, r2 = find_line(lines, key)
         st = _stmt_session_upsert(r2)
         _turso_execute(([st] if st else []) + _stmts_events(pending_events, date_s))
@@ -695,7 +736,7 @@ def main():
                        + [_stmt_session_delete(key)]
                        + _stmts_events(pending_events, date_s))
     elif cmd == "reconcile":
-        turso_append_events(pending_events, date_s)
+        _turso_execute(_stmts_reconcile(pending_events, date_s))
 
 
 if __name__ == "__main__":

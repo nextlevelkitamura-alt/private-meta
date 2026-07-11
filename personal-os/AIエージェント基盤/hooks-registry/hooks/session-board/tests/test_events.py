@@ -3,7 +3,7 @@
 # board.main() を in-process で叩き、_turso_execute をモックして送信文をキャプチャする
 # （ネットワーク非依存・本番Tursoへは一切飛ばない）。実ボードには触れない（env差し替え）。
 # 検証: add新規=1本/冪等=0本・flip変化=1本/同状態=0本・finish=doneスナップショット・
-#       reconcile降格=変更行分・update/log/sub-start/sub-end=0本・Stop経路でwaitちょうど1本・
+#       reconcile降格=変更行分・sub状態遷移・update/log=0本・Stop経路でwaitちょうど1本・
 #       sessions/logs との同一バッチ合流（HTTP往復1回）。
 import datetime
 import os
@@ -128,11 +128,29 @@ clear()
 run("flip", "--key", "evnt0001", "--state", "run")
 ok("flip復帰(wait→run)=イベント1本", len(events()) == 1 and events()[0]["state"] == "run")
 
-# ---- sub-start / sub-end: イベント0本（状態は🔵⇄🟢と動くが送らない仕様）----
+# ---- sub-start / sub-end: 状態変化時だけevent、体数変化は毎回upsert ----
 clear()
 run("sub-start", "--key", "evnt0001")
+ok("sub-start: run→subイベント", len(events()) == 1
+   and events()[0]["state"] == "sub" and events()[0]["trig"] == "sub-start")
+ok("sub-start: upsert+eventを1バッチ", len(calls) == 1 and len(calls[0]) == 2 and len(upserts()) == 1)
+clear()
+run("sub-start", "--key", "evnt0001")
+ok("サブ1→2体: イベント無し・sessions upsertあり", len(events()) == 0 and len(upserts()) == 1)
+clear()
 run("sub-end", "--key", "evnt0001")
-ok("sub-start/sub-end=イベント0本", len(events()) == 0)
+ok("サブ2→1体: イベント無し・sessions upsertあり", len(events()) == 0 and len(upserts()) == 1)
+clear()
+run("sub-end", "--key", "evnt0001")
+ok("最後のsub-end: sub→runイベント", len(events()) == 1
+   and events()[0]["state"] == "run" and events()[0]["trig"] == "sub-end")
+ok("最後のsub-end: upsert+eventを1バッチ", len(calls) == 1 and len(calls[0]) == 2 and len(upserts()) == 1)
+run("flip", "--key", "evnt0001", "--state", "wait")
+clear()
+run("sub-start", "--key", "evnt0001")
+ok("sub-start: wait→subもイベント", len(events()) == 1
+   and events()[0]["state"] == "sub" and events()[0]["trig"] == "sub-start")
+run("sub-end", "--key", "evnt0001")
 
 # ---- log: イベント0本 ----
 clear()
@@ -170,7 +188,8 @@ ok("reconcile: state=wait / trig=reconcile",
    ev and ev[0]["state"] == "wait" and ev[0]["trig"] == "reconcile")
 ok("reconcile: 降格行のスナップショット", ev and ev[0]["session_key"] == "s:evre0001"
    and ev[0]["goal"] == "降格対象")
-ok("reconcile: sessions upsertは送らない(イベントのみ)", len(upserts()) == 0)
+ok("reconcile: 降格行のsessions upsertを同梱", len(upserts()) == 1)
+ok("reconcile: upsert+eventを1バッチ", len(calls) == 1 and len(calls[0]) == 2)
 clear()
 run("reconcile")
 ok("再reconcile(既に⏸)=イベント0本", len(events()) == 0)

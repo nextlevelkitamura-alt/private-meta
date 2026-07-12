@@ -472,6 +472,21 @@ python3 skills/ui-ux-pro-max/scripts/search.py "<keyword>" --stack react-native
 
 ---
 
+## Settings / Admin / Preferences UI Design
+
+For settings, preferences, admin, account, billing, security, developer, integration, and automation screens, use the absorbed settings design knowledge in `references/settings/` (from the former `settings-ui-architect` skill). The generic multi-chat / worker-split / integration **delivery orchestration was intentionally dropped** — use `handoff-plan-supervisor` for an implementation handoff, and `cockpit-supervisor` for cockpit supervision.
+
+| File | Use For |
+|------|---------|
+| `references/settings/settings-taxonomy.md` | Default category / IA classification and placement rules for settings screens |
+| `references/settings/ui-quality-rubric.md` | 100-point scorecard to evaluate an existing/proposed settings UI and pick next actions |
+| `references/settings/benchmark-targets.md` | Mature-app comparison checklist (verify with live research/screenshots, not memory) |
+| `assets/settings/ui-acceptance-template.md` | Fill-in acceptance criteria (responsive, interaction, a11y, visual constraints) for a settings UI |
+
+Flow: evaluate the current UI with the rubric → design taxonomy / IA → write acceptance criteria → then generate visuals (via the image skill) and hand implementation to the orchestrators. Do not generate mockups before taxonomy and acceptance criteria exist.
+
+---
+
 ## Example Workflow
 
 **User request:** "Make an AI search homepage."

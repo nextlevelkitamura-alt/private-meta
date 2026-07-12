@@ -34,7 +34,7 @@ referenceは2つだけ。増やす前に、この2つへ統合できないか確
 1. アプリ本体の実装。
 2. repoの物理移動。必要なら `repo-relocation` を使う。
 3. Skill作成、削除、改名、移行。必要なら `skill-creator-custom` / `skill-delete` を使う。
-4. Medium/Largeの開発進行管理。必要なら `coding-task-orchestrator` などを使う。
+4. Medium/Largeの開発の入口判断・進行管理。必要なら `plan-triage` / `cockpit-supervisor` を使う。
 5. 本番deploy、DB migration、secret設定。
 
 ## 5. 絶対ルール

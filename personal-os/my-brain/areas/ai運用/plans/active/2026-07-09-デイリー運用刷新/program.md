@@ -27,7 +27,7 @@
 - 子03: 儀式の自動実行。Standup/Wrap=Desktop scheduled tasks（チャット出現・公式機能）、Shutdown=launchd＋Python枠/LLM stdout契約。morning-routineを3スキルへ分配、朝ルーチン自動実行構想（07-03滞留）を吸収。
 - 子04: %推定エンジン。イベント駆動（board.py log起点・debounce10分）＋3回スナップ安全網。digest.sh骨格7割流用。board.pyと同一flock共有が絶対条件。
 - 子05: ⏸自動判定（board-sweep）。定期loop（launchd）＋定型台帳＋`board.py finish`作用器。codex one-shot検知3種は実測確定済み。dry-run 1週間から。
-- 子06: インボックス即時起案。inbox-patrol＋inbox-triage（8割実装済み・停止中）の再有効化＋改修（planning起案化・repo経路・権限allowlist化）。
+- 子06: インボックス起案。旧自動巡回は廃止し、人間指定のinbox-triage→planning起案だけを現行導線とする。
 - 依存方向: 01が全子の前提（月間計画・テンプレ）。02の業務行が03/04/05の読み書き対象。06は01のインボックス節のみに依存（早出し可）。
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新

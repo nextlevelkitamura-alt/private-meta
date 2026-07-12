@@ -1,5 +1,5 @@
 分類: loop ／ 種別: 既存改善（renderer廃止後のNotion連携を session-board 源で作り直す） ／ 優先: ○ ／ 規模: ライト
-次: 実装着手。新loop `loops/daily-notion-sync/` の骨格作成＋Notion連携部の移設から。参照旧計画: `../2026-07-02-Notionオンライン盤面/plan.md`（renderer源のN1〜N3b・renderer廃止で停止）。
+次: `loops/daily-notion-sync/` は実装・launchd登録済み。現行実体と状態は同loopの `loop.md` と `実行一覧/personal-os.md` を正とする。
 
 # デイリー状態のNotion表反映（session-board 源・30秒）
 
@@ -13,8 +13,8 @@
   - `## 動いているエージェント`: 1行=1セッション。`- HH:MM | repo | 種別 | 要約 | 状態 <!-- s:key -->`（`LINE_RE`）。状態は🟢動作中/⏸停止・確認待ち/🔵サブ稼働中の3値。
   - `## 終わったこと`: `### repo` ＞ `- 親タスク` ＞ `  - HH:MM 子成果` の入れ子。
 - 旧Notion連携（`../2026-07-02-Notionオンライン盤面/plan.md`）は renderer loop 配下で N1（全文push）/N2（インボックスpull）/N3（計画ボード）/N3b（レーン実況）を実装したが、**renderer廃止（2026-07-06）で停止**。旧「レーン実況」DBは `orca worktree ps` 源で、session-board源ではない（データ源が違う）。
-- **Notion資産は生きている**（実機確認済み）: keychain `notion-personal-os`、親ページ「Personal OS」、`renderer/state/`（親ページid・各DB idキャッシュ）、`renderer/scripts/`（`notion-common.sh`・`notion_helper.py`・`notion-push.sh`・`notion-lanes.sh`・`lanes-sync.sh`）。
-- launchd は全停止（`com.kitamura.*` 0件）。退避plistに `lanes-sync` 1本（renderer配下を指すsymlink）。
+- **現行Notion資産**（2026-07-11再確認）: keychain `notion-personal-os`、親ページ「Personal OS」、`loops/daily-notion-sync/state/` と同loopの `scripts/`。旧rendererへの実行依存はない。
+- launchd `com.kitamura.daily-notion-sync` は登録済み・loaded（StartInterval 30秒）。
 - **申し送り（2026-07-09・デイリー運用刷新の調査4より）**: 実装済みの `loops/daily-notion-sync/scripts/parse-daily.sh` は旧v1行形式の正規表現のままで、**現行ボードv2.2行に1行もマッチしない（断線中）**。修正時は正規表現の二重定義をやめ board.py `parse_line` の import へ一本化を推奨（以後の行フォーマット進化に自動追従）。また `../2026-07-09-デイリー運用刷新/` が「## 今日すること」業務行(b:key)等の新節を足すが、セッション行のLINE_REは変えない設計（業務表を足すなら新DB＝純加算）。
 
 ## 方針

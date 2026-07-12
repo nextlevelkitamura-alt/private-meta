@@ -1,0 +1,20 @@
+name: 3カラム比較
+description: 縦3列で項目を並列比較。ビフォア/アフター/結果や、3つの選択肢比較に。
+slots:
+  - position: top
+    type: text
+    elements: [見出し]
+  - position: column-left
+    type: card
+    elements: [見出し+本文 or アイコン+説明]
+  - position: column-center
+    type: card
+  - position: column-right
+    type: card
+suit_for:
+  - プラン比較・料金比較
+  - Before / Now / After
+  - 3要素の特徴整理
+not_suit_for:
+  - 2項目比較（左右2分割を使う）
+  - 4項目以上（マトリクスを使う）

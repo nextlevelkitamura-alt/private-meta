@@ -1,0 +1,63 @@
+{
+  "skill_name": "sns-post",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/sns-post hiro_ai_dx でループ回して",
+      "expected_output": "Step 0で副業確定 → Step 1で🔁ループ自動分岐 → mode-loop.md 読み込み → Step 1のインサイト同期から開始",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "kurashi_to_hatarakuのピラー詳細編集したい",
+      "expected_output": "Step 0で本業確定 → Step 1で🛠アカウント整備自動分岐 → mode-account-tend.md読み込み → サブ① ピラー詳細編集",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "今のhiroの予約何件入ってる？",
+      "expected_output": "Step 0副業確定 → 📅予約管理 → mode-list.md読み込み → quota.ts で残枠表示+予約一覧",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "nextlevelのコンセプト変えたい、もう少しキャリア相談を前面に出したい",
+      "expected_output": "Step 0本業確定 → 🛠アカウント整備 → サブ④コンセプト更新 → 整合性チェック+pillar影響提示",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "hiro_ai_dxのネタ帳に「Claude Code でブラウザ自動化が30分→3分」を追加",
+      "expected_output": "Step 0副業確定 → 🛠アカウント整備 → サブ③ネタ帳追加 → ピラー紐付け対話 → addStock 実行",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "kurashiの伸びた投稿分析して、改善案を反映したい",
+      "expected_output": "Step 0本業確定 → 📈育てる → mode-growth フローB → 分析結果提示 → updateAccount でスプシ直接 update",
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "hiro_ai_dx向けにAIコーチングのThreads競合調査して、スクショもスプシにまとめたい",
+      "expected_output": "Step 0副業確定 → 🧭調査する → mode-research.md読み込み → 調査テーマ/深度/取得手段を確認 → スプシ反映はdry-run後に確認",
+      "files": []
+    }
+  ],
+  "trigger_eval_seed": [
+    { "query": "hiro_ai_dxの投稿作って", "should_trigger": true },
+    { "query": "kurashi_to_hatarakuのループ回して", "should_trigger": true },
+    { "query": "nextlevelの予約何件残ってる？", "should_trigger": true },
+    { "query": "ネタ帳にこのアイディア追加しといて", "should_trigger": true },
+    { "query": "ピラー詳細編集したい、構成比変えたい", "should_trigger": true },
+    { "query": "アカウントのコンセプト変えたい", "should_trigger": true },
+    { "query": "今日のyuu_workstyle投稿どれが伸びた？", "should_trigger": true },
+    { "query": "Bufferに5件予約入れて", "should_trigger": true },
+    { "query": "AIコーチングのThreads競合調査をして", "should_trigger": true },
+    { "query": "インフルエンサー投稿のスクショをスプシにまとめて", "should_trigger": true },
+    { "query": "今日の天気は？", "should_trigger": false },
+    { "query": "Pythonでファイル読み込みするコード書いて", "should_trigger": false },
+    { "query": "求人の管理画面で承認処理して", "should_trigger": false },
+    { "query": "営業先の候補10社リサーチして", "should_trigger": false }
+  ]
+}

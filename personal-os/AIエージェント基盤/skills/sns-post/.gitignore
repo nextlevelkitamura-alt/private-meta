@@ -1,0 +1,5 @@
+# 再生成・派生データ。git追跡しない（正本はGoogleスプレッドシート／各repoのconfig）。
+# cache/    : アカウント/在庫のTTL3分キャッシュ（外部から再取得可）
+# insights/ : アカウント別の設計変更ログ（半私的な業務内容・skill本体ではない状態）
+cache/
+insights/

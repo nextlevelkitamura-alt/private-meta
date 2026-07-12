@@ -1,0 +1,41 @@
+name: 自己紹介
+description: 個人を売り込む型。プロフィール・実績・強み・想い・コラボイメージで関係構築につなげる。
+suit_for:
+  - 個人事業主の初回商談
+  - 講演者の自己紹介
+  - 採用面接（候補者側）
+  - パートナー紹介
+not_suit_for:
+  - 商品売り込み
+  - 提案書本体
+recommended_slides: 6-9
+chapters:
+  - id: cover
+    name: 表紙（名前 + キャッチコピー）
+    slides: 1
+    weight: 中
+  - id: profile
+    name: プロフィール（経歴）
+    slides: 1
+    weight: 小
+  - id: now
+    name: 今やっていること
+    slides: 1-2
+    weight: 中
+  - id: result
+    name: 実績・数字
+    slides: 1-2
+    weight: 大
+  - id: why
+    name: なぜこれをやっているか（Why）
+    slides: 1
+    weight: 中
+    note: STAR Moment 候補・自分らしさの核
+  - id: vision
+    name: 一緒に作りたい未来
+    slides: 1
+    weight: 小
+  - id: contact
+    name: 連絡先・次の一歩
+    slides: 1
+    weight: 最小

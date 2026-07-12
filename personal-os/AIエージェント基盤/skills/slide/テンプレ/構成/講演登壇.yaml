@@ -1,0 +1,42 @@
+name: 講演登壇
+description: TED型のストーリー構築。Hook → 共通体験 → 転換点 → メッセージ → 行動。記憶に残る一瞬を必ず仕込む。
+suit_for:
+  - 講演・登壇
+  - キーノート
+  - 採用イベント・ピッチ
+not_suit_for:
+  - 配布資料（読んで理解する用途には不向き）
+  - 営業提案
+recommended_slides: 12-20
+chapters:
+  - id: hook
+    name: Hook（つかみ）
+    slides: 1-2
+    weight: 中
+    note: 質問・統計・物語の冒頭・予想を裏切る一言
+  - id: shared
+    name: 共通体験（あなたも経験ありますよね）
+    slides: 1-2
+    weight: 中
+  - id: turn
+    name: 転換点（実はこうだった）
+    slides: 2-3
+    weight: 大
+    note: 常識を覆す発見・自分の体験
+  - id: message
+    name: 核心メッセージ
+    slides: 1
+    weight: 大
+    note: STAR Moment 候補
+  - id: how
+    name: How（具体的な方法・事例）
+    slides: 3-5
+    weight: 中
+  - id: vision
+    name: ビジョン（こうなる未来）
+    slides: 1-2
+    weight: 中
+  - id: action
+    name: One Action（持ち帰ってほしい1つ）
+    slides: 1
+    weight: 小

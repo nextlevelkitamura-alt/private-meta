@@ -1,0 +1,4 @@
+interface:
+  display_name: "Images Generate"
+  short_description: "Generate images: general/promo art or product mockups (via imagegen)"
+  default_prompt: "Use $images-generate to create an image for this request (branch A general/promo, or branch B product mockup)."

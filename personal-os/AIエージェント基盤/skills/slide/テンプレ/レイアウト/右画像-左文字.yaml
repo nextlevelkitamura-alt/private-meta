@@ -1,0 +1,17 @@
+name: 右画像-左文字
+description: 左に見出し+本文、右に図版/写真を大きく配置。提案系で多用。
+slots:
+  - position: left
+    type: text
+    width_ratio: 0.5
+    elements: [見出し, 本文3-5行, CTA可]
+  - position: right
+    type: image
+    width_ratio: 0.5
+suit_for:
+  - 営業提案の解決策提示
+  - 自己紹介のプロフィール
+  - サービス紹介
+not_suit_for:
+  - データ多めの分析スライド
+  - 文字情報が長い説明

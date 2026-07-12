@@ -1,0 +1,18 @@
+name: 全画面写真
+description: 写真をスライド全面に敷き、上に短い文字を重ねる。Hookや章扉に強い。
+slots:
+  - position: full
+    type: image
+    treatment: フルブリード（端まで写真）
+  - position: overlay
+    type: text
+    elements: [短い見出し1行（白文字 or 黒文字）]
+    overlay_position: 中央 | 左下 | 右下
+suit_for:
+  - 講演のHookスライド
+  - 章扉
+  - 表紙
+  - STAR Moment スライド
+not_suit_for:
+  - 情報量が必要な説明
+  - 配布資料（読まれる前提）

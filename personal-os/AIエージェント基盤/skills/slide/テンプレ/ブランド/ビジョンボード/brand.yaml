@@ -1,0 +1,34 @@
+name: ビジョンボード
+description: 北村直博 個人ビジョンボード。深夜の東京・静かな確信・プレミアム感
+
+colors:
+  primary: "#0D0F14"
+  accent:  "#C9A84C"
+  text:    "#FFFFFF"
+  text_sub: "#A0A8B8"
+  highlight: "#1E3A5F"
+  bg:      "#0D0F14"
+
+fonts:
+  heading: "Noto Sans JP Bold"
+  body:    "Noto Sans JP Light"
+
+tone: "プレミアム・確信・ミニマル"
+
+logo:
+  path: logo.png
+  position: top-right
+  size_ratio: 0.08
+  margin_pct: 3
+  apply_to: all
+
+visual:
+  density: ミニマル
+  diagram_text_ratio: バランス
+  reference: "深夜の東京を歩いているような、静かな確信"
+  ng:
+    - クリップアート
+    - 蛍光色
+    - 3D効果
+    - グラデーション多用
+    - 英日混在

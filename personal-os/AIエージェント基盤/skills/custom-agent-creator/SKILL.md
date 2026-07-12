@@ -1,6 +1,6 @@
 ---
 name: custom-agent-creator
-description: Claude Code の subagent、Codex の custom agent、OpenCode の primary/subagent など、AIコーディング環境のカスタムエージェント定義ファイルを作成・整理・レビューする。permission/sandbox/approval、inline MCP、hooks、model routing、reviewer/quality-gate の設計を扱う。「subagentを作りたい」「custom agentを作りたい」「エージェント定義」「permission設計」「codex-reviewerを作りたい」等で使う。Skillそのものの新規作成・改善は skill-creator-custom / skill-creator-codex を使いこれには使わない。エージェントの運用・指揮（cockpit監督・タスク分解）は coding-task-orchestrator / cockpit-supervisor を使う。
+description: Claude Code の subagent、Codex の custom agent、OpenCode の primary/subagent など、AIコーディング環境のカスタムエージェント定義ファイルを作成・整理・レビューする。permission/sandbox/approval、inline MCP、hooks、model routing、reviewer/quality-gate の設計を扱う。「subagentを作りたい」「custom agentを作りたい」「エージェント定義」「permission設計」「codex-reviewerを作りたい」等で使う。Skillそのものの新規作成・改善は skill-creator-custom / skill-creator-codex を使いこれには使わない。エージェントの運用・指揮は cockpit-supervisor、作業の入口判断は plan-triage を使う。
 metadata:
   short-description: カスタムエージェント定義の作成・整理
 ---

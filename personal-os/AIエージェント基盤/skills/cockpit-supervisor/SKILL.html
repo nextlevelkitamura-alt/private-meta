@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cockpit-supervisor — Skill説明書</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1220;--panel:#171e30;--line:#2b3650;--text:#edf2ff;--muted:#a7b2ca;--accent:#c09cff;--warn:#ffb36a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}.wrap{max-width:900px;margin:auto;padding:44px 22px 70px}header,section{margin-bottom:30px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.12em;text-transform:uppercase}h1{font-size:38px;margin:.2em 0}h2{font-size:18px;margin:0 0 12px}p,li{color:var(--muted)}.card,pre{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}code,pre{color:#d8c9ff}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.grid div{padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}.rule{border-left:4px solid var(--warn)}@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style></head><body><main class="wrap">
+<header><div class="eyebrow">Skill説明書 · meta</div><h1>cockpit-supervisor</h1><p>orca-cockpitの実装・レビューペインを、WAKE理由、差し戻し上限、人間ゲートに沿って指揮する判断層。</p></header>
+<section><h2>いつ使うか</h2><ul><li>「見張り番が起こした。次を判断して」</li><li>「レビューFAILを差し戻して」「コックピット構成を決めて」</li></ul></section>
+<section><h2>構造</h2><pre>cockpit-supervisor/
+├── SKILL.md    判断手順の正本
+└── SKILL.html  人間向け表示
+
+機構: orca-cockpit/scripts/{cockpit.sh,watch.sh}</pre></section>
+<section><h2>判断の中身</h2><div class="grid"><div>error・確認待ち・idle・timeoutの対応</div><div>実装完了からレビュー配布</div><div>PASS時の人間マージゲート</div><div>FAIL差し戻しと上限</div><div>2ペイン既定／3ペイン例外</div><div>watch.shの再起動とWATCH_SEEN</div></div></section>
+<section><h2>現在の監視構成</h2><div class="card">常設の最終防衛loopはない。監督中は指揮官が<code>orca-cockpit/scripts/watch.sh</code>を再起動して維持し、不在中の自動通知は前提にしない。</div></section>
+<section><h2>絶対ルール・安全方針</h2><div class="card rule">マージ・push・削除・外部送信は人間ゲート。Skillは判断だけを持ち、worktree構築や検知ロジックはorca-cockpitを正本とする。</div></section>
+<p>更新日: 2026-07-11 ／ 正本: <code>SKILL.md</code>（このHTMLは人間向け表示）</p>
+</main></body></html>

@@ -1,0 +1,32 @@
+name: 圧縮
+description: 5分以内・5枚前後で意思決定を取りに行く。経営報告・短時間提案向け。
+suit_for:
+  - 経営会議・役員報告
+  - 短時間ピッチ
+  - 1スライドで決まる稟議の付録
+not_suit_for:
+  - 講演登壇
+  - ストーリーで魅せたい資料
+recommended_slides: 5-7
+chapters:
+  - id: answer
+    name: Answer（結論を最初に）
+    slides: 1
+    weight: 大
+    note: 13-30字に圧縮した結論
+  - id: why
+    name: Why（理由3点）
+    slides: 1-2
+    weight: 中
+  - id: data
+    name: Data（裏付けデータ）
+    slides: 1-2
+    weight: 大
+  - id: risk
+    name: Risk（リスクと対策）
+    slides: 1
+    weight: 小
+  - id: action
+    name: Decision（必要な意思決定）
+    slides: 1
+    weight: 中

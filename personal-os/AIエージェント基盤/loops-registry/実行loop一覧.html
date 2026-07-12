@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="c56d6d423b62d5e35689ed9c9b009139d72d53c86e4c9c84907e715c250aa907">
+  <title>実行loop一覧</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background:#f7f9fc; --surface:#ffffff; --surface-subtle:#f8fafc;
+      --text:#182033; --muted:#667085; --line:#d9e0ea; --line-soft:#e9edf3;
+      --primary:#1769e0; --primary-soft:#edf5ff; --personal:#2878e7;
+      --success:#17a34a; --success-soft:#ecf9f0; --work:#169447; --work-soft:#effbf3;
+      --warning:#f2a100; --warning-soft:#fff8e8; --danger:#dc2f3f;
+      --shadow:0 8px 28px rgba(34,52,82,.055);
+      --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+      --mono:"SF Mono",Menlo,Consolas,monospace;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--background); color:var(--text); font:14px/1.55 var(--sans); -webkit-font-smoothing:antialiased; }
+    main { width:min(1460px,calc(100% - 48px)); margin:0 auto; padding:28px 0 64px; }
+    .page-header { display:flex; justify-content:space-between; gap:28px; align-items:flex-start; margin:0 6px 18px; }
+    h1 { margin:0; font-size:32px; line-height:1.2; letter-spacing:-.035em; }
+    .lead { margin:5px 0 0; color:var(--muted); font-size:14px; }
+    .legend { display:flex; gap:18px; padding:8px 13px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:#344054; font-size:12px; }
+    .legend span,.health-pill { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+    .legend i,.health-pill i { width:10px; height:10px; border-radius:50%; background:var(--success); }
+    .legend .warn { background:var(--warning); } .legend .stop { background:var(--danger); }
+    .summary { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:15px; }
+    .metric { min-height:100px; display:flex; align-items:center; gap:16px; padding:17px 20px; border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:var(--shadow); }
+    .metric-icon { display:grid; place-items:center; flex:0 0 44px; height:44px; border:3px solid currentColor; border-radius:50%; color:var(--primary); font-size:20px; font-weight:700; }
+    .metric.success .metric-icon,.metric.success strong { color:var(--success); }
+    .metric small { display:block; color:var(--muted); font-size:12px; }
+    .metric strong { display:block; margin-top:2px; color:var(--primary); font-size:21px; line-height:1.25; }
+    .metric p { margin:3px 0 0; color:var(--muted); font-size:11px; }
+    .domain { overflow:hidden; margin-top:12px; border:1px solid #abd0ff; border-radius:12px; background:var(--surface); box-shadow:var(--shadow); }
+    .domain.work { border-color:#a9dfbb; }
+    .domain-header { display:flex; justify-content:space-between; gap:20px; align-items:center; padding:13px 20px; background:#f7fbff; border-bottom:1px solid #cfe2fb; }
+    .work .domain-header { background:#f6fcf8; border-color:#d0ead9; }
+    .domain-title,.domain-health { display:flex; align-items:center; gap:13px; }
+    .domain-icon { display:grid; place-items:center; min-width:44px; height:38px; padding:0 8px; border-radius:7px; background:var(--personal); color:#fff; font-size:11px; font-weight:800; }
+    .work .domain-icon { background:var(--work); }
+    h2 { display:inline; margin:0; font-size:23px; line-height:1.2; letter-spacing:-.02em; }
+    .domain-title p { display:inline; margin-left:12px; color:var(--muted); font-size:12px; }
+    .domain-health>strong { margin-right:10px; color:var(--personal); font-size:15px; }
+    .work .domain-health>strong { color:var(--work); }
+    .health-pill { padding:5px 10px; border:1px solid var(--line); border-radius:7px; background:#fff; font-size:11px; font-weight:600; }
+    .health-pill.warning i { background:var(--warning); } .health-pill.stopped i { background:var(--danger); }
+    .column-head,.loop-row summary { display:grid; grid-template-columns:44px minmax(310px,1fr) 165px 170px 190px; align-items:center; }
+    .column-head { min-height:30px; padding:0 18px; color:var(--muted); font-size:11px; }
+    .column-head span:first-child { grid-column:1; } .column-head span:nth-child(2) { grid-column:2; }
+    .category-label { padding:7px 20px 5px; border-top:1px solid var(--line-soft); background:#fbfcfe; color:#526274; font-size:11px; font-weight:700; letter-spacing:.03em; }
+    .category-label span { margin-left:5px; color:#98a2b3; font-weight:500; }
+    .loop-row { margin:0 12px 5px; border:1px solid var(--line); border-radius:8px; background:#fff; transition:border-color .15s,box-shadow .15s; }
+    .loop-row:hover { border-color:#b9c8da; box-shadow:0 3px 10px rgba(36,52,76,.05); }
+    .loop-row summary { min-height:58px; padding:7px 10px; list-style:none; cursor:pointer; }
+    .loop-row summary::-webkit-details-marker { display:none; }
+    .chevron { width:8px; height:8px; border-right:2px solid #667085; border-bottom:2px solid #667085; transform:rotate(-45deg); transition:transform .15s; }
+    details[open] .chevron { transform:rotate(45deg); }
+    .status-dot { position:absolute; margin-left:23px; width:14px; height:14px; border-radius:50%; background:var(--success); }
+    .status-dot.warning { background:var(--warning); } .status-dot.stopped { background:var(--danger); }
+    .loop-copy { min-width:0; padding-right:18px; }
+    .loop-copy code { display:block; color:var(--text); font:700 14px/1.35 var(--mono); overflow-wrap:anywhere; }
+    .loop-copy small { display:block; margin-top:2px; color:#475467; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .timing small,.next small { display:block; color:var(--muted); font-size:10px; }
+    .timing strong,.next strong { display:block; color:#344054; font-size:12px; } .next strong { color:var(--primary); }
+    .destination { justify-self:start; padding:5px 10px; border:1px solid var(--line); border-radius:7px; background:#fff; color:#344054; font-size:11px; font-weight:600; }
+    .destination.sheet { color:#087a35; border-color:#cfe8d8; background:#f7fcf8; } .destination.notion { color:#353945; }
+    .process-block { margin:0 10px 10px; padding:14px 15px; border:1px solid #d9e8fb; border-radius:8px; background:#f8fbff; }
+    .process-block h3 { margin:0; font-size:13px; } .process-lead { margin:2px 0 11px; color:var(--muted); font-size:10px; }
+    .process-steps { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 12px; margin:0; padding:0; list-style:none; }
+    .process-steps li { display:flex; gap:9px; min-width:0; padding:8px 9px; border:1px solid var(--line-soft); border-radius:7px; background:#fff; }
+    .process-steps li>span { display:grid; place-items:center; flex:0 0 22px; height:22px; border-radius:50%; background:var(--primary-soft); color:var(--primary); font-size:10px; font-weight:800; }
+    .process-steps strong { display:block; color:#344054; font-size:11px; } .process-steps p { margin:2px 0 0; color:#667085; font-size:10px; }
+    .detail-strip { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px; margin:0 10px; overflow:hidden; border:1px solid var(--line-soft); border-radius:7px; background:var(--line-soft); }
+    .detail-item { min-width:0; padding:9px 11px; background:var(--surface-subtle); } .detail-item.wide { grid-column:1/-1; }
+    .detail-item dt { color:var(--muted); font-size:10px; font-weight:700; } .detail-item dd { margin:2px 0 0; color:#475467; font-size:11px; overflow-wrap:anywhere; }
+    code { font-family:var(--mono); }
+    .row-meta { display:flex; justify-content:space-between; gap:16px; padding:7px 12px 9px; color:#8792a2; font-size:9px; }
+    .rule { margin-top:14px; padding:13px 16px; border:1px solid #cfe2fb; border-radius:9px; background:var(--primary-soft); color:#3d4e64; font-size:12px; }
+    .rule strong { color:var(--primary); }
+    .snapshot-note { margin:-2px 0 14px; color:var(--muted); font-size:10px; text-align:right; }
+    .live-plan { margin-top:14px; padding:17px 18px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+    .live-plan h2 { margin:0; font-size:16px; } .live-plan>p { margin:3px 0 12px; color:var(--muted); font-size:11px; }
+    .live-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; } .live-card { padding:12px; border:1px solid var(--line-soft); border-radius:8px; background:var(--surface-subtle); }
+    .live-card strong { display:block; font-size:12px; } .live-card p { margin:4px 0 0; color:#667085; font-size:10px; } .live-card.recommended { border-color:#b8d9c3; background:var(--work-soft); }
+    footer { margin-top:12px; color:var(--muted); font-size:9px; overflow-wrap:anywhere; }
+    @media (max-width:1050px) {
+      main { width:min(100% - 24px,980px); } .summary { grid-template-columns:repeat(2,1fr); }
+      .column-head { display:none; } .loop-row summary { grid-template-columns:44px minmax(260px,1fr) 130px 150px; }
+      .destination { display:none; } .domain-header { align-items:flex-start; } .domain-health { flex-wrap:wrap; justify-content:flex-end; }
+    }
+    @media (max-width:720px) {
+      main { padding-top:20px; } .page-header,.domain-header { align-items:flex-start; flex-direction:column; } .legend { flex-wrap:wrap; gap:9px 14px; }
+      .summary { grid-template-columns:1fr; } .metric { min-height:82px; } .domain-health { justify-content:flex-start; }
+      .domain-title p { display:block; margin:3px 0 0; } .loop-row summary { grid-template-columns:36px 1fr; gap:3px; }
+      .status-dot { margin-left:18px; } .timing,.next { grid-column:2; display:flex; gap:8px; align-items:baseline; } .detail-strip,.process-steps,.live-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="page-header"><div><h1>実行loop一覧</h1><p class="lead">Macで動く自作loopを2領域で管理</p></div><div class="legend" aria-label="状態の凡例"><span><i></i>正常</span><span><i class="warn"></i>要確認</span><span><i class="stop"></i>停止</span></div></header>
+    <section class="summary" aria-label="一覧の概要">
+      <div class="metric success"><span class="metric-icon">✓</span><div><small>launchd健康状態</small><strong>正常</strong><p>正常7・要確認0・停止0</p></div></div>
+      <div class="metric"><span class="metric-icon">▶</span><div><small>登録済みloop数</small><strong>7 / 7</strong><p>launchctlの実機スナップショット</p></div></div>
+      <div class="metric"><span class="metric-icon">↻</span><div><small>最短実行間隔</small><strong>30秒ごと</strong><p>正確な次回時刻はlaunchdが管理</p></div></div>
+      <div class="metric"><span class="metric-icon">◷</span><div><small>状態取得時刻</small><strong>2026/07/12 16:55:14</strong><p>実機の状態はlaunchctlが正本</p></div></div>
+    </section>
+    <p class="snapshot-note">状態はHTML生成時のスナップショット。更新: <code>python3 verify.py --write-html</code></p>
+    <section class="domain personal" aria-labelledby="domain-personal">
+              <header class="domain-header">
+                <div class="domain-title"><span class="domain-icon">基盤</span><div><h2 id="domain-personal">Personal OS</h2><p>Mac / AIエージェント基盤の運用</p></div></div>
+                <div class="domain-health"><strong>4 loop</strong><span class="health-pill"><i></i>4 正常</span><span class="health-pill warning"><i></i>0 要確認</span><span class="health-pill stopped"><i></i>0 停止</span></div>
+              </header>
+              <div class="column-head" aria-hidden="true"><span>状態</span><span>loop名 / 何をする</span><span>実行間隔</span><span>次回</span><span>記録先</span></div>
+              <div class="loop-list"><div class="category-label">AI運用・セッション管理 <span>2 loop</span></div><details class="loop-row" data-loop-name="board-reconcile">
+                  <summary>
+                    <span class="chevron" aria-hidden="true"></span>
+                    <span class="status-dot healthy" title="launchd: 正常"></span>
+                    <span class="loop-copy"><code>board-reconcile</code><small>session-boardの生存照合を補完し、沈黙した稼働表示を停止へ戻す</small></span>
+                    <span class="timing"><small>実行間隔</small><strong>5分ごと</strong></span>
+                    <span class="next"><small>次回</small><strong>次の5分周期</strong></span>
+                    <span class="destination local">ローカルログ</span>
+                  </summary>
+                  <section class="process-block"><h3>内部処理</h3><p class="process-lead">起動後は、次の順番・条件で処理する。</p><ol class="process-steps"><li><span>1</span><div><strong>当日ボードを確認</strong><p>当日のデイリーが無ければ何も作らず終了する</p></div></li><li><span>2</span><div><strong>稼働行を抽出</strong><p>動作中・サブ稼働中の行だけを対象にする</p></div></li><li><span>3</span><div><strong>実体記録を照合</strong><p>行のキーに対応するClaude/Codex transcriptの最新更新時刻を探す</p></div></li><li><span>4</span><div><strong>沈黙閾値を判定</strong><p>動作中は10分、サブ稼働中は30分を目安に実体の沈黙を判定する</p></div></li><li><span>5</span><div><strong>停止表示へ戻す</strong><p>閾値超過行だけを停止・確認待ちへ変更し、Turso側のイベントも同期する</p></div></li></ol></section>
+                  <dl class="detail-strip">
+                    <div class="detail-item"><dt>実行方法</dt><dd>launchd → reconcile.sh → board.py reconcile</dd></div>
+                    <div class="detail-item"><dt>失敗時</dt><dd>即時再試行なし。次の5分tickで再実行</dd></div>
+                    <div class="detail-item"><dt>記録先</dt><dd>ローカル `loops/board-reconcile/output/logs/board-reconcile.{out,err}.log`</dd></div>
+                    <div class="detail-item"><dt>正本</dt><dd><code>loops/board-reconcile/loop.md</code></dd></div>
+                    <div class="detail-item"><dt>launchd構成</dt><dd>専用loop。状態照合だけを低負荷で行う</dd></div>
+                    <div class="detail-item"><dt>統合判断</dt><dd>維持。閾値が10分・30分なので5分周期に固有の意味がある</dd></div>
+                  </dl>
+                  <div class="row-meta"><code>com.kitamura.board-reconcile</code><span>launchd: 正常 ／ state=not running ／ runs=307 ／ last exit=0</span></div>
+                </details><details class="loop-row" data-loop-name="board-sweep">
+                  <summary>
+                    <span class="chevron" aria-hidden="true"></span>
+                    <span class="status-dot healthy" title="launchd: 正常"></span>
+                    <span class="loop-copy"><code>board-sweep</code><small>停止行を安全弁つきで判定し、確実に完了した行だけを完了へ流す</small></span>
+                    <span class="timing"><small>実行間隔</small><strong>60分ごと</strong></span>
+                    <span class="next"><small>次回</small><strong>次の60分周期</strong></span>
+                    <span class="destination local">ローカルログ</span>
+                  </summary>
+                  <section class="process-block"><h3>内部処理</h3><p class="process-lead">起動後は、次の順番・条件で処理する。</p><ol class="process-steps"><li><span>1</span><div><strong>停止行を列挙</strong><p>当日と前日の停止・確認待ち行を収集する</p></div></li><li><span>2</span><div><strong>transcriptを照合</strong><p>Claude/Codexの実体記録とCodex末尾task_completeを確認する</p></div></li><li><span>3</span><div><strong>定型台帳を照合</strong><p>routine-ledgerの一致条件・完了判定・沈黙ガードを確認する</p></div></li><li><span>4</span><div><strong>会話を要約</strong><p>初回依頼と末尾ターンを優先し、対象行ごとの会話ダイジェストを作る</p></div></li><li><span>5</span><div><strong>read-only AI判定</strong><p>台帳対象外をまとめてdone・not-done・unknownに分類する</p></div></li><li><span>6</span><div><strong>二重鍵と上限を適用</strong><p>機械証跡とAI doneの両方、または台帳一致だけを対象にし、1回最大3件へ制限する</p></div></li><li><span>7</span><div><strong>完了へ移動</strong><p>適格行だけboard.py finishで終わったことへ移し、失敗時はボードを変更しない</p></div></li></ol></section>
+                  <dl class="detail-strip">
+                    <div class="detail-item"><dt>実行方法</dt><dd>launchd → sweep.sh --apply → sweep.py → read-only AI判定</dd></div>
+                    <div class="detail-item"><dt>失敗時</dt><dd>ボード無変更で終了。次の60分tickで再評価</dd></div>
+                    <div class="detail-item"><dt>記録先</dt><dd>ローカル `loops/board-sweep/output/logs/board-sweep.{out,err}.log`</dd></div>
+                    <div class="detail-item"><dt>正本</dt><dd><code>loops/board-sweep/loop.md</code></dd></div>
+                    <div class="detail-item"><dt>launchd構成</dt><dd>専用loop。意味判定とAI呼び出しを低頻度で行う</dd></div>
+                    <div class="detail-item"><dt>統合判断</dt><dd>維持。5分の生存照合とは責務・負荷・安全条件が異なる</dd></div>
+                  </dl>
+                  <div class="row-meta"><code>com.kitamura.board-sweep</code><span>launchd: 正常 ／ state=not running ／ runs=24 ／ last exit=0</span></div>
+                </details><div class="category-label">情報同期 <span>1 loop</span></div><details class="loop-row" data-loop-name="daily-notion-sync">
+                  <summary>
+                    <span class="chevron" aria-hidden="true"></span>
+                    <span class="status-dot healthy" title="launchd: 正常"></span>
+                    <span class="loop-copy"><code>daily-notion-sync</code><small>当日デイリーの稼働中・完了情報を表示専用のNotion表へミラーする</small></span>
+                    <span class="timing"><small>実行間隔</small><strong>30秒ごと</strong></span>
+                    <span class="next"><small>次回</small><strong>次の30秒周期</strong></span>
+                    <span class="destination notion">Notion + ローカル</span>
+                  </summary>
+                  <section class="process-block"><h3>内部処理</h3><p class="process-lead">起動後は、次の順番・条件で処理する。</p><ol class="process-steps"><li><span>1</span><div><strong>多重起動を防止</strong><p>mkdirロックを取得し、300秒超のstale lockは自己修復する</p></div></li><li><span>2</span><div><strong>当日2節を解析</strong><p>動いているエージェントと終わったことをTSVへ正規化する</p></div></li><li><span>3</span><div><strong>差分signatureを計算</strong><p>前回と同じならNotion APIを呼ばず終了する</p></div></li><li><span>4</span><div><strong>Notion側を準備</strong><p>親ページ・当日ページ・表A/表Bをstate→検索→必要時作成の順で解決する</p></div></li><li><span>5</span><div><strong>表Aを同期</strong><p>稼働行をsession keyでupsertし、消えた行を安全ガード付きでarchiveする</p></div></li><li><span>6</span><div><strong>表Bを同期</strong><p>完了行をrepo・親・時刻・成果の複合キーでupsertし、消えた行をarchiveする</p></div></li><li><span>7</span><div><strong>成功を確定</strong><p>全処理成功時だけsignatureを更新し、失敗時は次の30秒周期へ持ち越す</p></div></li></ol></section>
+                  <dl class="detail-strip">
+                    <div class="detail-item"><dt>実行方法</dt><dd>launchd → sync.sh → 差分検知 → Notion API</dd></div>
+                    <div class="detail-item"><dt>失敗時</dt><dd>signatureを更新せず、次の30秒tickで自動再試行</dd></div>
+                    <div class="detail-item"><dt>記録先</dt><dd>ローカル `loops/daily-notion-sync/output/logs/sync.{out,err}.log` ／ Notion表示 ／ stateは同loopの `state/`</dd></div>
+                    <div class="detail-item"><dt>正本</dt><dd><code>loops/daily-notion-sync/loop.md</code></dd></div>
+                    <div class="detail-item"><dt>launchd構成</dt><dd>専用loop。30秒ごとに起動するが差分なしならAPI呼び出しゼロ</dd></div>
+                    <div class="detail-item"><dt>統合判断</dt><dd>維持。外出先表示の反映速度を担い、他loopと時間軸が異なる</dd></div>
+                  </dl>
+                  <div class="row-meta"><code>com.kitamura.daily-notion-sync</code><span>launchd: 正常 ／ state=not running ／ runs=3040 ／ last exit=0</span></div>
+                </details><div class="category-label">保守・整理 <span>1 loop</span></div><details class="loop-row" data-loop-name="session-record-prune">
+                  <summary>
+                    <span class="chevron" aria-hidden="true"></span>
+                    <span class="status-dot healthy" title="launchd: 登録済み"></span>
+                    <span class="loop-copy"><code>session-record-prune</code><small>30日を超えたClaude・Codexセッション記録を内蔵ディスク上のTrashへ移す</small></span>
+                    <span class="timing"><small>実行間隔</small><strong>月・水・金 18:00</strong></span>
+                    <span class="next"><small>次回</small><strong>次回スケジュール</strong></span>
+                    <span class="destination local">ローカルログ</span>
+                  </summary>
+                  <section class="process-block"><h3>内部処理</h3><p class="process-lead">起動後は、次の順番・条件で処理する。</p><ol class="process-steps"><li><span>1</span><div><strong>対象を固定</strong><p>Claude projectsとCodex sessions配下のjsonlだけを対象にする</p></div></li><li><span>2</span><div><strong>保持期限を判定</strong><p>最終更新から30日を超えたファイルだけを候補にする</p></div></li><li><span>3</span><div><strong>安全ガードを確認</strong><p>ファイルsymlinkを除外し、symlink directoryへ降りず、Trashと同じvolumeだけを扱う</p></div></li><li><span>4</span><div><strong>内容を読まず集計</strong><p>statだけで対象件数と容量を計算し、セッション本文は開かない</p></div></li><li><span>5</span><div><strong>Trashへ移動</strong><p>同名衝突を連番で避けながら復旧可能なTrashへ移す</p></div></li><li><span>6</span><div><strong>結果を判定</strong><p>件数・容量・対象directoryだけを記録し、対象があるのに全件失敗ならexit 1にする</p></div></li></ol></section>
+                  <dl class="detail-strip">
+                    <div class="detail-item"><dt>実行方法</dt><dd>launchd → prune.sh → prune.py --apply</dd></div>
+                    <div class="detail-item"><dt>失敗時</dt><dd>即時再試行なし。次の月・水・金18:00。発火を逃した場合はwake時に1回</dd></div>
+                    <div class="detail-item"><dt>記録先</dt><dd>ローカル `loops/session-record-prune/output/logs/session-record-prune.{out,err}.log`</dd></div>
+                    <div class="detail-item"><dt>正本</dt><dd><code>loops/session-record-prune/loop.md</code></dd></div>
+                    <div class="detail-item"><dt>launchd構成</dt><dd>専用calendar loop。定刻を逃すとMac復帰時に1回実行される</dd></div>
+                    <div class="detail-item"><dt>統合判断</dt><dd>維持。曜日・時刻で動く保守処理で短周期loopと統合する意味がない</dd></div>
+                  </dl>
+                  <div class="row-meta"><code>com.kitamura.session-record-prune</code><span>launchd: 登録済み ／ state=not running ／ runs=0 ／ last exit=(never exited)</span></div>
+                </details></div>
+            </section><section class="domain work" aria-labelledby="domain-work">
+              <header class="domain-header">
+                <div class="domain-title"><span class="domain-icon">仕事</span><div><h2 id="domain-work">仕事</h2><p>仕事repoが所有する業務自動化</p></div></div>
+                <div class="domain-health"><strong>3 loop</strong><span class="health-pill"><i></i>3 正常</span><span class="health-pill warning"><i></i>0 要確認</span><span class="health-pill stopped"><i></i>0 停止</span></div>
+              </header>
+              <div class="column-head" aria-hidden="true"><span>状態</span><span>loop名 / 何をする</span><span>実行間隔</span><span>次回</span><span>記録先</span></div>
+              <div class="loop-list"><div class="category-label">仕事・求人運用 <span>3 loop</span></div><details class="loop-row" data-loop-name="nextlevel-dispatcher">
+                  <summary>
+                    <span class="chevron" aria-hidden="true"></span>
+                    <span class="status-dot healthy" title="launchd: 正常"></span>
+                    <span class="loop-copy"><code>nextlevel-dispatcher</code><small>NextLevel系の時限処理・求人更新・認証維持・求人巡回・月次生成を一括巡回する</small></span>
+                    <span class="timing"><small>実行間隔</small><strong>RunAtLoad＋60秒ごと</strong></span>
+                    <span class="next"><small>次回</small><strong>次の1分周期</strong></span>
+                    <span class="destination local">ローカルログ</span>
+                  </summary>
+                  <section class="process-block"><h3>内部処理</h3><p class="process-lead">起動後は、次の順番・条件で処理する。</p><ol class="process-steps"><li><span>1</span><div><strong>巡回stateを読む</strong><p>6タスクの最終起動時刻をdispatcher-state.jsonから読む</p></div></li><li><span>2</span><div><strong>期限を判定</strong><p>タスクごとの毎分・15分・60分・日次・月金条件をJSTで評価する</p></div></li><li><span>3</span><div><strong>重複起動を防止</strong><p>タスク別PID lockを確認し、実行中はskip、期限超過lockは除去する</p></div></li><li><span>4</span><div><strong>entry-schedule</strong><p>毎分、自動処理表から期限内の未実行行を拾い、エントリー・Meet・確定案内・カレンダー・架電・通知へ振り分ける</p></div></li><li><span>5</span><div><strong>keep-alive</strong><p>通常15分、平日朝の認証枠で未認証なら毎分、管理画面sessionを確認・延命する</p></div></li><li><span>6</span><div><strong>job-update</strong><p>15分ごとに月別求人更新表を読み、対象求人を管理画面で一括更新して結果を書き戻す</p></div></li><li><span>7</span><div><strong>job-update-schedule-generator</strong><p>9時以降60分ごとに当月、10日以降は翌月の求人更新表不足を補完する</p></div></li><li><span>8</span><div><strong>monthly-schedule-generator</strong><p>9時以降1日1回、翌月の自動処理表を作成または補完する</p></div></li><li><span>9</span><div><strong>job-patrol</strong><p>月曜・金曜の12時以降に1回、掲載求人を巡回して月別求人表を更新する</p></div></li><li><span>10</span><div><strong>子processを記録</strong><p>処理をbackground起動し、個別logへstart・finish・exit codeを書き、最終起動stateを保存する</p></div></li></ol></section>
+                  <dl class="detail-strip">
+                    <div class="detail-item"><dt>実行方法</dt><dd>launchd → dispatcher.ts → 条件成立した内部タスクを別processで起動</dd></div>
+                    <div class="detail-item"><dt>失敗時</dt><dd>子taskのログへ記録し、lockと状態条件に従って次の60秒tick以降に再判定</dd></div>
+                    <div class="detail-item"><dt>記録先</dt><dd>ローカル `~/Private/projects/active/仕事/scripts/nextlevel-dispatcher/output/logs/`</dd></div>
+                    <div class="detail-item"><dt>正本</dt><dd><code>../../../projects/active/仕事/領域/整備/自動実行/マニュアル/自動実行一覧.md</code></dd></div>
+                    <div class="detail-item"><dt>launchd構成</dt><dd>親dispatcher。旧6本のNextLevel launchdを1本へ統合済み</dd></div>
+                    <div class="detail-item"><dt>統合判断</dt><dd>統合済み。1分tickはこの1本だけに集約し、内部条件で実処理頻度を分ける</dd></div>
+                  </dl>
+                  <div class="row-meta"><code>com.nextlevel.dispatcher</code><span>launchd: 正常 ／ state=not running ／ runs=1526 ／ last exit=0</span></div>
+                </details><details class="loop-row" data-loop-name="worker-search-kanto">
+                  <summary>
+                    <span class="chevron" aria-hidden="true"></span>
+                    <span class="status-dot healthy" title="launchd: 正常"></span>
+                    <span class="loop-copy"><code>worker-search-kanto</code><small>関東の新着ワーカーを定期検索し、監視結果へ追記する</small></span>
+                    <span class="timing"><small>実行間隔</small><strong>RunAtLoad＋4分ごと</strong></span>
+                    <span class="next"><small>次回</small><strong>次の4分周期</strong></span>
+                    <span class="destination sheet">Google Sheets</span>
+                  </summary>
+                  <section class="process-block"><h3>内部処理</h3><p class="process-lead">起動後は、次の順番・条件で処理する。</p><ol class="process-steps"><li><span>1</span><div><strong>稼働時間を確認</strong><p>9時から19時以外は処理せず終了する</p></div></li><li><span>2</span><div><strong>認証guard</strong><p>PlaywrightとGoogle Sheets認証を確認し、未復旧なら今回をskipする</p></div></li><li><span>3</span><div><strong>連続失敗を確認</strong><p>認証失敗が5回に達して通知済みなら検索を停止状態のまま維持する</p></div></li><li><span>4</span><div><strong>対象を検索</strong><p>東京・神奈川・埼玉・千葉、20〜39歳を更新日降順で最大10ページ取得する</p></div></li><li><span>5</span><div><strong>既存と差分比較</strong><p>ワーカーIDで既存行を照合し、新規と更新日変更者を分ける</p></div></li><li><span>6</span><div><strong>profileを補完</strong><p>新規と更新対象の詳細画面から生年月日・職業・就職支援希望を取得する</p></div></li><li><span>7</span><div><strong>除外と重複排除</strong><p>都道府県間重複をIDで除外し、学生判定と同名・電話番号照合を行う</p></div></li><li><span>8</span><div><strong>スプシを更新</strong><p>新規または再浮上対象を関東監視結果の上部へ追加し、既存者のメモ・更新日も更新する</p></div></li><li><span>9</span><div><strong>結果を通知・記録</strong><p>対象者がいれば関東だけntfy通知し、関東実行ログへ件数と結果を追記する</p></div></li><li><span>10</span><div><strong>認証状態を保存</strong><p>ブラウザsessionを保存して閉じ、認証エラー時は失敗回数を更新する</p></div></li></ol></section>
+                  <dl class="detail-strip">
+                    <div class="detail-item"><dt>実行方法</dt><dd>launchd → npm run cycle:kanto → Playwright＋Google Sheets</dd></div>
+                    <div class="detail-item"><dt>失敗時</dt><dd>非0終了は60秒以上空けて再起動。認証失敗は5回で自動停止し通知</dd></div>
+                    <div class="detail-item"><dt>記録先</dt><dd>ローカル `~/Private/projects/active/仕事/scripts/worker-search/output/logs/schedule.{out,err}.log` ／ スプシ `関東実行ログ`</dd></div>
+                    <div class="detail-item"><dt>正本</dt><dd><code>../../../projects/active/仕事/領域/整備/自動実行/マニュアル/自動実行一覧.md</code></dd></div>
+                    <div class="detail-item"><dt>launchd構成</dt><dd>worker-search共通実装の関東target専用loop</dd></div>
+                    <div class="detail-item"><dt>統合判断</dt><dd>統合候補。全国と同じ4分周期・同じ実装なので1親schedulerから順次起動できる</dd></div>
+                  </dl>
+                  <div class="row-meta"><code>com.nextlevel.worker-search.schedule</code><span>launchd: 正常 ／ state=not running ／ runs=380 ／ last exit=0</span></div>
+                </details><details class="loop-row" data-loop-name="worker-search-zenkoku">
+                  <summary>
+                    <span class="chevron" aria-hidden="true"></span>
+                    <span class="status-dot healthy" title="launchd: 正常"></span>
+                    <span class="loop-copy"><code>worker-search-zenkoku</code><small>全国の新着ワーカーを定期検索し、監視結果へ追記する</small></span>
+                    <span class="timing"><small>実行間隔</small><strong>4分ごと</strong></span>
+                    <span class="next"><small>次回</small><strong>次の4分周期</strong></span>
+                    <span class="destination sheet">Google Sheets</span>
+                  </summary>
+                  <section class="process-block"><h3>内部処理</h3><p class="process-lead">起動後は、次の順番・条件で処理する。</p><ol class="process-steps"><li><span>1</span><div><strong>稼働時間を確認</strong><p>9時から19時以外は処理せず終了する</p></div></li><li><span>2</span><div><strong>認証guard</strong><p>PlaywrightとGoogle Sheets認証を確認し、未復旧なら今回をskipする</p></div></li><li><span>3</span><div><strong>連続失敗を確認</strong><p>認証失敗が5回に達している間は検索を停止状態のまま維持する</p></div></li><li><span>4</span><div><strong>対象を検索</strong><p>北海道・大阪・愛知・京都・兵庫・福岡、20〜39歳を更新日降順で最大10ページ取得する</p></div></li><li><span>5</span><div><strong>既存と差分比較</strong><p>ワーカーIDで既存行を照合し、新規と更新日変更者を分ける</p></div></li><li><span>6</span><div><strong>profileを補完</strong><p>新規と更新対象の詳細画面から生年月日・職業・就職支援希望を取得する</p></div></li><li><span>7</span><div><strong>除外と重複排除</strong><p>都道府県間重複をIDで除外し、学生判定と同名・電話番号照合を行う</p></div></li><li><span>8</span><div><strong>スプシを更新</strong><p>新規または再浮上対象を全国監視結果の上部へ追加し、既存者のメモ・更新日も更新する</p></div></li><li><span>9</span><div><strong>結果を記録</strong><p>全国実行ログへ件数と結果を追記し、関東用ntfy通知は送らない</p></div></li><li><span>10</span><div><strong>認証状態を保存</strong><p>ブラウザsessionを保存して閉じ、認証エラー時は失敗回数を更新する</p></div></li></ol></section>
+                  <dl class="detail-strip">
+                    <div class="detail-item"><dt>実行方法</dt><dd>launchd → npm run cycle:zenkoku → Playwright＋Google Sheets</dd></div>
+                    <div class="detail-item"><dt>失敗時</dt><dd>非0終了は60秒以上空けて再起動。認証失敗は5回で自動停止</dd></div>
+                    <div class="detail-item"><dt>記録先</dt><dd>ローカル `~/Private/projects/active/仕事/scripts/worker-search/output/logs/schedule-zenkoku.{out,err}.log` ／ スプシ `全国実行ログ`</dd></div>
+                    <div class="detail-item"><dt>正本</dt><dd><code>../../../projects/active/仕事/領域/整備/自動実行/マニュアル/自動実行一覧.md</code></dd></div>
+                    <div class="detail-item"><dt>launchd構成</dt><dd>worker-search共通実装の全国target専用loop</dd></div>
+                    <div class="detail-item"><dt>統合判断</dt><dd>統合候補。関東と同じ4分周期・同じ実装なので1親schedulerから順次起動できる</dd></div>
+                  </dl>
+                  <div class="row-meta"><code>com.nextlevel.worker-search.zenkoku</code><span>launchd: 正常 ／ state=not running ／ runs=380 ／ last exit=0</span></div>
+                </details></div>
+            </section>
+    <section class="live-plan"><h2>launchdをいつでもUIで見る設計</h2><p>静的な説明と変動する実機状態を混ぜず、余計な短周期loopも増やさない。</p><div class="live-grid">
+      <div class="live-card"><strong>現在: 一覧HTML</strong><p>処理内容・周期・失敗時・記録先の正本ビュー。状態は再生成時のlaunchctlスナップショット。</p></div>
+      <div class="live-card recommended"><strong>推奨: 開いている間だけlive</strong><p>localhostの小さなviewerがページ閲覧中だけ10〜30秒ごとにlaunchctlを読む。新しい1分launchdは不要。</p></div>
+      <div class="live-card"><strong>避ける: 状態取得loopの乱立</strong><p>labelごとの監視loopや同周期の親loopを増やすと、確認対象そのものが増えて逆効果になる。</p></div>
+    </div></section>
+    <section class="rule"><strong>統合判断</strong>　1分周期はNextLevel dispatcher 1本へ6処理を統合済み。現在の重複候補は、同じ実装・同じ4分周期で動く関東／全国worker-searchの2本。停止・再登録を伴うため統合実装は別の人間ゲートで行う。</section>
+    <section class="rule"><strong>新しいloopを追加するとき</strong>　正本MDへ「領域: Personal OS / 仕事」と内容分類を追記し、<code>python3 verify.py --write-html &amp;&amp; python3 verify.py</code>で表示と実体を揃える。ログ本文は集約せず、ここにはローカル・Notion・Google Sheetsなどの記録先だけを書く。</section>
+    <footer>正本: 実行loop一覧.md ／ source-sha256: c56d6d423b62d5e35689ed9c9b009139d72d53c86e4c9c84907e715c250aa907</footer>
+  </main>
+</body>
+</html>

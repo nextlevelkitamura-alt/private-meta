@@ -1,55 +1,36 @@
 ---
 name: html
-description: 回答や作業結果を、人間が見るための1枚もののHTML（レポート・調査まとめ・ダッシュボード・比較）に整えて出すSkill。/html で呼ぶと、直前の内容を表・図(SVG)・カードで構造化し、外部依存のない self-contained な Artifact（PC前提）として出力する。使用場面は、難所を図解・表で見やすく説明したい時、成果物を1枚にまとめて共有したい時。正本(md)や同期対象(デイリー・計画)の置き換えには使わない。
+description: 回答や作業結果を、人間が見る1枚もののself-containedなHTMLへ整えるSkill。通常のレポート・調査まとめ・ダッシュボード・比較はquick/fullで作成する。メタ構造について「meta-explain」「分かるまで説明して」「この仕組みを説明して」「実装前に構成を見せて」と明示された時は、人間が理解するまで同一HTMLを更新するメタ説明workflowを使い、合意まで対象を編集しない。正本mdや同期対象の置き換え、軽い依頼整理、問いで詰める壁打ちには使わない。
 ---
 
 # html
 
-回答・作業結果を「読む文章」から「見て分かるHTML」に変えて、人間向けの最終表示として出すSkill。正本(md)は置き換えず、表示専用の生成物だけを作る。
+回答・作業結果を「見て分かるHTML」にする統合窓口。通常HTML作成と、メタ構造の理解ゲートを別workflowへ振り分ける。
 
-## 1. 役割
+## 1. Workflow振り分け
 
-1. レポート・調査まとめ・ダッシュボード・比較を、self-contained な HTML(Artifact) にして出す。
-2. 表・図(SVG)・カードで、難所を見やすく構造化する。
-3. 対象外: 正本(md)の置き換え、同期対象(デイリー・計画)のHTML化、データの書き込み・保存（Artifactはバックエンド無し）。
+1. `/html`、レポート、調査まとめ、ダッシュボード、比較、図解 → `workflows/create-html.md`。
+2. メタ構造について「meta-explain」「分かるまで説明して」「この仕組みを説明して」「実装前に構成を見せて」と明示 → `workflows/meta-explain.md`。
+3. メタ説明workflowは自発起動しない。必要そうな時も提案までに留め、人間の明示依頼か確認後に開始する。
+4. 軽い依頼整理は `naiyou-suriawase`、問いで詰める壁打ちは `grill-me` を使う。
 
-## 2. いつ呼ぶ
+## 2. 共通の出力
 
-1. `/html` と明示的に呼ばれた時。
-2. 表・図・カードで整理した方が分かる、と判断した回答。
-3. 「見て終わり・共有して終わり」の成果物。継続編集する正本には使わない。
+1. 既定はPC前提・self-containedなArtifact。Artifactが使えないruntimeではローカルHTMLを提示する。
+2. 正本md・同期対象・継続編集する文書をHTMLで置き換えない。
+3. スマホ・ブラウザ・URL表示の明示依頼時だけ `workflows/mobile-preview.md` を使う。
 
-## 3. 出し先
+## 3. 共通の安全方針
 
-1. 既定 = Artifact（PC前提・self-contained・残る・共有できる）。
-2. インライン widget は使わない（スマホでスクロール不可のため。PCのArtifactに寄せる）。
-3. 作成したらからならずチャット表題をつけたURLを出力する（スマホ環境でもアクセスしやすいようにするため）
-4. 配色はライト単色に意図的にコミットする。`prefers-color-scheme`のdark分岐・`data-theme="dark"`切替は書かない（トークンは`assets/artifact-template.html`のものだけを使う）。
+1. secret・token・credential・認証値をHTMLに含めない。
+2. スマホURLは外部公開を伴うため、明示依頼なしに発行しない。
+3. commit・push・外部送信はしない。
+4. メタ説明workflowでは、人間の合意まで説明対象の実装・削除・移動・改名・symlink変更をしない。
 
-## 4. 2つのモードを選ぶ（判断基準）
+## 4. 直接参照するファイル
 
-作る前に、どちらの重さで作るかを決める。
-
-1. `quick`（軽い・低トークン・使い捨て）: その場の説明、簡単なレポート、今の計画をぱっと見せる等、一度見て終わるもの。構造は最小・自由。→ `references/mode-quick.md`。
-2. `full`（しっかり・高品質・恒久）: メタ的情報、繰り返し参照する重要資料、残して何度も見るもの。トークンをかけてよく、色・図をリッチに使う。構造は固定型に従う。→ `references/mode-full.md`。
-3. 迷ったら `quick`。恒久的に何度も見る・残して共有するものだけ `full`。
-
-## 5. 作り方
-
-1. 共通の土台 `references/html-structure.md` に従う（Artifact制約・部品の選択ラダー・表の使用条件・節の型）。
-2. §4で選んだモードの `references/mode-quick.md` または `references/mode-full.md` に従う。
-3. `assets/artifact-template.html` を骨組みにコピーし、部品カタログから差し込む（部品は選択ラダーで決める。詳細＝表にしない）。
-4. 公開後、PCで表示とレイアウト崩れを確認する。
-
-## 6. 安全方針
-
-1. 副作用レベル: L1（Artifact公開＝本人プライベート。commit / push / 外部送信はしない）。
-2. 正本(md)・Notion同期対象を書き換えない。表示専用の生成物だけ作る。
-3. secret・token・認証値をHTMLに含めない。
-
-## 7. 関連
-
-1. 窓口（作成・改善）: `skill-creator-custom`。
-2. 共通の土台規約: `references/html-structure.md`。
-3. モード別の作り方: `references/mode-quick.md` / `references/mode-full.md`。
+1. 共通のHTML規約: `references/html-structure.md`。
+2. 通常HTMLの品質: `references/mode-quick.md` / `references/mode-full.md`。
+3. メタ説明固有の見せ方: `references/meta-explain-layout.md`。
 4. 骨組み: `assets/artifact-template.html`。
+5. スマホ表示: `workflows/mobile-preview.md` / `scripts/mobile_preview.py`。

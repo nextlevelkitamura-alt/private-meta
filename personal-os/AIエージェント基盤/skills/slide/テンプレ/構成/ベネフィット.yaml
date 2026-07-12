@@ -1,0 +1,31 @@
+name: ベネフィット
+description: 価値訴求型。最初に得られる結果を見せて関心を引く。短時間で動かす場面に強い。
+suit_for:
+  - 商品・サービス紹介（短時間プレゼン）
+  - LP風の説明資料
+  - 営業の初回プレゼン
+not_suit_for:
+  - 反対派が多い社内稟議（証拠が後回しで弱い）
+recommended_slides: 7-9
+chapters:
+  - id: hook
+    name: Benefit Hook（一番のベネフィット）
+    slides: 1
+    weight: 大
+    note: 「○○できる」を冒頭で打ち出す
+  - id: who
+    name: Who is this for（対象者）
+    slides: 1
+    weight: 小
+  - id: how
+    name: How it works（仕組み）
+    slides: 2-3
+    weight: 中
+  - id: proof
+    name: Proof（証拠）
+    slides: 1-2
+    weight: 大
+  - id: action
+    name: Action（行動喚起）
+    slides: 1
+    weight: 小

@@ -55,4 +55,4 @@ launchctl enable gui/$(id -u)/com.kitamura.session-record-prune
 ```
 
 停止: `launchctl bootout gui/$(id -u)/com.kitamura.session-record-prune`
-有効化・停止したら `../../実行一覧/personal-os.md` を同じ作業で更新する。
+有効化・停止したら `../../実行loop一覧.md` を同じ作業で更新する。

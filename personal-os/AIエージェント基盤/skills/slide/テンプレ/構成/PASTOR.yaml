@@ -1,0 +1,41 @@
+name: PASTOR
+description: 課題ドリブンの古典型。問題を深く掘り下げてから解決策を提示。説得力が高い。
+suit_for:
+  - 営業提案（課題が明確な顧客）
+  - 提案書（社内・社外問わず）
+  - 商品紹介（解決型）
+not_suit_for:
+  - 講演登壇（重い）
+  - 速報・告知
+recommended_slides: 9-11
+chapters:
+  - id: P
+    name: Problem（問題提起）
+    slides: 2
+    weight: 中
+    note: 相手が抱えている問題を言語化する
+  - id: A
+    name: Amplify（増幅・共感）
+    slides: 1
+    weight: 小
+    note: 放置した場合のリスクを示し、緊急性を出す
+  - id: S
+    name: Story / Solution（解決策）
+    slides: 3
+    weight: 中
+    note: 解決のストーリーと具体策
+  - id: T
+    name: Testimonial（証拠）
+    slides: 1-2
+    weight: 大
+    note: データ・事例・実績
+  - id: O
+    name: Offer（提案内容）
+    slides: 1
+    weight: 中
+    note: 具体的な提案内容
+  - id: R
+    name: Response（行動喚起）
+    slides: 1
+    weight: 小
+    note: 次の一歩を明示

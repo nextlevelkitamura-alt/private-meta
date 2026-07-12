@@ -1,0 +1,16 @@
+name: 見出し本文中心
+description: 上に見出し、下に本文。最も汎用的なテキストレイアウト。
+slots:
+  - position: top
+    type: text
+    elements: [見出し（24-36pt）]
+  - position: middle
+    type: text
+    elements: [本文、箇条書き3-5項目]
+suit_for:
+  - 説明・定義スライド
+  - 章扉（短い見出しのみ）
+  - 社内共有
+not_suit_for:
+  - 視覚的インパクトが必要な場面
+  - 講演登壇のキーメッセージ

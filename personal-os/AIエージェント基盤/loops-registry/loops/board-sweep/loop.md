@@ -128,4 +128,4 @@ launchctl enable gui/$(id -u)/com.kitamura.board-sweep
 5. 23:30 の節目で当日の `[auto]` 一覧を人間レビュー（Shutdown儀式に1項目・子03側の担当）。
 
 停止: `launchctl bootout gui/$(id -u)/com.kitamura.board-sweep`
-有効化・停止したら `../../実行一覧/personal-os.md` を同じ作業で更新する。
+有効化・停止したら `../../実行loop一覧.md` を同じ作業で更新する。

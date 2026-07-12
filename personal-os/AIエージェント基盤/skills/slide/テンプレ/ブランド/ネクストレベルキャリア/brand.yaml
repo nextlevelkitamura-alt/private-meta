@@ -1,0 +1,40 @@
+name: ネクストレベルキャリア
+description: 中小派遣会社向け人材紹介サービス。白基調×オレンジ・赤ハイライト
+
+colors:
+  primary:    "#1B2A4A"   # 見出し・本文テキスト（ダークネイビー）
+  highlight1: "#E85C00"   # オレンジ — 見出し帯・CTAボタン・フローアロー・重要キーワード
+  highlight2: "#C41E1E"   # 赤 — 最重要数字・「費用ゼロ」などの強調語
+  text:       "#1B2A4A"   # 本文テキスト
+  text_on_dark: "#FFFFFF"
+  bg:         "#FFFFFF"   # メイン背景（白基調）
+  bg_sub:     "#F5F7FA"   # セクション区切り（ライトグレー）
+  bg_cta:     "#FFF8F5"   # CTAスライド専用（ウォームホワイト）
+
+fonts:
+  heading: "Noto Sans JP Bold"
+  body:    "Noto Sans JP Regular"
+  number:  "Noto Sans JP ExtraBold"
+
+tone: "信頼・実績・スピード・成果報酬・プロフェッショナル"
+
+logo:
+  path: logo.jpg
+  position: top-right
+  size_ratio: 0.08
+  margin_pct: 3
+  apply_to: all
+  title_slide: center    # 表紙とCTAは中央配置
+
+visual:
+  density: 標準
+  diagram_text_ratio: バランス
+  bg_pattern: white-gray-alternate  # 白とF5F7FAを交互に使用
+  reference: "ネクストレベルキャリア ブランドガイド v2.1"
+  ng:
+    - グラデーション多用
+    - 3D効果・シャドウ多用
+    - 安っぽいクリップアート
+    - 英語/日本語混在（固有名詞除く）
+    - 箇条書き5項目超
+    - オレンジ・赤をメインカラーとして広範囲使用（アクセント限定）

@@ -1,6 +1,6 @@
 # repo概要
 
-daily-digest（`../loops-registry/loops/renderer/scripts/digest.sh`）がLLM要約の文脈として読み合わせる、対象repo固定リストの短い説明。**各repoの詳細・現在状態はそのrepoの `AGENTS.md` が正本**（ここは1〜2行のポインタのみ・二重管理しない）。
+対象repoの役割と正本への導線をまとめた短い索引。**各repoの詳細・現在状態はそのrepoの `AGENTS.md` が正本**（ここは1〜2行のポインタのみ・二重管理しない）。
 
 ## AIエージェント基盤
 

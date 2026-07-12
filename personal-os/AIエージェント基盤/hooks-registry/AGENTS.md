@@ -3,7 +3,7 @@
 各 AI ランタイム（Claude Code / Codex 等）の hook script の正本を置く場所。
 `loops-registry` / `global-skill-registry` / `repo-registry` と揃えた `-registry` 系。
 hook は「イベント直後に軽い決まった処理を挟む」もの（記録・通知など。判断不要・高速・非ブロッキング）。
-実行方式の位置づけは `../loops-registry/references/loop-types.md` の ③hook。
+loopとの境界（時刻・間隔発火か、runtimeイベント発火か）は `../loops-registry/AGENTS.md` の「loopの境界」を参照する。
 
 ## 構造（機構の共有 × runtime受け口〔イベント別〕）
 

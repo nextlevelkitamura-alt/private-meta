@@ -1,0 +1,32 @@
+name: 社内共有
+description: 社内向けの情報共有・進捗報告・ナレッジ展開。読み手の時間を最小化することが最優先。
+suit_for:
+  - 週次・月次の進捗共有
+  - プロジェクト報告
+  - ナレッジ・調査結果の展開
+not_suit_for:
+  - 意思決定が必要な提案（圧縮型を使う）
+  - 社外向け
+recommended_slides: 5-8
+chapters:
+  - id: summary
+    name: サマリー（一目で全部わかる）
+    slides: 1
+    weight: 大
+    note: ここだけ読めば終わるレベルにする
+  - id: context
+    name: 背景（なぜこの共有か）
+    slides: 1
+    weight: 小
+  - id: result
+    name: 結果・進捗
+    slides: 1-2
+    weight: 中
+  - id: insight
+    name: 気づき・学び
+    slides: 1-2
+    weight: 中
+  - id: next
+    name: 今後の予定・依頼
+    slides: 1
+    weight: 小

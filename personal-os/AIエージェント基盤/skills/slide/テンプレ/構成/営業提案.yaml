@@ -1,0 +1,50 @@
+name: 営業提案
+description: BtoB営業の標準型。相手の現状理解から始まり、課題仮説→提案→投資効果→次の一歩まで。
+suit_for:
+  - BtoB営業（顧客向け提案）
+  - パートナー提案
+  - リプレイス提案
+not_suit_for:
+  - 社内稟議（前田式の方が向く）
+  - 講演
+recommended_slides: 10-14
+chapters:
+  - id: cover
+    name: 表紙
+    slides: 1
+    weight: 最小
+  - id: today
+    name: 本日のゴール
+    slides: 1
+    weight: 小
+    note: お互いの時間を有効活用するための合意
+  - id: understanding
+    name: 御社の現状理解
+    slides: 1-2
+    weight: 中
+    note: ヒアリング内容を構造化して返す
+  - id: hypothesis
+    name: 課題仮説
+    slides: 1-2
+    weight: 中
+    note: 「私たちはこう見ています」
+  - id: solution
+    name: 解決策提案
+    slides: 2-3
+    weight: 中
+  - id: case
+    name: 導入事例
+    slides: 1-2
+    weight: 大
+  - id: roi
+    name: 投資対効果
+    slides: 1
+    weight: 大
+  - id: schedule
+    name: スケジュール
+    slides: 1
+    weight: 中
+  - id: next
+    name: ネクストアクション
+    slides: 1
+    weight: 小

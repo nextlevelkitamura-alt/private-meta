@@ -1,12 +1,12 @@
 ---
-稼働状態: draft（未起動・launchd未ロード。人間がbootstrap登録するまで無効）
+稼働状態: 稼働中（2026-07-11 launchctl printでloaded・StartInterval 30秒を再確認）
 設計: ~/Private/personal-os/my-brain/areas/ai運用/plans/active/2026-07-06-デイリーNotion表反映/plan.md
-起動: launchd `com.kitamura.daily-notion-sync`（StartInterval 30・symlink未登録＝人間ゲート）。手動実行は `scripts/sync.sh`。
+起動: launchd `com.kitamura.daily-notion-sync`（StartInterval 30・登録済み）。手動実行は `scripts/sync.sh`。
 ---
 
 # daily-notion-sync（当日デイリー→Notion表 30秒ミラー）
 
-`../../references/loop-runbook.md` の loop 契約（§2）に沿った実行スペック。1 loop＝1タスク定義。
+`../../AGENTS.md` のloop契約に沿った実行スペック。1 loop＝1タスク定義。
 
 ## 目的
 
@@ -65,7 +65,7 @@ Pythonヘルパ `notion_helper.py` を使う）。処理順:
 ## 完了・停止条件
 
 - 完了（1回）: `sync.sh` がexit 0で終わる（差分なし・差分ありどちらも正常終了）。
-- 停止: launchd登録前は「未起動」。登録後の停止は
+- 停止:
   `launchctl bootout gui/$(id -u)/com.kitamura.daily-notion-sync`（人間ゲート）。
 
 ## 設定・環境変数
@@ -83,8 +83,8 @@ secret以外はgit管理・secretはkeychainのみ（値は一切書かない）
 
 ## ログ先
 
-このloop自体の実行ログ（stdout/stderr）はrepo外（`loop-runbook.md` §5の規約どおり）。draft plistは
-`output/logs/sync.{out,err}.log` を指定している（稼働中に切り替えた場合のみ生成される）。
+このloop自体の実行ログ（stdout/stderr）はgitignoreされた
+`output/logs/sync.{out,err}.log`。生ログはGit追跡しない。
 
 ## 関連
 
@@ -92,6 +92,5 @@ secret以外はgit管理・secretはkeychainのみ（値は一切書かない）
 - データ源の正本: `../../hooks-registry/hooks/session-board/`（`board.py`・`README.md`）。
 - 移設した共有ロジック（secret取得・HTTP呼び出し・親ページ解決）: `scripts/notion-common.sh`・
   `scripts/notion_helper.py`（旧renderer由来。移設済み・renderer配下は参照しない）。
-- 作り替え元（upsert/archive/差分syncのパターン見本。依存はしない・参照のみ）:
-  `../renderer/scripts/notion-lanes.sh`・`../renderer/scripts/lanes-sync.sh`。
-- 実行方式の選び方: `../../references/loop-types.md`（③hookではなく②script相当の毎tick決定的実行）。
+- upsert/archive/差分syncは旧renderer実装を移設して独立化済み。旧フォルダへの実行・文書依存はない。
+- 実行方式: `../../AGENTS.md` の `runner: script`（hookではなく毎tickの決定的実行）。

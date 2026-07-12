@@ -1,0 +1,19 @@
+name: 図解中心
+description: 中央に大きな図解・フロー図を配置。文字は最小限の補足。
+slots:
+  - position: top
+    type: text
+    elements: [見出し1行]
+  - position: center
+    type: diagram
+    elements: [フロー図 / 構造図 / マトリクス / ベン図]
+  - position: bottom
+    type: text
+    elements: [補足1行（任意）]
+suit_for:
+  - 仕組み・構造の説明
+  - プロセス・ワークフロー
+  - 関係性の可視化
+not_suit_for:
+  - 短時間プレゼン（理解に時間がかかる）
+  - データ表現

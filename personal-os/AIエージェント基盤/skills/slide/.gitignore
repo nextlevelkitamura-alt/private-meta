@@ -1,0 +1,5 @@
+# 再生成・state。git非追跡（本体テンプレ・brief-templateは追跡維持）。
+scripts/node_modules/
+memory/
+ログ/*/
+テンプレ/ブランド/_last-used.txt

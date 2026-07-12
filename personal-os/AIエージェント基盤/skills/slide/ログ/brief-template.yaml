@@ -1,0 +1,99 @@
+# ============================================================
+# brief.yaml — 1スライド企画の全情報（Step 1〜8 + 生成ルート設定）
+# ============================================================
+# 使い方:
+# 1. /slide で企画フェーズ完了時に Claude がこのテンプレを埋めて
+#    `ログ/YYYY-MM-{資料名}/brief.yaml` に保存する
+# 2. 次回類似資料を作るときは、Step 0 でこのファイルを読み「過去デッキ」として再利用
+# 3. ルート（NotebookLM / Claude for PowerPoint）非依存だが、PPT 用は powerpoint: 節を使う
+# ============================================================
+
+meta:
+  title: ""                  # 資料名（例: "2026Q2 営業提案_A社向け"）
+  created_at: ""             # YYYY-MM-DD
+  engine: ""                 # notebooklm | claude-for-powerpoint
+  brand: ""                  # 資料/ブランド設定/{name}/ のディレクトリ名
+
+# ---------------- Step 1: 目的・ゴール深掘り（3ターン対話） ----------------
+purpose:
+  audience_one_liner: ""     # 誰に向けて何を作る資料か
+  desired_action: ""         # 見終わった人に取ってほしい行動（最重要1つ）
+  obstacles: []              # 想定される懸念・反論・無関心（複数可）
+
+# ---------------- Step 2: 聴衆解像度 ----------------
+audience:
+  knowledge_level: ""        # 業界・テーマに関する知識レベル
+  interests: ""              # 何に関心が向いているか
+  expected_objections: []    # 想定反論（具体）
+  decision_authority: ""     # 意思決定権限（決裁者 / 実務 / 推奨者）
+
+# ---------------- Step 3: ストーリーライン ----------------
+storyline:
+  type: ""                   # 案A 課題ドリブン / 案B ベネフィット / 案C 圧縮
+  reason: ""                 # この型を選んだ理由
+
+# ---------------- Step 4: 全体ボリューム設計 ----------------
+volume_design:
+  scene: ""                  # 対面 / 配布 / オンライン / 両用
+  duration_min: 0            # 提示時間（分・配布のみなら 0）
+  total_slides: 0            # 確定枚数
+  chapters:                  # 章別配分 + テキスト量タグ（最小/小/中/大）
+    # - "[1] Hook (1枚・最小)"
+    # - "[2-3] 問題提起 (2枚・小)"
+    # - "[4] 共感 (1枚・小)"
+
+# ---------------- Step 5: キーメッセージ ----------------
+key_messages:
+  # - message: ""
+  #   assigned_slides: []    # スライド番号（複数可）
+
+# ---------------- Step 6: ビジュアル方針（4軸 + 雰囲気/NG） ----------------
+visual_policy:
+  density: ""                # ミニマル / 標準 / 高密度
+  diagram_vs_text: ""        # 図解中心 / バランス / 文字中心
+  tone: ""                   # フォーマル / 親しみ / クール / 温かみ
+  data_style: ""             # グラフあり / 表のみ / なし
+  reference_mood: ""         # 雰囲気リファレンス（自由記述）
+  ng_images: []              # NG イメージ
+
+# ---------------- Step 7: ブランドアセット ----------------
+brand_asset:
+  name: ""                   # 既存ブランド名 or 空（汎用）
+  brand_yaml_path: ""        # 資料/ブランド設定/{name}/brand.yaml
+  template_pptx_path: ""     # 事前ロゴ埋込済みテンプレ（PPT ルート用・任意）
+
+# ---------------- Step 8: ソース設計（リサーチ官アウトプット） ----------------
+sources:
+  # - type: ""               # url | text | yaml | pdf | image
+  #   value: ""              # URL or ファイルパス or テキスト先頭
+  #   purpose: ""            # コア / データ / ブランド / 補助 / 構成指示書
+
+# ============================================================
+# Claude for PowerPoint ルート専用設定（NotebookLM ルートでは省略）
+# ============================================================
+powerpoint:
+  model: ""                  # opus-4-6（デック全体生成推奨）| sonnet-4-5（単一スライド修正）
+
+  # アドインの「Instructions」field に貼る永続設定
+  # 全会話で適用されるブランド・トーン・bullet ルール等
+  instructions: |
+    # Brand: {ブランド名}
+    # Tone: {tone keywords}
+    # Color usage: primary={#HEX} for headings, accent={#HEX} for highlights
+    # Bullet rule: one line per bullet, max 30 chars
+    # Number rule: never invent figures; use [TBD: source] for unknown numbers
+    # Slide title rule: titles must convey insight, not labels
+    # Output review rule: present an outline first when creating multiple slides
+
+  # 本文プロンプト（毎回送信する文）
+  body_prompt: |
+    # Create a {n}-slide {deck_type} for {audience}.
+    # Goal: {action}.
+    # Structure (exact slide count, do not add or remove):
+    # 1. {slide_1} — {tag}
+    # 2. {slide_2} — {tag}
+    # ...
+    # Constraints:
+    # - Match the active template (slide master, fonts, colors).
+    # - For unknown numbers, write [TBD: source].
+    # - Output as outline first; do not generate full slides until I confirm.

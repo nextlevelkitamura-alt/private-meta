@@ -20,9 +20,8 @@
 # 差し替え可能（テスト用スタブに差し替える。ORCA_PS_CMDと同じ方式）。
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DAILY_DIGEST_SCRIPTS="$(cd "$SCRIPT_DIR/../../daily-digest/scripts" && pwd)"
 # shellcheck source=/dev/null
-source "$DAILY_DIGEST_SCRIPTS/_paths.sh"
+source "$SCRIPT_DIR/_paths.sh"
 
 HELPER="$SCRIPT_DIR/notion_helper.py"
 CONF_FILE="${NOTION_PUSH_CONF:-$SCRIPT_DIR/../notion-push.conf}"

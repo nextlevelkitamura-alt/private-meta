@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>kickoff — Skill説明書</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1220;--panel:#171e30;--line:#2b3650;--text:#edf2ff;--muted:#a7b2ca;--accent:#74b7ff;--warn:#ffb36a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}.wrap{max-width:900px;margin:auto;padding:44px 22px 70px}header,section{margin-bottom:30px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.12em;text-transform:uppercase}h1{font-size:38px;margin:.2em 0}h2{font-size:18px;margin:0 0 12px}p,li{color:var(--muted)}.card,pre{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}code,pre{color:#bed1ff}.flow{display:flex;gap:8px;flex-wrap:wrap}.flow span{padding:10px 13px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}.rule{border-left:4px solid var(--warn)}
+</style></head><body><main class="wrap">
+<header><div class="eyebrow">Skill説明書 · meta</div><h1>kickoff</h1><p>新しい作業をデイリーへ1行起票し、軽量判定からサクッと実行またはplan-triageへ渡す入口ゲート。</p></header>
+<section><h2>いつ使うか</h2><ul><li>「これを起票して」</li><li>「この作業を始めて」「kickoffして」</li></ul></section>
+<section><h2>構造</h2><pre>kickoff/
+├── SKILL.md    正本（起票・軽量判定・分岐）
+└── SKILL.html  人間向け表示</pre></section>
+<section><h2>処理の流れ</h2><div class="flow"><span>デイリーへ1行起票</span><span>構造3条件で判定</span><span>サクッと → 実行</span><span>ライト以上 → plan-triage</span></div></section>
+<section><h2>現在の外部入口</h2><div class="card">Notion依頼インボックスからの自動pullは提供しない。Notionへ書いた依頼は人間が当日デイリーへ転記してからkickoffへ流す。計画起案の結果マーカーは<code>inbox-triage</code>を参照する。</div></section>
+<section><h2>絶対ルール・安全方針</h2><div class="card rule">既存行を削除・書換せず追記する。ゲート内で長い調査を始めない。人間ゲート事項をサクッと扱わない。削除済みloopを自動入口として扱わない。</div></section>
+<p>更新日: 2026-07-11 ／ 正本: <code>SKILL.md</code>（このHTMLは人間向け表示）</p>
+</main></body></html>

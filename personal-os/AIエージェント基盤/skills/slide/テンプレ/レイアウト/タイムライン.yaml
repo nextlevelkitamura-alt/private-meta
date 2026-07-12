@@ -1,0 +1,17 @@
+name: タイムライン
+description: 横軸に時間、縦軸に出来事を並べる。経歴・プロジェクトスケジュールに。
+slots:
+  - position: top
+    type: text
+    elements: [見出し]
+  - position: middle
+    type: timeline
+    direction: 横
+    elements: [マイルストーン3-7個]
+suit_for:
+  - 経歴・キャリア紹介
+  - プロジェクトスケジュール
+  - 過去→現在→未来の流れ
+not_suit_for:
+  - 並列比較
+  - 単発の事実説明

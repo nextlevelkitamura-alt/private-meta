@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>inbox-triage — Skill説明書</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1220;--panel:#171e30;--line:#2b3650;--text:#edf2ff;--muted:#a7b2ca;--accent:#67d7b5;--warn:#ffb36a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}.wrap{max-width:900px;margin:auto;padding:44px 22px 70px}header,section{margin-bottom:30px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.12em;text-transform:uppercase}h1{font-size:38px;margin:.2em 0}h2{font-size:18px;margin:0 0 12px}p,li{color:var(--muted)}.card,pre{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}code,pre{color:#bed1ff}.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.step{padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}.rule{border-left:4px solid var(--warn)}@media(max-width:700px){.steps{grid-template-columns:1fr}}
+</style></head><body><main class="wrap">
+<header><div class="eyebrow">Skill説明書 · meta</div><h1>inbox-triage</h1><p>人間が指定した依頼インボックス1行を、planning計画の起案またはサクッと判定まで進める。実装・自動巡回はしない。</p></header>
+<section><h2>いつ使うか</h2><ul><li>「このデイリーのインボックス行をトリアージして」</li><li>「この1行を判定してplanningに計画を起案して」</li></ul></section>
+<section><h2>構造</h2><pre>inbox-triage/
+├── SKILL.md    正本（入力・判定・起案・行更新）
+└── SKILL.html  人間向け表示</pre></section>
+<section><h2>処理の流れ</h2><div class="steps"><div class="step">1. 対象repoとplanning置き場を判定</div><div class="step">2. フル／ライト／サクッと判定</div><div class="step">3. <code>plan-ops/scripts/new-plan.sh</code>で雛形生成</div><div class="step">4. 指定された1行だけへ結果印</div></div></section>
+<section><h2>現行導線</h2><div class="card"><p><code>new-plan.sh --out &lt;絶対path&gt; --class &lt;分類&gt; --kind &lt;種別&gt;</code></p><p>出力先が対象repoの<code>plans/planning/</code>配下であることはSkill側が先に確認する。scriptは既存ファイルを上書きしない。</p></div></section>
+<section><h2>絶対ルール・安全方針</h2><div class="card rule">指定された1行以外を触らない。active化、実装、通知、commit、push、削除、launchd登録、Notion API操作を行わない。削除済み自動巡回loopは呼ばない。</div></section>
+<p>更新日: 2026-07-11 ／ 正本: <code>SKILL.md</code>（このHTMLは人間向け表示）</p>
+</main></body></html>

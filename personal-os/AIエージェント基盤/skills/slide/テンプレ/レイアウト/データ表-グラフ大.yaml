@@ -1,0 +1,22 @@
+name: データ表-グラフ大
+description: グラフをスライドの主役にする。一目で結論が分かる単一指標を強調。
+slots:
+  - position: top
+    type: text
+    elements: [見出し（このグラフが示すこと）]
+  - position: center
+    type: chart
+    elements: [メイングラフ（棒/折れ線/円）]
+  - position: side
+    type: text
+    elements: [So what?（このデータの意味・気づき）]
+suit_for:
+  - 業績報告
+  - 市場データ提示
+  - 効果測定の結果
+not_suit_for:
+  - 複数指標の同時比較（ダッシュボード型を使う）
+  - 定性情報
+notes:
+  - グラフは1枚1指標が原則
+  - So what? を必ず文字で添える

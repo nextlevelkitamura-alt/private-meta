@@ -64,9 +64,9 @@ Focusmap Mac Agent <──agent API── claim / observation / run event
     次: 01〜03統合branchでtest・lint・build・Browser確認の人間許可を待つ
     参照: focusmap@837a9bdc
     場所: plans/03-Focusmap一覧UI.md ／ 依存: 01
-04 統合・切替・旧一覧廃止 … 実装（01〜03統合済み・実行検証ゲート待ち）
-    次: 人間承認後に統合branchでtest・lint・build・Browser確認を行い、続いてTurso migration・7loop初期import・shadow観測へ進む
-    参照: focusmap@76ff1104
+04 統合・切替・旧一覧廃止 … 実装（統合・専用検証PASS・Browser確認待ち）
+    次: 3001のPersonal OS説明サーバーを止める人間承認後にFocusmap UIをBrowser確認し、その後Turso migrationのdry-run判断へ進む
+    参照: focusmap@d3f29a5c
     場所: plans/04-統合・切替・旧一覧廃止.md ／ 依存: 01,02,03
 
 ## 人間ゲート

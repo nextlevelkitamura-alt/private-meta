@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AppleのFilesでMacフォルダを外出先から見る</title>
+  <style>
+    :root{--ground:#ECEEF3;--surface:#fff;--surface2:#F5F6FA;--ink:#19212F;--muted:#5F6879;--line:#DBDFEA;--accent:#2C3A8C;--accentInk:#202C6E;--accentSoft:#E9ECFA;--go:#2E7D5B;--goInk:#1E5A40;--goSoft:#E3F1EA;--warn:#B4472B;--warnInk:#8C3620;--warnSoft:#F7E8E2;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono",SFMono-Regular,Menlo,Consolas,monospace}*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased}.page{padding:42px 20px 72px}.wrap{max-width:920px;margin:auto;display:flex;flex-direction:column;gap:42px}.eyebrow,h2{margin:0 0 9px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}h1{margin:0;font-size:33px;line-height:1.24;letter-spacing:-.02em}.lede{max-width:62ch;margin:14px 0 0;color:var(--muted);font-size:16px}.lede b{color:var(--ink)}section{display:flex;flex-direction:column}.slede{max-width:65ch;margin:0 0 16px;font-size:14.5px}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{padding:5px 12px;border:1px solid transparent;border-radius:99px;background:var(--accentSoft);color:var(--accentInk);font-size:12px;text-decoration:none}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}@media(max-width:720px){.cards,.compare{grid-template-columns:1fr}}.card,.item,.box,details{padding:17px 18px;border:1px solid var(--line);border-radius:13px;background:var(--surface)}.card h3,.item h3,.box h3{margin:0 0 8px;font-size:15px}.card p,.item p,.box p{margin:0;color:var(--muted);font-size:13.5px}.card b,.item b,.box b{color:var(--ink)}.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;vertical-align:1px}.go{background:var(--goSoft);color:var(--goInk)}.acc{background:var(--accentSoft);color:var(--accentInk)}.warn{background:var(--warnSoft);color:var(--warnInk)}.diagram{padding:18px;border:1px solid var(--line);border-radius:13px;background:var(--surface);overflow-x:auto}.diagram svg{display:block;width:100%;min-width:660px;height:auto}.steps{margin:0;padding:0;list-style:none}.steps li{display:flex;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line)}.steps li:last-child{border-bottom:0}.num{display:flex;flex:none;align-items:center;justify-content:center;width:25px;height:25px;margin-top:1px;border-radius:50%;background:var(--accentSoft);color:var(--accentInk);font-size:12px;font-weight:700}.steps b{font-size:14px}.steps p{margin:1px 0 0;color:var(--muted);font-size:13px}.code{margin-top:8px;padding:11px 13px;border-radius:9px;background:#232936;color:#E8EBF2;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.items{display:flex;flex-direction:column;gap:10px}.callout{padding:16px 18px;border:1px solid var(--warn);border-radius:13px;background:var(--warnSoft)}.callout h3{margin:0 0 4px;color:var(--warnInk);font-size:13px}.callout p{margin:0;font-size:13.5px}.source{margin:0;padding-left:20px;color:var(--muted);font-size:12.5px}.source li+li{margin-top:7px}.source a{color:var(--accentInk)}details summary{cursor:pointer;color:var(--accentInk);font-size:13.5px;font-weight:600}details p{margin:8px 0 0;color:var(--muted);font-size:13px}code{padding:1px 5px;border:1px solid var(--line);border-radius:5px;background:var(--surface2);font-family:var(--mono);font-size:12px}.history{margin:0;padding:0;list-style:none;color:var(--muted);font-size:13px}.history li{padding:8px 0;border-bottom:1px dashed var(--line)}.history li:last-child{border:0}
+  </style>
+</head>
+<body>
+  <main class="page"><div class="wrap">
+    <header>
+      <p class="eyebrow">meta-explain · 説明のみ · v1 · 2026-07-11</p>
+      <h1>AppleのFilesで、Macのフォルダを外出先から見る</h1>
+      <p class="lede"><b>iCloud Driveと、Macのファイル共有は別物です。</b>未pushのローカル状態を見たいなら、Macの指定フォルダを共有し、iPhoneのFilesから開きます。外出先でその経路を安全にするためだけにTailscaleを使います。</p>
+    </header>
+
+    <nav class="chips" aria-label="この説明の目次"><a class="chip" href="#difference">2つの方法</a><a class="chip" href="#map">全体像</a><a class="chip" href="#mac">Macでの設定</a><a class="chip" href="#iphone">iPhoneでの接続</a><a class="chip" href="#icloud">iCloudの場合</a><a class="chip" href="#gate">確認したいこと</a></nav>
+
+    <section>
+      <h2>結論</h2>
+      <div class="cards">
+        <article class="card"><h3>あなたが欲しいもの <span class="pill go">SMB共有</span></h3><p><b>Macにある現物をそのまま読む。</b>未コミット・未pushも見える。Macが起きていれば、iPhoneのFilesでフォルダとして開ける。</p></article>
+        <article class="card"><h3>Appleだけでできる部分 <span class="pill acc">標準機能</span></h3><p><b>Macの「ファイル共有」とiPhoneの「Files」</b>はApple標準。フォルダと読み取り権限をMac側で選ぶ。</p></article>
+        <article class="card"><h3>外出先に届かせる部分 <span class="pill acc">Tailscale</span></h3><p><b>MacとiPhoneの間に私用の通路を作る。</b>ルーターの設定やSMBポート公開をせず、外から安全に接続する。</p></article>
+      </div>
+    </section>
+
+    <section id="difference">
+      <h2>iCloud Driveとファイル共有は、見えるものが違う</h2>
+      <p class="slede">「Appleの方法」と言っても2通りあるため、ここを分けると迷わなくなります。</p>
+      <div class="compare">
+        <div class="box"><h3>iCloud Drive：コピーを同期する</h3><p>MacのiCloud Driveへ<strong>移動またはコピーした資料</strong>を、iPhoneのFilesで見る。Macが寝ていても開けるが、<b>元のローカルフォルダを直接見る方法ではない</b>。</p></div>
+        <div class="box"><h3>Macファイル共有（SMB）：現物を読む</h3><p>Macの指定フォルダを、iPhoneから<strong>そのMacへ接続して</strong>開く。<b>未pushの現在状態が見える</b>。ただしMacが起きてネット接続されている必要がある。</p></div>
+      </div>
+    </section>
+
+    <section id="map">
+      <h2>今回つくるのは「3つをつないだ通路」</h2>
+      <p class="slede">ファイルをどこかへ移すのではありません。Macの共有設定を、Tailscale経由で、iPhoneのFilesが読むだけです。</p>
+      <div class="diagram">
+        <svg viewBox="0 0 800 195" role="img" aria-label="MacのPrivateフォルダをファイル共有、Tailscale、iPhoneのFilesを通じて外出先から見る構成図">
+          <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <rect x="20" y="58" width="174" height="60" rx="11" fill="#E9ECFA" stroke="#2C3A8C"/><text x="107" y="82" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="14" fill="#202C6E">Macのフォルダ</text><text x="107" y="103" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" fill="#202C6E">例：~/Private</text>
+          <line x1="194" y1="88" x2="286" y2="88" stroke="#5F6879" stroke-width="1.5" marker-end="url(#arrow)"/><text x="240" y="76" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" fill="#5F6879">共有する</text>
+          <rect x="296" y="58" width="174" height="60" rx="11" fill="#E3F1EA" stroke="#2E7D5B"/><text x="383" y="82" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="14" fill="#1E5A40">Macのファイル共有</text><text x="383" y="103" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" fill="#1E5A40">SMB・読み出しのみ</text>
+          <line x1="470" y1="88" x2="562" y2="88" stroke="#5F6879" stroke-width="1.5" marker-end="url(#arrow)"/><text x="516" y="76" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" fill="#5F6879">私用の通路</text>
+          <rect x="572" y="58" width="114" height="60" rx="11" fill="#E9ECFA" stroke="#2C3A8C"/><text x="629" y="82" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="14" fill="#202C6E">Tailscale</text><text x="629" y="103" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" fill="#202C6E">外部公開なし</text>
+          <line x1="629" y1="118" x2="629" y2="161" stroke="#5F6879" stroke-width="1.5" marker-end="url(#arrow)"/><text x="646" y="143" font-family="-apple-system,sans-serif" font-size="11" fill="#5F6879">接続</text>
+          <rect x="540" y="166" width="178" height="24" rx="9" fill="#fff" stroke="#DBDFEA"/><text x="629" y="183" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="12" fill="#19212F">iPhoneのFilesアプリ</text>
+          <text x="20" y="150" font-family="-apple-system,sans-serif" font-size="12" fill="#5F6879">重要：GitHubへpushしない。ファイルをコピーしない。</text>
+        </svg>
+      </div>
+    </section>
+
+    <section id="mac">
+      <h2>Macで行うこと：見せるフォルダと、読み取り権限を決める</h2>
+      <p class="slede">ここで行うのはMacの設定変更です。まだ実行はしませんが、画面上で押す場所は次のとおりです。</p>
+      <ol class="steps">
+        <li><span class="num">1</span><div><b>「システム設定」を開く</b><p>Appleメニュー  → <strong>システム設定</strong> → <strong>一般</strong> → <strong>共有</strong> へ進む。</p></div></li>
+        <li><span class="num">2</span><div><b>「ファイル共有」をオンにする</b><p>「ファイル共有」の右側にある <strong>ⓘ</strong> を開き、ファイル共有をオンにする。Macをファイル閲覧先として動かすスイッチ。</p></div></li>
+        <li><span class="num">3</span><div><b>共有するフォルダを1つ選ぶ</b><p>「共有フォルダ」の <strong>＋</strong> を押し、まずは <code>~/Private</code> か、より狭い <code>~/Private/projects</code> を選ぶ。迷うなら<strong>最初は projects</strong>がおすすめ。</p></div></li>
+        <li><span class="num">4</span><div><b>自分のMacアカウントを「読み出しのみ」にする</b><p>右側の「ユーザ」で自分のMacログイン用アカウントだけを許可し、権限を <strong>読み出しのみ</strong> にする。iPhoneから誤って編集・削除しないため。</p></div></li>
+        <li><span class="num">5</span><div><b>SMBを使えるようにする</b><p>「オプション…」から <strong>SMBを使用してファイルとフォルダを共有</strong> をオンにし、自分のアカウントを選ぶ。この時にMacのログイン用パスワードを入力する。</p><div class="code">ここまでで「自宅Wi-Fi内からFilesで開けるMac」が完成する。
+外出先から開けるようにするのは、次のTailscaleの役割。</div></div></li>
+      </ol>
+    </section>
+
+    <section id="iphone">
+      <h2>iPhoneで行うこと：Tailscaleを通ってMacへ接続する</h2>
+      <p class="slede">TailscaleはMacをインターネットへ丸見えにせず、あなたのiPhoneだけがMacを見つけられるようにするアプリです。</p>
+      <ol class="steps">
+        <li><span class="num">1</span><div><b>MacとiPhoneの両方にTailscaleを入れ、同じアカウントでログイン</b><p>両方が「同じ私用ネットワーク」に参加する。ここではフォルダを同期しない。</p></div></li>
+        <li><span class="num">2</span><div><b>MacのTailscale IPを確認する</b><p>MacのTailscaleアプリで <code>100.x.x.x</code> の形のIPアドレスを確認する。これは接続先を示す住所で、パスワードではない。</p></div></li>
+        <li><span class="num">3</span><div><b>iPhoneの「Files」を開く</b><p>下の <strong>ブラウズ</strong> → 右上の <strong>…</strong> → <strong>サーバへ接続</strong> を押す。</p><div class="code">サーバ：smb://100.x.x.x
+接続方法：登録ユーザ
+名前：Macにログインするアカウント名
+パスワード：そのMacアカウントのパスワード</div></div></li>
+        <li><span class="num">4</span><div><b>共有フォルダを選ぶ</b><p>Macで共有した <code>projects</code> などがFilesの「共有」欄に現れる。次回以降は「最近使ったサーバ」に残るので、IPを毎回入力する必要はない。</p></div></li>
+      </ol>
+      <div class="callout"><h3>公開設定はしない</h3><p>ルーターのポート開放、SMBをインターネットへ直接公開、共有を「全員」にする設定は不要です。Tailscale経由だけにします。Macがスリープ中・ネット未接続なら、外出先からは見えません。</p></div>
+    </section>
+
+    <section id="icloud">
+      <h2>iCloud Driveを使う場合は、資料の「持ち歩きコピー」に限定する</h2>
+      <p class="slede">iCloud Driveは設定が簡単ですが、Macの現在の作業フォルダを直接見る仕組みではありません。</p>
+      <div class="items">
+        <article class="item"><h3>向いているもの <span class="pill go">おすすめ</span></h3><p>README、計画書、PDF、画像、完成した資料。Mac側で <strong>iCloud Drive</strong> に置いたものを、iPhoneのFiles → iCloud Driveから開く。</p></article>
+        <article class="item"><h3>向かないもの <span class="pill warn">今回の主目的ではない</span></h3><p>未pushのGitリポジトリ全体、作業中のコード、<code>.git</code> を含むフォルダ。これらはMacローカルを正本にし、見たい時だけSMB共有で読む。</p></article>
+      </div>
+    </section>
+
+    <section id="gate">
+      <h2>実行前に決めるのは、最初に共有する範囲だけ</h2>
+      <p class="slede">今は説明だけで、Mac・iPhone・ルーターの設定は一切変えていません。</p>
+      <div class="items">
+        <article class="item"><h3>質問：最初にiPhoneから見たい範囲はどれ？</h3><p><span class="pill go">推奨</span> <b><code>~/Private/projects</code> だけ。</b> 仕事やプロジェクトを見たいという目的には十分で、<code>~/Private</code> 全体より公開範囲を狭くできる。Personal OS側も見たいなら後から追加できる。</p></article>
+        <article class="item"><h3>質問：Macは外出中も起きている？</h3><p><span class="pill go">推奨</span> まず電源接続・スリープなしで自宅からテストする。ここが満たせないとFilesからは接続できないので、設定前に確認する。</p></article>
+      </div>
+    </section>
+
+    <section>
+      <h2>根拠・出典</h2>
+      <ul class="source">
+        <li><b>Apple</b> — <a href="https://support.apple.com/en-lamr/guide/mac-help/mh17131/mac">Macのファイル共有</a>：共有フォルダとユーザー別の読み取り専用権限を設定できること。</li>
+        <li><b>Apple</b> — <a href="https://support.apple.com/en-ca/guide/mac-help/mh14107/mac">MacでSMB共有を有効にする</a>：ファイル共有のオプションでSMBをオンにする手順。</li>
+        <li><b>Apple</b> — <a href="https://support.apple.com/guide/iphone/transfer-files-iphone-a-storage-device-server-iphe9aff429a/ios">iPhoneのFilesからサーバへ接続</a>：Filesの「サーバへ接続」と登録ユーザー接続の手順。</li>
+        <li><b>Tailscale</b> — <a href="https://tailscale.com/docs/reference/troubleshooting/apple/cant-access-macos-from-iphone">iPhoneからMacのSMB共有へ接続</a>：FilesにMacのTailscale IPを入力して共有フォルダを閲覧する手順。</li>
+        <li><b>Apple</b> — <a href="https://support.apple.com/en-euro/109344">DesktopとDocumentsをiCloud Driveへ</a>：iCloud Driveは端末間で同期するコピーであること。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>更新履歴</h2>
+      <ul class="history"><li><b>v1 · 2026-07-11</b> — iCloud DriveとSMB共有を分離し、Mac → Tailscale → iPhone Filesの接続手順を図解。設定変更は未実施。</li></ul>
+    </section>
+  </div></main>
+</body>
+</html>

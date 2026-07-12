@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>実装計画と独立レビュー運用の現状調査</title>
+<style>
+  :root{
+    --ground:#ECEEF3; --surface:#FFFFFF; --surface-2:#F5F6FA;
+    --ink:#19212F; --muted:#5F6879; --line:#DBDFEA;
+    --accent:#2C3A8C; --accent-ink:#202C6E; --accent-soft:#E9ECFA;
+    --go:#2E7D5B; --go-ink:#1E5A40; --go-soft:#E3F1EA;
+    --warn:#B4472B; --warn-ink:#8C3620; --warn-soft:#F7E8E2;
+    --amber:#9A6A12; --amber-soft:#FFF3D6;
+    --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP","Segoe UI",sans-serif;
+    --mono:"SF Mono","SFMono-Regular","JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0}
+  .page{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;padding:40px 20px 72px}
+  .wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:42px}
+  .eyebrow{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 12px}
+  h1{font-size:34px;font-weight:650;letter-spacing:-.02em;margin:0;line-height:1.25;text-wrap:balance}
+  .lede{margin:14px 0 0;font-size:16px;color:var(--muted);max-width:70ch}
+  .lede b{color:var(--ink);font-weight:650}
+  h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:650;margin:0 0 6px}
+  .slede{margin:0 0 16px;font-size:14.5px;color:var(--ink);max-width:76ch}
+  section{display:flex;flex-direction:column}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-block;font-size:12px;font-weight:550;padding:5px 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);text-decoration:none;border:1px solid transparent}
+  .chip:hover{border-color:var(--accent)}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:760px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px}
+  .card .h{font-size:14px;font-weight:650;margin:0 0 8px}
+  .card p{margin:0;font-size:13.5px;color:var(--muted)}
+  .card p b{color:var(--ink)}
+  .pill{display:inline-block;font-size:11.5px;font-weight:550;padding:2px 10px;border-radius:999px;vertical-align:1px;white-space:nowrap}
+  .pill.go{background:var(--go-soft);color:var(--go-ink)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
+  .pill.acc{background:var(--accent-soft);color:var(--accent-ink)}
+  .pill.amber{background:var(--amber-soft);color:var(--amber)}
+  figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px;overflow-x:auto}
+  figure svg{min-width:780px;display:block}
+  figcaption{font-size:12px;color:var(--muted);margin-top:10px}
+  .deflist{display:flex;flex-direction:column;gap:10px}
+  .ditem{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 17px}
+  .ditem .dhead{margin:0 0 6px;font-size:14px;font-weight:650;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .ditem .dbody{margin:0;font-size:13.5px;color:var(--muted)}
+  .ditem .dbody b,.ditem li b{color:var(--ink);font-weight:650}
+  .ditem ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--muted)}
+  .ditem li{margin:3px 0}
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .steps li{display:flex;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .stepno{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:12.5px;font-weight:650;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .steps .h{font-size:13.5px;font-weight:650;margin:0}
+  .steps p{margin:0;font-size:13px;color:var(--muted)}
+  .tree{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px 20px;overflow-x:auto;line-height:1.9;margin:0}
+  .tree .note{color:var(--muted)}
+  .tree .add{color:var(--go-ink);font-weight:650}
+  .tree .mod{color:var(--accent-ink);font-weight:650}
+  .callout{border-radius:13px;padding:15px 17px;border:1px solid var(--warn);background:var(--warn-soft)}
+  .callout .ct{margin:0 0 4px;font-size:12.5px;font-weight:700;color:var(--warn-ink);letter-spacing:.04em}
+  .callout p{margin:0;font-size:13.5px}
+  .callout.go{border-color:var(--go);background:var(--go-soft)}
+  .callout.go .ct{color:var(--go-ink)}
+  details.disc{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px 17px;margin-top:12px}
+  details.disc summary{cursor:pointer;font-size:13.5px;font-weight:550;color:var(--accent-ink)}
+  details.disc[open] summary{margin-bottom:8px}
+  details.disc .dbody{font-size:13.5px;color:var(--muted);margin:0}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px;background:var(--surface)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:550}
+  tbody tr:last-child td{border-bottom:0}
+  .source{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted)}
+  .source b{color:var(--ink);font-weight:650}
+  .path{font-family:var(--mono);font-size:11.5px;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div class="page">
+<main class="wrap">
+  <header>
+    <p class="eyebrow">AIエージェント基盤 現状調査 / 2026-07-11</p>
+    <h1>実装計画と独立レビューは「設計済み」だが、実行時の強制が足りない</h1>
+    <p class="lede"><b>ライト以上は実装担当とレビュー担当を分け、同じ計画MDの完了条件で合否判定する</b>、という方針が最も自然です。現行ルールもほぼ同じですが、計画の自動読込・プロンプト合成・lint・監督ランタイムに抜けがあり、毎回確実に守られる状態にはなっていません。</p>
+  </header>
+
+  <nav class="chips" aria-label="ページ内ナビゲーション">
+    <a class="chip" href="#flow">推奨フロー</a>
+    <a class="chip" href="#audit">現状監査</a>
+    <a class="chip" href="#scale">規模別ルール</a>
+    <a class="chip" href="#docs">文書の違い</a>
+    <a class="chip" href="#tree">フォルダ構成</a>
+    <a class="chip" href="#improve">改善案</a>
+    <a class="chip" href="#rollout">導入順序</a>
+  </nav>
+
+  <section>
+    <h2>要点</h2>
+    <div class="cards">
+      <article class="card"><p class="h">ライト以上は2役を固定</p><p><b>実装者と評価者を分離</b>し、FAILは指揮官経由で実装者へ戻す。ライトは1回、フルは2回を上限にする。</p></article>
+      <article class="card"><p class="h">評価項目は同じ計画MD</p><p><b>完了条件＝レビュー項目</b>を実装前に書き、実装者とレビュアーが同じパスを読む。プロンプトへ本文を複製しない。</p></article>
+      <article class="card"><p class="h">programは実装仕様ではない</p><p><b>program.mdは親の索引</b>。実装の正本は単発ならplan.md、複数なら各子計画.md。ここを混ぜない。</p></article>
+    </div>
+  </section>
+
+  <section id="flow">
+    <h2>推奨フロー</h2>
+    <p class="slede">1つの実装単位に対し、実装と評価を別エージェントにし、同じ計画MDを契約として回します。</p>
+    <figure>
+      <svg width="100%" viewBox="0 0 920 310" role="img" aria-label="計画から実装、独立レビュー、差し戻し、完了までの推奨フロー">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          <marker id="arrowWarn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#B4472B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+        </defs>
+        <rect x="20" y="40" width="145" height="62" rx="12" fill="#E9ECFA" stroke="#2C3A8C"/>
+        <text x="92" y="66" text-anchor="middle" font-family="var(--sans)" font-size="14" font-weight="650" fill="#202C6E">入口判定</text>
+        <text x="92" y="87" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#5F6879">サクッと / ライト / フル</text>
+        <line x1="165" y1="71" x2="205" y2="71" stroke="#5F6879" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="205" y="28" width="170" height="86" rx="12" fill="#FFFFFF" stroke="#DBDFEA"/>
+        <text x="290" y="55" text-anchor="middle" font-family="var(--sans)" font-size="14" font-weight="650" fill="#19212F">正本計画MD</text>
+        <text x="290" y="77" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#5F6879">目的・範囲・方針</text>
+        <text x="290" y="96" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#1E5A40">完了条件＝レビュー項目</text>
+        <line x1="375" y1="71" x2="415" y2="71" stroke="#5F6879" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="415" y="28" width="170" height="86" rx="12" fill="#E9ECFA" stroke="#2C3A8C"/>
+        <text x="500" y="55" text-anchor="middle" font-family="var(--sans)" font-size="14" font-weight="650" fill="#202C6E">実装エージェント</text>
+        <text x="500" y="77" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#5F6879">計画を読んで実装・検証</text>
+        <text x="500" y="96" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#5F6879">commit + DONE</text>
+        <line x1="585" y1="71" x2="625" y2="71" stroke="#5F6879" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="625" y="28" width="170" height="86" rx="12" fill="#FFF" stroke="#2E7D5B" stroke-width="1.4"/>
+        <text x="710" y="55" text-anchor="middle" font-family="var(--sans)" font-size="14" font-weight="650" fill="#1E5A40">レビューエージェント</text>
+        <text x="710" y="77" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#5F6879">同じ計画＋diffを照合</text>
+        <text x="710" y="96" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#5F6879">PASS / FAIL</text>
+        <line x1="795" y1="71" x2="835" y2="71" stroke="#5F6879" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="835" y="40" width="70" height="62" rx="12" fill="#E3F1EA" stroke="#2E7D5B"/>
+        <text x="870" y="67" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="650" fill="#1E5A40">PASS</text>
+        <text x="870" y="87" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5F6879">完了報告</text>
+
+        <path d="M710 114 L710 185 L500 185 L500 120" fill="none" stroke="#B4472B" stroke-width="1.6" marker-end="url(#arrowWarn)"/>
+        <rect x="555" y="157" width="100" height="35" rx="9" fill="#F7E8E2" stroke="#B4472B"/>
+        <text x="605" y="179" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="650" fill="#8C3620">FAIL：差し戻し</text>
+
+        <rect x="205" y="230" width="590" height="52" rx="12" fill="#F5F6FA" stroke="#DBDFEA"/>
+        <text x="500" y="252" text-anchor="middle" font-family="var(--sans)" font-size="12.5" font-weight="650" fill="#19212F">指揮官は転送だけを担う</text>
+        <text x="500" y="271" text-anchor="middle" font-family="var(--sans)" font-size="11.5" fill="#5F6879">FAIL理由 + 残す成果 + 直す対象 + 受け入れ条件 + 新DONEマーカー</text>
+        <line x1="710" y1="192" x2="710" y2="230" stroke="#5F6879" stroke-dasharray="4 4"/>
+      </svg>
+      <figcaption>レビュアーは実装者へ直接指示せず、合否と根拠を返す。差し戻し内容の整理と上限管理は指揮官が担う。</figcaption>
+    </figure>
+  </section>
+
+  <section id="audit">
+    <h2>現状監査：方針はあるが、強制と整合が不足</h2>
+    <p class="slede">「作ってあるから毎回動く」とはまだ言えません。文書契約・起動スクリプト・ランタイムの3層が揃っていないためです。</p>
+    <div class="deflist">
+      <article class="ditem">
+        <p class="dhead"><span class="pill go">設計済み</span> 計画MDとレビュー項目</p>
+        <p class="dbody"><b>標準テンプレートは正しい方向です。</b> plan.md／子計画.mdに「目的・現状・方針・完了条件（レビュー項目）」があり、実装者とレビュアーが同じ条件を見る契約になっています。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill warn">未強制</span> 計画パスの注入</p>
+        <p class="dbody"><b><code>cockpit.sh up</code> は利用者が渡したプロンプトだけを起動時に注入</b>し、role-prompts.mdや計画パスを自動合成しません。呼び出し側が書き忘れると、計画を読まない実装・レビューが成立します。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill warn">矛盾</span> モデルと役割の既定値</p>
+        <p class="dbody"><b>plan-triageは実装=Claude／レビュー=Codexを既定</b>としますが、orca-cockpit本体の既定はCodex×2・mediumです。異系統クロスチェックの原則とスクリプト既定が一致していません。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill warn">見逃し</span> program lint</p>
+        <p class="dbody"><b>最新の表形式programは標準外なのに「違反なし」</b>でした。lintは標準の<code>NN … 状態</code>ブロックを0件検出しても成功するため、非対応形式を素通しします。全9 programのうち形式上6件PASS・3件FAILですが、PASSの中に偽陽性があります。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill amber">要実機確認</span> 自動レビュー配布</p>
+        <p class="dbody"><b>watch.shの合成テストは59/59 PASS</b>で、DONE→レビューペイン自動配布ロジックは存在します。一方、スキル冒頭は状態フック撤去で「要作り直し」と警告し、新しいメモはOrcaフック依存と説明。実機ではClaude側フックを確認、Codex側の登録は確認できず、Orca自体は調査時停止中でした。E2E保証は未確認です。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill warn">現行例</span> 2026-07-11画像スキル簡素化</p>
+        <p class="dbody"><b>子計画には詳細なレビュー項目がありますが、親は実装サブエージェント×2のみを明記</b>し、独立レビュアーの割当がありません。親programは表形式・状態<code>active</code>・標準メタ情報欠落で、現行規約とずれています。</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="scale">
+    <h2>簡単修正だけは、評価エージェントを省略してよい</h2>
+    <p class="slede">例外は感覚ではなく「1〜2ファイル・容易に戻せる・人間ゲートなし」の3条件をすべて満たす時だけに固定します。</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>規模</th><th>計画</th><th>実装レビュー</th><th>差し戻し上限</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill go">サクッと</span></td><td>なし</td><td>自己チェック＋diff要約</td><td>なし</td></tr>
+          <tr><td><span class="pill acc">ライト</span></td><td>plan.md必須</td><td>別エージェント・1パス</td><td>1回</td></tr>
+          <tr><td><span class="pill warn">フル</span></td><td>plan / program必須</td><td>別エージェント・探索込み</td><td>2回</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <details class="disc">
+      <summary>途中で規模が膨らんだ場合</summary>
+      <p class="dbody">サクッとで始めても、3ファイル以上・戻しにくい変更・削除やpush等の人間ゲートが見えた時点でライト以上へ昇格し、計画MDと独立レビューを追加します。最初の判定を守るために無理に小さく見せません。</p>
+    </details>
+  </section>
+
+  <section id="docs">
+    <h2>program / plan / 子計画 / プロンプトの違い</h2>
+    <p class="slede">programは「大きい計画書」ではなく、複数の独立計画を束ねる親索引です。実装者へ渡す主文書はplan.mdまたは子計画.mdです。</p>
+    <div class="deflist">
+      <article class="ditem">
+        <p class="dhead"><span class="pill acc">単発</span> plan.md</p>
+        <p class="dbody"><b>独立成果が1つの時の実装契約。</b>目的、現状、方針、触る範囲／非目標、検証方法、完了条件を持ちます。実装者とレビュアーの双方がこの1枚を読みます。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill acc">親</span> program.md</p>
+        <p class="dbody"><b>独立に完了する子が2本以上ある時だけ作る索引。</b>全体目的、共有契約、依存関係、子計画マップ、program全体の完了条件を持ちます。個々の実装詳細は書き込みません。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill acc">実行単位</span> plans/NN-子計画.md</p>
+        <p class="dbody"><b>program配下のplan.md相当。</b>1エージェントが独立して実装・レビューできる粒度にし、親backlinkと固有のレビュー項目を持ちます。子自身には状態を書かず、親マップが段階を持ちます。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill amber">輸送</span> 起動プロンプト</p>
+        <p class="dbody"><b>正本ではなく、エージェントへ契約を届ける封筒。</b>目的1行、計画の絶対パス、許可範囲、検証指示、報告形式、完了マーカーだけにし、計画本文をコピーしません。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill amber">ビュー</span> session-board</p>
+        <p class="dbody"><b>誰が何をしているかを見る盤面。</b>計画本文やレビュー基準の保管庫にはしません。計画への参照と現在段階だけを表示します。</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="tree">
+    <h2>推奨フォルダ構成は、今の骨格を変えずに揃える</h2>
+    <p class="slede">新しいreviewフォルダやプロンプト複製置き場は作らず、実行先repoのplans配下へ統一します。</p>
+    <pre class="tree">&lt;対象repo&gt;/
+├── AGENTS.md                         <span class="note">repo固有ルールの正本</span>
+└── plans/
+    ├── planning/
+    ├── active/
+    │   ├── 2026-07-11-単発修正/
+    │   │   └── <span class="mod">plan.md</span>              <span class="note">実装者＋レビュアーが同じ1枚を読む</span>
+    │   └── 2026-07-11-複数成果/
+    │       ├── <span class="mod">program.md</span>           <span class="note">親索引・共有契約・子マップ</span>
+    │       ├── plans/
+    │       │   ├── <span class="add">01-機能A.md</span>       <span class="note">実装・レビューの1単位</span>
+    │       │   └── <span class="add">02-機能B.md</span>
+    │       └── references/           <span class="note">任意。完成した参照資料だけ</span>
+    ├── paused/
+    ├── done/                         <span class="note">完了・未評価</span>
+    └── archive/                      <span class="note">評価済みOK</span>
+
+作らないもの:
+├── review/                           <span class="note">レビュー基準を別管理しない</span>
+├── prompts/                          <span class="note">仕様本文を複製しない</span>
+└── 子計画ごとの状態フォルダ           <span class="note">状態はprogram.mdの子マップに一本化</span></pre>
+  </section>
+
+  <section id="improve">
+    <h2>改善は「新しい制度」より、既存制度の強制力を足す</h2>
+    <p class="slede">優先順位は、計画を必ず読ませる導線、同じ条件でレビューする導線、規約ドリフトを止めるlintの順です。</p>
+    <div class="deflist">
+      <article class="ditem">
+        <p class="dhead"><span class="pill warn">P0</span> cockpit起動に<code>--plan</code>を必須化</p>
+        <ul>
+          <li><b>ライト／フル:</b> 計画の絶対パスが無ければ起動拒否。</li>
+          <li><b>起動時:</b> role-prompts共通契約＋計画パス＋役割固有指示を自動合成。</li>
+          <li><b>実装:</b> planを読み、完了条件・許可範囲・テストを先に要約してから編集。</li>
+          <li><b>レビュー:</b> 同じplanとbase→HEAD差分を読み、完了条件ごとにPASS/FAIL。</li>
+        </ul>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill warn">P0</span> program-lintの偽PASSを止める</p>
+        <ul>
+          <li><b>0ブロック:</b> 子計画マップが空でなければFAIL。</li>
+          <li><b>表形式:</b> 明示的に拒否し、標準NNブロックへの修正を案内。</li>
+          <li><b>親:</b> <code>形態: program</code>と標準メタ情報を必須化。</li>
+          <li><b>子:</b> 親backlink・必須4節・対象付きレビュー項目を検査。</li>
+        </ul>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill acc">P1</span> モデル既定を1つの正本から生成</p>
+        <p class="dbody"><b>plan-triage、orca-cockpit、role-promptsの値を手書きで重複させない。</b>規模から「実装系／レビュー系／effort」を解決し、構成カードと実起動が同じ結果になるようにします。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill acc">P1</span> 監督doctorを起動前に通す</p>
+        <p class="dbody"><b>Orca runtime、対象エージェントのhook、worktree psのlastAssistantMessage、レビューペイン識別を実機確認。</b>不成立なら自動監督を名乗らず、手動監督モードへ明示的に落とします。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill acc">P1</span> レビュー証跡は子計画へ最小集約</p>
+        <p class="dbody"><b>新しいreviewフォルダは作りません。</b>完了後だけ子計画末尾へ実装commit、レビュー結果、レビューcommitまたはセッション参照を1ブロック追記。状態は親マップ、詳細ログは端末／セッションに残します。</p>
+      </article>
+      <article class="ditem">
+        <p class="dhead"><span class="pill go">運用ルール</span> 現行作業にも独立レビューを追加</p>
+        <p class="dbody"><b>現在の「画像スキル簡素化」は子01・子02それぞれに独立レビューを1体ずつ割り当てる</b>のが自然です。実装2体を同時に走らせても、レビューは各子の実装commit後に同じ子計画を読ませます。</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="rollout">
+    <h2>導入順序：まず抜け道を閉じ、次に自動差し戻しを戻す</h2>
+    <p class="slede">監督の全面再構築より先に、計画パスとレビュー契約を確実に注入すれば、手動監督でも品質ゲートは成立します。</p>
+    <ol class="steps">
+      <li><span class="stepno">1</span><div><p class="h">計画テンプレートとlintを直す</p><p>標準外programを拒否し、レビュー項目に対象・検証方法・非目標を持たせる。</p></div></li>
+      <li><span class="stepno">2</span><div><p class="h">cockpitに計画パス強制とプロンプト自動合成を入れる</p><p>実装者・レビュアーの双方に同じ正本が必ず届くようにする。</p></div></li>
+      <li><span class="stepno">3</span><div><p class="h">1つのライト案件で実地検証する</p><p>実装→FAIL→1回差し戻し→PASSまでを通し、証跡と所要を確認する。</p></div></li>
+      <li><span class="stepno">4</span><div><p class="h">Orca hook／watchのE2Eを復旧する</p><p>doctorで環境依存を可視化し、DONE→review→FAIL/PASSの自動遷移を実機で証明する。</p></div></li>
+      <li><span class="stepno">5</span><div><p class="h">既存programを機械監査する</p><p>9件を新lintで再検査し、activeから優先して直す。履歴は勝手に一括書換しない。</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>最終提案</h2>
+    <div class="callout go">
+      <p class="ct">採用すべき運用</p>
+      <p><b>サクッとだけ実装者の自己確認で直送。ライト以上は必ず「実装1体＋独立レビュー1体」。</b>両者は同じplan.md／子計画.mdを読み、レビュー項目を唯一の合否基準にする。program.mdは親索引に限定し、レビュー専用フォルダは増やさない。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>根拠・参照</h2>
+    <ul class="source">
+      <li><b>規模とレビュー方式</b> — <span class="path">personal-os/説明書/運用契約.md §2</span></li>
+      <li><b>plan / program / 子計画の規約</b> — <span class="path">personal-os/my-brain/areas/AGENTS.md §3</span></li>
+      <li><b>入口判定</b> — <span class="path">personal-os/AIエージェント基盤/skills/plan-triage/SKILL.md</span></li>
+      <li><b>テンプレートとlint</b> — <span class="path">personal-os/AIエージェント基盤/skills/plan-ops/</span></li>
+      <li><b>実装・レビューの役割契約</b> — <span class="path">personal-os/AIエージェント基盤/skills/orca-cockpit/references/role-prompts.md</span></li>
+      <li><b>起動実装</b> — <span class="path">personal-os/AIエージェント基盤/skills/orca-cockpit/scripts/cockpit.sh</span></li>
+      <li><b>監督と差し戻し</b> — <span class="path">personal-os/AIエージェント基盤/skills/cockpit-supervisor/SKILL.md</span></li>
+      <li><b>実地確認</b> — program 9件lint、watch.sh合成テスト59/59 PASS、Orca runtime停止状態を2026-07-11に確認</li>
+    </ul>
+  </section>
+</main>
+</div>
+</body>
+</html>

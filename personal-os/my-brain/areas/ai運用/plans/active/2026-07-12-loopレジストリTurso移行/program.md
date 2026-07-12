@@ -60,8 +60,9 @@ Focusmap Mac Agent <──agent API── claim / observation / run event
     次: 単一Mac Agentのobserver・spool・shadow importer・承認済みapplyを実装し、launchd変更前で止める
     参照: focusmap@f0361b0d
     場所: plans/02-Mac同期と既存loop移行.md ／ 依存: 01
-03 Focusmap一覧UI … 計画レビュー待ち
-    次: 01確定後にfixtureを使うUI実装担当へ配る
+03 Focusmap一覧UI … 実装中（01契約f0361b0d基準）
+    次: /dashboard/settings/loopsのread-only UIとWeb session read routeを実装し、Browser確認前で止める
+    参照: focusmap@f0361b0d
     場所: plans/03-Focusmap一覧UI.md ／ 依存: 01
 04 統合・切替・旧一覧廃止 … 計画レビュー待ち
     次: 01〜03レビューPASS後にintegration担当へ配る

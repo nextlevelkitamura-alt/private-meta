@@ -56,8 +56,9 @@ Focusmap Mac Agent <──agent API── claim / observation / run event
     次: 01契約commit f0361b0dを基準に02 Mac同期と03 UIを別worktreeで並列実装する
     参照: focusmap@f0361b0d
     場所: plans/01-共通契約とDB・API・MCP.md ／ 依存: ―
-02 Mac同期と既存loop移行 … 計画レビュー待ち
-    次: 01確定後にobserver・spool・import・applyの実装担当へ配る
+02 Mac同期と既存loop移行 … 実装中（01契約f0361b0d基準）
+    次: 単一Mac Agentのobserver・spool・shadow importer・承認済みapplyを実装し、launchd変更前で止める
+    参照: focusmap@f0361b0d
     場所: plans/02-Mac同期と既存loop移行.md ／ 依存: 01
 03 Focusmap一覧UI … 計画レビュー待ち
     次: 01確定後にfixtureを使うUI実装担当へ配る

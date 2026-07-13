@@ -47,5 +47,24 @@ check("(d2) リサーチ×? は従来催促", len(out) == 3 and out[2].startswit
 guide = common._first_guide("k", "repo", "claude")
 check("(e) _first_guideの③に評価NN.md", "評価NN.mdで採点（全PASS=done" in guide and "書いてから着手" in guide)
 
+# (f) 計画箱は repo AGENTS の宣言から解決し、root plans 固定へ戻らない
+check("(f) _first_guideは二段ルーティング", all(s in guide for s in (
+    "repo-registry/repo概要.md", "対象repoの最寄りAGENTS.md", "宣言範囲の既存planを検索",
+    "root plansを推定・作成せず停止",
+)))
+check("(f2) _first_guideにroot plans固定なし",
+      "<repo>/plans" not in guide and "ls <repo>/plans" not in guide)
+
+# (g) Private起点は既存sessionの移管でなく対象repoの新しい可視sessionへhandoffする
+check("(g) _first_guideは可視session handoff", all(s in guide for s in (
+    "新しい可視sessionへhandoff", "既存session IDの移管・reparentはしない", "worktree cwd",
+)))
+
+# (h) 2回目以降の計画ミラーも repo AGENTS が宣言した箱を案内する
+out = mirror_lines("計画", "企画/01")
+check("(h) 計画ミラーもrepo固有箱", len(out) == 3
+      and "対象repo AGENTS.md→宣言された計画箱" in out[2]
+      and "<repo>/plans" not in out[2])
+
 print(f"\n== 結果: PASS={PASS} FAIL={FAIL} ==")
 sys.exit(1 if FAIL else 0)

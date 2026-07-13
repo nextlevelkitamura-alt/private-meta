@@ -41,7 +41,7 @@ description: 「やりたいこと」1件を受けて、規模(フル/ライト/
 1. **対象repoを特定する**。依頼がpersonal-os構造・横断運用そのものを指すなら「repo無し（ai運用領域）」として扱う。
 2. **計画置き場を決める**:
    - repo-local作業 → 対象repoの `plans/`（規約は所有repo側 `AGENTS.md` が正本）。
-   - Global Skill / loop / 横断・personal-os構造 → `~/Private/personal-os/my-brain/areas/ai運用/plans/active/<YYYY-MM-DD-日本語企画名>/plan.md`（置き場の規約: `~/Private/personal-os/my-brain/areas/ai運用/AGENTS.md` §3、テンプレ: `~/Private/personal-os/my-brain/areas/AGENTS.md` §3）。
+   - Global Skill / loop / 横断・personal-os構造 → `~/Private/personal-os/my-brain/areas/ai運用/plans/planning/<YYYY-MM-DD-日本語企画名>/plan.md`（置き場の規約: `~/Private/personal-os/my-brain/areas/ai運用/AGENTS.md` §3、テンプレ: `~/Private/personal-os/my-brain/areas/AGENTS.md` §3）。指揮官が実行を決めた時だけ plan-ops の `bucketctl` で active へ昇格する。
 3. **担当指揮官を決める**: 1プロジェクト（program）=指揮官1名の原則（`~/Private/personal-os/my-brain/areas/ai運用/決定ログ.md` #3）。対象プロジェクトに既存の指揮官チャットがあればそこへ合流させる。無ければ新規指揮官チャットを起こすかどうかは人間の判断（本Skillは決めない）。
 
 ## 4. 判断3: 起動形（2ペイン既定 / 3ペイン例外）

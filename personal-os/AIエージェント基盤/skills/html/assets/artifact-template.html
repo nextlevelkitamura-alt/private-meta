@@ -2,7 +2,7 @@
 <!--
   html Skill 骨組みテンプレ（コピーして中身を差し替える・使わない部品はCSSごと削る）
   - self-contained: 外部リソース禁止（CSS/JSインライン・画像はSVG/data URI・fontはsystem）
-  - 配色はライト単色に意図的にコミット。dark分岐（prefers-color-scheme/data-theme）を追加しない。
+  - 配色は必ず白背景のライト単色。暗い背景や表示環境による配色切替を追加しない。
   - PC前提・1枚完結。JSは書かない（開閉はネイティブの details/summary で足りる）。
   - full の固定構造:
       ① 見出し＋1行結論 → ② アンカーチップ(節5つ以上の時だけ) → ③ 要点カード
@@ -15,7 +15,7 @@
 -->
 <style>
   :root{
-    --ground:#ECEEF3; --surface:#FFFFFF; --surface-2:#F5F6FA;
+    --ground:#FFFFFF; --surface:#FFFFFF; --surface-2:#F7F8FB;
     --ink:#19212F; --muted:#5F6879; --line:#DBDFEA;
     --accent:#2C3A8C; --accent-ink:#202C6E; --accent-soft:#E9ECFA;
     --go:#2E7D5B; --go-ink:#1E5A40; --go-soft:#E3F1EA;
@@ -84,10 +84,10 @@
   .steps p{margin:0;font-size:13px;color:var(--muted)}
 
   /* ── codeblock: 実行フロー・対話の実文を .steps の各step内に置く時（ウォークスルー型）。.cm=コメント灰/.hl=強調緑/.arg=引数青 ── */
-  .codeblock{margin:8px 0 0;padding:12px 14px;background:#232936;color:#E8EBF2;font-family:var(--mono);font-size:11.8px;line-height:1.7;white-space:pre-wrap;word-break:break-word;border-radius:10px}
-  .codeblock .cm{color:#8B94A7}
-  .codeblock .hl{color:#9FE8C4;font-weight:600}
-  .codeblock .arg{color:#A9C1FF}
+  .codeblock{margin:8px 0 0;padding:12px 14px;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);font-family:var(--mono);font-size:11.8px;line-height:1.7;white-space:pre-wrap;word-break:break-word;border-radius:10px}
+  .codeblock .cm{color:var(--muted)}
+  .codeblock .hl{color:var(--go-ink);font-weight:600}
+  .codeblock .arg{color:var(--accent-ink)}
 
   /* ── tree: ディレクトリ・階層・包含関係。注釈は span で色分け ── */
   .tree{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px 20px;overflow-x:auto;line-height:1.9;margin:0}

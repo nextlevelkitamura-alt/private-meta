@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>全repoへのAI運用標準移植 — 計画提案</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ground: #ffffff;
+      --ground-2: #f7f9fc;
+      --surface: #ffffff;
+      --surface-2: #f3f6fb;
+      --ink: #172033;
+      --muted: #5b6679;
+      --line: #d7dfeb;
+      --accent: #315fbd;
+      --accent-ink: #244f9e;
+      --accent-soft: #e8efff;
+      --go: #16865d;
+      --go-ink: #0b6848;
+      --go-soft: #e5f6ee;
+      --warn: #b36b00;
+      --warn-ink: #875000;
+      --warn-soft: #fff2da;
+      --danger: #d33f54;
+      --danger-ink: #a62b3e;
+      --danger-soft: #fdebef;
+      --sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Segoe UI", sans-serif;
+      --mono: "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); line-height: 1.75; }
+    .page { min-height: 100vh; padding: 44px 22px 76px; background: #ffffff; }
+    .wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 38px; }
+    header { padding: 28px; background: #ffffff; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 12px 34px rgba(42, 62, 94, .07); }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(30px, 5vw, 48px); line-height: 1.18; letter-spacing: -.03em; }
+    .lede { margin: 16px 0 0; color: var(--muted); font-size: 17px; max-width: 74ch; }
+    .lede b, .slede b, .dbody b, li b { color: var(--ink); }
+    h2 { margin: 0 0 7px; color: var(--muted); font-size: 13px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .slede { margin: 0 0 16px; max-width: 78ch; color: var(--ink); font-size: 15px; }
+    section { display: flex; flex-direction: column; }
+    code { padding: 2px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--accent-ink); font-family: var(--mono); font-size: 12px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 9px; }
+    .chip { padding: 6px 13px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--accent-ink); font-size: 12px; font-weight: 650; text-decoration: none; }
+    .chip:hover { border-color: var(--accent); }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    .card .h { margin: 0 0 8px; font-size: 15px; font-weight: 750; }
+    .card p { margin: 0; color: var(--muted); font-size: 13.5px; }
+    .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 750; vertical-align: 1px; }
+    .pill.go { color: var(--go-ink); background: var(--go-soft); }
+    .pill.warn { color: var(--warn-ink); background: var(--warn-soft); }
+    .pill.danger { color: var(--danger-ink); background: var(--danger-soft); }
+    .pill.acc { color: var(--accent-ink); background: var(--accent-soft); }
+    figure { margin: 0; padding: 20px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+    figure svg { display: block; min-width: 760px; }
+    .figure-scroll { overflow-x: auto; }
+    figcaption { margin-top: 12px; color: var(--muted); font-size: 12px; }
+    .callout { padding: 18px; border: 1px solid var(--danger); border-radius: 14px; background: var(--danger-soft); }
+    .callout .ct { margin: 0 0 6px; color: var(--danger-ink); font-size: 13px; font-weight: 800; letter-spacing: .04em; }
+    .callout p { margin: 0; font-size: 14px; }
+    .deflist { display: flex; flex-direction: column; gap: 10px; }
+    .ditem { padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    .dhead { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; margin: 0 0 6px; font-size: 14px; font-weight: 750; }
+    .dbody { margin: 0; color: var(--muted); font-size: 13.5px; }
+    .ditem ul { margin: 7px 0 0; padding-left: 20px; color: var(--muted); font-size: 13.5px; }
+    .ditem li { margin: 4px 0; }
+    .compare2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .ccol { min-width: 0; padding: 17px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    .ccol .h { margin: 0 0 10px; font-size: 14px; font-weight: 750; }
+    .ccol ul { margin: 0; padding-left: 20px; color: var(--muted); font-size: 13.5px; }
+    .steps { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+    .steps li { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+    .steps li:last-child { border-bottom: 0; }
+    .stepno { display: flex; flex: none; align-items: center; justify-content: center; width: 28px; height: 28px; margin-top: 2px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; font-weight: 800; }
+    .steps .h { margin: 0; font-size: 14px; font-weight: 750; }
+    .steps p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
+    .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    .tree { margin: 0; padding: 18px 20px; overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font-family: var(--mono); font-size: 12.5px; line-height: 1.95; }
+    .tree .global { color: var(--accent-ink); }
+    .tree .local { color: var(--go-ink); }
+    .tree .legacy { color: var(--warn-ink); }
+    .kv { margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    .kvrow { display: flex; gap: 18px; padding: 10px 16px; border-bottom: 1px solid var(--line); font-size: 13px; }
+    .kvrow:last-child { border-bottom: 0; }
+    .kvrow dt { flex: 0 0 180px; color: var(--muted); }
+    .kvrow dd { margin: 0; }
+    details.disc { padding: 13px 17px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); }
+    details.disc summary { cursor: pointer; color: var(--accent-ink); font-size: 13.5px; font-weight: 700; }
+    details.disc[open] summary { margin-bottom: 8px; }
+    .source { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; color: var(--muted); font-size: 12.5px; list-style: none; }
+    .source b { color: var(--ink); }
+    .footer-note { padding-top: 4px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 760px) {
+      .cards, .compare2 { grid-template-columns: 1fr; }
+      .kvrow { flex-direction: column; gap: 2px; }
+      .kvrow dt { flex: auto; }
+      header { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <main class="wrap">
+      <header>
+        <p class="eyebrow">AI運用 / Active / 2026-07-13</p>
+        <h1>全repoへのAI運用標準移植</h1>
+        <p class="lede"><b>Wave 0を実行し、中央契約はPASS、仕事repoは危険な自動commit hookを除去しました。</b>ただし変更前から開いていた仕事sessionが別作業を2件の未push commitへ巻き込んだため、現在は人間ゲートで停止しています。</p>
+      </header>
+
+      <nav class="chips" aria-label="ページ内ナビゲーション">
+        <a class="chip" href="#changed-now">今回変えたこと</a>
+        <a class="chip" href="#plan-shape">これからの計画</a>
+        <a class="chip" href="#folder-changes">編集フォルダ</a>
+        <a class="chip" href="#architecture">構造</a>
+        <a class="chip" href="#p0">第0ゲート</a>
+        <a class="chip" href="#routing">依頼ルート</a>
+        <a class="chip" href="#boundary">移植境界</a>
+        <a class="chip" href="#legacy">既存計画</a>
+        <a class="chip" href="#conflicts">競合</a>
+        <a class="chip" href="#roadmap">ロードマップ</a>
+        <a class="chip" href="#parallel">並列実装</a>
+        <a class="chip" href="#repo-guarantee">repo内保証</a>
+        <a class="chip" href="#parallel-skill">並列Skill</a>
+        <a class="chip" href="#gates">合格条件</a>
+        <a class="chip" href="#cockpit">実行編成</a>
+        <a class="chip" href="#decision">確認事項</a>
+      </nav>
+
+      <section id="changed-now" aria-labelledby="summary-title">
+        <h2 id="summary-title">今回変更したことと現在の停止点</h2>
+        <p class="slede"><b>中央側は完了、仕事repo側は安全化途中</b>です。正本は中央program一式から増やしていません。</p>
+        <div class="cards">
+          <article class="card">
+            <p class="h"><span class="pill go">PASS</span> Child01 中央契約</p>
+            <p><b>二段ルーティング、session引継ぎ、session-board責務分離</b>を実装。10/10・80/80・59/59の回帰テストと独立レビューを通過しました。</p>
+          </article>
+          <article class="card">
+            <p class="h"><span class="pill warn">一部PASS</span> Child02 hook安全化</p>
+            <p><b>現在のCodex/Claude設定では危険hook 0件</b>です。checkpoint commitは人間確認＋明示path限定へ変更しました。</p>
+          </article>
+          <article class="card">
+            <p class="h"><span class="pill danger">停止中</span> 旧sessionの巻込みcommit</p>
+            <p><b><code>f4b78f49</code>・<code>fb6f5047</code></b> が安全化差分とcircus計画を混在。稼働中sessionの終了と履歴分離の承認待ちです。</p>
+          </article>
+        </div>
+        <div style="height:12px"></div>
+        <div class="callout">
+          <p class="ct">いま仕事repoで書込みを再開しない理由</p>
+          <p><b><code>circus応募自動入力を実装</code> sessionが変更前のhookを保持している可能性</b>があり、現在も別作業の未コミット差分が増えています。終了・再起動を確認するまでreset・stage・commit・後続移植を行いません。</p>
+        </div>
+      </section>
+
+      <section id="plan-shape" aria-labelledby="plan-shape-title">
+        <h2 id="plan-shape-title">これからは「中央契約 → 仕事安全化 → 仕事実証 → 横展開」の順</h2>
+        <p class="slede"><b>9子計画を直列ゲート付きで進めます。</b>現在はWave 0のChild01完了、Child02人間ゲート待ちです。</p>
+        <ol class="steps">
+          <li><span class="stepno">0</span><div><p class="h">完了 — programをactive化</p><p>中央program一式だけを横断移植の正本とし、仕事repoへ同じ計画・台帳・状態表を複製しない契約を確定しました。</p></div></li>
+          <li><span class="stepno">1</span><div><p class="h">Wave 0 — Child01 PASS／Child02停止中</p><p>中央契約は完了。仕事repoは危険hookを除去済みですが、旧sessionの2 auto-commit分離、credential、Claude設定永続化が残っています。</p></div></li>
+          <li><span class="stepno">2</span><div><p class="h">Wave 1〜3 — 子03→05を直列実証</p><p>仕事repoの旧plan・consumerをread-only台帳にし、Private→仕事repoの二段ルートを入れ、外部副作用のない新規plan 1件でE2Eを通します。</p></div></li>
+          <li><span class="stepno">3</span><div><p class="h">Wave 4 — 子06の後に子07の実更新</p><p>人間が選んだ既存plan 1件の正本・consumer・索引を整理します。子07の所有権監査は先行できますが、AGENTS・Skill・hookの書込みは子06の評価後です。</p></div></li>
+          <li><span class="stepno">4</span><div><p class="h">Wave 5〜6 — 子08と09で標準化・横展開</p><p><code>repo-create</code> にread-only監査とdry-run scaffoldを追加し、focusmapで実装系を再実証。PASS後だけ、残りrepoを1repo=1計画・1worktreeで展開します。</p></div></li>
+        </ol>
+        <div style="height:12px"></div>
+        <details class="disc">
+          <summary>Terraが実装・計画反映した内容</summary>
+          <p class="dbody">root <code>plans/</code> 固定を解消し、repo registry→対象repo AGENTS→既存plan検索→宣言箱へ統一。Private→対象repoの可視session handoff、孤児sessionなし、canonical repo一意、hook各1回、done/archive分離、実runtime基準の監査をprogramへ反映しました。</p>
+        </details>
+      </section>
+
+      <section id="folder-changes" aria-labelledby="folder-changes-title">
+        <h2 id="folder-changes-title">編集する場所は「中央基盤」「仕事repo」「focusmap以降」の3段階</h2>
+        <p class="slede"><b>中央は契約と共通ツール、仕事repoは業務の箱とrepo-local導線、focusmapは実装系のカナリア</b>として編集します。</p>
+        <pre class="tree">~/Private/
+├── <span class="global">personal-os/</span>                                      <span class="note">中央正本／Wave 0・5</span>
+│   ├── <span class="mod">説明書/運用契約.md</span>                    <span class="note">[編集] repo固有計画箱と完了語彙を整合</span>
+│   ├── <span class="global">AIエージェント基盤/</span>
+│   │   ├── <span class="mod">GLOBAL_AGENTS.md</span>                  <span class="note">[編集] 一律root plans前提を廃止</span>
+│   │   ├── <span class="mod">repo-registry/repo概要.md</span>        <span class="note">[監査/最小修正] 担当repo解決だけに限定</span>
+│   │   ├── <span class="mod">hooks-registry/hooks/session-board/</span>
+│   │   │   ├── session-start.md             <span class="note">[編集] repo AGENTSが宣言する計画箱を尊重</span>
+│   │   │   ├── common.py                    <span class="note">[編集] canonical repo/session handoff対応</span>
+│   │   │   └── README.md                    <span class="note">[編集] session状態＋実行ログの責務を明記</span>
+│   │   └── <span class="global">skills/</span>
+│   │       ├── plan-triage/                 <span class="note">[編集] registry→repo AGENTSの二段ルート</span>
+│   │       ├── plan-ops/                    <span class="note">[再利用] 解決済みpathへ生成・lint</span>
+│   │       └── repo-create/                 <span class="note">[追加] audit-repo / scaffold / audit-all</span>
+│   └── <span class="global">my-brain/areas/</span>
+│       ├── <span class="mod">AGENTS.md・ai運用/AGENTS.md</span>        <span class="note">[編集] 古いpath・存在しない節参照を解消</span>
+│       ├── <span class="mod">ai運用/決定ログ.md</span>              <span class="note">[追記] 標準契約と棄却案</span>
+│       └── <span class="add">ai運用/plans/active/全repo移植/</span>   <span class="note">[実行中] 唯一の中央programと9子計画</span>
+│
+├── <span class="local">projects/active/仕事/</span>                         <span class="note">業務repo正本／Wave 0〜4</span>
+│   ├── <span class="mod">AGENTS.md</span>                              <span class="note">[一部編集済み] checkpoint commitを人間確認＋明示path限定</span>
+│   ├── <span class="local">CLAUDE.md -&gt; AGENTS.md</span>                  <span class="note">[維持] rootは既に正しい</span>
+│   ├── <span class="local">領域/{domain}/{project}/計画/plan.md</span> <span class="note">[原則維持] 領域固有planの正本</span>
+│   ├── <span class="mod">計画一覧.md</span>                           <span class="note">[変更] 手書き状態→生成read-only索引</span>
+│   ├── <span class="mod">.agents/skills/{task,eod,review,…}/</span>    <span class="note">[変更] plan更新→索引再生成</span>
+│   ├── <span class="mod">.codex/hooks.json・.claude/settings.json</span> <span class="note">[変更] 無条件 git add -A / commitだけ停止</span>
+│   ├── <span class="mod">.codex/config.toml</span>                    <span class="note">[人間ゲート] credential失効・repo外保管へ切替</span>
+│   └── <span class="mod">領域/*/{AGENTS.md,CLAUDE.md}</span>           <span class="note">[承認後] AGENTS正本・CLAUDE互換へ1階層ずつ</span>
+│
+├── <span class="global">projects/active/focusmap/</span>                      <span class="note">実装系カナリア／Wave 6</span>
+│   ├── AGENTS.md・CLAUDE.md・plans/              <span class="note">[後段編集] coding repo用の計画箱と導線</span>
+│   └── docs/plans/・docs/ai/plans/                  <span class="note">[分類先行] 仕様/履歴/現行planを一括移動しない</span>
+│
+└── <span class="legacy">projects/{paused,archive}/</span>                    <span class="note">[未マウント/対象外] 一律変更しない</span></pre>
+        <div style="height:12px"></div>
+        <details class="disc">
+          <summary>今回の移植計画は中央programだけ</summary>
+          <p class="dbody"><b>今回の全repo移植は中央program一式だけが正本</b>です。仕事repoへ同じ移植planを作りません。移植後に仕事固有の新規依頼が来た時だけ、仕事AGENTSが解決した計画箱のplanをその依頼の唯一の正本にします。</p>
+        </details>
+        <div style="height:12px"></div>
+        <details class="disc">
+          <summary>今回の移植で触らないフォルダ</summary>
+          <p class="dbody">仕事repoの <code>領域/*/マニュアル/</code>、業務データ、候補者DB、MCP本体、dispatcher等の稼働loop実装、launchdは原則変更しません。Dailyの8セクション化・close marker・archive刷新も別計画のままです。</p>
+        </details>
+      </section>
+
+      <section id="architecture" aria-labelledby="architecture-title">
+        <h2 id="architecture-title">推奨構造は「中央手続き＋二段ルーティング＋repo内の箱」</h2>
+        <p class="slede">正本を混ぜず、<b>registryはrepoだけ、repo AGENTSは領域と箱だけ、planは本文と状態だけ</b>を所有します。</p>
+        <figure>
+          <div class="figure-scroll">
+            <svg width="100%" viewBox="0 0 960 405" role="img" aria-label="Privateの依頼をrepo registryと対象repo AGENTSの二段階で計画箱へ振り分ける構造図">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M2 1L8 5L2 9" fill="none" stroke="#4d6fd3" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+              </defs>
+              <rect x="24" y="145" width="150" height="82" rx="16" fill="#edf2ff" stroke="#4d6fd3"/>
+              <text x="99" y="178" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="#172033">Privateの依頼</text>
+              <text x="99" y="204" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#526078">自然文・対象が曖昧でも可</text>
+              <line x1="174" y1="186" x2="224" y2="186" stroke="#4d6fd3" stroke-width="2" marker-end="url(#arrow)"/>
+              <rect x="230" y="118" width="205" height="136" rx="18" fill="#f1f4fb" stroke="#4d6fd3"/>
+              <text x="332" y="153" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="#172033">repo registry</text>
+              <text x="332" y="181" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#244f9e">担当repoだけを解決</text>
+              <text x="332" y="207" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5b6679">領域表・計画本文・状態は持たない</text>
+              <text x="332" y="232" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5b6679">repo概要.md → repo/AGENTS.md</text>
+              <line x1="435" y1="186" x2="485" y2="186" stroke="#4d6fd3" stroke-width="2" marker-end="url(#arrow)"/>
+              <rect x="491" y="101" width="205" height="170" rx="18" fill="#e8f7f0" stroke="#1d9769"/>
+              <text x="594" y="136" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="#172033">対象repo AGENTS</text>
+              <text x="594" y="165" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#0b6848">領域・プロジェクト・箱を解決</text>
+              <text x="594" y="192" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#0b6848">既存planを先に検索</text>
+              <text x="594" y="219" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5b6679">一致 → 合流</text>
+              <text x="594" y="243" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5b6679">不明 → 人間確認</text>
+              <line x1="696" y1="145" x2="750" y2="85" stroke="#1d9769" stroke-width="2" marker-end="url(#arrow)"/>
+              <line x1="696" y1="225" x2="750" y2="295" stroke="#4d6fd3" stroke-width="2" marker-end="url(#arrow)"/>
+              <rect x="755" y="25" width="180" height="120" rx="18" fill="#e8f7f0" stroke="#1d9769"/>
+              <text x="845" y="58" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#172033">仕事｜領域固有</text>
+              <text x="845" y="84" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#0b6848">領域/{domain}/{project}/</text>
+              <text x="845" y="105" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#0b6848">計画/plan.md</text>
+              <text x="845" y="128" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#5b6679">業務の箱をrepo内に持つ</text>
+              <rect x="755" y="165" width="180" height="100" rx="18" fill="#fff4df" stroke="#c48316"/>
+              <text x="845" y="198" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#172033">仕事｜repo横断</text>
+              <text x="845" y="224" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#875000">root plans/&lt;bucket&gt;/</text>
+              <text x="845" y="247" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#5b6679">複数領域・基盤移行だけ</text>
+              <rect x="755" y="285" width="180" height="95" rx="18" fill="#edf2ff" stroke="#4d6fd3"/>
+              <text x="845" y="318" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#172033">focusmap等</text>
+              <text x="845" y="344" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#244f9e">repo AGENTS指定のplans/</text>
+              <text x="845" y="365" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#5b6679">同じpathを全repoへ強制しない</text>
+            </svg>
+          </div>
+          <figcaption>repo registryを巨大な業務台帳にせず、各repoのAGENTSへ責務を渡すことで、正本の二重管理を防ぎます。</figcaption>
+        </figure>
+      </section>
+
+      <section id="p0" aria-labelledby="p0-title">
+        <h2 id="p0-title">第0ゲートを通るまで仕事repoを変更しない</h2>
+        <p class="slede">今回の監査で、移植設計より先に解消すべき<b>セキュリティとGit安全性の問題</b>が確認されました。</p>
+        <div class="callout">
+          <p class="ct">重大 — credential値はこのHTMLに含めていません</p>
+          <p>trackedのCodex設定に平文credentialがあり、Git履歴にも残っています。また<b>仕事repo固有</b>のtrust登録済みStop hookが、AI応答の終了時に <code>git add -A</code> と自動commitを実行します。自動commit一般が悪いのではなく、<b>対象確認なしで全差分をstage・commitする経路</b>が危険です。Globalのsession-board hookとは別物です。</p>
+        </div>
+        <div style="height:12px"></div>
+        <details class="disc">
+          <summary>第0ゲートの具体項目</summary>
+          <p class="dbody">①仕事repo固有Stop hookのstage/commit経路だけ停止、②Stop時はread-onlyのstatus・完了シグナル・session-board記録だけ、③節目にdiff確認、④ <code>git add -- &lt;明示path&gt;</code>、⑤人間確認後にcommit。Global session-board hookや有効な業務hookを一括停止しません。credentialは失効・再発行→repo外保管を先行し、履歴rewriteは別人間ゲートです。</p>
+        </details>
+      </section>
+
+      <section id="routing" aria-labelledby="routing-title">
+        <h2 id="routing-title">入口は2つでも、仕事repoの実行contextへ合流する</h2>
+        <p class="slede">仕事repo内から始めた時はそのまま、Privateから始めた時はrepoを解決してから、<b>仕事repoの新しい可視session/worktreeを起動して実行所有権を渡します。</b></p>
+        <ol class="steps">
+          <li><span class="stepno">1</span><div><p class="h">入口を判定する</p><p>仕事repo内ならregistryを飛ばして仕事AGENTSへ。Privateなら <code>repo-registry/repo概要.md</code> で担当repoだけを決めます。</p></div></li>
+          <li><span class="stepno">2</span><div><p class="h">仕事repoの可視sessionを新規起動する</p><p><code>canonical_repo=仕事</code>、正本plan参照、worktree cwd、元session keyをhandoff情報として渡します。subagent/headlessは対話実装sessionの代わりにしません。</p></div></li>
+          <li><span class="stepno">3</span><div><p class="h">Private側は引継ぎ確認後にfinishする</p><p>Private行は「調査・計画・承認・引継ぎ」の完了ログを残して終了し、仕事行が実装を単独所有します。調整役として残す場合だけ、2行併存を明示します。</p></div></li>
+          <li><span class="stepno">4</span><div><p class="h">repo固有ルールを読む</p><p>仕事root <code>AGENTS.md</code>で、ドメイン・プロジェクト・計画箱を解決します。</p></div></li>
+          <li><span class="stepno">5</span><div><p class="h">既存計画を先に探す</p><p>目的・対象領域・関連pathが同じplanへ合流します。正本が曖昧なら新規作成せず確認します。</p></div></li>
+          <li><span class="stepno">6</span><div><p class="h">正しい箱にだけ作る</p><p>領域固有は <code>領域/{ドメイン}/{プロジェクト}/計画/plan.md</code>、repo横断だけroot <code>plans/</code>です。</p></div></li>
+          <li><span class="stepno">7</span><div><p class="h">共通手続きを適用する</p><p>plan-triageが規模・実行形を決め、plan-opsが解決済みpathへ雛形生成・lintします。hookは計画pathを決めません。session-boardはsession状態とDaily実行ログだけを持ち、plan本文・plan状態は持ちません。</p></div></li>
+        </ol>
+      </section>
+
+      <section id="boundary" aria-labelledby="boundary-title">
+        <h2 id="boundary-title">「全repo同じpath」ではなく「同じ判断手順」</h2>
+        <p class="slede">仕事repoの箱はしっかり仕事repo内に持たせ、<b>共通化するのは置き場所ではなく、正本を解決する順序</b>です。</p>
+        <div class="compare2">
+          <article class="ccol">
+            <p class="h"><span class="pill go">移植する</span> 共通の制御面</p>
+            <ul>
+              <li>registry→repo AGENTSの二段ルート</li>
+              <li>plan-triage / plan-ops</li>
+              <li>レビュー・人間ゲート</li>
+              <li>session-board / Orca接続</li>
+              <li>read-only監査とscaffold</li>
+            </ul>
+          </article>
+          <article class="ccol">
+            <p class="h"><span class="pill warn">残す</span> repo固有の資産</p>
+            <ul>
+              <li>仕事の <code>領域/.../計画/</code> とmanual</li>
+              <li>repo-local Skill / MCP / scripts</li>
+              <li>仕事repo所有の3 loop実装</li>
+              <li>coding repoのcode・仕様・test</li>
+              <li>root <code>plans/</code>（repo横断計画用）</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="legacy" aria-labelledby="legacy-title">
+        <h2 id="legacy-title">既存の領域planは残し、手動一覧だけを段階廃止する</h2>
+        <p class="slede"><b>一括移動も即時廃盤も不採用</b>です。Skillが参照しているpathを保ち、書込み先だけを1正本へ収束させます。</p>
+        <div class="deflist">
+          <article class="ditem"><p class="dhead"><span class="pill go">維持</span> 領域固有plan</p><p class="dbody"><code>領域/{ドメイン}/{プロジェクト}/計画/plan.md</code> はそのまま正本です。現在正しい場所にある計画をrootへ移しません。</p></article>
+          <article class="ditem"><p class="dhead"><span class="pill acc">生成化</span> <code>計画一覧.md</code></p><p class="dbody">pathは互換のため残し、各plan headerから生成するread-only索引へ降格します。各行は正本planへのlinkを持ちます。</p></article>
+          <article class="ditem"><p class="dhead"><span class="pill warn">同一wave</span> Skill writerの切替</p><p class="dbody"><code>task</code>・<code>eod</code>・<code>review</code>・<code>business-planning</code>・<code>repo-eval</code>を「plan更新→一覧再生成」へ同時に切り替えます。旧手動一覧と生成一覧は併用しません。</p></article>
+          <article class="ditem"><p class="dhead">repo横断・重複・廃止plan</p><p class="dbody">台帳で1件ずつ分類します。repo横断だけroot plansへの移動候補、重複・廃止は旧pathに後継pointerだけを残し、本文・状態を複製しません。移動・改名は人間承認後です。</p></article>
+        </div>
+      </section>
+
+      <section id="conflicts" aria-labelledby="conflicts-title">
+        <h2 id="conflicts-title">仕事repoは「部分導入済み」だが正本が競合している</h2>
+        <p class="slede">領域planとroot plansは片方を廃止する関係ではありません。難所は、<b>用途を分け、一覧・consumer・hookを二重正本にしないこと</b>です。</p>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>論点</th><th>現在</th><th>移行先</th><th>危険度</th></tr></thead>
+            <tbody>
+              <tr><td>repo選択</td><td>入口ごとに暗黙判断</td><td>repo registryで一意化</td><td><span class="pill warn">中</span></td></tr>
+              <tr><td>計画正本</td><td>領域plan＋root plan＋手動一覧</td><td>repo AGENTSが用途別に箱を宣言</td><td><span class="pill danger">高</span></td></tr>
+              <tr><td>計画consumer</td><td>5 Skillが一覧を読書き</td><td>plan更新→一覧生成</td><td><span class="pill danger">高</span></td></tr>
+              <tr><td>credential</td><td>tracked設定＋履歴</td><td>runtime保管</td><td><span class="pill danger">P0</span></td></tr>
+              <tr><td>Stop hook</td><td>全差分自動commit</td><td>signalのみ→節目に明示path stage</td><td><span class="pill danger">P0</span></td></tr>
+              <tr><td>領域AGENTS</td><td>逆向きsymlink</td><td>CLAUDE→AGENTS</td><td><span class="pill warn">中</span></td></tr>
+              <tr><td>Global Skill</td><td>外部symlink 3件</td><td>runtime露出</td><td><span class="pill warn">中</span></td></tr>
+              <tr><td>仕事loop</td><td>repo所有＋Global一覧</td><td>変更なし</td><td><span class="pill go">低</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="roadmap" aria-labelledby="roadmap-title">
+        <h2 id="roadmap-title">9子計画を6波で進める</h2>
+        <p class="slede">中央修正と仕事安全化だけを並列にし、その後は<b>1波の評価が通るまで次へ進まない</b>構成です。</p>
+        <ol class="steps">
+          <li><span class="stepno">0</span><div><p class="h">中央契約の整合＋仕事repo緊急安全化</p><p>子01・02。credential、危険hook、壊れた中央参照を先に解消します。両方PASSが後続の開始条件です。</p></div></li>
+          <li><span class="stepno">1</span><div><p class="h">read-only移植台帳</p><p>子03。legacy計画、consumer、旧絶対path、Skill/hook/loop所有者を列挙し、まだ何も動かしません。</p></div></li>
+          <li><span class="stepno">2</span><div><p class="h">二段ルーティング＋一覧互換</p><p>子04。Private→registry→仕事repo context→AGENTS→計画箱の順と、plan→生成一覧の互換導線を実装します。</p></div></li>
+          <li><span class="stepno">3</span><div><p class="h">領域固有計画1件のE2E</p><p>子05。外部副作用のない依頼をPrivateから出し、正しい領域planへ入り、review・完了・rollbackまで実証します。</p></div></li>
+          <li><span class="stepno">4</span><div><p class="h">既存計画1件＋導線所有権</p><p>子06・07。人間が選んだ1計画の正本・consumer・索引を整理し、正しい領域planは無理にrootへ移しません。</p></div></li>
+          <li><span class="stepno">5</span><div><p class="h">類型対応キット→focusmap→残りrepo</p><p>子08・09。repo-createへrepo種別別のdry-run監査を実装し、実装系カナリアPASS後に各repoの箱へ独立計画を立てます。</p></div></li>
+        </ol>
+        <div style="height:12px"></div>
+        <details class="disc">
+          <summary>9子計画のファイル対応</summary>
+          <p class="dbody">01 中央正本とrepo標準契約／02 仕事repo緊急安全化／03 仕事repo移植台帳／04 仕事repo二段ルーティング導入／05 仕事repo新規計画パイロット／06 仕事repo既存計画の正本整理／07 仕事repo導線所有権整理／08 repo-create移植キット／09 実装系カナリアと全repo展開。ファイル名の改名は破壊的変更になるため、今回は本文見出しだけ更新しています。</p>
+        </details>
+      </section>
+
+      <section id="parallel" aria-labelledby="parallel-title">
+        <h2 id="parallel-title">並列化できるのは「独立調査」と「別repoの実装」が中心</h2>
+        <p class="slede">並列化は子計画の番号ではなく、<b>同じ正本へのwriterが重ならないか</b>で決めます。現計画で安全な並列waveは次の通りです。</p>
+        <figure>
+          <div class="figure-scroll">
+            <svg width="100%" viewBox="0 0 980 500" role="img" aria-label="全repo AI運用標準移植の並列waveと依存関係">
+              <defs>
+                <marker id="parallel-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5b6679" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+              </defs>
+              <text x="28" y="42" font-family="sans-serif" font-size="13" font-weight="700" fill="#5b6679">WAVE 0 — ここだけ別repoで同時書込み可</text>
+              <rect x="28" y="58" width="380" height="86" rx="16" fill="#edf2ff" stroke="#4d6fd3"/>
+              <text x="218" y="91" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#172033">01 中央正本・標準契約</text>
+              <text x="218" y="118" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#244f9e">Personal OSだけを編集</text>
+              <rect x="572" y="58" width="380" height="86" rx="16" fill="#fdebef" stroke="#d33f54"/>
+              <text x="762" y="91" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#172033">02 仕事repo緊急安全化</text>
+              <text x="762" y="118" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#a62b3e">仕事repoだけを編集／人間ゲート必須</text>
+              <line x1="218" y1="144" x2="430" y2="192" stroke="#5b6679" stroke-width="1.7" marker-end="url(#parallel-arrow)"/>
+              <line x1="762" y1="144" x2="550" y2="192" stroke="#5b6679" stroke-width="1.7" marker-end="url(#parallel-arrow)"/>
+              <rect x="350" y="192" width="280" height="64" rx="14" fill="#f3f6fb" stroke="#aeb8c8"/>
+              <text x="490" y="218" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#172033">03 read-only移植台帳</text>
+              <text x="490" y="240" text-anchor="middle" font-family="sans-serif" font-size="11.5" fill="#5b6679">台帳内の調査観点は並列可</text>
+              <line x1="490" y1="256" x2="490" y2="288" stroke="#5b6679" stroke-width="1.7" marker-end="url(#parallel-arrow)"/>
+              <rect x="350" y="288" width="280" height="64" rx="14" fill="#edf2ff" stroke="#4d6fd3"/>
+              <text x="490" y="314" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#172033">04 ルーティング → 05 E2E</text>
+              <text x="490" y="336" text-anchor="middle" font-family="sans-serif" font-size="11.5" fill="#244f9e">契約を固め、実地で1本証明</text>
+              <line x1="490" y1="352" x2="490" y2="383" stroke="#5b6679" stroke-width="1.7" marker-end="url(#parallel-arrow)"/>
+              <rect x="210" y="383" width="260" height="78" rx="14" fill="#fff4df" stroke="#c48316"/>
+              <text x="340" y="412" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#172033">06 既存plan正本整理</text>
+              <text x="340" y="436" text-anchor="middle" font-family="sans-serif" font-size="11.5" fill="#875000">writerはこちらが先</text>
+              <rect x="510" y="383" width="260" height="78" rx="14" fill="#f3f6fb" stroke="#aeb8c8"/>
+              <text x="640" y="412" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#172033">07 導線所有権整理</text>
+              <text x="640" y="436" text-anchor="middle" font-family="sans-serif" font-size="11.5" fill="#5b6679">監査のみ並列／書込みは06後</text>
+              <line x1="470" y1="422" x2="510" y2="422" stroke="#c48316" stroke-width="2" marker-end="url(#parallel-arrow)"/>
+              <text x="490" y="487" text-anchor="middle" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#0b6848">08後: focusmap PASS → 残りrepoは1repo=1worktreeで並列展開可</text>
+            </svg>
+          </div>
+          <figcaption>実装と最終reviewは同時に完了できません。reviewerは仕様・テスト観点を先行確認できますが、最終PASSはwriterのcommit後です。</figcaption>
+        </figure>
+        <div style="height:12px"></div>
+        <details class="disc"><summary>並列writerの必須条件</summary><p class="dbody">①別repoまたは別worktree、②allowed filesに重複なし、③共通契約が先に確定、④1writer=1責務、⑤Integration担当を1人に固定、⑥明示pathだけstage、⑦merge・push・worktree撤去は人間ゲート。どれか1つでも満たさなければ直列化します。</p></details>
+      </section>
+
+      <section id="repo-guarantee" aria-labelledby="repo-guarantee-title">
+        <h2 id="repo-guarantee-title">現状は「repo内で頼めば必ず同基準」までは保証できない</h2>
+        <p class="slede">中央契約は整いましたが、仕事repoのAGENTS・計画consumer・旧root参照・実機E2Eが未完のため、<b>まだ「必ず」とは言えません</b>。</p>
+        <div class="compare2">
+          <article class="ccol"><p class="h"><span class="pill danger">現在</span> 安全化は途中</p><ul><li>最寄りAGENTSに旧計画pathが残る</li><li>Skillが手書き <code>計画一覧.md</code> へ書く</li><li>設定上の危険hookは0だが旧sessionが残る</li><li>Claude設定はignoredでcloneへ非永続</li></ul></article>
+          <article class="ccol"><p class="h"><span class="pill go">実装後</span> 2入口が同じplanへ合流</p><ul><li>repo AGENTSが領域・計画箱を明示</li><li><code>CLAUDE.md -&gt; AGENTS.md</code> を統一</li><li>Global Skillはruntime露出で発見</li><li>hookは経路決定せず安全な後処理だけ</li><li>Private/repo rootのE2Eが同一pathを返す</li></ul></article>
+        </div>
+        <div style="height:12px"></div>
+        <details class="disc"><summary>「同じ基準に則った」と言えるカナリアテスト</summary><p class="dbody">同じ依頼文を①対象repo root、② <code>~/Private</code> の2箇所からdry-runし、<code>resolved_repo</code>・<code>repo_rules</code>・<code>existing_plan</code>・<code>canonical_plan_path</code>・<code>execution_cwd</code> が一致することを機械確認します。一致しなければそのrepoの導入はFAILです。</p></details>
+      </section>
+
+      <section id="parallel-skill" aria-labelledby="parallel-skill-title">
+        <h2 id="parallel-skill-title">簡易並列Skillは別agentに作らせる。ただし仕事repo実証後</h2>
+        <p class="slede"><b>計画者が契約と受入条件を固め、別agentが実装、さらに別系統がreview</b>するのが安全です。今すぐ作ると、未確定のルーティングをSkillに固定化してしまいます。</p>
+        <div class="deflist">
+          <article class="ditem"><p class="dhead"><span class="pill go">推奨</span> 薄い <code>parallel-work</code> 入口</p><p class="dbody">「並列でやって」に反応し、タスクの依存、allowed files、writer、Integration担当、review gateを1枚の構成カードにします。自分でhook・watcher・worktree実装を持ちません。</p></article>
+          <article class="ditem"><p class="dhead">既存Skillとの責務分離</p><p class="dbody"><code>task-router</code> の良い並列判定基準は活かしますが、旧 <code>docs/ai</code> 運用は引き継ぎません。<code>orchestration</code> はDAG・dispatch・worker_doneを実行する下位エンジン、<code>parallel-work</code> は人間向けの判定入口とします。</p></article>
+          <article class="ditem"><p class="dhead"><span class="pill danger">使用不可</span> 現行 <code>orca-cockpit</code> を保証基盤にしない</p><p class="dbody">本文自身に、状態fileを使う <code>watch.sh</code> 検知が現在インエフェクティブと明記されています。修理または現行Orca orchestrationへの置き換えを別計画・別reviewで通すまで、「自動監督できる」と扱いません。</p></article>
+          <article class="ditem"><p class="dhead">作成タイミング</p><p class="dbody">今回のWave 0〜仕事repo E2Eは、明示的な手動構成カードで進めます。Work PASS後、子08の標準化キット内で <code>skill-creator-custom</code> を使い、別agent実装→別reviewerで作成します。</p></article>
+        </div>
+      </section>
+
+      <section id="gates" aria-labelledby="gates-title">
+        <h2 id="gates-title">仕事repoから次へ進む条件</h2>
+        <p class="slede">仕事repoの成功は業務系標準の合格です。<b>全repo展開可はfocusmap合格後</b>に判定します。</p>
+        <div class="deflist">
+          <article class="ditem">
+            <p class="dhead"><span class="pill danger">Gate 0</span> 安全基線</p>
+            <p class="dbody"><b>tracked secret 0・危険自動commit 0・旧rootエラー 0</b>。credentialは失効・再発行済みで、履歴対応が人間判断済み。</p>
+          </article>
+          <article class="ditem">
+            <p class="dhead"><span class="pill acc">Work PASS</span> 業務系パイロット</p>
+            <p class="dbody"><b>領域固有の新規1件＋既存1件</b>が仕事repo内起点とPrivate起点の両方から同じ正本へ合流し、生成一覧、plan-ops、Claude/Codex、session-board、異系統レビュー、rollbackを通過。</p>
+          </article>
+          <article class="ditem">
+            <p class="dhead"><span class="pill go">Rollout PASS</span> 実装系パイロット</p>
+            <p class="dbody"><b>focusmapでcode・仕様・計画の境界</b>を保ち、test/lint/build/deploy gateを壊さず同じ制御面が機能。</p>
+          </article>
+          <article class="ditem">
+            <p class="dhead">全repoの終了条件</p>
+            <p class="dbody"><b>導入済み・保留・対象外・未mount</b>のどれかと理由を全管理対象repoに付け、active repoには所有repo内の独立計画を置く。</p>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="files-title">
+        <h2 id="files-title">正本と説明HTMLの置き場</h2>
+        <p class="slede">MDが実行正本、HTMLは人間向けの派生説明です。旧paused計画は別セッションのstaged対象なので編集せず、新program側から出所を参照します。</p>
+        <pre class="tree"><span class="global">ai運用/plans/active/2026-07-13-全repoへのAI運用標準移植/</span>
+├── <span class="global">program.md</span>                  # 現在の判断・状態・全体順序の正本
+├── plans/
+│   ├── 01-中央正本とrepo標準契約.md
+│   ├── 02-仕事repo緊急安全化.md
+│   ├── …
+│   └── 09-実装系カナリアと全repo展開.md
+└── explain/
+    └── <span class="local">program.html</span>             # この人間向け説明
+
+<span class="legacy">ai運用/plans/paused/2026-07-02-repo構造の標準化構想/plan.md</span>
+└── 発案履歴（既存staged差分のため未編集）</pre>
+      </section>
+
+      <section id="cockpit" aria-labelledby="cockpit-title">
+        <h2 id="cockpit-title">コックピット構成カード — Wave 0で停止中</h2>
+        <p class="slede">Terraと仕事安全化担当を並列実行し、中央側は完了しました。<b>仕事repoの旧sessionと履歴分離が終わるまで後続writerを起動しません。</b></p>
+        <dl class="kv">
+          <div class="kvrow"><dt>レーン</dt><dd>全repo AI運用標準移植</dd></div>
+          <div class="kvrow"><dt>repo / branch</dt><dd>ai運用領域／子計画ごとに所有repoと専用worktree</dd></div>
+          <div class="kvrow"><dt>規模 / review</dt><dd>フル／探索込み・差し戻し上限2・Codex xhigh</dd></div>
+          <div class="kvrow"><dt>Wave 0</dt><dd>01と02を別repo・別writerで同時実行候補</dd></div>
+          <div class="kvrow"><dt>レビュー</dt><dd>仕様確認は並列可／最終PASSは各commit後</dd></div>
+          <div class="kvrow"><dt>監督方式</dt><dd>Orca orchestrationが有効ならworker_done/gate、無効なら明示手動進行</dd></div>
+          <div class="kvrow"><dt>critical path</dt><dd>子01・02のみ Opus 4.8 fast候補（全後続が待つため）</dd></div>
+          <div class="kvrow"><dt>他の実装</dt><dd>Claude Sonnet 5既定／レビューはCodex gpt-5.5 xhigh</dd></div>
+          <div class="kvrow"><dt>起動状態</dt><dd><span class="pill danger">Child02 人間ゲート待ち</span></dd></div>
+        </dl>
+      </section>
+
+      <section id="decision" aria-labelledby="decision-title">
+        <h2 id="decision-title">未決事項 — 仕事repoを安全に再開する3ゲート</h2>
+        <p class="slede">設計判断はprogramへ反映済みです。ここでは<b>別作業を失わずにauto-commitを分離する承認</b>だけを求めます。</p>
+        <div class="deflist">
+          <article class="ditem"><p class="dhead"><span class="pill danger">先に必要</span> 1. 稼働中circus sessionを終了・再起動</p><p class="dbody">変更前から開いているsessionが旧Stop hookを保持する可能性があります。現在の未コミット実装を保ったまま、sessionだけを終了・再起動します。</p></article>
+          <article class="ditem"><p class="dhead"><span class="pill go">推奨</span> 2. 未push 2commitを安全に組み直す</p><p class="dbody"><code>origin/master</code> へmixed resetしてworktreeの最新内容を保持し、<code>.codex/hooks.json</code> と <code>AGENTS.md</code> だけを明示pathで安全化commit。circus差分は未commitへ戻します。</p></article>
+          <article class="ditem"><p class="dhead"><span class="pill warn">別ゲート</span> 3. credentialとClaude設定を正本化</p><p class="dbody">credentialを失効・再発行しrepo外へ分離した後、既存 <code>.claude/settings.json</code> を安全に追跡できるか判断します。新しい設定正本は作りません。</p></article>
+        </div>
+      </section>
+
+      <section aria-labelledby="history-title">
+        <h2 id="history-title">更新履歴</h2>
+        <p class="slede">このHTMLは同一pathを更新しています。正本mdと実装は合意後に更新します。</p>
+        <dl class="kv">
+          <div class="kvrow"><dt>v1</dt><dd>全repo移植の調査結果と9子計画を可視化</dd></div>
+          <div class="kvrow"><dt>v2</dt><dd>ダーク配色を廃止し、HTML Skillに白背景必須ルールを反映</dd></div>
+          <div class="kvrow"><dt>v3</dt><dd>Private起点の二段ルーティングと仕事repo内の計画箱を明確化</dd></div>
+          <div class="kvrow"><dt>v4</dt><dd>並列wave、repo内起点の保証条件、簡易並列Skillの位置づけを追加</dd></div>
+          <div class="kvrow"><dt>v5</dt><dd>「今回変えたこと」を最上部へ移し、実装順序・編集予定フォルダ・Terraのsession監査を統合</dd></div>
+          <div class="kvrow"><dt>v6</dt><dd>Wave 0の実装結果、Child01 PASS、旧hookの2 auto-commit事故、再開に必要な3ゲートへ更新</dd></div>
+        </dl>
+      </section>
+
+      <section aria-labelledby="sources-title">
+        <h2 id="sources-title">調査根拠</h2>
+        <ul class="source">
+          <li><b>共通契約</b> — `personal-os/説明書/運用契約.md`、`personal-os/AIエージェント基盤/GLOBAL_AGENTS.md`</li>
+          <li><b>計画規約</b> — `personal-os/my-brain/areas/AGENTS.md`、`areas/ai運用/AGENTS.md`、`skills/plan-ops/`</li>
+          <li><b>仕事repo</b> — root AGENTS、計画一覧、領域内計画、plan consumer、Codex/Claude hook、Skill symlink、loop状態をread-only監査</li>
+          <li><b>二段ルーティング</b> — repo registryの責務規約、仕事repo root AGENTSの領域・計画規約、plan-triage / plan-opsの現行前提</li>
+          <li><b>横展開比較</b> — focusmapのAGENTS・計画置き場・Git/worktree状態、repo-create criteria</li>
+          <li><b>並列調査</b> — 中央正本棚卸し、仕事repo競合監査、横展開アーキテクチャの3系統を統合</li>
+          <li><b>並列実行比較</b> — <code>task-router/workflows/parallelization-gate.md</code>、Orca <code>orchestration</code>、現行 <code>orca-cockpit</code> の責務と制約を照合</li>
+          <li><b>Daily/session監査</b> — Terraがsession-boardの <code>common.py</code>、<code>session-start.md</code>、README、実Daily、完了/archive計画、仕事repo hookをread-only照合</li>
+        </ul>
+        <p class="footer-note">credential値・token・環境変数値は、本文・HTML・ログへ掲載していません。</p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

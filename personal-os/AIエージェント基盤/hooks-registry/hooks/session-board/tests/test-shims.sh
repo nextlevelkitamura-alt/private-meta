@@ -93,7 +93,11 @@ echo "$J4_SS" | python3 "$CL/session-start/session-board-session-start.py" >/dev
 OUT=$(echo "$J4_UP" | python3 "$CL/prompt-register/session-board-prompt-register.py")
 echo "$OUT" | grep -qF -- '--plan "<企画名[/NN] か なし>"'; ok "D11 ガイドに--plan例" test $? -eq 0
 echo "$OUT" | grep -q "計画列: 計画=これから置く先"; ok "D11 計画列1行" test $? -eq 0
-echo "$OUT" | grep -qF "ls <repo>/plans/{planning,active}"; ok "D11 既存計画確認(ls)行" test $? -eq 0
+echo "$OUT" | grep -qF "対象repoの最寄りAGENTS.md"; ok "D11 repo AGENTSで計画箱解決" test $? -eq 0
+echo "$OUT" | grep -qF "宣言範囲の既存planを検索"; ok "D11 宣言範囲で既存計画検索" test $? -eq 0
+echo "$OUT" | grep -qF "root plansを推定・作成せず停止"; ok "D11 計画箱不明時は停止" test $? -eq 0
+echo "$OUT" | grep -qF "新しい可視sessionへhandoff"; ok "D11 Privateから可視sessionへhandoff" test $? -eq 0
+echo "$OUT" | grep -qF "既存session IDの移管・reparentはしない"; ok "D11 session reparent禁止" test $? -eq 0
 echo "$OUT" | grep -q "計画種別なら、置く前に3判定"; ok "D11 3判定見出し" test $? -eq 0
 [ "$(echo "$OUT" | grep -c -E '^ [^ ]')" = "4" ]; ok "D11 3判定は4小項目(①②③置き場)" test $? -eq 0
 # D9: 実装で 計画:? → ミラーに催促行（3行）→ update --plan 後のターンで消える（2行）

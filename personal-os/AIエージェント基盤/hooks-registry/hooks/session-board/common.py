@@ -143,7 +143,7 @@ def _summarize(prompt):
 
 
 def _first_guide(key, repo, runtime):
-    """初回注入（目標が未記入の間）: 記入コマンド・種別/計画列定義・既存目標一覧・既存計画確認・計画3判定。"""
+    """初回注入（目標が未記入の間）: 記入コマンド・種別/計画列定義・既存目標一覧・二段ルーティング・計画3判定。"""
     goals = board_goals()
     lines = [
         f"[session-board] s:{key} | {repo or '?'} | {runtime} | 現在:{_now()}",
@@ -163,7 +163,9 @@ def _first_guide(key, repo, runtime):
             "（親名=目標名で成果が1つの親に集まる）。無関係なら新しい目標を立てる。",
         ]
     lines += [
-        "置く前に ls <repo>/plans/{planning,active} で既存計画・親programを確認（重複新設しない）。",
+        "計画ルート: repo-registry/repo概要.md で担当repoだけを判定（cwdで決めない）→ "
+        "対象repoの最寄りAGENTS.mdで領域・プロジェクト・計画箱を解決→宣言範囲の既存planを検索。既存があれば合流。",
+        "repo未登録／AGENTSなし／計画箱未宣言・複数候補／既存plan競合なら、root plansを推定・作成せず停止して人間確認。",
         "計画種別なら、置く前に3判定（詳細: 運用契約§2・areas/AGENTS.md §3）:",
         " ①規模: ①1〜2ファイル ②容易に戻せる ③人間ゲート無し が全YES=サクッと → "
         "計画ファイル不要（--plan なし・ボードとlogで足りる）。1つでもNOなら plan.md 必須。",
@@ -171,8 +173,9 @@ def _first_guide(key, repo, runtime):
         "それ以外は単発 plan.md。",
         " ③完了条件: レビュー項目（「こうなっていれば正しい」形式・対象明示）を書いてから着手。"
         "ライト以上は実装後に評価NN.mdで採点（全PASS=done・areas§3）。雛形: plan-ops new-plan.sh",
-        " 置き場: repo概要.md で所属repoを判定（cwdでなく依頼の中身で）→ そのrepo AGENTS.md → "
-        "<repo>/plans/。決めたら update --plan で宣言。",
+        " 置き場: 上の二段ルートで対象repo AGENTS.mdが宣言した計画箱を使う。決めたら update --plan で宣言。",
+        "Private起点で対象repoへ書く前は、canonical repo path・plan参照・worktree cwd・許可path・開始時Git snapshotを渡し、"
+        "対象repoをrootとする新しい可視sessionへhandoff。既存session IDの移管・reparentはしない。",
         f"節目: {BOARD} log --key {key} --repo <repo> --parent <目標名> --entry <成果1行>"
         "（時刻・所要は自動付与）。サブエージェント起動中: flip --state sub／復帰: flip --state run"
         "（SubagentStart/Stop 受け口の登録環境では sub-start/sub-end が体数ごと自動増減・手動不要）。"
@@ -192,8 +195,8 @@ def _mirror(key, row):
     ]
     if row.get("type") == "計画":
         lines.append("計画3判定: ①サクッと（3条件全YES）→ --plan なし ②子2本以上→program化 "
-                     "③レビュー項目を書いてから着手（実装後は評価NN.mdで採点） → 置き場: repo概要.md→<repo>/plans/"
-                     "（運用契約§2・areas§3）。")
+                     "③レビュー項目を書いてから着手（実装後は評価NN.mdで採点） → 置き場: "
+                     "repo概要.md→対象repo AGENTS.md→宣言された計画箱（既存planを先に検索・運用契約§2・areas§3）。")
     elif row.get("type") == "実装" and plan in (PLACEHOLDER, "なし"):
         lines.append("実装で計画:" + ("?" if plan == PLACEHOLDER else "なし") +
                      " → サクッと3条件（①1〜2ファイル②容易に戻せる③人間ゲート無し）を再確認。"

@@ -6,7 +6,7 @@
 - AIが動く構造をブラックボックス化しない。正本、導線、runtime露出、Skill、loop、hook、registry の関係は、人間が理解できる形で説明・構造化する。
 - `personal-os/AIエージェント基盤/` は、Global Skill、loop、hook、repo-registry、runtime露出、グローバルAGENTS系指示など、PC全体のAIエージェント運用の正本を集める場所である。AIの動かし方・導線・横断設定を編集する前に、まずこの基盤配下の `AGENTS.md` と該当サブフォルダの `AGENTS.md` を確認する。
 - runtimeやツール側へ露出するグローバル指示・設定は、原則としてこの基盤側に正本を置き、必要な場所へ symlink として露出する。本文コピーや露出先の正本化で二重管理しない。
-- 難しい構造やメタ情報を説明するときは、ダークモードでの可読性を前提に、フォルダー構成・表・図で分かりやすく提示する。特にAIエージェント基盤などのメタ領域では、配置と関係性が分かる構造図を優先する。
+- 難しい構造やメタ情報を説明するときは、必ず白背景のライト単色を前提に、フォルダー構成・表・図で分かりやすく提示する。画面・カード・図・コードブロックに暗い背景を使わず、表示環境による暗色切替も作らない。特にAIエージェント基盤などのメタ領域では、配置と関係性が分かる構造図を優先する。
 - 物事を説明・比較・整理するときは、短い返答で足りる場合を除き `html` スキルを優先し、HTMLで見やすく構造化する。正本mdや継続編集する計画・デイリーはHTMLで置き換えない。
 - 構造はシンプルに保ち、既存の構造を基本的に尊重する。AI判断だけでフォルダ、ファイル名、分類、正本の置き場を好き勝手に増やしたり変えたりしない。
 - Global Skill、AIエージェント基盤、横断的な構造設計などのメタ領域は、人間が分からない状態のまま進めない。
@@ -27,14 +27,14 @@
 - `CLAUDE.md` は、同じフォルダの `AGENTS.md` への相対symlinkとして作る。本文コピーは禁止。
 - 作業前に対象ディレクトリの最寄り `AGENTS.md` を読む。
 - `AGENTS.md` があるフォルダでは、同階層に `CLAUDE.md -> AGENTS.md` がある状態を基本とする。
-- mdの人間向けHTML説明書を作る場合は、対になるmdと同じベース名の `.html` にする（`SKILL.md`→`SKILL.html`、`AGENTS.md`→`AGENTS.html`）。同じ場所に複数mdがあってもどのmdの説明か一目で分かる。HTMLは人間向け表示で、正本は常にmd側。AIの実行導線（Skill本文など）からHTMLを参照しない。
+- mdの人間向けHTML説明書を作る場合は、対になるmdと同じベース名の `.html` にする（`SKILL.md`→`SKILL.html`、`AGENTS.md`→`AGENTS.html`）。同じ場所に複数mdがあってもどのmdの説明か一目で分かる。areaの計画に紐づくHTMLは `<計画>/explain/` に置き、`plan.md` / `program.md` の説明はそれぞれ `explain/plan.html` / `explain/program.html` にする。HTMLは人間向け表示で、正本は常にmd側。AIの実行導線（Skill本文など）からHTMLを参照しない。
 
 ## 4. 正本の扱い
 - 特定repoの実装・計画・repo-local Skillは、そのrepo内を正本にする。
 - runtime側に出すファイルは露出先であり、正本にしない。
 - 正本・計画・現在状態・履歴・実装を混ぜない。
 - 同じ本文を複数箇所にコピーして二重管理しない。
-- Skillやツールが生成する成果物（生成物）は、所属repoの `それぞれのカテゴリーフォルダ/outputs/YYYY-MM/` に置く。似た用途の生成物は同じ用途フォルダに入れ、repoごとに置き場をばらつかせない。最終成果物はgit追跡、一時・中間生成物は `.gitignore`。この規約が生成物置き場の正本で、各Skillはここを参照し規約本文をコピーしない。
+- Skillやツールが生成する成果物は、正本との関係で置き場を選ぶ。areaの完成した恒久知識は `areas/<area>/知識/*.md`（必要なHTMLは同名で隣接）、計画に紐づく人間向けHTMLは `<計画>/explain/`、それ以外のrepo成果物は所属repoの `それぞれのカテゴリーフォルダ/outputs/YYYY-MM/` に置く。似た用途の生成物は同じ用途フォルダに入れ、repoごとに置き場をばらつかせない。最終成果物はgit追跡、一時・中間生成物は `.gitignore`。この規約が生成物置き場の正本で、各Skillはここを参照し規約本文をコピーしない。
 
 ## 5. 安全ルール
 - 削除、移動、改名、正本変更、破壊的git操作は明示承認なしに実行しない。
@@ -44,5 +44,6 @@
 - push は明示依頼がある時だけ行う（session-board の終了確認①②③④で人間がOKした場合は明示依頼にあたる）。
 
 ## 6. セッション運用と計画の置き場
-- セッションの開始と終了は `session-board` の手順に従う（開始=当日デイリー「動いているエージェント」へ宣言、終了=完了判断→人間確認①②③④→「終わったこと」へ入れ子で報告＋git仕上げ）。正本は `personal-os/AIエージェント基盤/hooks-registry/hooks/session-board/`（skillは廃止・2026-07-05）。フックが注入・強制する。**完了確認は毎ターンではなく節目**（大目標達成＋満足の気配）でのみ（prompt型フックが判定・2026-07-05）。一区切りは `board.py log` で時刻付きの子を積む。subagent・headlessは登録しない。
-- 計画の置き場: 実作業repoでは `<repo>/plans/planning|active|paused|done/`（無ければ作る）。personal-os / my-brain 系は `my-brain/areas/<領域>/plans/` の同バケット。フォルダ=状態で、md内に状態や「実行中」マークを書かない。
+- セッションの開始と終了は `session-board` の手順に従う（開始=当日デイリー「動いているエージェント」へ宣言、終了=完了判断→人間確認①②③④→「終わったこと」へ入れ子で報告＋git仕上げ）。正本は `personal-os/AIエージェント基盤/hooks-registry/hooks/session-board/`（skillは廃止・2026-07-05）。フックが注入・強制する。**完了確認は毎ターンではなく節目**（大目標達成＋満足の気配）でのみ（prompt型フックが判定・2026-07-05）。一区切りは `board.py log` で時刻付きの子を積む。subagent・headlessは独立sessionとして登録しない。session-boardはsession状態とDailyの実行ログを所有し、plan本文・plan状態は所有しない。
+- 計画の置き場は全repo共通pathにしない。`repo-registry/repo概要.md` で担当repoだけを決め、対象repoの最寄り `AGENTS.md` で領域・プロジェクト・計画箱を解決し、宣言された範囲の既存planを先に検索する。既存planがあれば合流し、無ければrepoが宣言した箱へ作る。計画箱が未宣言・複数候補で曖昧・正本不明な場合は、root `plans/` を自動作成せず停止して人間に確認する。personal-os / my-brain系は `my-brain/areas/<領域>/plans/` のバケット規約に従う。
+- Private起点で対象repoへ書き込む前に、canonical repo path・plan参照・worktree cwd・許可path・開始時Git snapshotを引き継ぎ、対象repoをrootとする新しい可視sessionを起動する。既存session IDの移管・reparentはしない。新sessionの登録と対象repo `AGENTS.md` の読込みを確認後、Private側は引継ぎ完了としてfinishする。調整役として残す場合だけ2行併存を許し、役割と終了責任を明記する。

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily運用刷新 — Terra並列実装計画</title>
+<style>
+  :root{--bg:#fff;--ink:#172131;--muted:#5e6877;--line:#d8e0ea;--soft:#f6f8fb;--blue:#3557a5;--blueSoft:#eaf0ff;--green:#237054;--greenSoft:#e5f3ec;--amber:#8a5915;--amberSoft:#fff3df;--red:#93402d;--redSoft:#fbece7;--violet:#4f499d;--violetSoft:#efedff;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono","SFMono-Regular",Menlo,monospace}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#fff;color:var(--ink);font-family:var(--sans);line-height:1.72}.page{min-height:100vh;padding:42px 22px 76px;background:#fff}.wrap{max-width:1060px;margin:auto;display:flex;flex-direction:column;gap:42px}
+  .eyebrow{margin:0 0 10px;color:var(--muted);font-size:12px;letter-spacing:.14em;text-transform:uppercase}h1{font-size:35px;line-height:1.2;margin:0;letter-spacing:-.025em}h2{font-size:15px;letter-spacing:.055em;color:var(--muted);margin:0 0 8px}h3{font-size:15px;margin:0 0 7px}.lede{max-width:80ch;margin:15px 0 0;color:var(--muted);font-size:16px}.lede b,.intro b,.card b,.item b{color:var(--ink)}section{display:flex;flex-direction:column}.intro{max-width:80ch;margin:0 0 16px;font-size:14.5px}
+  .nav{display:flex;gap:8px;flex-wrap:wrap}.nav a{padding:6px 12px;border-radius:999px;border:1px solid #cdd9fb;background:var(--blueSoft);color:#2a4386;text-decoration:none;font-size:12px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.card,.item,.callout,.tree,.timeline,.status,.folder,details{border:1px solid var(--line);border-radius:14px;background:#fff}.card{padding:17px}.card p{margin:0;color:var(--muted);font-size:13.5px}.card .title{font-weight:800;color:var(--ink);margin:7px 0 5px}.tag{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800}.done{background:var(--greenSoft);color:#195c43}.now{background:var(--blueSoft);color:#294185}.wait{background:var(--amberSoft);color:#75480d}.todo{background:var(--redSoft);color:#823523}.terra{background:var(--violetSoft);color:#403a8b}
+  .status{display:grid;grid-template-columns:repeat(4,1fr);overflow:hidden}.stat{padding:15px;border-right:1px solid var(--line)}.stat:last-child{border-right:0}.stat .num{font-size:22px;font-weight:850}.stat .label{font-size:12px;color:var(--muted)}
+  .beforeafter{display:grid;grid-template-columns:1fr 44px 1fr;align-items:stretch}.ba{padding:18px;border:1px solid var(--line);border-radius:14px;background:#fff}.ba ul{margin:8px 0 0;padding-left:20px;color:var(--muted);font-size:13.5px}.arrow{align-self:center;text-align:center;font-size:23px;color:#7b8696}
+  .timeline{padding:18px}.wave{display:grid;grid-template-columns:110px 1fr;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line)}.wave:last-child{border-bottom:0}.wlabel{font-size:12px;font-weight:850;color:#294185}.wbody p{margin:0;font-size:13.5px}.wbody .sub{color:var(--muted);font-size:12.5px;margin-top:2px}.lanes{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}.lane{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:3px 8px;background:var(--soft)}
+  .folders{display:grid;grid-template-columns:1fr 1fr;gap:13px}.folder{padding:16px}.folder .head{display:flex;align-items:center;gap:8px;margin:0 0 5px;font-weight:800}.folder p{margin:0;color:var(--muted);font-size:13px}.folder code{display:block;margin-top:8px;overflow-wrap:anywhere}
+  code{font-family:var(--mono);font-size:12px;background:var(--soft);border:1px solid var(--line);padding:1px 5px;border-radius:6px}.tree{padding:16px 19px;margin:0;font-family:var(--mono);font-size:12.2px;line-height:1.82;white-space:pre;overflow:auto}.items{display:flex;flex-direction:column;gap:11px}.item{padding:15px 17px}.itemhead{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 5px;font-size:14px;font-weight:800}.item p,.item ul{font-size:13.5px;color:var(--muted);margin:0}.item ul{padding-left:20px;margin-top:7px}.callout{padding:15px 17px;background:var(--amberSoft);border-color:#e1bc81}.callout.red{background:var(--redSoft);border-color:#dca594}.callout.green{background:var(--greenSoft);border-color:#a7d1bd}.callout .ct{font-size:12px;font-weight:900;color:#74460c;margin:0 0 4px}.callout.red .ct{color:#823523}.callout.green .ct{color:#195c43}.callout p{margin:0;font-size:13.5px}.steps{margin:0;padding:0;list-style:none}.steps li{display:flex;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line)}.steps li:last-child{border-bottom:0}.no{flex:none;width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--blueSoft);color:#294185;font-size:12px;font-weight:850}.steps p{margin:0;font-size:13.5px}.steps .sub{color:var(--muted);font-size:12.5px}.history{border-left:2px solid #cdd6e4;padding-left:18px}.history p{margin:0 0 9px;font-size:13px;color:var(--muted)}.history time{font-weight:800;color:var(--ink)}details{padding:13px 16px}summary{cursor:pointer;color:#294185;font-size:13px;font-weight:800}details p,details li{font-size:13px;color:var(--muted)}.links{margin:8px 0 0;padding-left:20px}.links a{color:#294185}
+  @media(max-width:820px){.cards,.folders,.status{grid-template-columns:1fr}.stat{border-right:0;border-bottom:1px solid var(--line)}.stat:last-child{border-bottom:0}.beforeafter{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.wave{grid-template-columns:1fr}.page{padding:28px 15px 60px}h1{font-size:29px}}
+</style>
+</head>
+<body><div class="page"><main class="wrap">
+  <header>
+    <p class="eyebrow">Daily運用刷新 / Terra並列実装計画 / v3</p>
+    <h1>4体並列 → 中間テスト → 2体並列 → 全体テスト</h1>
+    <p class="lede"><b>programは全体の順序だけ、各planはagentへの作業指示書に分けました。</b> 各Terraが終わるたびには正式レビューをせず、Wave統合後のCheckpoint A / Bと全実装後のFinal Gateでまとめてテスト・レビューします。runtime実装・commit・active昇格はまだ行っていません。</p>
+  </header>
+
+  <nav class="nav" aria-label="ページ内ナビゲーション"><a href="#conclusion">1. 結論</a><a href="#current">2. 現在地</a><a href="#change">3. 変更内容</a><a href="#micro">4. 実装計画</a><a href="#risk">5. リスク</a><a href="#questions">6. 未決事項</a><a href="#history">7. 更新履歴</a></nav>
+
+  <section id="conclusion">
+    <h2>1. 結論 — Terraはモデル、並列化はworktreeと担当境界で作る</h2>
+    <p class="intro"><code>gpt-5.6-terra</code>はオーケストレーター名ではなく実装モデルです。<b>同じ基点から独立worktreeを作り、同じファイルを2体に触らせない</b>ことで並列化します。</p>
+    <div class="cards">
+      <article class="card"><span class="tag terra">Terra worker</span><p class="title">自分のplanだけ読む</p><p>programや他planは読まず、必読正本・許可path・自己テストを自分のplanから受け取ります。</p></article>
+      <article class="card"><span class="tag now">Checkpoint</span><p class="title">個別レビューで止めない</p><p>worker完了時は自己テストとcommit hashだけ。正式な検証はWave統合後にまとめます。</p></article>
+      <article class="card"><span class="tag wait">人間ゲート</span><p class="title">危険操作は最後まで分離</p><p>目標本文、active昇格、commit、runtime露出、launchd、main、pushはTerraに実行させません。</p></article>
+    </div>
+  </section>
+
+  <section id="current">
+    <h2>2. 現在地 — 計画分割とbaseline確認まで完了</h2>
+    <p class="intro">いまは<b>Terra投入前の計画整備が完了した段階</b>です。実装の正否を比べる既存baselineも実測しました。</p>
+    <div class="status">
+      <div class="stat"><div class="num">9</div><div class="label">子plan<br>01〜09へ分割</div></div>
+      <div class="stat"><div class="num">263</div><div class="label">session-board checks<br>全PASS</div></div>
+      <div class="stat"><div class="num">31</div><div class="label">board-sweep tests<br>全PASS</div></div>
+      <div class="stat"><div class="num">PASS</div><div class="label">program lint / loop verify<br>整合違反なし</div></div>
+    </div>
+    <div style="height:13px"></div>
+    <div class="items">
+      <article class="item"><p class="itemhead"><span class="tag done">完了</span> programとplanの責務分離</p><p>programはDAG・Checkpoint・人間ゲートだけ。plan 01〜09には、必読正本、触る場所、禁止範囲、成果物、自己テスト、完了報告を記載しました。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag done">確認済み</span> 05と06は新規実装しない</p><p>board-sweepは稼働済み、inbox-triageは手動経路が実装済みです。どちらも新Terra workerを立てず、統合Checkpointの回帰対象にしました。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag wait">開始ブロッカー</span> 計画が未コミット</p><p>現在のplanは作業ツリー上にあり、Terra worktreeは古いHEADしか読めません。実装開始前に計画一式だけをscoped commitする必要があります。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag todo">未実装</span> Daily本体と3儀式</p><p>biz CRUD、lane、work_closed/closed、3儀式、monthly-reset、goal-alignment、進捗推定、09:50起動はこれからです。</p></article>
+    </div>
+  </section>
+
+  <section id="change">
+    <h2>3. 変更内容 — programを短く、planを実行可能に</h2>
+    <p class="intro">workerが巨大なprogramを全読みして判断を重ねる形から、<b>1agent＝1plan＝1編集領域</b>へ変えました。</p>
+    <div class="beforeafter">
+      <article class="ba"><h3>Before</h3><ul><li>programに設計詳細と全子の説明が集中</li><li>workerが他の子まで読んで編集範囲を推測</li><li>01〜08をそのまま8体へ配るとhotspot衝突</li><li>05/06の状態が古く、新規実装に見える</li><li>各子のレビュー時機が混在</li></ul></article>
+      <div class="arrow">→</div>
+      <article class="ba"><h3>After</h3><ul><li>programは時系列・DAG・人間ゲートだけ</li><li>各planに「読む／触る／触らない」を完結記載</li><li>Wave 1は4領域、Wave 2は2領域に分離</li><li>05/06は回帰確認へ訂正</li><li>Checkpoint A / B / Finalへレビュー集約</li></ul></article>
+    </div>
+    <div style="height:13px"></div>
+    <pre class="tree">program.md             <span style="color:#5e6877">統合担当・test・reviewerだけが読む</span>
+└── plans/
+    ├── 01 ゴール土台       <span style="color:#4f499d">Terra-01</span>
+    ├── 02 Dailyコア        <span style="color:#4f499d">Terra-02</span>
+    ├── 03 3儀式            <span style="color:#4f499d">Terra-03</span>
+    ├── 04 進捗推定         <span style="color:#4f499d">Terra-04</span>
+    ├── 05 board-sweep      <span style="color:#237054">回帰のみ</span>
+    ├── 06 inbox-triage     <span style="color:#237054">回帰のみ</span>
+    ├── 07 Monthly Reset    <span style="color:#4f499d">Terra-07</span>
+    ├── 08 Goal Alignment   <span style="color:#4f499d">Terra-08</span>
+    └── 09 統合・全体test   <span style="color:#3557a5">Terra-09 / reviewer</span></pre>
+  </section>
+
+  <section id="micro">
+    <h2>4. 実装計画 — Checkpointを通らないと次Waveへ進まない</h2>
+    <p class="intro">worker終了は「材料が届いた」だけです。<b>統合してCheckpointがPASSした時に初めて次段へ進みます。</b></p>
+    <div class="timeline">
+      <div class="wave"><div class="wlabel">Gate 0<br><span class="tag wait">人間</span></div><div class="wbody"><p><b>Terra投入の共通基点を作る</b></p><p class="sub">モデル例外・reviewer・目標未確定範囲を確認し、plan一式だけをcommit。programをactiveへ上げるか判断。</p></div></div>
+      <div class="wave"><div class="wlabel">Wave 1<br><span class="tag terra">4体並列</span></div><div class="wbody"><p><b>互いに違うフォルダを実装</b></p><div class="lanes"><span class="lane">01 ゴール土台</span><span class="lane">02 Dailyコア</span><span class="lane">07 Monthly Reset</span><span class="lane">08 Goal Alignment</span></div></div></div>
+      <div class="wave"><div class="wlabel">Checkpoint A<br><span class="tag now">統合test</span></div><div class="wbody"><p><b>土台をまとめて検査</b></p><p class="sub">既存294、8節、biz CRUD、lane、close、3か月ensure、承認前無変更。赤ならWave 2へ進まない。</p></div></div>
+      <div class="wave"><div class="wlabel">Wave 2<br><span class="tag terra">2体並列</span></div><div class="wbody"><p><b>確定した土台の上に儀式と進捗を載せる</b></p><div class="lanes"><span class="lane">03 Daily start / Work end / Daily end</span><span class="lane">04 進捗推定</span></div></div></div>
+      <div class="wave"><div class="wlabel">Checkpoint B<br><span class="tag now">合成E2E</span></div><div class="wbody"><p><b>1日と月末を通しで検査</b></p><p class="sub">前日未封印→朝→work/private→仕事締め→夜締め→翌日回送。月跨ぎ、計画承認、進捗fail-safe、05/06回帰も実行。</p></div></div>
+      <div class="wave"><div class="wlabel">Wave 3<br><span class="tag now">直列統合</span></div><div class="wbody"><p><b>Plan 09だけが共有部分を接続</b></p><p class="sub">README、AGENTS、catalog、loop一覧、trigger、旧Skill参照を整理。runtime loadはまだしない。</p></div></div>
+      <div class="wave"><div class="wlabel">Final Gate<br><span class="tag done">全体review</span></div><div class="wbody"><p><b>clean worktreeで全test後、異系統review</b></p><p class="sub">全PASS後だけレビュー。FAILは最小planへ戻すが、修正後はFinal Gate全体を再実行。</p></div></div>
+      <div class="wave"><div class="wlabel">Runtime Gate<br><span class="tag wait">人間</span></div><div class="wbody"><p><b>露出・launchd・mainを個別承認</b></p><p class="sub">canary後に1週間運用し、人間がprogram完了を判定。</p></div></div>
+    </div>
+
+    <div style="height:16px"></div>
+    <div class="folders">
+      <article class="folder"><p class="head"><span class="tag terra">01</span> 年間・月間・Dailyの型</p><p>人間が書く目標とテンプレの場所を整えます。</p><code>personal-os/my-brain/ゴール/</code></article>
+      <article class="folder"><p class="head"><span class="tag terra">02</span> Dailyへ書く機械の中心</p><p>業務、work/private、仕事締め、全日締めを実装します。</p><code>.../hooks/session-board/</code></article>
+      <article class="folder"><p class="head"><span class="tag terra">03</span> 朝・仕事終わり・夜の対話</p><p>3つのSkillと09:50起動候補を作ります。自動送信しません。</p><code>.../skills/daily-start|work-end|daily-end/</code></article>
+      <article class="folder"><p class="head"><span class="tag terra">04</span> 実績から進捗を推定</p><p>機械専用進捗行だけを安全に更新します。</p><code>.../loops-registry/loops/daily-progress/</code></article>
+      <article class="folder"><p class="head"><span class="tag done">05 / 06</span> 既存機能の回帰</p><p>board-sweepと手動inbox-triageを再実装せず、壊れていないか確認します。</p><code>.../board-sweep/ ・ .../inbox-triage/</code></article>
+      <article class="folder"><p class="head"><span class="tag terra">07</span> 3か月・月末レビュー</p><p>未来予定、月末振り返り、closedによる論理archiveを実装します。</p><code>.../skills/monthly-reset/</code></article>
+      <article class="folder"><p class="head"><span class="tag terra">08</span> 年→月→今日の照合</p><p>変更案を出し、承認された層だけ正本へ反映します。</p><code>.../skills/goal-alignment/</code></article>
+      <article class="folder"><p class="head"><span class="tag now">09</span> 全部をつなぐ担当</p><p>共有docs、trigger、registry、統合test、最終reviewを所有します。</p><code>program + shared integration files</code></article>
+    </div>
+    <div style="height:13px"></div>
+    <details><summary>更新した計画mdを開く</summary><ul class="links">
+      <li><a href="../program.md">program.md</a></li><li><a href="../plans/01-土台構成とテンプレ.md">Plan 01</a></li><li><a href="../plans/02-業務レイヤboard拡張.md">Plan 02</a></li><li><a href="../plans/03-儀式の自動実行.md">Plan 03</a></li><li><a href="../plans/04-進捗推定エンジン.md">Plan 04</a></li><li><a href="../plans/05-停止行自動判定sweep.md">Plan 05</a></li><li><a href="../plans/06-インボックス即時起案.md">Plan 06</a></li><li><a href="../plans/07-日次ライフサイクルと未来予定.md">Plan 07</a></li><li><a href="../plans/08-計画照合と変更反映.md">Plan 08</a></li><li><a href="../plans/09-統合テストと最終レビュー.md">Plan 09</a></li>
+    </ul></details>
+  </section>
+
+  <section id="risk">
+    <h2>5. 影響とリスク — 3つの規約差分をGate 0で止める</h2>
+    <p class="intro">並列構造は作れましたが、<b>古い全体規約と今回の指定に差分</b>があります。黙って進めずGate 0で明示します。</p>
+    <div class="items">
+      <article class="item"><p class="itemhead"><span class="tag wait">モデル差分</span> 現在のモデル正本は実装=Claude</p><p>今回のTerra実装はユーザー指定の例外です。実装開始前にモデル正本/決定ログへ今回の扱いを反映し、reviewerはClaude系へ入れ替えるのが安全です。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag wait">レビュー差分</span> 現行規約は依存するフル子を都度レビュー</p><p>今回は個別停止をなくし、Checkpointで後続を止める明示例外です。異系統レビューと差し戻し上限は維持します。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag wait">git基点</span> 現在のplanは未コミット</p><p>古いHEADからworktreeを作る事故を防ぐため、計画一式だけをscoped commitしてからTerraを起動します。他の未コミット変更は混ぜません。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag todo">実時間</span> 1週間運用は即時testにできない</p><p>実装の決定的testと、実機1週間の観察を別Gateにします。時間を待たず完了扱いにはしません。</p></article>
+    </div>
+    <div style="height:13px"></div>
+    <div class="callout red"><p class="ct">まだ行っていないこと</p><p>runtimeコード実装、計画commit、active移動、Terra thread作成、Skill露出、launchd、main反映、pushは一切行っていません。</p></div>
+  </section>
+
+  <section id="questions">
+    <h2>6. 未決事項 — 実装開始前の最小確認</h2>
+    <p class="intro">ユーザー指定で2点は回答済みです。残りは実装開始と人間の目標に関するゲートです。</p>
+    <div class="items">
+      <article class="item"><p class="itemhead"><span class="tag done">回答済み</span> 実装workerはTerra</p><p>回答: <code>gpt-5.6-terra</code>を並列実装workerとして使う。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag done">回答済み</span> レビューは個別完了時にしない</p><p>回答: Checkpoint A / Bと全実装後へ集約する。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag wait">Q1</span> 正式reviewerをClaude系にしてよいか</p><p><b>推奨: よい。</b> Terra実装と別系統にしてクロスチェックを維持します。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag wait">Q2</span> 次のターンでplan一式だけをscoped commitし、activeへ昇格してよいか</p><p><b>推奨: よい。</b> ただし現在の他の未コミット変更は含めず、対象pathを人間へ提示してから実行します。</p></article>
+      <article class="item"><p class="itemhead"><span class="tag wait">Q3</span> 年間6slugと月末review/closed案</p><p><b>推奨: 前回案で確定。</b> <code>ai運用 / ai事業 / 商用化 / 収入 / 資産 / 家計</code>、物理archiveなし、月末Daily end＋翌月catch-up。</p></article>
+    </div>
+    <div style="height:13px"></div>
+    <div class="callout green"><p class="ct">最短の次指示</p><p>「Q1〜Q3は推奨でOK。Gate 0へ進めて」で、scoped commit対象の提示とactive昇格準備へ進みます。まだTerra実装自体は起動しません。</p></div>
+  </section>
+
+  <section id="history">
+    <h2>7. 更新履歴</h2>
+    <div class="history">
+      <p><time>v1 — 2026-07-13</time><br>1日1枚、2レーン、3儀式、3か月の月間計画、09:50自動壁打ち案を整理。</p>
+      <p><time>v2 — 2026-07-13</time><br>年間・月間ゴール、月末レビュー、論理archive、完了済み／未実装を追加。</p>
+      <p><time>v3 — 2026-07-13</time><br>Terra並列実装へ再編。programを全体地図へ縮小し、Plan 01〜09へagent packetを分配。Wave 1 / A / Wave 2 / B / Finalのテスト・レビュー時系列、編集フォルダ、294 checks baselineを追加。</p>
+    </div>
+  </section>
+</main></div></body></html>

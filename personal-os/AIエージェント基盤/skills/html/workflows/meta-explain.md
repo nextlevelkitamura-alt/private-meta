@@ -23,6 +23,8 @@
 2. 共通のHTML規約は `references/html-structure.md`、品質は `references/mode-full.md` に従う。
 3. 変更前合意では、新規・変更ファイルの本文ドラフト全文をHTML内に保持する。
 4. スマホ・ブラウザ・URL表示の明示依頼時だけ `workflows/mobile-preview.md` を使う。
+5. ローカルへ保存する場合は `GLOBAL_AGENTS.md` §3–4を正本として、説明対象の計画内 `explain/` に置く。
+6. メタ説明でも例外を作らず、ページ全体・図・カード・コードブロックを白背景のライト単色で作る。暗い背景と表示環境による配色切替は作らない。
 
 ## 4. 理解ループを回す
 

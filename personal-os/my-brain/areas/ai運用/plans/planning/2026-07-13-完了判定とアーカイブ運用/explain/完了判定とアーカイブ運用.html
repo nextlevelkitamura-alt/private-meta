@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>完了判定とアーカイブ運用 — 計画の見取り図</title>
+<style>
+:root{--ground:#eceef3;--surface:#fff;--surface2:#f5f6fa;--ink:#19212f;--muted:#5f6879;--line:#dbdfea;--accent:#2c3a8c;--accentink:#202c6e;--accentsoft:#e9ecfa;--go:#2e7d5b;--goink:#1e5a40;--gosoft:#e3f1ea;--warn:#b4472b;--warnink:#8c3620;--warnsoft:#f7e8e2;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7}.page{min-height:100vh;padding:42px 20px 72px}.wrap{max-width:880px;margin:auto;display:flex;flex-direction:column;gap:40px}.eyebrow{margin:0 0 10px;color:var(--muted);font-size:12px;letter-spacing:.14em}.lede{max-width:62ch;margin:14px 0 0;color:var(--muted);font-size:16px}.lede b{color:var(--ink)}h1{margin:0;font-size:32px;line-height:1.25;font-weight:650;letter-spacing:-.02em}h2{margin:0 0 7px;font-size:13px;letter-spacing:.08em;color:var(--muted)}.slede{margin:0 0 15px;font-size:14.5px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}@media(max-width:680px){.cards{grid-template-columns:1fr}}.card,.box,figure,.callout{background:var(--surface);border:1px solid var(--line);border-radius:14px}.card{padding:17px}.card h3{margin:0 0 7px;font-size:14px}.card p{margin:0;color:var(--muted);font-size:13.5px}.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}.pill.go{background:var(--gosoft);color:var(--goink)}.pill.acc{background:var(--accentsoft);color:var(--accentink)}.pill.warn{background:var(--warnsoft);color:var(--warnink)}figure{margin:0;padding:18px}figcaption{margin-top:10px;color:var(--muted);font-size:12px}.callout{padding:16px 18px;border-color:var(--warn);background:var(--warnsoft)}.callout h3{margin:0 0 5px;font-size:13px;color:var(--warnink)}.callout p{margin:0;font-size:13.5px}.steps{margin:0;padding:0;list-style:none}.steps li{display:flex;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line)}.steps li:last-child{border-bottom:0}.n{display:flex;flex:0 0 25px;height:25px;align-items:center;justify-content:center;border-radius:50%;background:var(--accentsoft);color:var(--accentink);font-size:12px;font-weight:700}.steps h3{margin:0;font-size:14px}.steps p{margin:1px 0 0;color:var(--muted);font-size:13.5px}.source{padding:0;margin:0;list-style:none;color:var(--muted);font-size:12.5px}.source li{margin:6px 0}.source b{color:var(--ink)}code{padding:1px 5px;border:1px solid var(--line);border-radius:5px;background:var(--surface2);font-size:12px;color:var(--ink)}
+</style>
+</head>
+<body>
+<main class="page"><div class="wrap">
+  <header>
+    <p class="eyebrow">AI運用 / planning / 2026-07-13</p>
+    <h1>計画は「レビュー完了」と<br>「人間確認」を分けて進める</h1>
+    <p class="lede"><b>実装と最終AIレビューが全PASSなら done。</b>人間が明示的に archive を確認した時だけ archive へ進めます。さらに、<b>active=3・paused=3・done=8</b>を超えないよう、AIの移動操作を機械的に止める計画です。</p>
+  </header>
+
+  <section>
+    <h2>今回固定する3つの状態境界</h2>
+    <div class="cards">
+      <article class="card"><span class="pill acc">実行中</span><h3>active</h3><p>実装・修正・AIレビューを進める場所。今週動く計画だけを置く。</p></article>
+      <article class="card"><span class="pill go">AIレビュー済み</span><h3>done</h3><p>実装済みかつ最終評価が全PASS。<b>人間確認を待つ</b>状態。</p></article>
+      <article class="card"><span class="pill warn">人間確認済み</span><h3>archive</h3><p>人間が明示確認した参照専用の場所。AIの推測では動かさない。</p></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>バケットの容量</h2>
+    <p class="slede">上限は各 <code>plans/</code> ごとに判定する。満杯でも、AIが別の計画を勝手に退避して枠を作ることはない。</p>
+    <div class="cards">
+      <article class="card"><span class="pill acc">無制限</span><h3>planning / archive</h3><p>企画を育てる場所と、確認済みの参照場所。容量で詰まらせない。</p></article>
+      <article class="card"><span class="pill warn">最大3件</span><h3>active / paused</h3><p>今動くものと保留中のものを少数に保つ。新規流入は満杯で拒否する。</p></article>
+      <article class="card"><span class="pill go">最大8件</span><h3>done</h3><p>AIレビュー済みで人間確認を待つものだけを置く。確認後はarchiveへ進める。</p></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>状態遷移</h2>
+    <p class="slede">バケットが状態の正本。各矢印の条件を揃え、active から archive への近道を作らない。</p>
+    <figure>
+      <svg width="100%" viewBox="0 0 760 230" role="img" aria-label="planning から active、done、archiveへ順に遷移し、session finishは別経路である図">
+        <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#5f6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+        <rect x="20" y="54" width="155" height="58" rx="12" fill="#e9ecfa" stroke="#2c3a8c"/><text x="97" y="78" text-anchor="middle" font-size="16" fill="#202c6e" font-weight="600">planning</text><text x="97" y="99" text-anchor="middle" font-size="11" fill="#202c6e">起案・方針を育てる</text>
+        <line x1="175" y1="83" x2="238" y2="83" stroke="#5f6879" stroke-width="1.6" marker-end="url(#a)"/><text x="207" y="67" text-anchor="middle" font-size="11" fill="#5f6879">指揮官が昇格</text>
+        <rect x="240" y="54" width="155" height="58" rx="12" fill="#e9ecfa" stroke="#2c3a8c"/><text x="317" y="78" text-anchor="middle" font-size="16" fill="#202c6e" font-weight="600">active</text><text x="317" y="99" text-anchor="middle" font-size="11" fill="#202c6e">実装・修正・AIレビュー</text>
+        <line x1="395" y1="83" x2="458" y2="83" stroke="#5f6879" stroke-width="1.6" marker-end="url(#a)"/><text x="427" y="67" text-anchor="middle" font-size="11" fill="#5f6879">最終評価 全PASS</text>
+        <rect x="460" y="54" width="125" height="58" rx="12" fill="#e3f1ea" stroke="#2e7d5b"/><text x="522" y="78" text-anchor="middle" font-size="16" fill="#1e5a40" font-weight="600">done</text><text x="522" y="99" text-anchor="middle" font-size="11" fill="#1e5a40">人間確認待ち</text>
+        <line x1="585" y1="83" x2="648" y2="83" stroke="#5f6879" stroke-width="1.6" marker-end="url(#a)"/><text x="617" y="67" text-anchor="middle" font-size="11" fill="#5f6879">人間が明示確認</text>
+        <rect x="650" y="54" width="95" height="58" rx="12" fill="#f7e8e2" stroke="#b4472b"/><text x="697" y="78" text-anchor="middle" font-size="15" fill="#8c3620" font-weight="600">archive</text><text x="697" y="99" text-anchor="middle" font-size="11" fill="#8c3620">参照専用</text>
+        <rect x="246" y="158" width="242" height="43" rx="10" fill="#f5f6fa" stroke="#dbdfea"/><text x="367" y="177" text-anchor="middle" font-size="13" fill="#19212f" font-weight="600">session-board finish</text><text x="367" y="193" text-anchor="middle" font-size="10.5" fill="#5f6879">セッション記録を閉じるだけ。archive は動かさない。</text>
+        <line x1="522" y1="112" x2="450" y2="157" stroke="#b4472b" stroke-width="1.4" stroke-dasharray="5 4"/><text x="548" y="142" font-size="10.5" fill="#8c3620">別責務</text>
+      </svg>
+      <figcaption>人間確認はCLIで本人性を証明できないため、実際の明示発言と、計画本文への確認記録を両方必要にする。</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>安全網は4層でつくる</h2>
+    <p class="slede">案内だけに頼らず、移動窓口・実行前ガード・既存計画の監査までを同じ契約で揃える。</p>
+    <ol class="steps">
+      <li><span class="n">1</span><div><h3>bucketctlを唯一の移動窓口にする</h3><p>全遷移をdry-run既定で通し、移動先の件数・上限・対象一覧を検査する。<code>--force</code>や自動退避は作らない。</p></div></li>
+      <li><span class="n">2</span><div><h3>Prompt Submitで規則を常に見せる</h3><p><code>common.py</code> が状態遷移・容量・<code>bucketctl check</code>を案内する。<code>finish</code> と archive の非同一性もここで明確にする。</p></div></li>
+      <li><span class="n">3</span><div><h3>PreToolで生の移動を止める</h3><p>Codex/ClaudeのBashで計画バケットへの直接 <code>git mv</code> / <code>mv</code> を拒否し、安全な窓口へ誘導する。</p></div></li>
+      <li><span class="n">4</span><div><h3>既存計画を監査してから是正する</h3><p>paused=24、done=18は新上限を超える。警告と新規流入拒否は先に有効化し、移動は人間が候補を選んだ後だけにする。</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>自動化できない重要な点</h2>
+    <div class="callout"><h3>AIの自動退避は禁止する</h3><p>スクリプトは確認の記録・移動順・上限を強制できますが、どの計画を止めるかは判断です。満杯時は対象一覧と必要な人間判断を返し、AIは曖昧な「OK」や自動のsession finishをarchive承認にも、勝手な枠空けにも使いません。</p></div>
+  </section>
+
+  <section>
+    <h2>正本と実装対象</h2>
+    <ul class="source">
+      <li><b>計画の正本</b> — <code>plans/planning/2026-07-13-完了判定とアーカイブ運用/program.md</code></li>
+      <li><b>状態の正本</b> — <code>my-brain/areas/AGENTS.md</code> と <code>説明書/運用契約.md</code></li>
+      <li><b>Prompt Submitの生成元</b> — <code>hooks-registry/hooks/session-board/common.py</code></li>
+    </ul>
+  </section>
+</div></main>
+</body>
+</html>

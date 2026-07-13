@@ -24,7 +24,7 @@
 ## 3. 作業ルール
 
 1. まず対象areaの `AGENTS.md` と `identity.md` を読む。
-2. まだ固まっていない構想は、`identity.md` か、育成中の計画の `plans/active/<計画>/plan.md` の `方針`（未確定のまま）に置く。`thinking/` は廃止した。
-3. 実行する前提になったら `plans/active/<YYYY-MM-DD-日本語企画名>/plan.md` を作る。
+2. まだ固まっていない構想は、`identity.md` か、育成中の計画の `plans/planning/<計画>/plan.md` の `方針`（未確定のまま）に置く。`thinking/` は廃止した。
+3. 新規計画は `plans/planning/<YYYY-MM-DD-日本語企画名>/plan.md` に作る。今週実行すると指揮官が決めた時だけ、areas規約の `bucketctl` で active へ昇格する。
 4. 旧 `ops/` 5フォルダ構成は廃止（既存計画に残るものはlegacy・新規に作らない）。計画から派生する作業は `areas/AGENTS.md` §4.2 に従う。
 5. secret、token、credential、環境変数の値は表示・記録しない。

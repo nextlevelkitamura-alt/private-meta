@@ -17,8 +17,9 @@ description: 回答や作業結果を、人間が見る1枚もののself-contain
 ## 2. 共通の出力
 
 1. 既定はPC前提・self-containedなArtifact。Artifactが使えないruntimeではローカルHTMLを提示する。
-2. 正本md・同期対象・継続編集する文書をHTMLで置き換えない。
-3. スマホ・ブラウザ・URL表示の明示依頼時だけ `workflows/mobile-preview.md` を使う。
+2. すべてのHTMLを必ず白背景のライト単色で作る。暗い背景、表示環境による暗色切替、quick/fullやメタ説明による配色例外は作らない。
+3. 正本md・同期対象・継続編集する文書をHTMLで置き換えない。
+4. スマホ・ブラウザ・URL表示の明示依頼時だけ `workflows/mobile-preview.md` を使う。
 
 ## 3. 共通の安全方針
 

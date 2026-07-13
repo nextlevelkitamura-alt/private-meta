@@ -4,14 +4,16 @@
 program.md の「子計画マップ」を静的に検査し、違反を `<file>:<行>: <メッセージ>` 形式で
 stdoutへ出す（違反1件以上で非0 exit）。ライブなレーン状態（cockpit/watch.sh）は見ない。
 
-検査5種:
-  1. マップNN ↔ plans/NN-*.md 実ファイルの実在（「場所:」が plans/ を指す場合のみ。
+検査6種:
+  1. 「子計画マップ」に子計画ブロックが1件以上あること（パーサの形式不追従による
+     0件検出を「違反なし」と誤合格させない）。
+  2. マップNN ↔ plans/NN-*.md 実ファイルの実在（「場所:」が plans/ を指す場合のみ。
      卒業先・program.md内セクション参照など plans/ 以外を指す場合は対象外）。
-  2. 見出し行のNNと「場所: plans/NN」のNNが一致しているか（コピペミスで別NNの子を指す事故を検出）。
-  3. 実在する子ファイルのfrontmatter「親計画:」backlinkが対象program.mdへ解決するか。
-  4. 見出し行の状態語彙（運用契約§2の段階語彙 ＋ 実運用のマップ状態語 との完全一致・
+  3. 見出し行のNNと「場所: plans/NN」のNNが一致しているか（コピペミスで別NNの子を指す事故を検出）。
+  4. 実在する子ファイルのfrontmatter「親計画:」backlinkが対象program.mdへ解決するか。
+  5. 見出し行の状態語彙（運用契約§2の段階語彙 ＋ 実運用のマップ状態語 との完全一致・
      括弧注記「実装中（...）」の「（...）」部分だけは付帯説明として許容し先頭トークンで判定）。
-  5. 状態が「完了」の子について、その子ファイル自身の
+  6. 状態が「完了」の子について、その子ファイル自身の
      「## 完了条件（レビュー項目）」に未チェック（`- [ ]`）が残っていないか。
 """
 import glob
@@ -19,7 +21,9 @@ import os
 import re
 import sys
 
-from _planops_map import read_lines, find_section, find_blocks, get_state, find_field_line
+from _planops_map import (
+    read_lines, find_section, find_blocks, get_state, find_field_line, checkbox_mark,
+)
 
 MAP_HEADING = "子計画マップ"
 COMPLETION_HEADING = "完了条件"
@@ -90,6 +94,8 @@ def lint(program_path):
         return [f"{program_path}:1: 「## {MAP_HEADING}」見出しが見つからない"]
     _, body_start, body_end = section
     blocks = find_blocks(lines, body_start, body_end)
+    if not blocks:
+        return [f"{program_path}:{body_start}: 「{MAP_HEADING}」に子計画ブロックが無い"]
 
     for b in blocks:
         header_line_no = b.start + 1
@@ -101,6 +107,15 @@ def lint(program_path):
         base = state_base(state)
         if base not in STATE_VOCAB:
             out.append(f"{program_path}:{header_line_no}: NN={b.nn} 状態語彙に無い状態: 「{base}」")
+
+        mark = checkbox_mark(lines[b.start])
+        if mark is not None and ((mark == "x") != (base == "完了")):
+            expected = "[x]" if base == "完了" else "[ ]"
+            actual = "[x]" if mark == "x" else "[ ]"
+            out.append(
+                f"{program_path}:{header_line_no}: NN={b.nn} チェックボックスと状態が不整合: "
+                f"{actual} / {base}（期待: {expected}）"
+            )
 
         basho_idx = find_field_line(lines, b, "場所:")
         if basho_idx is None:

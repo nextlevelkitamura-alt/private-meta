@@ -8,7 +8,7 @@ import argparse
 import sys
 
 from _planops_map import (
-    read_lines, find_section, find_blocks, get_state, find_field_line, SEP,
+    read_lines, find_section, find_blocks, get_state, find_field_line, SEP, with_checkbox_mark,
 )
 
 MAP_HEADING = "子計画マップ"
@@ -70,6 +70,9 @@ def main():
             return
         ending = "\n" if header.endswith("\n") else ""
         header = header[: idx + len(SEP)] + args.state + ending
+        # 新形式のチェックボックスは状態と同期する。旧形式は移行前互換のため変更しない。
+        state_base = args.state.split("（", 1)[0].split("(", 1)[0].strip()
+        header = with_checkbox_mark(header, "x" if state_base == "完了" else " ")
     block_lines[0] = header
 
     def ensure_field(label, new_value):

@@ -5,18 +5,21 @@ progctl_core.py / program_lint_core.py の両方から import する。
 
 想定フォーマット（areas/AGENTS.md §3 コピペ用テンプレ準拠）:
   ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
-  NN  <子計画名> … <状態>
+  - [ ] NN  <子計画名> … <状態>  # チェックボックスは任意（旧形式も受理）
       次: <次の一手>
       場所: plans/NN ／ 依存: <NN／―>
 
-- ブロック見出し行 = 行頭（インデント無し）で `NN` (2桁数字) + 空白 で始まる行。
+- ブロック見出し行 = 行頭（インデント無し）で `NN` (2桁数字) + 空白、または
+  `- [ ]`/`- [x]` + 空白 + `NN` で始まる行。
 - ブロック本体行 = 見出し行の次から、次の見出し行またはセクション終端の直前まで（インデント付き）。
 - 状態の区切りは " … "（半角スペース+U+2026+半角スペース）。
 """
 import re
 
 SEP = " … "  # " … "
-HEADER_RE = re.compile(r"^(\d{2})(\s+)(.*)$")
+HEADER_RE = re.compile(
+    r"^(?:- \[(?P<check>[ x])\]\s+)?(?P<nn>\d{2})(?P<space>\s+)(?P<body>.*)$"
+)
 
 
 class Block:
@@ -64,7 +67,7 @@ def find_blocks(lines, body_start, body_end):
     for i in range(body_start, body_end):
         m = HEADER_RE.match(lines[i])
         if m:
-            headers.append((m.group(1), i))
+            headers.append((m.group("nn"), i))
     blocks = []
     for idx, (nn, start) in enumerate(headers):
         end = headers[idx + 1][1] if idx + 1 < len(headers) else body_end
@@ -78,6 +81,22 @@ def get_state(header_line):
     if idx < 0:
         return None
     return header_line[idx + len(SEP):].rstrip("\n")
+
+
+def checkbox_mark(header_line):
+    """見出しのチェックボックス値（' ' / 'x'）を返す。旧形式ならNone。"""
+    m = HEADER_RE.match(header_line)
+    return m.group("check") if m else None
+
+
+def with_checkbox_mark(header_line, mark):
+    """既存チェックボックスだけを更新する。旧形式には追加しない。"""
+    if mark not in {" ", "x"}:
+        raise ValueError("checkbox mark must be ' ' or 'x'")
+    if checkbox_mark(header_line) is None:
+        return header_line
+    # `- [ ]` の中央1文字だけを置換し、以降の空白・本文をバイト不変で保つ。
+    return header_line[:3] + mark + header_line[4:]
 
 
 def find_field_line(lines, block, label):

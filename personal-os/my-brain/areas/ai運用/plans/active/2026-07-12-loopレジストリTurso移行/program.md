@@ -52,19 +52,19 @@ Focusmap Mac Agent <──agent API── claim / observation / run event
 
 ## 子計画マップ
 
-01 共通契約とDB・API・MCP … 実装（静的レビューPASS・実行検証待ち）
+- [ ] 01 共通契約とDB・API・MCP … 実装（静的レビューPASS・実行検証待ち）
     次: 01契約commit f0361b0dを基準に02 Mac同期と03 UIを別worktreeで並列実装する
     参照: focusmap@f0361b0d
     場所: plans/01-共通契約とDB・API・MCP.md ／ 依存: ―
-02 Mac同期と既存loop移行 … 実装（静的レビューPASS・実行検証待ち）
+- [ ] 02 Mac同期と既存loop移行 … 実装（静的レビューPASS・実行検証待ち）
     次: 01〜03統合branchでMac Agent・API・import preflightの実行検証許可を待つ
     参照: focusmap@d281bec9
     場所: plans/02-Mac同期と既存loop移行.md ／ 依存: 01
-03 Focusmap一覧UI … 実装（静的レビューPASS・実行検証待ち）
+- [ ] 03 Focusmap一覧UI … 実装（静的レビューPASS・実行検証待ち）
     次: 01〜03統合branchでtest・lint・build・Browser確認の人間許可を待つ
     参照: focusmap@837a9bdc
     場所: plans/03-Focusmap一覧UI.md ／ 依存: 01
-04 統合・切替・旧一覧廃止 … 実装（統合・専用検証PASS・Browser確認待ち）
+- [ ] 04 統合・切替・旧一覧廃止 … 実装（統合・専用検証PASS・Browser確認待ち）
     次: 3001のPersonal OS説明サーバーを止める人間承認後にFocusmap UIをBrowser確認し、その後Turso migrationのdry-run判断へ進む
     参照: focusmap@d3f29a5c
     場所: plans/04-統合・切替・旧一覧廃止.md ／ 依存: 01,02,03

@@ -10,7 +10,7 @@
     変化を検知し、変化がある時だけNotionの表A/表B（session-table.sh）を更新するsync loop
     （2026-07-06デイリーNotion表反映plan.md）。無変化ならAPI呼び出しゼロで即exit 0。
 
-    draft。置くだけ・未ロード（有効化は人間ゲート＝運用契約§2・§7の破壊操作ゲート対象）。
+    draft。置くだけ・未ロード（有効化は人間ゲート＝GLOBAL_AGENTS.md §7の破壊操作ゲート対象）。
     有効化する場合（symlink方式。既存draft plistと同じ実運用パターン）:
       ln -s '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-notion-sync/com.kitamura.daily-notion-sync.plist' \
         ~/Library/LaunchAgents/com.kitamura.daily-notion-sync.plist

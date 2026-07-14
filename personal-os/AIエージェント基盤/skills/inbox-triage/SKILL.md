@@ -6,7 +6,7 @@ description: 依頼インボックスの指定された1行を、経路判定→
 # inbox-triage
 
 当日デイリーの「依頼インボックス」に人間が書いた1行の思いつきを、実行可能な計画ドラフトに変換するSkill。
-**起案までが仕事。実装・実行は一切しない**（運用契約 §2 の入口ゲート＝計画レビューを迂回しない）。
+**起案までが仕事。実装・実行は一切しない**（GLOBAL_AGENTS.md §7の入口ゲート＝計画レビューを迂回しない）。
 **起案先は `plans/planning/` バケット。`plans/active/` には置かない**（2026-07-09 デイリー運用刷新program 裁定Q3: 自動はplanningドラフトまで・active化は人間承認）。
 
 ## 入力契約
@@ -33,12 +33,12 @@ description: 依頼インボックスの指定された1行を、経路判定→
 
 ### 2. 規模判定（フル / ライト / サクッと）
 
-判定基準は `../plan-triage/SKILL.md` §2（正本: `~/Private/personal-os/説明書/運用契約.md` §2）に委譲する。基準本文はここに複製しない。
+判定基準は `../plan-triage/SKILL.md` §2（正本: `~/Private/personal-os/AIエージェント基盤/GLOBAL_AGENTS.md` §7）に委譲する。基準本文はここに複製しない。
 
 - plan-triage の判断1（規模）を対象行に適用し、フル/ライト/サクッとのいずれかを決める。
-- **サクッと**判定の場合、手順3（plan.md起案）は不要（契約§2「サクッと=計画書なしの即実行」）。手順4のサクッと分岐に従って対象行を更新し、実装・実行はせず終了する。
+- **サクッと**判定の場合、手順3（plan.md起案）は不要（GLOBAL_AGENTS.md §7「サクッと=計画書なしの即実行」）。手順4のサクッと分岐に従って対象行を更新し、実装・実行はせず終了する。
 - **フル/ライト**判定の場合は手順3へ進み、`規模:` 行にその判定結果をそのまま書く。
-- 迷ったら**フル**（人間確認ゲートを増やす側に倒す。運用契約は「省略時フル」）。
+- 迷ったら**フル**（人間確認ゲートを増やす側に倒す。GLOBAL_AGENTS.md §7は「省略時フル」）。
 
 ### 3. plan.md起案（planningドラフト）
 
@@ -100,7 +100,7 @@ description: 依頼インボックスの指定された1行を、経路判定→
 
 - 計画の実装・実行・ai-jobsへのrun-card投入はしない。plan.md を起案するところまで。
 - `plans/active/` への配置・既存planのactive化はしない（planningドラフトまで。active化は人間承認）。
-- git commit／push／main反映／削除／launchd登録などの破壊操作はしない（運用契約 §2・§7）。
+- git commit／push／main反映／削除／launchd登録などの破壊操作はしない（GLOBAL_AGENTS.md §7）。
 - secret／token／認証値を plan.md や行マーカーに書かない。keychain（`security`）にも触れない。
 - 起案先やマーカー以外のファイルを編集しない。
 
@@ -110,6 +110,6 @@ description: 依頼インボックスの指定された1行を、経路判定→
 - 規模判定（フル/ライト/サクッと）の適用手順: `../plan-triage/SKILL.md` §2
 - 雛形生成script: `../plan-ops/scripts/new-plan.sh`（使い方は `../plan-ops/SKILL.md` §2.2）
 - 計画テンプレ・レビュー項目の正本: `~/Private/personal-os/my-brain/areas/AGENTS.md` §3
-- 段階語彙・規模定義・人間ゲートの正本: `~/Private/personal-os/説明書/運用契約.md` §2
+- 段階語彙・規模定義・人間ゲートの正本: `~/Private/personal-os/AIエージェント基盤/GLOBAL_AGENTS.md` §7
 - 設計（2026-07-09改修）: `~/Private/personal-os/my-brain/areas/ai運用/plans/active/2026-07-09-デイリー運用刷新/plans/06-インボックス即時起案.md`
 - 旧親計画: `~/Private/personal-os/my-brain/areas/ai運用/plans/done/2026-07-02-状態と記録の統合設計/plans/06-依頼インボックスloop.md`

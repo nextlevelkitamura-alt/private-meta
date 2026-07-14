@@ -31,7 +31,7 @@
 
 ## 完了条件（レビュー項目）
 
-- [ ] `GLOBAL_AGENTS.md`、`説明書/運用契約.md`、`my-brain/areas/AGENTS.md`、`my-brain/areas/ai運用/AGENTS.md` のrepo計画pathと状態語彙が一致する。
+- [ ] `GLOBAL_AGENTS.md` §7、`my-brain/areas/AGENTS.md`、`my-brain/areas/ai運用/AGENTS.md` のrepo計画pathと状態語彙が一致する。
 - [ ] Global契約から「全repoは必ずroot plans」という前提が外れ、repo `AGENTS.md` が計画箱を宣言する二段ルーティングが定義されている。
 - [ ] repo registry→対象repo AGENTS→既存計画検索→計画箱、の責務と失敗時の停止条件を人間が追える。
 - [ ] `rg` で、存在しない基盤AGENTS節、`plans/skills/`、廃止済みrenderer自動反映、旧 `ops/` 必須化のactiveな指示が0件である。

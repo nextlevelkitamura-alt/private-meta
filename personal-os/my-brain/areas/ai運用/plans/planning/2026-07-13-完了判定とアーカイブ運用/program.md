@@ -50,7 +50,7 @@ planning → active → done → archive
 
 - [ ] `active → done` が「実装済みかつ最終評価mdが全PASS」でのみ進み、`done → archive` は人間の明示確認の記録がある時だけ進むことを、規約・CLIテストで確認できる。
 - [ ] 各 `plans/` root で `active≤3`、`paused≤3`、`done≤8` を移動先ごとに強制し、`planning` と `archive` は上限なしである。超過済みの既存バケットは可視化・流入拒否するが、自動退避しない。
-- [ ] `areas/AGENTS.md`、`運用契約.md`、plan-ops のテンプレ／SKILL／tests が同じ状態語彙と責務を示し、`状態:` の二重管理を増やしていない。
+- [ ] `areas/AGENTS.md`、`GLOBAL_AGENTS.md`、plan-ops のテンプレ／SKILL／tests が同じ状態語彙と責務を示し、`状態:` の二重管理を増やしていない。
 - [ ] UserPromptSubmit の初回ガイドとミラーが、planning 起案・active 実行・done 待機・archive 人間確認・バケット上限という契約を、過剰な本文複製なしに案内する。
 - [ ] Codex/ClaudeのPreToolガードが、計画バケットへの生の `git mv` / `mv` を拒否して `bucketctl` へ誘導する。新規hookのruntime登録・Codex再trustは実装直前に人間確認を得てから行う。
 - [ ] 上限到達時は件数・上限・対象一覧・次に必要な人間判断を警告するが、AIが勝手に paused/done/archive を選ばない。
@@ -60,7 +60,7 @@ planning → active → done → archive
 
 ## 関連
 
-- 状態・計画規約: `../../../../AGENTS.md` §3-4 ／ `../../../../../../説明書/運用契約.md` §2
+- 状態・計画規約: `../../../../AGENTS.md` §3-4 ／ `../../../../../../AIエージェント基盤/GLOBAL_AGENTS.md` §7
 - 計画操作: `../../../../../../AIエージェント基盤/skills/plan-ops/`
 - Prompt Submit 本体: `../../../../../../AIエージェント基盤/hooks-registry/hooks/session-board/common.py`
 - セッション手順: `../../../../../../AIエージェント基盤/hooks-registry/hooks/session-board/{session-start,session-end}.md`

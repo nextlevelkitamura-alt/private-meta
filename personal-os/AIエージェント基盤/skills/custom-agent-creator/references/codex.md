@@ -58,7 +58,7 @@ CLI指定は `-s <値>`（対話TUI・execの両方で有効）。
 4. read-only委任（相談・レビュー）は `-s read-only` を毎回付ける。
 5. inline MCP（`codex mcp-server` 接続）を長時間委任に使わない理由: MCPツール呼び出しはクライアント側の実質10分タイムアウトに支配され、`codex-reply` の threadId はサーバープロセス内のみ有効（再起動後は "Session not found"。ただし同じIDを `codex exec resume` へ渡せば復元できる）。対話的承認（elicitation）が必要な場合だけMCPに優位性がある。
 6. 生きた実例: `~/.claude/commands/codex-impl.md`（/codex-impl・メイン直接駆動の手順書）/ `~/.claude/agents/codex-consult.md`（相談役・read-only固定・exec直接駆動）。旧 `codex-implementer` サブエージェントは2026-07-11廃止（メイン直接駆動へ一本化）。
-7. 実装×評価ペア（2026-07-11）: ライト以上の実装は、実装=Codex（exec）× 評価=`~/.claude/agents/impl-reviewer.md`（claude系sub・read-only）の異系統クロスチェックで回す。採点と差し戻しは口頭でなくMD駆動（plan.md→評価NN.md→修正NN.md→`exec resume`で「修正NN.mdを読め」）。規約は my-brain/areas/AGENTS.md §3「評価・修正文書」、上限・規模判定は運用契約§2。
+7. 実装×評価ペア（2026-07-11）: ライト以上の実装は、実装=Codex（exec）× 評価=`~/.claude/agents/impl-reviewer.md`（claude系sub・read-only）の異系統クロスチェックで回す。採点と差し戻しは口頭でなくMD駆動（plan.md→評価NN.md→修正NN.md→`exec resume`で「修正NN.mdを読め」）。規約は my-brain/areas/AGENTS.md §3「評価・修正文書」、上限・規模判定は `GLOBAL_AGENTS.md` §7。
 
 ## 8. テンプレート: レビュー担当カスタムプロンプト
 

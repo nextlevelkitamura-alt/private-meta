@@ -93,7 +93,7 @@ COCKPIT_EVENTS_FILE="$WORKDIR/c-events.jsonl"
 cmd_send --terminal "term-2" --prompt "レビューして" --stage "実装レビュー" --worktree "/fake/wt-c" --repo "RepoC" --branch "branchC" >/dev/null
 assert_eq "(c) stage記録" "$(json_get "$COCKPIT_EVENTS_FILE" 1 stage)" "実装レビュー"
 assert_eq "(c) worktree記録" "$(json_get "$COCKPIT_EVENTS_FILE" 1 worktree)" "/fake/wt-c"
-# 運用契約§2の語彙に無い任意文字列でも検証せずそのまま記録される（機構は判断しない）ことの確認。
+# GLOBAL_AGENTS.md §7の語彙に無い任意文字列でも検証せずそのまま記録される（機構は判断しない）ことの確認。
 cmd_send --terminal "term-2" --prompt "x" --stage "でたらめな段階名" >/dev/null
 assert_eq "(c) 未知の語彙も無検証でそのまま記録" "$(json_get "$COCKPIT_EVENTS_FILE" 2 stage)" "でたらめな段階名"
 

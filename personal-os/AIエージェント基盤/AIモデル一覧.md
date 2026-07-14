@@ -1,25 +1,24 @@
 # AIモデル一覧 — サブスクと使い分けの正本
 
-契約中のAIサブスクと、どの用途にどのモデル/runtimeを使うかの一覧（シンプルに1枚・2026-07-08新設）。
-モデル選定はここを参照する。各計画・Skill・フローに本文をコピーしない（単一正本）。
-レーン別適用の判断経緯は `../my-brain/areas/ai運用/決定ログ.md` #11。
+契約中のAIサブスクと、役割ごとのモデル/runtimeを示す1枚。モデル選定はここを参照し、各計画・Skill・フローに本文をコピーしない。
+当日の担当・残量・進行中レーンは当日デイリー/session-boardが持つ。判断経緯は `../my-brain/areas/ai運用/決定ログ.md` #11 を参照する。
 
 ## サブスク（契約中）
 
-- Claude（Anthropic）… Claude Code / Desktop。主モデル: Fable 5・Opus 4.8・Sonnet 5
-- Codex（OpenAI）… レビューレーンで使用
-- （記入待ち: 他に契約中のサブスク・プラン名があれば人間が追記する）
+| 提供元 | 利用面 | 契約プラン | 主なモデル |
+|---|---|---|---|
+| Anthropic | Claude Code / Desktop | Max | Fable 5 / Opus 4.8 / Sonnet 5 |
+| OpenAI | Codex Desktop / CLI | プラン名は人間確認後に記入 | Codex |
 
-## 用途 → モデル（決定ログ#11 準拠）
+## 役割 → モデル
 
-- 全体管理者A（判断業務）: claude/fable5
-- 中間指揮官3=仕事（企画・設計壁打ち）: claude/fable5
-- その他の中間指揮官ペイン: claude/opus4.8
-- 実装レーン: claude/sonnet5
-- レビューレーン: codex
-- 並列実装ワーカー（worktree・並列実装フロー）: 実装レーンに準ずる（監督=メインチャットは開いているモデルのまま）
+- 判断・企画・設計壁打ち: claude/fable5
+- 指揮・通常の対話作業: claude/opus4.8
+- 実装: claude/sonnet5
+- レビュー: codex
+- 他レーンを待たせるクリティカルパスだけ、指揮官が実装モデルの格上げを明示する。
 
 ## 運用
 
-- ボードの who 列（runtime/model）はこの一覧の小文字短縮で書く: `fable5` / `opus4.8` / `sonnet5` / `codex`。
-- 変更（新サブスク・レーン変更）は決定ログに1件残し、同じコミットでこの一覧を更新する。
+- ボードの who 列（runtime/model）は `fable5` / `opus4.8` / `sonnet5` / `codex` を使う。
+- サブスクまたは役割の変更は決定ログに1件残し、同じ作業単位でこの一覧を更新する。

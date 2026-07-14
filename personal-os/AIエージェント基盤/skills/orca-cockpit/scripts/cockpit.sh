@@ -83,7 +83,7 @@ except Exception: d={}
 print(d.get('$1','') if isinstance(d,dict) else '')"; }
 
 # 段階イベント追記（1呼び出し=JSONL1行）。機構は判断しない: stageは呼び出し元が明示した値をそのまま
-# 記録するだけで、本文からの推測・語彙検証は行わない（運用契約§2の語彙判断はAI/人が持つ）。
+# 記録するだけで、本文からの推測・語彙検証は行わない（GLOBAL_AGENTS.md §7の語彙判断はAI/人が持つ）。
 # 追記失敗はwarnのみで主処理を止めない（up/send/downの成否とは独立の副チャンネル）。
 _log_event(){ # <event:up|send|down> <repo> <branch> <worktree> <terminal> <stage> [owner]
   # owner=管轄指揮官（先行部品①・任意/後方互換）。stageと同じく呼び出し元が明示した値をそのまま記録し
@@ -377,7 +377,7 @@ except Exception: print('none')" 2>/dev/null)"
 
 cmd_send(){ # --terminal <h> --prompt <text> [--stage <段階語彙>] [--owner <指揮官>] [--worktree <path>] [--repo <name>] [--branch <b>] [--force]
   # --stage / --owner は送信者(人/AI)が明示宣言する任意フラグ。本文から段階・管轄を推測するロジックは入れない
-  # （運用契約§2の語彙判断・妥当性検証は機構の責務外＝呼び出し元がそのまま記録される）。
+  # （GLOBAL_AGENTS.md §7の語彙判断・妥当性検証は機構の責務外＝呼び出し元がそのまま記録される）。
   # 安全ガード（2026-07-03）: --worktree指定時、そのworktreeにagentが1つも居なければ送信を拒否する
   # （プロンプトがzshへ流出する事故=claude不起動20分無検知の再発防止）。--forceで明示上書き可。
   local h="" p="" stage="" owner="" wt="" repo="" branch="" force=0

@@ -23,9 +23,6 @@
 !/personal-os/AIエージェント基盤/**
 # 統合時に残った旧バックアップ（.bak-*ディレクトリ）は非追跡。
 /personal-os/AIエージェント基盤/**/*.bak-*/
-# パーソナルOS説明書（運用モデルの入口ドキュメント）。全サブツリーを追跡。
-!/personal-os/説明書/
-!/personal-os/説明書/**
 !/personal-os/my-brain/
 /personal-os/my-brain/*
 !/personal-os/my-brain/AGENTS.md

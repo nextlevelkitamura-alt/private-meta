@@ -14,7 +14,7 @@ usage: program-lint.sh <program.mdの絶対パス>
   違反あり: <file>:<行>: <メッセージ> を列挙してexit 1
 
 検査対象: マップNN↔plans/NN-*.md実在／子frontmatterのbacklink解決／
-         状態語彙（運用契約§2＋保留）／「完了」なのに完了条件未チェック。
+         状態語彙（GLOBAL_AGENTS.md §7＋保留）／「完了」なのに完了条件未チェック。
 EOF
   exit 2
 }

@@ -1,13 +1,12 @@
 # Personal OS
 
 AIエージェント運用・思考・計画・意思決定の中枢。実装ではなく「運用」のrepo。
-今の使い方・運用モデルの入口は `説明書/README.md`。
+現在の状態は当日デイリー/session-board、恒久ルールは `AIエージェント基盤/GLOBAL_AGENTS.md`、計画は各areaまたは対象repoを読む。
 
 ## フォルダ（どこに何があるか。詳しくは各 AGENTS.md）
 - `my-brain/` … 自分の考え・判断軸・調査・領域別計画を明文化する場所
   - `areas/` … 領域ごと（ai運用 等）。計画はここで育て、成熟したらrepoへ卒業（正本 `areas/AGENTS.md`）
 - `AIエージェント基盤/` … エージェントが動く土台の正本（Skill・loop・hook・registry・global指示）。git構成の一望は `AIエージェント基盤/git-registry/git-overview.md`
-- `説明書/` … 今の運用モデル・使い方の入口（`README.md`）
 - `AGENTS.md` … この入口ルールの正本／`CLAUDE.md` … それへの相対symlink
 
 ## 配下すべてが守ること（絶対ルール）

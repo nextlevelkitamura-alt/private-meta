@@ -154,7 +154,7 @@ def _first_guide(key, repo, runtime):
         "--plan \"<企画名[/NN] か なし>\"",
         TYPE_DEFS,
         "計画列: 計画=これから置く先／実装・レビュー=拠り所の計画／リサーチ=任意。"
-        "①1〜2ファイル ②容易に戻せる ③人間ゲート無し の全YESなら --plan なし でよい（運用契約§2のサクッと）。",
+        "①1〜2ファイル ②容易に戻せる ③人間ゲート無し の全YESなら --plan なし でよい（GLOBAL_AGENTS.md §7のサクッと）。",
     ]
     if goals:
         lines += [
@@ -166,7 +166,7 @@ def _first_guide(key, repo, runtime):
         "計画ルート: repo-registry/repo概要.md で担当repoだけを判定（cwdで決めない）→ "
         "対象repoの最寄りAGENTS.mdで領域・プロジェクト・計画箱を解決→宣言範囲の既存planを検索。既存があれば合流。",
         "repo未登録／AGENTSなし／計画箱未宣言・複数候補／既存plan競合なら、root plansを推定・作成せず停止して人間確認。",
-        "計画種別なら、置く前に3判定（詳細: 運用契約§2・areas/AGENTS.md §3）:",
+        "計画種別なら、置く前に3判定（詳細: GLOBAL_AGENTS.md §7・areas/AGENTS.md §3）:",
         " ①規模: ①1〜2ファイル ②容易に戻せる ③人間ゲート無し が全YES=サクッと → "
         "計画ファイル不要（--plan なし・ボードとlogで足りる）。1つでもNOなら plan.md 必須。",
         " ②形: 独立に完了する子計画を2本以上生む → program化（program.md＋plans/NN-子.md）。"
@@ -196,7 +196,7 @@ def _mirror(key, row):
     if row.get("type") == "計画":
         lines.append("計画3判定: ①サクッと（3条件全YES）→ --plan なし ②子2本以上→program化 "
                      "③レビュー項目を書いてから着手（実装後は評価NN.mdで採点） → 置き場: "
-                     "repo概要.md→対象repo AGENTS.md→宣言された計画箱（既存planを先に検索・運用契約§2・areas§3）。")
+                     "repo概要.md→対象repo AGENTS.md→宣言された計画箱（既存planを先に検索・GLOBAL_AGENTS.md §7・areas§3）。")
     elif row.get("type") == "実装" and plan in (PLACEHOLDER, "なし"):
         lines.append("実装で計画:" + ("?" if plan == PLACEHOLDER else "なし") +
                      " → サクッと3条件（①1〜2ファイル②容易に戻せる③人間ゲート無し）を再確認。"

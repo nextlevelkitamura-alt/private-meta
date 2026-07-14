@@ -9,10 +9,10 @@ description: 計画ライフサイクルの機械手続き（program.md子計画
 **判断（中身の決定）はしない。** 何をやるか・どう直すかは既存の判断系skill（`mokuteki-jisso` / `plan-triage` / `grill-me` 等）へ委譲する。ここは手だけ。
 
 規約の正本（コピーしない・ここから参照する）:
-- 状態の持ち方・作業パイプライン段階語彙・人間ゲート: `~/Private/personal-os/説明書/運用契約.md` §1-2。
+- 状態の持ち方・作業パイプライン段階語彙・人間ゲート: `~/Private/personal-os/AIエージェント基盤/GLOBAL_AGENTS.md` §6-7。
 - 計画テンプレ／レビュー項目と実行ゲート／バケット状態語彙: `~/Private/personal-os/my-brain/areas/AGENTS.md` §3-4。
 
-規模・段階・状態の語彙はこのSKILL.mdでは独自定義しない（上記正本への前方一致参照のみ。program-lintの状態語彙チェックも運用契約§2を参照する実装）。
+規模・段階・状態の語彙はこのSKILL.mdでは独自定義しない（上記正本への前方一致参照のみ。program-lintの状態語彙チェックも `GLOBAL_AGENTS.md` §7 を参照する実装）。
 
 ## 0. 状態の持ち方（テキスト状態）
 

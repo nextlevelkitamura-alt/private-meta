@@ -673,7 +673,7 @@ print(h if isinstance(h,str) else '')" 2>/dev/null)"
 usage(){ cat >&2 <<'U'
 cockpit.sh — Orca分割コックピット構築・駆動（既定2ペイン: 右上=実装 / 右下=レビュー。
              左=計画+監督は計画未成熟時のみ --pane で3つ明示指定する任意枠。方針10・2026-07-02裁定）
-既定エージェント: 実装=codex(gpt-5.5,medium) / レビュー=codex(gpt-5.5,medium)
+既定エージェント: 実装=claude(claude-sonnet-5) / レビュー=codex(gpt-5.5,xhigh)
 
   plan    --repo <name> --branch <english> [--title <計画名>] [--panes 3|4] [--scope <text>] [--base <ref>]
           [--pane "役割:kind[:model[:effort]]"]...

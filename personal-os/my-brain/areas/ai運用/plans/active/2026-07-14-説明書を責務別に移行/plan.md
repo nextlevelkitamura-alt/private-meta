@@ -45,6 +45,11 @@
 - session-board: 80 pass / 0 fail、shim: 59 pass / 0 fail。
 - plist lint、shell構文、`git diff --check`、現行導線の旧参照scan: pass。
 
+## レビュー結果
+
+- `評価01.md`: 独立reviewerがcatalogの旧参照・ロースター要約、§7の段階語彙不足、モデル正本境界を検出。`修正01.md` に対象・期待状態・非対象を固定して修正した。
+- `評価02.md`: 別の独立reviewerが修正差分を再評価し、P0/P1/P2=0、全レビュー項目PASSを確認した。
+
 ## 次のゲート
 
-フル計画の done/archive 遷移には、実装者と異系統のレビュー担当による `評価01.md` が必要。この作業では独立reviewerを起動していないため、本計画はactiveに残す。
+実装・修正・独立レビューは完了した。active → archive の物理移動は人間承認後に行う。

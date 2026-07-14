@@ -1,7 +1,8 @@
 # 既存7 loop 読み取り専用 baseline
 
-取得日時: 2026-07-14 19:00:51 JST  
-目的: Turso import・canary・launchd変更の**前**に、現行の定義と実機状態を比較できるようにする。  
+取得日時: 2026-07-14 19:00:51 JST
+
+目的: Turso import・canary・launchd変更の**前**に、現行の定義と実機状態を比較できるようにする。
 実行したこと: `launchctl print` と `plutil -lint` の読み取りのみ。bootstrap / bootout / enable / disable / plist書換 / script実行はしていない。
 
 ## snapshot

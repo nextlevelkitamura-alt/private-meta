@@ -33,6 +33,7 @@
 - 2026-07-14 17:02 JST: Global Skill `loop-creator` を基盤で正本化し、`SKILL.md`、作成/変更workflow、`loop.md`だけを作るdry-run scaffoldとtest、`SKILL.html`、catalog、created logを追加した。5 runtimeへ正本のdirect symlinkで露出し、launchdと既存loopは変更していない。
 - 2026-07-14: 独立監査で検出したroot契約・同一apply・directory symlink検証・HTML図の不足を修正し、再監査PASSを確認した。以後のlaunchd変更には前後snapshot比較を必須化した。初回実装前のlaunchd snapshotは遡及できないが、この修正・再監査ではlaunchd変更をしていない。
 - 2026-07-14: Focusmapに `loops/AGENTS.md`、`CLAUDE.md -> AGENTS.md`、白背景の `AGENTS.html` を追加し、root `AGENTS.md` に `loop-creator` 必須導線と既存 `scripts/` / `scripts/focusmap-agent/` / launchdを移動しない境界を追記した。基盤の `implementation-links/Focusmap` はcanonicalな `focusmap/loops/` への相対directory symlinkであり、`verify-repo-loop-link.sh` はPASS。Focusmap local `main` commit: `e3980f72`。既存実装・launchd・Turso・Notionには未変更。
+- 2026-07-14 19:00 JST: 既存7loopを `launchctl print` と `plutil -lint` だけで確認し、6本loaded・1本（`daily-notion-sync`）は意図した安全停止中であることを記録した。baselineは [references/2026-07-14-既存7loop-readonly-baseline.md](../references/2026-07-14-既存7loop-readonly-baseline.md)。launchd・plist・script・Notion APIは変更していない。
 - 次: **本子計画の標準導入は完了**。別計画として、既存7loopのsource reference整理とTurso移行の順序を確定する。既存実装の移設、launchd変更、Notion廃止は人間承認済みの移行作業としてのみ扱う。
 
 ## 完了条件（レビュー項目）

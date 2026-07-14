@@ -3,6 +3,7 @@
 ここは、複数repo/runtimeにまたがり、人の操作なしで時刻または間隔を発火点として繰り返す
 **global loopの現役実装だけ**を置く場所。構想、手動コマンド、hook、廃止物を混ぜない。
 `CLAUDE.md` はこの `AGENTS.md` への相対symlink。
+`AGENTS.html` はこの文書を人が俯瞰するための派生説明であり、正本・AIの実行導線にはしない。
 
 ## loopの境界
 
@@ -17,22 +18,34 @@ scopeは実装の所有属性。人間向け一覧では、追加先を迷わな
 - `global`: 複数repo/runtimeで共有するものを `loops/<loop名>/` に置く。
 - `repo-local`: 特定repoの業務・資格情報に依存するものを所有repo内に置く。
 
+repo-localの実装コピーはこの棚に置かない。人が見つける入口だけを `implementation-links/<repo-id>` として置き、
+各所有repoの `loops/` root全体へ相対directory symlinkで繋ぐ。リンクの意味と安全規則は
+`implementation-links/AGENTS.md` を正とし、実行・削除・正本判定にリンクを使わない。
+
 runnerも属性として `loop.md` に書く。
 
 - `script`: 決定的な機械処理を直接起動する。
 - `ai`: 無人AI runtimeを起動する。人間の介入や方向修正があり得る処理はloopにせず、まずペイン実行で安定させる。
 
-## 現在の構成
+## 管理の構成と新規loopの最小構成
+
+下の `<loop名>/` は新規作成時の契約である。既存loopにある `tests/`、`state/`、`output/` は移動・削除しない。
 
 ```text
 loops-registry/
   AGENTS.md
   CLAUDE.md -> AGENTS.md
+  AGENTS.html              人間向けの全体説明（派生物）
   loops/                  現役または30日以内に再開可能なglobal loop
     <loop名>/
       loop.md             目的・発火・runner・状態・停止手順
-      *.plist             launchd正本（1本以上）
-      scripts/            実装
+      *.plist             launchdを使う時だけの正本
+      scripts/            実装が必要な時だけ
+      logs/               ファイルログが必要な時だけ。gitignore
+  implementation-links/   repo-local loop rootへの人間用入口（実体・実行経路ではない）
+    AGENTS.md
+    CLAUDE.md -> AGENTS.md
+    仕事 -> projects/active/仕事/loops/
   実行loop一覧.md         自作loop全体のcurrent overview正本
   実行loop一覧.html       同じ内容の白基調・2領域ダッシュボード
   verify.py               global棚・全plist・MD・HTML整合検査
@@ -60,9 +73,10 @@ loops-registry/
 
 ## state・lock・log
 
-- state: repo外、またはgitignoreされた各loop内の `state/`。実行のたびにGitを汚さない。
-- lock: `/tmp` またはgitignoreされたstate。PIDとstale期限を持ち、二重起動を防ぐ。
-- log: repo外、またはgitignoreされた各loop内の `output/logs/`。生ログを追跡しない。
+- 新規loopの定型作成は `loop.md` だけとする。`scripts/`、`logs/`、plistは必要な時だけ追加し、`tests/`・`state/`・`output/` を空フォルダとして作らない。既存loopの構成はこの変更だけで動かさない。
+- state: 必要な永続stateは、そのloopが `loop.md` で明示したrepo外・DB・既存正本へ置く。汎用の `state/` は定型にしない。
+- lock: 原則 `/tmp`。PIDとstale期限を持ち、二重起動を防ぐ。
+- log: ファイルログが必要な時だけrepo外、またはgitignoreされた各loop内の `logs/` に置く。生ログを追跡しない。
 - secret/token/credential: Keychain等のruntime保管だけを使い、plist・MD・HTML・ログ・Gitへ書かない。
 
 ## overview更新契約

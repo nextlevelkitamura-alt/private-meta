@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loop運用の全体説明 — AIエージェント基盤</title>
+  <style>
+    :root{--ground:#fff;--surface:#fff;--soft:#f7f8fb;--ink:#19212f;--muted:#5f6879;--line:#d9dfeb;--blue:#2857bf;--blue-ink:#1d459f;--blue-soft:#edf2ff;--green:#237149;--green-ink:#1b5938;--green-soft:#e7f5ec;--amber:#975a00;--amber-ink:#7d4a00;--amber-soft:#fff4df;--red:#a5402b;--red-ink:#843624;--red-soft:#fcece8;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono",Menlo,Consolas,monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7}.page{max-width:1120px;margin:0 auto;padding:48px 28px 88px}.eyebrow{margin:0 0 10px;color:var(--muted);font-size:12px;letter-spacing:.15em;font-weight:700}.hero h1{font-size:42px;letter-spacing:-.03em;line-height:1.22;margin:0;max-width:25ch}.lede{font-size:17px;color:var(--muted);max-width:70ch;margin:16px 0 0}.lede b{color:var(--ink)}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}.chip{font-size:13px;text-decoration:none;color:var(--blue-ink);background:var(--blue-soft);border:1px solid #ccd8fb;border-radius:999px;padding:6px 14px}.section{margin-top:54px}.section h2{font-size:26px;letter-spacing:-.02em;margin:0}.section-lede{margin:6px 0 18px;color:var(--muted);font-size:15px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{border:1px solid var(--line);border-radius:16px;padding:20px;background:var(--surface)}.card h3{font-size:18px;margin:12px 0 8px}.card p{margin:0;color:var(--muted);font-size:14.5px}.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}.pill.now{background:var(--green-soft);color:var(--green-ink)}.pill.plan{background:var(--amber-soft);color:var(--amber-ink)}.pill.info{background:var(--blue-soft);color:var(--blue-ink)}.callout{border:1px solid #edc9bd;background:var(--red-soft);border-radius:15px;padding:16px 18px}.callout h3{margin:0 0 4px;color:var(--red-ink);font-size:14px}.callout p{margin:0;font-size:14px;color:var(--ink)}.figure{border:1px solid var(--line);border-radius:16px;padding:20px;background:var(--surface)}.figure svg{display:block;width:100%;height:auto}.caption{margin:12px 0 0;color:var(--muted);font-size:13px}.tree{margin:0;overflow:auto;border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:18px 20px;font-family:var(--mono);font-size:13px;line-height:1.9}.tree .now{color:var(--green-ink);font-weight:700}.tree .plan{color:var(--amber-ink);font-weight:700}.tree .note{color:var(--muted)}.deflist{display:grid;gap:10px}.item{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--surface)}.item h3{margin:0 0 5px;font-size:16px}.item p{margin:0;color:var(--muted);font-size:14px}.steps{list-style:none;margin:0;padding:0;display:grid;gap:2px}.steps li{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line)}.steps li:last-child{border-bottom:0}.n{width:26px;height:26px;display:grid;place-items:center;margin-top:2px;border-radius:50%;background:var(--blue-soft);color:var(--blue-ink);font-size:12px;font-weight:700}.steps strong{font-size:15px}.steps p{margin:1px 0 0;color:var(--muted);font-size:14px}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.box{border:1px solid var(--line);border-radius:15px;padding:18px;background:var(--surface)}.box h3{margin:0 0 9px;font-size:16px}.box ul{margin:0;padding-left:20px;color:var(--muted);font-size:14px}.box li{margin:4px 0}code{font-family:var(--mono);font-size:.9em;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 5px}.refs{margin:0;padding:0;list-style:none;display:grid;gap:8px}.refs li{font-size:14px;color:var(--muted)}.refs b{color:var(--ink)}@media(max-width:760px){.page{padding:30px 18px 56px}.hero h1{font-size:33px}.cards,.compare{grid-template-columns:1fr}.section{margin-top:40px}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">AI AGENT FOUNDATION · LOOP GUIDE · 2026-07-14</p>
+      <h1>Loopは「実装」「実行」「見える化」を分けて管理する</h1>
+      <p class="lede"><b>実装の正本は所有repo、実行の正本はlaunchd、全体の見える化はregistryです。</b>このページは人間用の説明であり、AIが読む正本は同階層の <code>AGENTS.md</code> です。</p>
+      <nav class="chips" aria-label="ページ内ナビゲーション"><a class="chip" href="#map">全体像</a><a class="chip" href="#place">置き場所</a><a class="chip" href="#boundary">loopの境界</a><a class="chip" href="#creator">Loop Creator</a><a class="chip" href="#safety">安全と寿命</a><a class="chip" href="#sources">正本一覧</a></nav>
+    </header>
+
+    <section class="section" aria-labelledby="summary">
+      <h2 id="summary">まず押さえる3つの正本</h2>
+      <p class="section-lede">同じ事実を複数の場所で管理しないため、役割ごとに正本を分けます。</p>
+      <div class="cards">
+        <article class="card"><span class="pill now">実装の正本</span><h3>global または所有repo</h3><p>共通loopは基盤の <code>loops/</code>、業務固有loopは将来そのrepoの <code>loops/&lt;loop-id&gt;/</code> に置きます。</p></article>
+        <article class="card"><span class="pill now">実行の正本</span><h3>launchd / plist</h3><p>実機でいつ動くかはplistと <code>launchctl</code> が決めます。基盤のsymlinkは実行経路にしません。</p></article>
+        <article class="card"><span class="pill info">全体の正本</span><h3>現在は一覧、将来はTurso</h3><p>移行完了までは <code>実行loop一覧.md</code>。Turso移行後はdefinition・希望状態・観測履歴をTursoで管理します。</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="map">
+      <h2>全体像は「所有 → 実行 → 観測」の一本道</h2>
+      <p class="section-lede">基盤は実装をコピーせず、所有repoへの入口と共通ルールを持ちます。</p>
+      <div class="figure">
+        <svg viewBox="0 0 1000 310" role="img" aria-label="global loopとrepo local loopがそれぞれlaunchdで実行され、registryとFocusmapが状態を可視化する関係図">
+          <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#5f6879" stroke-width="1.5"/></marker></defs>
+          <rect x="38" y="45" width="205" height="76" rx="12" fill="#e7f5ec" stroke="#237149"/><text x="141" y="76" text-anchor="middle" font-size="17" font-weight="700" fill="#1b5938">基盤の global loops/</text><text x="141" y="101" text-anchor="middle" font-size="13" fill="#237149">共通loopの実体</text>
+          <rect x="38" y="189" width="205" height="76" rx="12" fill="#e7f5ec" stroke="#237149"/><text x="141" y="220" text-anchor="middle" font-size="17" font-weight="700" fill="#1b5938">仕事repoの loops/</text><text x="141" y="245" text-anchor="middle" font-size="13" fill="#237149">repo-local root（導入済み）</text>
+          <rect x="390" y="117" width="190" height="76" rx="12" fill="#edf2ff" stroke="#2857bf"/><text x="485" y="148" text-anchor="middle" font-size="17" font-weight="700" fill="#1d459f">launchd / plist</text><text x="485" y="173" text-anchor="middle" font-size="13" fill="#2857bf">実行時刻・間隔の正本</text>
+          <rect x="735" y="45" width="225" height="76" rx="12" fill="#fff" stroke="#d9dfeb"/><text x="847" y="76" text-anchor="middle" font-size="17" font-weight="700" fill="#19212f">実行loop一覧.md</text><text x="847" y="101" text-anchor="middle" font-size="13" fill="#5f6879">移行前の全体一覧</text>
+          <rect x="735" y="189" width="225" height="76" rx="12" fill="#edf2ff" stroke="#2857bf" stroke-dasharray="5 4"/><text x="847" y="220" text-anchor="middle" font-size="17" font-weight="700" fill="#1d459f">Turso / Focusmap</text><text x="847" y="245" text-anchor="middle" font-size="13" fill="#2857bf">移行後のdefinition・観測（計画中）</text>
+          <line x1="243" y1="83" x2="388" y2="137" stroke="#5f6879" stroke-width="1.5" marker-end="url(#arrow)"/><line x1="243" y1="227" x2="388" y2="173" stroke="#5f6879" stroke-width="1.5" marker-end="url(#arrow)"/><line x1="580" y1="137" x2="733" y2="83" stroke="#5f6879" stroke-width="1.5" marker-end="url(#arrow)"/><line x1="580" y1="173" x2="733" y2="227" stroke="#5f6879" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+        </svg>
+        <p class="caption">実線は現在の運用（global棚と仕事repo rootを含む）。破線はTurso / Focusmapへの移行と、Focusmapなど次のrepoへの展開です。</p>
+      </div>
+    </section>
+
+    <section class="section" id="place">
+      <h2>置き場所はscopeで決める</h2>
+      <p class="section-lede">「仕事」など人間向け領域名ではなく、実装がどこで所有されるかで判定します。</p>
+      <div class="compare">
+        <article class="box"><h3><span class="pill now">現在</span> global loop</h3><pre class="tree">AIエージェント基盤/loops-registry/
+├── AGENTS.md       <span class="note">AI向け正本</span>
+├── AGENTS.html     <span class="note">この人間向け説明</span>
+├── loops/
+│   └── &lt;loop-id&gt;/
+│       ├── loop.md
+│       ├── *.plist
+│       ├── scripts/ <span class="note">必要な時だけ</span>
+│       └── logs/ <span class="note">必要な時だけ・Git追跡しない</span>
+└── 実行loop一覧.md  <span class="note">移行前の一覧正本</span></pre></article>
+        <article class="box"><h3><span class="pill now">導入済み</span> 仕事repo-local loop</h3><pre class="tree">仕事/
+└── loops/
+    ├── AGENTS.md
+    ├── CLAUDE.md → AGENTS.md
+    └── &lt;loop-id&gt;/
+        ├── loop.md
+        ├── *.plist <span class="note">必要な時だけ</span>
+        ├── scripts/ <span class="note">必要な時だけ</span>
+        └── logs/ <span class="note">必要な時だけ・Git追跡しない</span></pre></article>
+      </div>
+      <div style="height:14px"></div>
+      <div class="callout"><h3>移動は別作業</h3><p>既存の <code>scripts/</code>、仕事repoの業務自動化、Focusmap Agentを、標準root導入と同時に移動しません。対象・launchd backup・rollbackを決め、人間が承認した移行だけが実体を動かします。</p></div>
+    </section>
+
+    <section class="section" id="boundary">
+      <h2>loopでないものを混ぜない</h2>
+      <p class="section-lede">自動で動くものでも、発火点と所有責務が違えば置き場所を分けます。</p>
+      <div class="deflist">
+        <article class="item"><h3><span class="pill now">loop</span> 時刻・間隔で繰り返す処理</h3><p><b>置く場所:</b> globalなら基盤の <code>loops/</code>、repo固有なら将来のrepo <code>loops/</code>。目的・発火・停止手順を <code>loop.md</code> に残します。</p></article>
+        <article class="item"><h3><span class="pill info">hook</span> runtimeイベント直後の処理</h3><p><b>置く場所:</b> <code>hooks-registry/</code> またはrepo-local hook。定時実行ではないためloop棚へ置きません。</p></article>
+        <article class="item"><h3><span class="pill info">手動コマンド / Skill</span> 人の依頼で動く処理</h3><p><b>置く場所:</b> 所有Skillまたはrepoの <code>scripts/</code>。繰り返し自動発火に成熟するまではloopにしません。</p></article>
+        <article class="item"><h3><span class="pill info">AI実装・レビュー・采配</span> 人の方向修正が前提の作業</h3><p><b>置く場所:</b> Skill / orchestration / 可視ペイン。無人の定期実行にする前に、まず対話的な運用で安定させます。</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="creator">
+      <h2>Loop Creatorが新設を一連の作業にする</h2>
+      <p class="section-lede">作成、登録、リンクを別々にすると漏れるため、将来のGlobal Skillは一つの完了条件として扱います。</p>
+      <ol class="steps">
+        <li><span class="n">1</span><div><strong>repo-registryで所有repoを確定する</strong><p>repoの役割とcanonical pathをここで選び、名前や絶対パスを推測しません。</p></div></li>
+        <li><span class="n">2</span><div><strong>対象repoのAGENTS.mdでloop rootを確認する</strong><p><code>loops/&lt;loop-id&gt;/</code> の宣言がなければfail-closed。勝手に <code>scripts/</code> を探索しません。</p></div></li>
+        <li><span class="n">3</span><div><strong>必要最小限の定義を作る</strong><p>必須は<code>loop.md</code>だけです。必要な時だけplist、scripts、gitignore対象のlogsを追加し、空の標準フォルダは作りません。</p></div></li>
+        <li><span class="n">4</span><div><strong>基盤にrepo rootをリンクする</strong><p><code>implementation-links/&lt;repo-id&gt; → &lt;repo&gt;/loops/</code> の相対directory symlinkを検証します。個別loopのリンクは不要です。</p></div></li>
+        <li><span class="n">5</span><div><strong>registryへsource referenceを登録する</strong><p>移行期間は一覧、切替後はTurso definitionへcanonical pathを登録します。launchdの有効化は人間承認後だけです。</p></div></li>
+      </ol>
+    </section>
+
+    <section class="section" id="safety">
+      <h2>symlinkは入口であり、実行や削除の基準ではない</h2>
+      <p class="section-lede">リンクを便利な抜け道にしないことで、repo所有権と実行の安定性を守ります。</p>
+      <div class="cards">
+        <article class="card"><span class="pill info">実行</span><h3>launchdはcanonical path</h3><p>plistは所有repoまたは基盤の実体を指します。基盤リンクの改名・再作成が稼働中の実行を壊しません。</p></article>
+        <article class="card"><span class="pill info">削除</span><h3>リンクを辿って削除しない</h3><p>削除前に実体・依存・loaded状態を確認します。リンクを消しても実体は消えず、実体削除は別の人間ゲートです。</p></article>
+        <article class="card"><span class="pill info">実行時データ</span><h3>lockは/tmp、ログは必要時だけ</h3><p>lockは原則<code>/tmp</code>、ファイルログは必要な時だけgitignoreされた<code>logs/</code>またはrepo外へ置きます。永続stateと成果物は目的に合う正本を明示します。</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="sources">
+      <h2>迷った時に読む正本</h2>
+      <p class="section-lede">このHTMLは入口です。AIの判断と実装はMarkdown・コード・実機状態を読みます。</p>
+      <ul class="refs">
+        <li><b>運用ルール:</b> <code>AGENTS.md</code> — global loopの境界、寿命、安全手順、一覧更新契約。</li>
+        <li><b>実装一覧（現在）:</b> <code>実行loop一覧.md</code> — 自作loop全体のcurrent overview正本。</li>
+        <li><b>実機状態:</b> 各loopのplistと <code>launchctl</code> — loaded状態、実行回数、終了状態。</li>
+        <li><b>移行計画:</b> <code>my-brain/areas/ai運用/plans/active/2026-07-12-loopレジストリTurso移行/</code> — Turso化とrepo-local標準の計画正本。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

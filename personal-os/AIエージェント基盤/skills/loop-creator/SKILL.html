@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>loop-creator — Skill説明書</title>
+<style>
+  :root{color-scheme:light only;--ground:#fff;--surface:#fff;--soft:#f5f7fb;--ink:#19212f;--muted:#5f6879;--line:#d9dfeb;--blue:#2857bf;--blue-soft:#edf2ff;--green:#237149;--green-soft:#e7f5ec;--amber:#975a00;--amber-soft:#fff4df;--red:#a5402b;--red-soft:#fcece8;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono",Menlo,Consolas,monospace}
+  *{box-sizing:border-box}html,body{background:#fff}body{margin:0;color:var(--ink);font-family:var(--sans);line-height:1.7;padding:42px 22px 76px}.wrap{max-width:980px;margin:0 auto;display:grid;gap:30px}.hero,section{border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:27px 30px}.hero{border-top:6px solid var(--blue)}.eyebrow{margin:0 0 8px;color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.12em}h1{margin:0;font-size:37px;line-height:1.2}h2{margin:0 0 13px;font-size:22px}h3{margin:0 0 7px;font-size:16px}p{margin:0 0 10px}.lede{margin-top:12px;color:var(--muted);font-size:16px;max-width:70ch}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:17px}.chip{border:1px solid #cad8ed;border-radius:999px;background:var(--blue-soft);color:#1d459f;padding:4px 10px;font-size:12px;font-weight:700}.examples,.roles{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.example,.role{border:1px solid var(--line);border-radius:12px;background:#fbfdff;padding:14px 16px}.example{color:#334155}.role p,.sub{color:var(--muted);font-size:13px}.structure{display:grid;grid-template-columns:1fr 1fr;gap:13px}.panel{border:1px solid var(--line);border-radius:13px;background:var(--soft);padding:17px}pre{margin:0;white-space:pre-wrap;font:12.5px/1.85 var(--mono);color:#26364a}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px}.step{border:1px solid #cbd8e7;border-radius:9px;background:var(--blue-soft);padding:5px 9px;font-size:12px}.step.gate{border-color:#e0be7d;background:var(--amber-soft);color:#7d4a00;font-weight:700}.arrow{color:var(--muted)}.workflow{border:1px solid var(--line);border-radius:14px;background:#fbfdff;padding:18px}.workflow ol{margin:12px 0 0;padding-left:23px}.workflow li{margin-bottom:8px}.rule{border-left:4px solid var(--red);border-radius:0 12px 12px 0;background:var(--red-soft);padding:15px 18px}.rule ul{margin:0;padding-left:20px}.foot{color:var(--muted);font-size:12px;text-align:center}@media(max-width:720px){body{padding:18px 10px 50px}.hero,section{padding:21px 18px}.examples,.roles,.structure{grid-template-columns:1fr}h1{font-size:31px}}
+</style>
+<style>
+  .diagram{margin-top:13px;border:1px solid var(--line);border-radius:13px;background:var(--soft);padding:17px}.diagram-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.lane{border:1px solid #cbd8e7;border-radius:10px;background:#fff;padding:13px}.lane h3{color:#1d459f}.lane p{font-size:13px;color:var(--muted)}@media(max-width:720px){.diagram-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="hero">
+    <p class="eyebrow">GLOBAL META SKILL · LOOP LIFECYCLE</p>
+    <h1>loop-creator</h1>
+    <p class="lede">定時・間隔で繰り返すloopを、所有repoの正本へ必要最小限で作り、基盤link・registry・launchdの関係まで安全に整えるSkillです。</p>
+    <div class="chips"><span class="chip">必須はloop.mdだけ</span><span class="chip">既定dry-run</span><span class="chip">未宣言rootは停止</span><span class="chip">launchdは人間ゲート</span></div>
+  </header>
+
+  <section>
+    <h2>① 何をするSkillか</h2>
+    <div class="roles">
+      <article class="role"><h3>所有と置き場を決める</h3><p>repo内なら最寄りAGENTS、Private起点ならplan-triageとrepo-registryを使い、globalかrepo-localかを決めます。</p></article>
+      <article class="role"><h3>必要なものだけ作る</h3><p>新規で自動作成するのはloop.mdだけ。scripts、logs、plist、testは必要性がある場合だけ追加します。</p></article>
+      <article class="role"><h3>横断導線を整合させる</h3><p>repo-local rootのdirectory symlinkとregistry source referenceを照合し、基盤へ実装をコピーしません。</p></article>
+      <article class="role"><h3>実行前に止まれる</h3><p>正本不明、リンク不一致、registry競合、launchd変更ではfail-closedまたは人間承認へ進みます。</p></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>② いつ発火するか</h2>
+    <div class="examples">
+      <div class="example">「朝にこの整理を自動実行したい」</div>
+      <div class="example">「仕事repoにloopを作って」</div>
+      <div class="example">「このloopの周期を変更して」</div>
+      <div class="example">「global loopとして登録して」</div>
+    </div>
+    <p class="sub">hook、手動コマンド、Codexのリマインダーやautomation、repo移動、Skill作成には使いません。</p>
+  </section>
+
+  <section>
+    <h2>③ 構造図</h2>
+    <div class="structure">
+      <div class="panel"><h3>Skillの正本</h3><pre>skills/loop-creator/
+├── SKILL.md
+├── SKILL.html
+├── workflows/
+│   └── create-or-update-loop.md
+└── scripts/
+    ├── scaffold-loop.sh
+    └── test-scaffold-loop.sh</pre></div>
+      <div class="panel"><h3>新規loopの最小構成</h3><pre>所有repo/loops/&lt;loop-id&gt;/
+├── loop.md      # 必須
+├── scripts/     # 必要時だけ
+├── logs/        # 必要時だけ・gitignore
+└── *.plist      # launchd利用時だけ</pre></div>
+    </div>
+    <div class="flow"><span class="step">依頼</span><span class="arrow">→</span><span class="step">所有repo</span><span class="arrow">→</span><span class="step">dry-run</span><span class="arrow">→</span><span class="step">loop.md</span><span class="arrow">→</span><span class="step">link / registry</span><span class="arrow">→</span><span class="step gate">launchd人間ゲート</span><span class="arrow">→</span><span class="step">検証・報告</span></div>
+    <div class="diagram">
+      <h3>実体・発見・実行は別の役割</h3>
+      <div class="diagram-grid">
+        <div class="lane"><h3>正本と発見</h3><pre>所有repo/loops/&lt;loop-id&gt;/<br>├── loop.md     定義・停止手順<br>├── *.plist     予定表の正本（必要時）<br>└── scripts/    実処理（必要時）<br><br>implementation-links/&lt;repo-id&gt;<br>  └─ 相対symlink → repoのloops/全体<br>      （人間が見つける入口。実行しない）<br><br>registry<br>  └─ その時点の唯一の正本へsourceを登録</pre></div>
+        <div class="lane"><h3>launchdで動かす時だけ</h3><pre>loop.md       人間とAIの定義<br>  └─ plist    launchdへの予定表<br>      └─ ~/Library/LaunchAgents/<br>          （plist正本へのsymlink露出）<br>          └─ launchd が読み込む<br>              └─ scripts/&lt;runner&gt; を実行<br><br>launchctl<br>  └─ 読込・停止・状態確認の操作窓口<br>     登録や周期変更は人間ゲート</pre></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>④ workflowの中身</h2>
+    <div class="workflow">
+      <h3><code>create-or-update-loop.md</code> — 新設と変更の全工程</h3>
+      <p class="sub">所有判定からscaffold、optional実装、基盤link、registry、launchd、検証までを1本で完了します。</p>
+      <ol>
+        <li>loop / hook / 手動 / 一回限りを分類する。</li>
+        <li>plan-triageと最寄りAGENTSから所有repo・計画経路を確定する。</li>
+        <li>宣言済みcanonical loops rootとloop-id衝突を確認する。</li>
+        <li>scaffoldをdry-runし、明確な作成指示または承認後だけloop.mdを作る。</li>
+        <li>script、logs、plist、testを必要性がある場合だけ追加する。</li>
+        <li>相対directory symlinkと作業時点のregistry正本を検証する。</li>
+        <li>launchd変更は対象・rollbackを示して人間承認後だけ行う。</li>
+        <li>test、plist、ignore、realpath、registry、実機状態を検証して報告する。</li>
+      </ol>
+      <p><b>完了条件:</b> 正本・露出先・実行時状態が一意で、未設定項目がなく、無承認のlaunchd変更がありません。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>⑥ 絶対ルール・安全方針</h2>
+    <div class="rule"><ul>
+      <li>未宣言root、正本不明、link不一致、registry競合では書き込みません。</li>
+      <li>既存loop・既存ファイルを上書きせず、個別loop symlinkや基盤への実装コピーを作りません。</li>
+      <li>launchd登録・解除・有効化・周期変更、symlink作成/置換、既存実装の移動・削除は人間ゲートです。launchd変更時は前後のread-only snapshotを比較します。</li>
+      <li>secret、token、credentialをplist、MD、HTML、logs、Gitへ書きません。</li>
+      <li>mdとTursoを同時にregistry正本にせず、作業時点のloops-registry契約に従います。</li>
+    </ul></div>
+  </section>
+
+  <p class="foot">更新日: 2026-07-14 ／ 正本: <code>SKILL.md</code>（このHTMLは人間向け派生説明）</p>
+</main>
+</body>
+</html>

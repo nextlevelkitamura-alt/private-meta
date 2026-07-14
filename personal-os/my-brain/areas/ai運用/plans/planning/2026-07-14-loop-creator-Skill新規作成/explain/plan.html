@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <title>loop-creator — 完了状況と次の作業</title>
+  <style>
+    :root{color-scheme:light only;--ground:#fff;--surface:#fff;--surface-2:#f7f8fb;--ink:#19212f;--muted:#5f6879;--line:#dbdfea;--accent:#2c3a8c;--accent-ink:#202c6e;--accent-soft:#e9ecfa;--go:#2e7d5b;--go-ink:#1e5a40;--go-soft:#e3f1ea;--warn:#b4472b;--warn-ink:#8c3620;--warn-soft:#f7e8e2;--amber:#9b6a12;--amber-ink:#744b05;--amber-soft:#fff4da;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono",Menlo,Consolas,monospace}*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7}.page{min-height:100vh;padding:40px 20px 72px}.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:40px}.eyebrow{margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--muted)}h1{margin:0;font-size:clamp(30px,4vw,46px);line-height:1.18;letter-spacing:-.02em}h2{margin:0 0 7px;font-size:14px;letter-spacing:.07em;color:var(--muted)}h3{margin:0 0 8px;font-size:15px}p{margin:0}.lede{margin-top:15px;max-width:64ch;font-size:16px;color:var(--muted)}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.chip{display:inline-block;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);font-size:12px;font-weight:700;color:var(--accent-ink);text-decoration:none}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:18px}.card p{font-size:13.5px;color:var(--muted)}.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700}.go{background:var(--go-soft);color:var(--go-ink)}.warn{background:var(--amber-soft);color:var(--amber-ink)}.acc{background:var(--accent-soft);color:var(--accent-ink)}figure{margin:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:18px}figcaption{margin-top:10px;font-size:12px;color:var(--muted)}.deflist{display:flex;flex-direction:column;gap:10px}.ditem{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:15px 17px}.dhead{margin:0 0 5px;font-size:14px;font-weight:700}.dbody{font-size:13.5px;color:var(--muted)}.steps{list-style:none;margin:0;padding:0}.steps li{display:flex;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line)}.steps li:last-child{border-bottom:0}.stepno{display:grid;place-items:center;flex:none;width:25px;height:25px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:700}.steps .h{margin:0;font-size:13.5px;font-weight:700}.steps p{font-size:13px;color:var(--muted)}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.col{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:17px}.col p{font-size:13.5px;color:var(--muted)}.callout{border:1px solid var(--amber);border-radius:14px;background:var(--amber-soft);padding:15px 17px}.callout .ct{margin:0 0 4px;font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--amber-ink)}.callout p{font-size:13.5px}.source{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--muted)}code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--line);padding:1px 5px;border-radius:5px}@media(max-width:720px){.page{padding:24px 14px 52px}.cards,.compare{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="page"><div class="wrap">
+    <header>
+      <p class="eyebrow">AI運用 / LOOP CREATOR / 2026-07-14</p>
+      <h1>Skill本体は完了。次はFocusmapへ同じ標準を展開する段階です。</h1>
+      <p class="lede"><b>いま使える状態になったもの</b>は、loopを安全に作るためのGlobal Skillと、仕事repoのloop rootです。<b>まだ始めていないもの</b>は、Focusmapのroot・実際の新規loop・launchdの有効化です。</p>
+      <nav class="chips" aria-label="ページ内ナビゲーション"><a class="chip" href="#map">全体図</a><a class="chip" href="#done">終わったこと</a><a class="chip" href="#next">次にやること</a><a class="chip" href="#boundary">やらないこと</a><a class="chip" href="#evidence">確認結果</a></nav>
+    </header>
+
+    <section>
+      <h2>要点</h2>
+      <div class="cards">
+        <article class="card"><p class="dhead"><span class="pill go">完了</span> loop-creator本体</p><p>作成・変更・検証のSkill、最小scaffold、相対link検証、5 runtimeへの直接露出まで完了しています。</p></article>
+        <article class="card"><p class="dhead"><span class="pill go">完了</span> 仕事repoの受け皿</p><p><code>仕事/loops/</code>と基盤の<code>implementation-links/仕事</code>がつながっています。既存実装は移していません。</p></article>
+        <article class="card"><p class="dhead"><span class="pill warn">次</span> Focusmap展開</p><p>Focusmapに同じ<code>loops/</code> rootと基盤linkを作る作業です。これはSkill本体とは別の実装です。</p></article>
+      </div>
+    </section>
+
+    <section id="map">
+      <h2>全体図</h2>
+      <p class="lede">緑は完了、黄は次の作業、灰色は今回動かしていない領域です。</p>
+      <figure>
+        <svg width="100%" viewBox="0 0 960 460" role="img" aria-label="loop-creatorの完了範囲とFocusmap展開の次の作業">
+          <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#2c3a8c" stroke-width="1.5"/></marker><marker id="goarrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#2e7d5b" stroke-width="1.5"/></marker></defs>
+          <text x="30" y="34" font-size="14" font-weight="700" fill="#1e5a40">完了した範囲</text>
+          <rect x="30" y="52" width="220" height="90" rx="14" fill="#e3f1ea" stroke="#2e7d5b"/><text x="140" y="84" text-anchor="middle" font-size="17" font-weight="700" fill="#1e5a40">loop-creator 正本</text><text x="140" y="108" text-anchor="middle" font-size="12" fill="#1e5a40">作成・変更・安全検証</text><text x="140" y="127" text-anchor="middle" font-size="12" fill="#1e5a40">skills/loop-creator/</text>
+          <line x1="250" y1="97" x2="330" y2="97" stroke="#2e7d5b" stroke-width="1.5" marker-end="url(#goarrow)"/>
+          <rect x="330" y="52" width="210" height="90" rx="14" fill="#e3f1ea" stroke="#2e7d5b"/><text x="435" y="84" text-anchor="middle" font-size="17" font-weight="700" fill="#1e5a40">5 runtime</text><text x="435" y="108" text-anchor="middle" font-size="12" fill="#1e5a40">正本への直接symlink</text><text x="435" y="127" text-anchor="middle" font-size="12" fill="#1e5a40">Codex / Claude / Gemini など</text>
+          <rect x="630" y="52" width="300" height="90" rx="14" fill="#e3f1ea" stroke="#2e7d5b"/><text x="780" y="84" text-anchor="middle" font-size="17" font-weight="700" fill="#1e5a40">仕事repoの受け皿</text><text x="780" y="108" text-anchor="middle" font-size="12" fill="#1e5a40">仕事/loops/ ← implementation-links/仕事</text><text x="780" y="127" text-anchor="middle" font-size="12" fill="#1e5a40">既存実装・launchdはそのまま</text>
+          <text x="30" y="204" font-size="14" font-weight="700" fill="#744b05">次に進める範囲</text>
+          <rect x="30" y="222" width="220" height="92" rx="14" fill="#fff4da" stroke="#9b6a12"/><text x="140" y="255" text-anchor="middle" font-size="17" font-weight="700" fill="#744b05">Focusmapの契約確認</text><text x="140" y="279" text-anchor="middle" font-size="12" fill="#744b05">repoのAGENTS・既存planを読む</text><text x="140" y="298" text-anchor="middle" font-size="12" fill="#744b05">対象repo sessionへ引継ぎ</text>
+          <line x1="250" y1="268" x2="330" y2="268" stroke="#2c3a8c" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <rect x="330" y="222" width="220" height="92" rx="14" fill="#fff4da" stroke="#9b6a12"/><text x="440" y="255" text-anchor="middle" font-size="17" font-weight="700" fill="#744b05">Focusmap/loops/ を導入</text><text x="440" y="279" text-anchor="middle" font-size="12" fill="#744b05">AGENTS + CLAUDE symlink</text><text x="440" y="298" text-anchor="middle" font-size="12" fill="#744b05">新規loopの正本root</text>
+          <line x1="550" y1="268" x2="630" y2="268" stroke="#2c3a8c" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <rect x="630" y="222" width="300" height="92" rx="14" fill="#fff4da" stroke="#9b6a12"/><text x="780" y="255" text-anchor="middle" font-size="17" font-weight="700" fill="#744b05">基盤linkを作成・検証</text><text x="780" y="279" text-anchor="middle" font-size="12" fill="#744b05">implementation-links/Focusmap</text><text x="780" y="298" text-anchor="middle" font-size="12" fill="#744b05">作成・置換は人間承認が必要</text>
+          <rect x="30" y="362" width="900" height="62" rx="14" fill="#f7f8fb" stroke="#dbdfea"/><text x="50" y="389" font-size="14" font-weight="700" fill="#19212f">今回の対象外</text><text x="50" y="410" font-size="12" fill="#5f6879">既存loopの移設 / launchdの登録・周期変更 / Turso migration適用。これらは別の対象・承認・rollbackを持つ作業として扱います。</text>
+        </svg>
+        <figcaption>「Skillを作ること」と「各repoにloopを展開すること」と「実際にスケジュールを有効化すること」は別段階です。</figcaption>
+      </figure>
+    </section>
+
+    <section id="done">
+      <h2>終わったこと</h2>
+      <p class="lede">loopを安全に作るための仕組みは、Global Skillとして利用できる状態です。</p>
+      <div class="deflist">
+        <div class="ditem"><p class="dhead"><span class="pill go">PASS</span> Global Skillとruntime露出</p><p class="dbody"><b>正本は基盤の<code>skills/loop-creator/</code></b>です。5 runtimeは本文コピーでなく、その正本への直接symlinkになっています。</p></div>
+        <div class="ditem"><p class="dhead"><span class="pill go">PASS</span> 作成時の安全条件</p><p class="dbody"><b>必須作成物は<code>loop.md</code>だけ</b>です。未宣言root、誤ったglobal root、link不一致は停止し、同じ入力の再実行はno-opで終わります。</p></div>
+        <div class="ditem"><p class="dhead"><span class="pill go">PASS</span> 仕事repoの導線</p><p class="dbody"><b><code>仕事/loops/</code>が実体の正本</b>で、基盤の<code>implementation-links/仕事</code>は人が見つけるための相対symlinkです。</p></div>
+      </div>
+    </section>
+
+    <section id="next">
+      <h2>次にやること</h2>
+      <p class="lede">次の目的は、Focusmapにも「仕事repoと同じ受け皿」を作り、将来のloop作成先を明確にすることです。</p>
+      <ol class="steps">
+        <li><span class="stepno">1</span><div><p class="h">Focusmapの現状を確認する</p><p>最寄りAGENTS、既存plan、既存の常駐・script導線を読んで、移動せずにrootだけを導入できるかを判断します。</p></div></li>
+        <li><span class="stepno">2</span><div><p class="h">Focusmap/loops/を正本として導入する</p><p><code>AGENTS.md</code>と<code>CLAUDE.md → AGENTS.md</code>を置き、既存実装の移動はしません。</p></div></li>
+        <li><span class="stepno">3</span><div><p class="h">基盤のdirectory symlinkを人間承認後に作る</p><p><code>implementation-links/Focusmap</code>からroot全体を見る形にし、作成後はloop-creatorの検証scriptで確認します。</p></div></li>
+        <li><span class="stepno">4</span><div><p class="h">その後、必要な個別loopを作る</p><p>初めて個別loopを作る時に、目的・周期・runner・registry・必要ならlaunchdを個別に設計します。</p></div></li>
+      </ol>
+    </section>
+
+    <section id="boundary">
+      <h2>次に進んでも、自動では起きないこと</h2>
+      <p class="lede">Focusmapにrootを作ることは、既存の自動実行を勝手に動かしたり移したりすることではありません。</p>
+      <div class="compare">
+        <div class="col"><h3><span class="pill go">今回する</span></h3><p>新しいloopの置き場・説明書・人間用の基盤linkを整える。将来のloop作成を安全な一本の導線にする。</p></div>
+        <div class="col"><h3><span class="pill warn">今回しない</span></h3><p>既存scriptや既存loopの移動、launchdの登録・有効化・周期変更、Turso migration適用、Notion廃止の実行。</p></div>
+      </div>
+    </section>
+
+    <section id="evidence">
+      <h2>確認結果と残る注意</h2>
+      <p class="lede">技術的な検証はPASSです。launchdについてだけ、過去の事前状態を後から完全に再構成できない注意を残しています。</p>
+      <div class="callout"><p class="ct">履歴上の注意</p><p>初回実装の前に取っていなかったlaunchd snapshotは、後から証明できません。以後は、launchdを変更する前後に対象labelとLaunchAgents symlinkを記録・比較するようSkillへ追加済みです。今回はlaunchd操作をしていません。</p></div>
+    </section>
+
+    <section>
+      <h2>根拠</h2>
+      <ul class="source"><li><b>計画正本</b> — <code>plan.md</code> の実装レビューと完了条件</li><li><b>Skill正本</b> — <code>AIエージェント基盤/skills/loop-creator/</code></li><li><b>検証</b> — scaffold/link test、registry verifier、実root dry-run、5 runtime symlink、独立再監査</li></ul>
+    </section>
+  </div></main>
+</body>
+</html>

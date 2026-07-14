@@ -68,6 +68,9 @@ Focusmap Mac Agent <──agent API── claim / observation / run event
     次: 3001のPersonal OS説明サーバーを止める人間承認後にFocusmap UIをBrowser確認し、その後Turso migrationのdry-run判断へ進む
     参照: focusmap@d3f29a5c
     場所: plans/04-統合・切替・旧一覧廃止.md ／ 依存: 01,02,03
+- [ ] 05 repo-local loop標準とLoop Creator … 実装（repo-local標準・Skill導入完了／Turso連携は04へ）
+    次: 2026-07-14のread-only baselineを参照し、Turso source reference・7loop import・切替は04の人間ゲート後に進める
+    場所: plans/05-repo-local-loop標準とLoop Creator.md ／ 依存: 01,02
 
 ## 人間ゲート
 

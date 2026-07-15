@@ -16,3 +16,5 @@
 - 状態遷移・生存照合: `../../shared/session-board/common.py` と `board.py`。
 - runtime登録: Claudeは `~/.claude/settings.json` の `hooks` 項目、Codexは `../../codex/hooks.json`。どちらも `agent-hooks/events/session-start/` 経由でこの `.py` を指す。
 - 全体の順番: `AGENTS.md`。
+
+開始通知・session-boardの`finish`は計画のarchiveを承認・実行しない。計画同期とバケット遷移はplan-opsの責務である。

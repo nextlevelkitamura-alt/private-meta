@@ -66,5 +66,13 @@ check("(h) 計画ミラーもrepo固有箱", len(out) == 3
       and "対象repo AGENTS.md→宣言された計画箱" in out[2]
       and "<repo>/plans" not in out[2])
 
+# (i) 承認待ちの次期Prompt Submit本文はcommon.pyだけが生成元で、責務境界を含む
+candidate = common.plan_management_guide_candidate()
+check("(i) 次期本文に最小ゲートと一本道", all(s in candidate for s in (
+    "全YESでない、または不明なら plan-management", "planning→active→done→archive",
+    "bucketctl check", "一括は束ねて", "finishはsession-boardの記録を閉じるだけ",
+)))
+check("(i2) 次期本文は未有効化", "plan-management" not in guide and "plan_management_guide_candidate" not in common.register_prompt.__code__.co_names)
+
 print(f"\n== 結果: PASS={PASS} FAIL={FAIL} ==")
 sys.exit(1 if FAIL else 0)

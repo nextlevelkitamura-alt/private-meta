@@ -122,22 +122,22 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
     次: 実装完了(132pass全緑・task/pf02=8d7fc3a・worktree保持中)。Wave4の3子一括レビューで消化
     場所: plans/02 ／ 依存: 01
     参照: task/pf02=8d7fc3a（132pass・一括レビュー待ち）
-- [ ] 03  harness・エージェント・ゴールコマンド … 実装レビュー（一括待ち）
+- [ ] 03  harness・エージェント・ゴールコマンド … 修正
     役割: 実装（delegate・roles・program-run）
     対象repo: ~/Private（private-meta）
     並列: 不可 ／ レビュー: 一括（Wave4後に02・03・04を3子一括。共通契約を変える修正のみ即差し戻し）
     人間ゲート: なし（worktree削除は明示cleanupのみ・露出は承認セットへ）
-    次: A/B統合+program-run実装完了(テスト14件PASS・task/pf03=fec91a9・worktree保持)。program-run起動前検査が本programの計画文書lint違反を検出→指揮官が是正
+    次: 一括レビュー評価01(4PASS/5FAIL: schema検証・Claudeレビュー経路・resume・実gitテスト・承認セット同期)の修正01をcodex resumeで対応中
     場所: plans/03 ／ 依存: 01, 02
-    参照: task/pf03=fec91a9（A/B統合+program-run・テスト14件PASS）
-- [ ] 04  Prompt Submitとhookガード … 計画
+    参照: task/pf03=fec91a9・評価01→修正01
+- [ ] 04  Prompt Submitとhookガード … 修正
     役割: 実装（注入更新・PreTool・plan-closeout guard）
     対象repo: ~/Private（private-meta）
     並列: 不可 ／ レビュー: 一括（Wave4後に02・03・04を3子一括。共通契約を変える修正のみ即差し戻し）
     人間ゲート: runtime登録・注入文の有効化・Codex再trustは実行せず承認セットへ（適用は承認後）
-    次: hooks再編差分の安定後、注入文・PreToolガード・Stop/SubagentStopガード（計画日付の陳腐化検知を含む）を本体＋テストまで実装し、登録差分を承認セットへ積む
+    次: 実装完了(登録未適用・差分ファイル化済み)→一括レビュー評価01(2PASS/6FAIL: PreTool回避・schema fail-open・fixture不足ほか。注入2件は完了条件明確化で解消)の修正01をcodex resumeで対応中
     場所: plans/04 ／ 依存: 02, 03, 計画運用ハーネス子04
-    参照: ―
+    参照: task/pf04=0c51934・評価01→修正01・登録差分=hooks-registry/registration-diff-04-plan-closeout.md
 - [ ] 05  既存計画とarea標準の適用 … 計画
     役割: 統合（既存計画の監査・ai運用pilot）
     対象repo: ~/Private（private-meta）

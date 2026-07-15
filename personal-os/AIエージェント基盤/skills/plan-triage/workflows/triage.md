@@ -1,6 +1,6 @@
 # triage workflow
 
-やりたいこと1件を、規模・経路・起動形・モデルの4判断と構成カードへ変換する端から端までの手順。経路の詳細と出力fieldは `../references/route-contract.md` を正とする。
+やりたいこと1件を、規模・経路・実行形・モデル参照の4判断と構成カードへ変換する端から端までの手順。経路の詳細と出力fieldは `../references/route-contract.md` を正とする。
 
 ## Step 1: 入力と起点を固定する
 
@@ -46,18 +46,35 @@
 5. `EXISTING_PLAN_AMBIGUOUS`: 合流候補が複数あり正本を決められない。
 6. `HANDOFF_INVALID`: 必須field欠損、別repoのworktree、snapshot不一致。
 
-## Step 4: 起動形とモデルを判定する
+## Step 4: 実行形とモデルを判定する
 
-1. 完成した計画は実装/レビューの2ペインを既定にする。
-2. 計画未成熟、現場判断が多い、配布専任が必要、外部仕様調査が先行する時だけ計画ペインを加える。
-3. モデルの正本は `../../../AIモデル一覧.md`。遅れると人間・他レーンが直列待ちする時だけ実装モデル格上げを明示する。
-4. 本workflowは構成カードを出すだけで、ペインを起動しない。
+1. 実行形は `direct`（指揮官が直接編集）／`delegated-single`（worker 1体へ委譲）／`delegated-parallel`（ファイル非交差の2 write laneまで）／`integration`（統合検証）から選ぶ。
+2. 必要役割は implementer を基本に、検証が独立する時だけ reviewer、経路や所有が未確定な時だけ explorer を足す。write lane数は direct=0、single/integration=1、parallel=2を上限にする。
+3. worktreeはread-onlyまたはdirectなら `不要`、writeを委譲するなら `task-scoped`。parallelはレーン別の変更可能範囲とworktree方針が計画に記載済みでなければ選ばない。
+4. レビューはサクッと=`自己`、ライト=`1pass`、フル=`full`を既定にし、子の束ね方は計画へ `都度/一括` として記す。モデルの正本は `../../../AIモデル一覧.md`で、カードには参照した旨だけを示す。
+5. Orcaは任意adapterであり、このカードの既定出力・起動操作には含めない。
 
 ## Step 5: route JSONと構成カードを出す
 
 1. `plan-triage.route/v1` の全fieldを固定順で返す。
 2. 候補path・findingは辞書順にし、timestampやsecret値を含めない。
-3. 構成カードには規模、canonical repo、plan action/path、起動形、モデル、handoff要否、人間ゲートを載せる。
+3. 構成カードには次を固定順で載せる。
+
+   ```text
+   規模:
+   形態: quick / plan / program
+   対象repo:
+   計画置き場:
+   実行形: direct / delegated-single / delegated-parallel / integration
+   必要役割:
+   write lane数:
+   worktree: 不要 / task-scoped
+   レビュー: 自己 / 1pass / full ＋ 都度 / 一括
+   人間ゲート:
+   判定理由:
+   ```
+
+   Orcaのペイン編成は、ユーザーが選んだ時だけ任意adapterとして別途提案する。
 4. stop時は計画スケルトンを作らず、人間が決める1点だけを返す。
 
 ## Step 6: 計画スケルトンを提案する

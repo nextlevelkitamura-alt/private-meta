@@ -52,8 +52,7 @@ tpl, out, klass, kind, is_program = sys.argv[1:6]
 with open(tpl, encoding="utf-8") as f:
     content = f.read()
 if klass:
-    ph = "<skill/repo/loop>" if is_program == "1" else "<skill/repo/loop/横断>"
-    content = content.replace(ph, klass, 1)
+    content = content.replace("<skill/repo/loop/横断>", klass, 1)
 if kind:
     content = re.sub(r"(種別: )<新規作成/既存改善/統合整理>", lambda m: m.group(1) + kind, content, count=1)
 with open(out, "w", encoding="utf-8") as f:

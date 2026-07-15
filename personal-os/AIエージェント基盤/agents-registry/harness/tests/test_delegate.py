@@ -88,6 +88,18 @@ class HarnessTest(unittest.TestCase):
         invalid["assumptions"] = ["token=not-for-state"]
         with self.assertRaisesRegex(manifest.ValidationError, "credential"):
             manifest.validate_result(invalid)
+        valid_manifest = dict(planctl_manifest)
+        valid_manifest["unexpected"] = "no"
+        with self.assertRaisesRegex(manifest.ValidationError, "未知"):
+            manifest.validate_manifest(valid_manifest)
+        valid_result = {"version": 1, "task_id": "x", "status": "done", "base_commit": "a", "result_commit": "b", "changed_paths": [], "tests": [], "assumptions": [], "blockers": [], "remaining_risks": [], "out_of_scope_findings": []}
+        valid_result["tests"] = [{"command": "ok", "status": "passed", "summary": "ok", "extra": "no"}]
+        with self.assertRaisesRegex(manifest.ValidationError, "未知"):
+            manifest.validate_result(valid_result)
+        valid_result["tests"] = []
+        valid_result["task_id"] = 1
+        with self.assertRaisesRegex(manifest.ValidationError, "型"):
+            manifest.validate_result(valid_result)
 
     def test_process_output_is_redacted(self) -> None:
         def leaky(_command: list[str], _cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:
@@ -113,6 +125,41 @@ class HarnessTest(unittest.TestCase):
         self.assertEqual(calls[0][:4], ["claude", "--print", "--output-format", "json"])
         disabled = delegate.delegate(self.args(task_id="claude-disabled", runtime="claude", allowed_path=["src/c.py"]), runner=fake_claude, claude_help="Usage: claude")
         self.assertEqual(disabled["status"], "feature-disabled")
+
+    def test_claude_json_result_is_saved_as_reviewer_final_text(self) -> None:
+        def fake_claude(_command: list[str], _cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:
+            packet = manifest.read_json(Path(env["PLAN_RUN_MANIFEST"]))
+            manifest.write_json(Path(packet["result_path"]), {"version": 1, "task_id": packet["task_id"], "status": "done", "base_commit": packet["base_commit"], "result_commit": packet["base_commit"], "changed_paths": [], "tests": [], "assumptions": [], "blockers": [], "remaining_risks": [], "out_of_scope_findings": []})
+            return delegate.ProcessResult(0, json.dumps({"result": "# 評価\n\n全PASS"}), "")
+        answer = delegate.delegate(self.args(task_id="claude-final", runtime="claude", role="reviewer", base_commit=None, allowed_path=[]), runner=fake_claude, claude_help="--print --output-format")
+        final = Path(str(answer["manifest"])).with_name("claude-final-final.md")
+        self.assertEqual(final.read_text(encoding="utf-8"), "# 評価\n\n全PASS")
+
+    def test_codex_resume_uses_recorded_thread_without_last(self) -> None:
+        def first(_command: list[str], _cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:
+            packet = manifest.read_json(Path(env["PLAN_RUN_MANIFEST"]))
+            manifest.write_json(Path(packet["result_path"]), {"version": 1, "task_id": packet["task_id"], "status": "done", "base_commit": packet["base_commit"], "result_commit": packet["base_commit"], "changed_paths": [], "tests": [], "assumptions": [], "blockers": [], "remaining_risks": [], "out_of_scope_findings": []})
+            return delegate.ProcessResult(0, '{"type":"thread.started","thread_id":"thread-01"}', "")
+        initial = delegate.delegate(self.args(task_id="resume", allowed_path=["src/resume.py"]), runner=first)
+        seen: list[str] = []
+        def resumed(command: list[str], _cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:
+            seen.extend(command)
+            packet = manifest.read_json(Path(env["PLAN_RUN_MANIFEST"]))
+            manifest.write_json(Path(packet["result_path"]), {"version": 1, "task_id": packet["task_id"], "status": "done", "base_commit": packet["base_commit"], "result_commit": packet["base_commit"], "changed_paths": [], "tests": [], "assumptions": [], "blockers": [], "remaining_risks": [], "out_of_scope_findings": []})
+            return delegate.ProcessResult(0, "", "")
+        answer = delegate.resume(Path(str(initial["manifest"])), "修正してください", runner=resumed)
+        self.assertEqual(answer["status"], "done")
+        self.assertEqual(seen[:5], ["codex", "exec", "resume", "thread-01", "修正指示: 修正してください\n完了時は既存result packetをschemaどおり更新してください。"])
+        self.assertNotIn("--last", seen)
+
+    def test_changed_paths_outside_allowed_scope_are_blocked(self) -> None:
+        def outside(_command: list[str], _cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:
+            packet = manifest.read_json(Path(env["PLAN_RUN_MANIFEST"]))
+            manifest.write_json(Path(packet["result_path"]), {"version": 1, "task_id": packet["task_id"], "status": "done", "base_commit": packet["base_commit"], "result_commit": packet["base_commit"], "changed_paths": ["outside.py"], "tests": [], "assumptions": [], "blockers": [], "remaining_risks": [], "out_of_scope_findings": []})
+            return delegate.ProcessResult(0)
+        answer = delegate.delegate(self.args(task_id="outside", allowed_path=["src/allowed.py"]), runner=outside)
+        self.assertEqual(answer["status"], "blocked")
+        self.assertIn("範囲外", str(answer["reason"]))
 
     def test_read_only_task_omits_worktree(self) -> None:
         observed: dict[str, object] = {}

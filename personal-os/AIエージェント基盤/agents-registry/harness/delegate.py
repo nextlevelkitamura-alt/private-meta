@@ -142,6 +142,31 @@ def _load_claude_help() -> str | None:
     return result.stdout + result.stderr if result.returncode == 0 else None
 
 
+def _thread_path(state_dir: Path, task_id: str) -> Path:
+    return state_dir / f"{task_id}-thread.json"
+
+
+def _thread_id(stdout: str) -> str | None:
+    """codex exec --jsonのthread.started記録からだけ識別子を取得する。"""
+    for line in stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(event, dict) and isinstance(event.get("thread_id"), str) and event["thread_id"]:
+            return event["thread_id"]
+    return None
+
+
+def _record_thread(state_dir: Path, task_id: str, runtime: str, stdout: str) -> str | None:
+    if runtime != "codex":
+        return None
+    thread_id = _thread_id(stdout)
+    if thread_id:
+        manifest.write_json(_thread_path(state_dir, task_id), {"version": 1, "task_id": task_id, "runtime": runtime, "thread_id": thread_id})
+    return thread_id
+
+
 def delegate(args: argparse.Namespace, runner: Runner = _run, claude_help: str | None = None) -> dict[str, object]:
     plan = Path(args.plan).resolve()
     if not plan.is_file():
@@ -194,6 +219,9 @@ def delegate(args: argparse.Namespace, runner: Runner = _run, claude_help: str |
 
     env = os.environ.copy(); env["PLAN_RUN_MANIFEST"] = str(manifest_path)
     result = runner(command, cwd, env)
+    if args.runtime == "claude" and result.returncode == 0:
+        final_path.write_text(claude.final_text(result.stdout), encoding="utf-8")
+    thread_id = _record_thread(state_dir, args.task_id, args.runtime, result.stdout)
     manifest.write_json(state_dir / f"{args.task_id}-process-output.json", {"returncode": result.returncode, "stdout": manifest.redact(result.stdout), "stderr": manifest.redact(result.stderr)})
     if result.returncode:
         data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
@@ -212,12 +240,64 @@ def delegate(args: argparse.Namespace, runner: Runner = _run, claude_help: str |
     if packet["task_id"] != args.task_id or packet["base_commit"] != base_commit:
         data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
         return {"status": "blocked", "manifest": str(manifest_path), "result_path": str(result_path), "reason": "result packetのtask_idまたはbase_commitが不一致"}
+    if writable and any(not worktree.scopes_overlap([changed], args.allowed_path) for changed in packet["changed_paths"]):
+        data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
+        return {"status": "blocked", "manifest": str(manifest_path), "result_path": str(result_path), "reason": "result packetのchanged_pathsが変更可能範囲外です"}
     data["phase"] = "implemented" if packet["status"] == "done" else "blocked"
     manifest.write_json(manifest_path, data)
-    return {"status": packet["status"], "manifest": str(manifest_path), "result_path": str(result_path), "worktree_path": data["worktree_path"]}
+    return {"status": packet["status"], "manifest": str(manifest_path), "result_path": str(result_path), "worktree_path": data["worktree_path"], "thread_id": thread_id}
+
+
+def resume(manifest_path: Path, reason: str, runner: Runner = _run) -> dict[str, object]:
+    """同一Codex threadへ差し戻す公開経路。Claudeはfeature-disabledを維持する。"""
+    manifest_path = manifest_path.resolve()
+    data = manifest.validate_manifest(manifest.read_json(manifest_path))
+    if data["runtime"] != "codex":
+        return {"status": "feature-disabled", "reason": "feature-disabled: Claude resumeは未確認です", "manifest": str(manifest_path)}
+    state_dir = manifest_path.parent
+    thread_file = _thread_path(state_dir, data["task_id"])
+    try:
+        thread = manifest.read_json(thread_file)
+    except manifest.ValidationError as exc:
+        raise worktree.HarnessConflict("resumeに必要なCodex thread識別子がありません") from exc
+    if thread.get("task_id") != data["task_id"] or thread.get("runtime") != "codex" or not isinstance(thread.get("thread_id"), str):
+        raise worktree.HarnessConflict("resume thread stateが不正です")
+    cwd = Path(data["worktree_path"] or data["repo_root"])
+    if not cwd.is_dir():
+        raise worktree.HarnessConflict("resume対象worktreeがありません")
+    prompt = f"修正指示: {reason}\n完了時は既存result packetをschemaどおり更新してください。"
+    env = os.environ.copy(); env["PLAN_RUN_MANIFEST"] = str(manifest_path)
+    result = runner(codex.resume_command(session_id=thread["thread_id"], prompt=prompt), cwd, env)
+    _record_thread(state_dir, data["task_id"], "codex", result.stdout)
+    manifest.write_json(state_dir / f"{data['task_id']}-resume-process-output.json", {"returncode": result.returncode, "stdout": manifest.redact(result.stdout), "stderr": manifest.redact(result.stderr)})
+    if result.returncode or not Path(data["result_path"]).is_file():
+        data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
+        return {"status": "blocked", "manifest": str(manifest_path), "result_path": data["result_path"]}
+    packet = manifest.validate_result(manifest.read_json(Path(data["result_path"])))
+    if packet["task_id"] != data["task_id"] or packet["base_commit"] != data["base_commit"]:
+        data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
+        return {"status": "blocked", "manifest": str(manifest_path), "result_path": data["result_path"], "reason": "resume result packetのtask_idまたはbase_commitが不一致"}
+    allowed = data.get("allowed_paths", [])
+    if data["role"] == "implementer" and (not isinstance(allowed, list) or any(not worktree.scopes_overlap([changed], allowed) for changed in packet["changed_paths"])):
+        data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
+        return {"status": "blocked", "manifest": str(manifest_path), "result_path": data["result_path"], "reason": "resume result packetのchanged_pathsが変更可能範囲外です"}
+    data["phase"] = "implemented" if packet["status"] == "done" else "blocked"
+    manifest.write_json(manifest_path, data)
+    return {"status": packet["status"], "manifest": str(manifest_path), "result_path": data["result_path"], "thread_id": thread["thread_id"]}
 
 
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] == "resume":
+        parser = argparse.ArgumentParser(description="同一Codex threadへ差し戻す")
+        parser.add_argument("--manifest", required=True)
+        parser.add_argument("--reason", required=True)
+        args = parser.parse_args(sys.argv[2:])
+        try:
+            print(json.dumps(resume(Path(args.manifest), args.reason), ensure_ascii=False))
+        except (worktree.HarnessConflict, manifest.ValidationError) as exc:
+            print(f"delegate: {exc}", file=sys.stderr)
+            raise SystemExit(2)
+        return
     parser = argparse.ArgumentParser(description="1 Task Packetをruntimeへ委譲する")
     parser.add_argument("--runtime", required=True, choices=sorted(manifest.RUNTIMES))
     parser.add_argument("--role", required=True, choices=sorted(manifest.ROLES))

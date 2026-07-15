@@ -8,6 +8,7 @@ used here.
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 VERIFIED_FLAGS = ("--print", "--output-format")
 FEATURE_DISABLED = "feature-disabled: Claude non-interactive flags are not verified"
@@ -22,3 +23,14 @@ def command(*, cwd: Path, prompt: str, help_text: str | None) -> list[str] | Non
         return None
     # cwd is passed to the process by delegate rather than a guessed CLI flag.
     return ["claude", "--print", "--output-format", "json", prompt]
+
+
+def final_text(stdout: str) -> str:
+    """print/json の最終応答本文を取り出す。非JSONは安全に本文として残す。"""
+    try:
+        payload = json.loads(stdout)
+    except json.JSONDecodeError:
+        return stdout
+    if isinstance(payload, dict) and isinstance(payload.get("result"), str):
+        return payload["result"]
+    return stdout

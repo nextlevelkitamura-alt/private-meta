@@ -53,6 +53,7 @@ class Task:
     manifest_path: Path
     worktree_path: Path | None = None
     branch: str | None = None
+    thread_id: str | None = None
     result: dict[str, Any] | None = None
 
 
@@ -72,6 +73,7 @@ class RunState:
     review_queue: list[str] = field(default_factory=list)
     held_worktrees: dict[str, str] = field(default_factory=dict)
     approvals: list[str] = field(default_factory=list)
+    integration_evaluation: dict[str, dict[str, str]] = field(default_factory=dict)
     events: list[str] = field(default_factory=list)
     reason: str = ""
 
@@ -80,7 +82,8 @@ class RunState:
             "version": 1, "run_id": self.run_id, "program": self.program,
             "status": self.status, "completed": self.completed,
             "review_queue": self.review_queue, "held_worktrees": self.held_worktrees,
-            "approvals": self.approvals, "events": self.events, "reason": self.reason,
+            "approvals": self.approvals, "integration_evaluation": self.integration_evaluation,
+            "events": self.events, "reason": self.reason,
         }
 
 
@@ -182,6 +185,11 @@ def waves(children: list[Child]) -> list[list[Child]]:
 class Operations:
     """副作用の境界。テストではこのメソッドだけを fake に差し替える。"""
 
+    def __init__(self, reviewer_runtime: str = "claude") -> None:
+        if reviewer_runtime not in manifest.RUNTIMES:
+            raise ValueError("reviewer_runtimeはcodexまたはclaude")
+        self.reviewer_runtime = reviewer_runtime
+
     def lint(self, path: Path, *, program: bool = False) -> None:
         script = PLANOPS / ("program-lint.sh" if program else "plan-lint.sh")
         done = subprocess.run([str(script), str(path)], capture_output=True, text=True)
@@ -203,6 +211,9 @@ class Operations:
             raise ProgramRunBlocked("dirty checkoutではprogram-runを起動できません")
 
     def prepare(self, task: Task, repo_root: Path, state_dir: Path, worktree_root: Path) -> None:
+        # planctlのgitignore確認は既存ディレクトリを対象にするため、追跡前に
+        # state directoryだけを作る（gitignore検証自体はplanctlが担う）。
+        state_dir.mkdir(parents=True, exist_ok=True)
         planned = worktree.task_worktree_path(repo_root, worktree_root, task.task_id)
         branch = worktree.task_branch(task.task_id)
         command = [sys.executable, str(PLANOPS / "planctl.py"), "prepare", "--plan", str(task.child.plan), "--task-id", task.task_id, "--role", "implementer", "--runtime", "codex", "--repo-root", str(repo_root), "--base-commit", task.base_commit, "--worktree-path", str(planned), "--branch", branch, "--state-dir", str(state_dir)]
@@ -218,12 +229,13 @@ class Operations:
             task.branch = worktree.task_branch(task.task_id)
         task.result_path = Path(str(answer["result_path"]))
         task.manifest_path = Path(str(answer["manifest"]))
+        task.thread_id = answer.get("thread_id") if isinstance(answer.get("thread_id"), str) else None
         task.result = manifest.validate_result(manifest.read_json(task.result_path)) if task.result_path.is_file() else None
         return task
 
     def review(self, task: Task, repo_root: Path, state_dir: Path) -> Review:
         review_id = f"{task.task_id}-review"
-        args = argparse.Namespace(runtime="claude", role="reviewer", plan=str(task.child.plan), repo_root=str(repo_root), task_id=review_id, base_commit=None, program_path=None, child_id=task.child.nn, state_dir=str(state_dir), worktree_root=None, allowed_path=[], purpose=f"diff範囲: {task.result.get('result_commit', '') if task.result else ''}。評価テンプレの本文を最終出力へ返す。", dry_run=False)
+        args = argparse.Namespace(runtime=self.reviewer_runtime, role="reviewer", plan=str(task.child.plan), repo_root=str(repo_root), task_id=review_id, base_commit=None, program_path=None, child_id=task.child.nn, state_dir=str(state_dir), worktree_root=None, allowed_path=[], purpose=f"diff範囲: {task.result.get('result_commit', '') if task.result else ''}。評価テンプレの本文を最終出力へ返す。", dry_run=False)
         answer = delegate.delegate(args)
         if answer.get("status") != "done":
             return Review(False, reason="reviewerがblockedです")
@@ -235,9 +247,13 @@ class Operations:
         return Review(True, evaluation)
 
     def resume(self, task: Task, reason: str) -> Task:
-        # delegate.py の公開CLIにはresume thread契約がない。未確認のCLIを推測で
-        # 呼ばないため、実機では安全に停止する。fake adapterで状態遷移は検証する。
-        raise ProgramRunBlocked("delegateのresume thread契約が未実装です")
+        answer = delegate.resume(task.manifest_path, reason)
+        if answer.get("status") != "done":
+            raise ProgramRunBlocked(str(answer.get("reason") or "Codex resumeがblockedです"))
+        task.result_path = Path(str(answer["result_path"]))
+        task.result = manifest.validate_result(manifest.read_json(task.result_path))
+        task.thread_id = answer.get("thread_id") if isinstance(answer.get("thread_id"), str) else task.thread_id
+        return task
 
     def apply(self, task: Task, review: Review, repo_root: Path) -> None:
         if not review.evaluation_path or not task.result:
@@ -261,6 +277,20 @@ class Operations:
         add = subprocess.run(["git", "-C", str(repo_root), "add", "--", *paths], capture_output=True, text=True)
         if add.returncode or subprocess.run(["git", "-C", str(repo_root), "commit", "-m", f"plan: 子{task.child.nn}の評価を同期", "--", *paths], capture_output=True).returncode:
             raise ProgramRunBlocked("評価同期のcommitに失敗しました")
+
+    def sync_approval(self, approval: Path, repo_root: Path) -> None:
+        if not approval.is_file():
+            return
+        relative = str(approval.relative_to(repo_root))
+        add = subprocess.run(["git", "-C", str(repo_root), "add", "--", relative], capture_output=True, text=True)
+        if add.returncode:
+            raise ProgramRunBlocked("承認セットをstageできません")
+        staged = subprocess.run(["git", "-C", str(repo_root), "diff", "--cached", "--quiet", "--", relative], capture_output=True)
+        if staged.returncode == 0:
+            return
+        commit = subprocess.run(["git", "-C", str(repo_root), "commit", "-m", "plan: 承認セットを同期", "--", relative], capture_output=True)
+        if commit.returncode:
+            raise ProgramRunBlocked("承認セットの同期commitに失敗しました")
 
     def merge(self, task: Task, repo_root: Path) -> None:
         if not task.branch:
@@ -316,6 +346,7 @@ class ProgramRunner:
             approval.write_text(existing.rstrip() + "\n" + entry, encoding="utf-8")
         self.state.approvals.append(str(approval))
         self.state.events.append(f"approval: {child.nn}")
+        self.ops.sync_approval(approval, self.repo_root)
 
     def _make_task(self, child: Child) -> Task:
         base = self.ops.base_commit(self.repo_root)
@@ -359,6 +390,10 @@ class ProgramRunner:
                 self.ops.cleanup(task, self.repo_root)
                 self.state.held_worktrees.pop(child.nn, None)
                 self.state.completed.append(child.nn)
+                self.state.integration_evaluation[child.nn] = {
+                    "status": "PASS", "evaluation": str(review.evaluation_path) if review.evaluation_path else "",
+                    "result_commit": str(task.result.get("result_commit", "")) if task.result else "",
+                }
                 self.state.events.append(f"integrated: {child.nn}")
                 return
             if attempt == 2:
@@ -393,7 +428,7 @@ class ProgramRunner:
             self.state.status = "completed"
             self.state.events.append("completed")
             self._save()
-            return self.state.as_dict() | {"state_path": str(self.state_path), "approval_set": str(self.program.parent / "承認セット.md")}
+            return self.state.as_dict() | {"state_path": str(self.state_path), "approval_set": str(self.program.parent / "承認セット.md"), "integration_evaluation": self.state.integration_evaluation}
         except (ProgramRunBlocked, manifest.ValidationError, worktree.HarnessConflict) as exc:
             return self._stop(str(exc))
 
@@ -405,10 +440,11 @@ def main() -> None:
     parser.add_argument("--state-dir")
     parser.add_argument("--run-id")
     parser.add_argument("--smoke-command", action="append", default=[])
+    parser.add_argument("--review-runtime", choices=sorted(manifest.RUNTIMES), default="claude")
     args = parser.parse_args()
     repo = Path(args.repo_root)
     state = Path(args.state_dir) if args.state_dir else repo / ".planops-state"
-    result = ProgramRunner(Path(args.program), repo, state, run_id=args.run_id, smoke_commands=tuple(args.smoke_command)).run()
+    result = ProgramRunner(Path(args.program), repo, state, operations=Operations(args.review_runtime), run_id=args.run_id, smoke_commands=tuple(args.smoke_command)).run()
     print(json.dumps(result, ensure_ascii=False))
     raise SystemExit(0 if result["status"] == "completed" else 1)
 

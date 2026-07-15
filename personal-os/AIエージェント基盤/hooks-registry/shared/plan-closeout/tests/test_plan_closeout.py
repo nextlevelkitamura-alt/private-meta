@@ -98,6 +98,16 @@ with tempfile.TemporaryDirectory() as td:
         rc, out = invoke(EVENTS / "pre-tool-use" / "guard-plan-bucket-move.py", {"toolInput": {"command": "bucketctl move --source plans/active/a --to done"}, "runtime": runtime}, env)
         check(f"{runtime} bucketctlを通す", rc == 0 and out == "")
 
+    # 既存のmark-waitとguardは別handlerとして並列に動いても、互いの状態に依存しない。
+    board_env = env | {"GOAL_BASE": str(root / "goal"), "SESSION_BOARD_DATE": "2099-01-02", "SESSION_BOARD_TX_ROOTS": str(root / "tx"), "SESSION_BOARD_NO_TURSO": "1"}
+    board = ROOT / "shared" / "session-board" / "board.py"
+    subprocess.run([sys.executable, str(board), "add", "--key", "closeout", "--repo", "test", "--who", "codex/?"], env=board_env, check=True, capture_output=True)
+    payload = {"session_id": "closeout-0000", "hook_event_name": "Stop"}
+    rc_wait, _ = invoke(EVENTS / "session-end" / "mark-wait.py", payload, board_env)
+    rc_guard, out_guard = invoke(EVENTS / "session-end" / "guard-plan-closeout.py", payload, board_env)
+    state = subprocess.run([sys.executable, str(board), "check", "--key", "closeout"], env=board_env, check=True, capture_output=True, text=True).stdout.strip()
+    check("既存mark-waitとcloseout guardは共存", rc_wait == 0 and rc_guard == 0 and state == "wait" and json.loads(out_guard)["decision"] == "block")
+
 with tempfile.TemporaryDirectory() as td:
     root = Path(td); path, data = manifest(root, role="reviewer", evaluation=True)
     check("read-only roleはStartのworktree照合を省略", common.start_decision({"cwd": str(root / "elsewhere")}, common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})) == common.Decision())

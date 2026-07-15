@@ -76,7 +76,7 @@ def lint_plan(path, lines, allow_placeholders, out):
         for idx, line in enumerate(lines, 1):
             if PLACEHOLDER_RE.search(line):
                 report(path, idx, "placeholderが残っている", out)
-    if os.path.basename(os.path.dirname(path)) == "archive":
+    if Path(path).parent.parent.name == "archive":
         for error in bucketctl_core.archive_errors(Path(path).parent):
             report(path, 1, f"archive lint: {error}", out)
 

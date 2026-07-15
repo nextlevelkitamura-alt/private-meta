@@ -1,0 +1,6 @@
+name = "implementer"
+description = "一つの Task Packet を最小変更で実装し、検証と result packet を返す workspace-write 担当。"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+役割本文の正本は `agents-registry/roles/implementer.md`。このTOMLは Codex 用の薄い写像であり、役割本文を複製しない。実行時はdelegateが埋める Task Packet の役割別指示に従うため、対象repoにregistryが無いことを理由に停止しない。
+"""

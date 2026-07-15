@@ -44,7 +44,7 @@ assert_contains "(c) 上限を説明" "$limit_out" "上限3件"
 assert_contains "(c) active一覧を表示" "$limit_out" "昇格対象"
 [ -d "$REPO/plans/planning/上限超過対象" ] && assert_eq "(c) 拒否時は移動しない" "yes" "yes" || assert_eq "(c) 拒否時は移動しない" "no" "yes"
 
-# (d) ai運用の指定programだけは、activeにある間だけ4件目へ昇格できる。
+# (d) active=3を一箇所で強制し、既存超過はcheckで可視化する。
 TEMP_REPO="$WORKDIR/temp-ai-repo"
 TEMP_PLANS="$TEMP_REPO/personal-os/my-brain/areas/ai運用/plans"
 TEMP_NAME="2026-07-14-計画運用ハーネス検証"
@@ -59,18 +59,13 @@ git -C "$TEMP_REPO" config user.name test
 git -C "$TEMP_REPO" config user.email test@example.invalid
 git -C "$TEMP_REPO" add personal-os
 git -C "$TEMP_REPO" commit -qm seed
-temp_out="$($SCRIPTS/bucketctl.sh promote "$TEMP_PLANS/planning/$TEMP_NAME" --to active)"
-assert_contains "(d) 指定programは4件目へ昇格予定" "$temp_out" "active: 3/4 → 4/4"
-"$SCRIPTS/bucketctl.sh" promote "$TEMP_PLANS/planning/$TEMP_NAME" --to active --apply >/dev/null
-temp_limit_out="$($SCRIPTS/bucketctl.sh promote "$TEMP_PLANS/planning/通常対象" --to active 2>&1)"
+temp_limit_out="$($SCRIPTS/bucketctl.sh promote "$TEMP_PLANS/planning/$TEMP_NAME" --to active 2>&1)"
 temp_limit_rc=$?
-assert_eq "(d) 4件目到達後は拒否" "$temp_limit_rc" "1"
-assert_contains "(d) 例外中の上限を表示" "$temp_limit_out" "上限4件"
-rm -rf "$TEMP_PLANS/active/$TEMP_NAME"
-reset_limit_out="$($SCRIPTS/bucketctl.sh promote "$TEMP_PLANS/planning/通常対象" --to active 2>&1)"
-reset_limit_rc=$?
-assert_eq "(d) 指定programが離れると3件へ戻る" "$reset_limit_rc" "1"
-assert_contains "(d) 復帰後の上限を表示" "$reset_limit_out" "上限3件"
+assert_eq "(d) active=3の流入は拒否" "$temp_limit_rc" "1"
+assert_contains "(d) 上限と人間判断を表示" "$temp_limit_out" "上限3件"
+check_out="$($SCRIPTS/bucketctl.sh check "$TEMP_PLANS" --json 2>&1)"
+assert_contains "(d) check --jsonは対象一覧を返す" "$check_out" "実行中A"
+assert_contains "(d) check --jsonは上限件数を返す" "$check_out" '"count": 3'
 
 # (e) --commitは昇格元の既存変更を同梱しない。
 git -C "$REPO" restore --staged --worktree plans/planning/上限超過対象/plan.md >/dev/null 2>&1 || true

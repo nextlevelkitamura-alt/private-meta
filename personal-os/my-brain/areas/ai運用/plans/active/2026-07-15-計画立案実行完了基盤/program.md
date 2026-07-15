@@ -112,17 +112,17 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
     人間ゲート: なし
     次: 評価02全PASS(6/6)・統合branchへmerge済み(スモーク120pass)・worktree削除済み。成果は子02以降が使用
     場所: plans/01 ／ 依存: ―（実装commit: 5583899・評価01→修正01→評価02）
-- [ ] 02  遷移統制とplanctl同期 … 計画
+- [ ] 02  遷移統制とplanctl同期 … 実装レビュー（一括待ち）
     役割: 実装（bucketctl拡張・終了区分・planctl同期・日付rename）
     並列: 不可 ／ レビュー: 一括(Wave4後に02・03・04、契約変更時のみ即差し戻し)
     人間ゲート: なし（既存計画の実移動は05が所有）
-    次: 遷移グラフ・容量・終了記録検証のbucketctl拡張と、planctl 5サブコマンド＋result packet検証＋renameサブコマンド（日付最新化・参照追従）を実装する
+    次: 実装完了(132pass全緑・task/pf02=8d7fc3a・worktree保持中)。Wave4の3子一括レビューで消化
     場所: plans/02 ／ 依存: 01
-- [ ] 03  harness・エージェント・ゴールコマンド … 計画
+- [ ] 03  harness・エージェント・ゴールコマンド … 実装
     役割: 実装（delegate・roles・program-run）
     並列: 不可 ／ レビュー: 一括(Wave4後に02・03・04、契約変更時のみ即差し戻し)
     人間ゲート: なし（worktree削除は明示cleanupのみ・露出は承認セットへ)
-    次: delegate/manifest/worktree/adapter、roles3種と/codex-impl互換、Wave自動進行のprogram-runを実装する
+    次: A=harness本体(task/pf03a)・B=roles+互換(task/pf03b)を並走中(base 8d7fc3a)→統合後にprogram-runを直列実装
     場所: plans/03 ／ 依存: 01, 02
 - [ ] 04  Prompt Submitとhookガード … 計画
     役割: 実装（注入更新・PreTool・plan-closeout guard）

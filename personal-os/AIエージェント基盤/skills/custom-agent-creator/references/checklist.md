@@ -27,12 +27,12 @@
 
 ## Codex
 
-1. 実在する方式か（`prompts/` カスタムプロンプト・`--profile` 設定・Skill同梱 `agents/`。`~/.codex/agents/*.toml` は 0.142.5 に存在しない）。
-2. カスタムプロンプトに frontmatter `description` と `$ARGUMENTS` があるか。プロファイルのキーは config.toml と同じ公式キーか。
-3. sandbox は適切か（reviewer / 相談役は `read-only`。exec なら `-s read-only` を毎回付ける）。
-4. `danger-full-access` を新たに指定していないか。
-5. Claude からの委任は `codex exec --json`＋`exec resume` になっているか（inline MCP を長時間委任に使っていないか）。
-6. Codex に渡す評価基準・制約は依頼文に自己完結で書かれているか（Claude側と文脈非共有のため）。
+1. 作成・露出の直前に `codex --version` と公式「Subagents」を確認したか。個人用は `~/.codex/agents/*.toml`、project用は `.codex/agents/*.toml` であることを対象versionで確認する。
+2. custom agent TOMLには `name`、`description`、`developer_instructions` があり、nameとファイル名の対応が明確か。プロンプトを作る場合はfrontmatter `description` と `$ARGUMENTS` があるか。プロファイルのキーはconfig.tomlと同じ公式キーか。
+3. sandboxは適切か（reviewer / explorerは `read-only`。implementerはTask Packetとworktree分離がある時だけ `workspace-write`。execのread-only委任は `-s read-only`）。
+4. `danger-full-access` と固定モデルIDを新たに指定していないか。
+5. Claudeからの委任は共通delegateを経由し、Task Packet・run manifest・result packetを使うか。delegate未導入の互換経路だけ `codex exec --json`＋`exec resume` を使い、inline MCPを長時間委任に使っていないか。
+6. Codexに渡す評価基準・制約はTask Packetまたは依頼文で自己完結しているか（Claude側と文脈非共有のため）。
 
 ## OpenCode
 

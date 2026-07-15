@@ -1,24 +1,31 @@
 # agents-registry
 
-Claude Code のカスタムエージェント（`~/.claude/agents/`）とコマンド（`~/.claude/commands/`）の正本を置く場所。runtime側は露出先（symlink）であり、正本にしない（GLOBAL_AGENTS の symlink露出原則に従う。2026-07-11新設）。
+Claude / Codex のカスタムエージェント、役割定義、委譲harness、Claudeコマンドの正本を置く場所。runtime側は露出先（symlinkまたはruntimeの登録）であり、正本にしない（GLOBAL_AGENTS の露出原則に従う。2026-07-11新設）。
 
 ## 構成
 
-- `claude/commands/` … コマンド正本（`/名前` で発動する手順書。本文はメインの文脈に注入される）
-- `claude/agents/` … カスタムエージェント正本（frontmatterのdescriptionで発動判断される別文脈のサブエージェント）
+- `roles/` … runtime共通の役割本文の正本（explorer / implementer / reviewer）。固定作業場所・branch・モデル・Program背景を置かない
+- `claude/commands/` … Claudeコマンド正本（`/名前` で発動する手順書。本文はメインの文脈に注入される）
+- `claude/agents/` … Claude形式の薄い役割写像と互換エージェント（frontmatterのdescriptionで発動判断される別文脈のサブエージェント）
+- `codex/agents/` … Codex形式の薄い役割写像（runtime露出時は `.codex/agents/*.toml` として登録する）
+- `harness/` … runtime中立のdelegate・manifest・worktree・adapter・schema。実行時stateはgit管理しない
 
 露出は `~/.claude/commands/<名前>.md` / `~/.claude/agents/<名前>.md` からの symlink。本文コピーは禁止。
 
 ## 登録一覧
 
-- `claude/commands/codex-impl.md` … Codex実装委任（計画→実装→評価→修正のMD駆動ループ・メイン直接exec駆動）。2026-07-11。
-- `claude/agents/impl-reviewer.md` … 実装後の評価担当（レビュー項目×diff採点・read-only）。2026-07-11。
+- `roles/{explorer,implementer,reviewer}.md` … 3役割の本文正本。Claude/Codexの写像はここを参照し、本文を複製しない。2026-07-15。
+- `claude/agents/{explorer,implementer,reviewer}.md` … Claude形式の役割写像。2026-07-15。
+- `codex/agents/{explorer,implementer,reviewer}.toml` … Codex形式の役割写像。2026-07-15。
+- `claude/commands/codex-impl.md` … Codex実装委任の互換入口（共通delegate→result packet→impl-reviewer→planctl同期）。2026-07-15。
+- `claude/agents/impl-reviewer.md` … reviewer役割のClaude実装（既存の実装後評価呼び出しを維持）。2026-07-11。
 - `claude/agents/codex-consult.md` … Codex相談役（exec直接駆動・read-only固定）。2026-07-10。
+- `harness/` … Task Packetを起点にruntime・role・plan path・base SHAを受ける共通delegate。2026-07-15。
 
 ## 追加・変更の手順
 
 1. 正本をここに作成・編集する（設計知見は `../skills/custom-agent-creator/references/` を参照）。
-2. runtime へ symlink を張る: `ln -s <正本> ~/.claude/{commands|agents}/<名前>.md`。
+2. runtimeへの露出は承認後に行う。Claudeは `~/.claude/{commands|agents}/`、Codexは `~/.codex/agents/*.toml` またはproject `.codex/agents/*.toml` の現行仕様に従う。本文コピーは禁止。
 3. この AGENTS.md の登録一覧に1行追記する。
 4. 削除は skill-delete と同様に人間承認＋一覧から除去＋symlink撤去をセットで行う。
 

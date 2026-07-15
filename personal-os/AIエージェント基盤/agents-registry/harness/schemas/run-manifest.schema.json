@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Plan run manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "task_id", "role", "runtime", "repo_root", "plan_path", "program_path", "child_id", "base_commit", "worktree_path", "branch", "result_path", "evaluation_path", "phase"],
+  "properties": {
+    "version": {"const": 1},
+    "task_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"},
+    "role": {"enum": ["explorer", "implementer", "reviewer"]},
+    "runtime": {"enum": ["codex", "claude"]},
+    "repo_root": {"type": "string", "minLength": 1},
+    "plan_path": {"type": "string", "minLength": 1},
+    "program_path": {"type": ["string", "null"]},
+    "child_id": {"type": ["string", "null"]},
+    "base_commit": {"type": "string", "minLength": 1},
+    "worktree_path": {"type": ["string", "null"]},
+    "branch": {"type": ["string", "null"]},
+    "result_path": {"type": "string", "minLength": 1},
+    "evaluation_path": {"type": ["string", "null"]},
+    "phase": {"enum": ["running", "implemented", "review_passed", "synced", "closed", "blocked"]},
+    "allowed_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  }
+}

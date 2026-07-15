@@ -91,7 +91,7 @@
   <div class="wrap">
 
     <header>
-      <p class="eyebrow">計画レビュー用の説明 ・ 2026-07-15 v3（改名・01-06振り直し・進め方）</p>
+      <p class="eyebrow">計画レビュー用の説明 ・ 2026-07-15 v4（worktree・並列判断・hook設計）</p>
       <h1>計画立案・実行・完了基盤 — 何がどう変わるのか</h1>
       <p class="lede">フォルダは <b>2026-07-15-計画立案実行完了基盤</b> へ日付更新・改名済み、子番号は<b>実行順の01〜06</b>に振り直し済みです。変わるのは3つ：<b>①計画がそのまま実装指示書になる（実行契約）</b>、<b>②実装後の計画更新が手動→機械になる（planctl）</b>、<b>③計画の閉じ方に理由が残る（終了区分）</b>。完成後は<b>ゴールコマンド1つで実装〜レビューまで完走</b>し、あなたは<b>最後に1回だけ</b>承認セットを確認します。</p>
     </header>
@@ -99,8 +99,10 @@
     <nav class="chips">
       <a class="chip" href="#now">今の困りごと</a>
       <a class="chip" href="#zentai">全体像</a>
-      <a class="chip" href="#unten">運転ルール（新）</a>
+      <a class="chip" href="#unten">運転ルール</a>
+      <a class="chip" href="#wt">worktreeの一生</a>
       <a class="chip" href="#scenes">場面別Before/After</a>
+      <a class="chip" href="#lanes">実行の並び</a>
       <a class="chip" href="#children">6子の中身</a>
       <a class="chip" href="#safe">勝手にやらないこと</a>
       <a class="chip" href="#susume">この後の進め方</a>
@@ -239,10 +241,76 @@
           <p class="dbody">全子の完走・統合評価の後、<b>承認セット1枚</b>（hook登録差分／既存計画の是正候補／identity・知識の移動候補／横展開可否、それぞれ根拠と推奨付き）だけを確認します。<b>子ごとの人間確認はありません</b>。認証・質問・待ちはAI側が解消します。</p>
         </div>
         <div class="ditem">
+          <p class="dhead"><span class="pill go">調査済み</span>hookの設計はCodex(high)が実機仕様を確認済み</p>
+          <p class="dbody">hooks-registryの現行4イベント・登録表・runtime公式仕様を読んだ<b>設計書</b>（references/2026-07-15-hooks設計調査.md）を正本に実装します。要点: <b>SubagentStart/StopはCodex・Claude両方に存在</b>し同じ受け口で見張れる／既存のsession-board・Orca hookは置換せず<b>別handlerとして共存</b>／block（継続要求）は「PASSなのに未同期」等を確定検出した時だけ<b>1回まで</b>で、それ以外は必ず素通し（普段の作業を止めない）。</p>
+        </div>
+        <div class="ditem">
           <p class="dhead"><span class="pill acc">今後の既定</span>子計画は6〜7が基本・日付は最新に保つ</p>
           <p class="dbody">今回12子は細かすぎたので<b>6子へ統合</b>しました。今後の既定として「<b>基本6〜7子まで・OSレベルの大改修だけ10前後</b>」と「<b>計画を大幅更新したらフォルダ日付を最新化</b>」を規約へ反映します（子01）。日付更新は機械コマンド <code>planctl rename</code>（子02）で参照ごと安全に行い、<b>更新忘れはセッション終了時にhookが検知して案内</b>します（子04）。</p>
         </div>
       </div>
+    </section>
+
+    <section id="wt">
+      <h2>worktreeの一生 — 作成からマージ・削除まで流れに入っています</h2>
+      <p class="slede">write実装の1 Taskは<b>この8段で必ず閉じます</b>。マージと削除はゴールコマンド（program-run）が実行し、<b>hookは下段の見張りだけ</b>を担当。mainに触れるのは最後の人間承認後だけです。</p>
+      <figure>
+        <svg width="100%" viewBox="0 0 760 300" role="img" aria-label="worktreeのライフサイクル8段とhookの見張り点">
+          <defs>
+            <marker id="aw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#5F6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+          <rect x="10" y="20" width="120" height="46" rx="9" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="70" y="39" text-anchor="middle" font-size="11.5" fill="#19212F">① worktree作成</text>
+          <text x="70" y="55" text-anchor="middle" font-size="10" fill="#5F6879">明示baseから自動</text>
+          <line x1="130" y1="43" x2="148" y2="43" stroke="#5F6879" stroke-width="1.5" marker-end="url(#aw)"/>
+          <rect x="150" y="20" width="100" height="46" rx="9" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="200" y="39" text-anchor="middle" font-size="11.5" fill="#19212F">② 実装</text>
+          <text x="200" y="55" text-anchor="middle" font-size="10" fill="#5F6879">worker/commit</text>
+          <line x1="250" y1="43" x2="268" y2="43" stroke="#5F6879" stroke-width="1.5" marker-end="url(#aw)"/>
+          <rect x="270" y="20" width="110" height="46" rx="9" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="325" y="39" text-anchor="middle" font-size="11.5" fill="#19212F">③ 結果JSON検証</text>
+          <text x="325" y="55" text-anchor="middle" font-size="10" fill="#5F6879">schema・禁止範囲</text>
+          <line x1="380" y1="43" x2="398" y2="43" stroke="#5F6879" stroke-width="1.5" marker-end="url(#aw)"/>
+          <rect x="400" y="20" width="130" height="46" rx="9" fill="#E9ECFA" stroke="#2C3A8C"/>
+          <text x="465" y="39" text-anchor="middle" font-size="11.5" fill="#202C6E">④ レビュー</text>
+          <text x="465" y="55" text-anchor="middle" font-size="10" fill="#202C6E">都度 or 一括まで待機</text>
+          <line x1="530" y1="43" x2="548" y2="43" stroke="#5F6879" stroke-width="1.5" marker-end="url(#aw)"/>
+          <rect x="550" y="20" width="120" height="46" rx="9" fill="#E3F1EA" stroke="#2E7D5B"/>
+          <text x="610" y="39" text-anchor="middle" font-size="11.5" fill="#1E5A40">⑤ planctl同期</text>
+          <text x="610" y="55" text-anchor="middle" font-size="10" fill="#1E5A40">全PASSの時だけ</text>
+          <path d="M 670 66 L 690 66 Q 700 66 700 76 L 700 96 Q 700 106 690 106 L 640 106" fill="none" stroke="#5F6879" stroke-width="1.5" marker-end="url(#aw)"/>
+          <rect x="500" y="84" width="138" height="46" rx="9" fill="#E3F1EA" stroke="#2E7D5B"/>
+          <text x="569" y="103" text-anchor="middle" font-size="11.5" fill="#1E5A40">⑥ 統合branchへmerge</text>
+          <text x="569" y="119" text-anchor="middle" font-size="10" fill="#1E5A40">--no-ff＋スモーク</text>
+          <line x1="500" y1="107" x2="482" y2="107" stroke="#5F6879" stroke-width="1.5" marker-end="url(#aw)"/>
+          <rect x="350" y="84" width="130" height="46" rx="9" fill="#E3F1EA" stroke="#2E7D5B"/>
+          <text x="415" y="103" text-anchor="middle" font-size="11.5" fill="#1E5A40">⑦ worktree削除</text>
+          <text x="415" y="119" text-anchor="middle" font-size="10" fill="#1E5A40">cleanup・branchは集約済み</text>
+          <line x1="350" y1="107" x2="332" y2="107" stroke="#5F6879" stroke-width="1.5" marker-end="url(#aw)"/>
+          <rect x="180" y="84" width="150" height="46" rx="9" fill="#F7E8E2" stroke="#B4472B"/>
+          <text x="255" y="103" text-anchor="middle" font-size="11.5" font-weight="600" fill="#8C3620">⑧ main反映 ＝ 人間承認後</text>
+          <text x="255" y="119" text-anchor="middle" font-size="10" fill="#8C3620">それまでmainに触れない</text>
+          <line x1="10" y1="150" x2="750" y2="150" stroke="#DBDFEA" stroke-width="1" stroke-dasharray="4 4"/>
+          <text x="10" y="172" font-size="11.5" font-weight="600" fill="#5F6879">hookの見張り点（検知・案内だけ。merge・削除・編集はしない）</text>
+          <rect x="10" y="184" width="175" height="48" rx="9" fill="#FFFFFF" stroke="#2C3A8C"/>
+          <text x="22" y="203" font-size="11" font-weight="600" fill="#202C6E">SubagentStart → ②の直前</text>
+          <text x="22" y="219" font-size="10" fill="#5F6879">割当worktree・baseの一致を照合</text>
+          <rect x="197" y="184" width="175" height="48" rx="9" fill="#FFFFFF" stroke="#2C3A8C"/>
+          <text x="209" y="203" font-size="11" font-weight="600" fill="#202C6E">SubagentStop → ②の直後</text>
+          <text x="209" y="219" font-size="10" fill="#5F6879">結果JSONの欠落を検出</text>
+          <rect x="384" y="184" width="180" height="48" rx="9" fill="#FFFFFF" stroke="#2C3A8C"/>
+          <text x="396" y="203" font-size="11" font-weight="600" fill="#202C6E">Stopガード → ⑤の見張り</text>
+          <text x="396" y="219" font-size="10" fill="#5F6879">「PASSなのに未同期」だけ止める</text>
+          <rect x="576" y="184" width="174" height="48" rx="9" fill="#FFFFFF" stroke="#2C3A8C"/>
+          <text x="588" y="203" font-size="11" font-weight="600" fill="#202C6E">PreTool → 常時</text>
+          <text x="588" y="219" font-size="10" fill="#5F6879">計画バケットへの生git mvを拒否</text>
+          <text x="10" y="262" font-size="10.5" fill="#5F6879">補足: 一括レビューの子は④でworktreeを保持したまま待機。⑥のconflictは自動解決せず停止。session-end時は日付の陳腐化（大幅更新なのに日付が古い）も案内。</text>
+          <text x="10" y="280" font-size="10.5" fill="#5F6879">Codex・Claudeどちらのworkerでも同じ受け口（events/subagent/ ほか）で見張る。</text>
+        </svg>
+        <figcaption>上段＝Taskの一生（実行はharness/program-run）。下段＝hookの見張り点（検査・案内のみ）。</figcaption>
+      </figure>
     </section>
 
     <section id="scenes">
@@ -276,32 +344,88 @@
       </div>
     </section>
 
+    <section id="lanes">
+      <h2>実行の並び — どこが直列で、どこが並列か</h2>
+      <p class="slede"><b>Wave間は直列</b>（前の成果が次の契約になるため）。<b>Wave内は子の宣言どおり</b> — 03と05だけがファイル非交差の2レーン並列で、同時に書くworkerは常に最大2体です。</p>
+      <figure>
+        <svg width="100%" viewBox="0 0 760 240" role="img" aria-label="6子の直列・並列レーン図">
+          <defs>
+            <marker id="al" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#5F6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+          <text x="38" y="30" text-anchor="middle" font-size="10.5" fill="#5F6879">Wave 1</text>
+          <rect x="10" y="40" width="86" height="52" rx="9" fill="#E9ECFA" stroke="#2C3A8C"/>
+          <text x="53" y="61" text-anchor="middle" font-size="12" font-weight="600" fill="#202C6E">01</text>
+          <text x="53" y="76" text-anchor="middle" font-size="10" fill="#202C6E">テンプレ｜直列</text>
+          <line x1="96" y1="66" x2="114" y2="66" stroke="#5F6879" stroke-width="1.5" marker-end="url(#al)"/>
+          <text x="159" y="30" text-anchor="middle" font-size="10.5" fill="#5F6879">Wave 2</text>
+          <rect x="116" y="40" width="86" height="52" rx="9" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="159" y="61" text-anchor="middle" font-size="12" font-weight="600" fill="#19212F">02</text>
+          <text x="159" y="76" text-anchor="middle" font-size="10" fill="#5F6879">遷移+planctl｜直列</text>
+          <line x1="202" y1="66" x2="220" y2="66" stroke="#5F6879" stroke-width="1.5" marker-end="url(#al)"/>
+          <text x="278" y="30" text-anchor="middle" font-size="10.5" fill="#5F6879">Wave 3（2レーン並列）</text>
+          <rect x="222" y="40" width="112" height="24" rx="7" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="278" y="56" text-anchor="middle" font-size="10" fill="#19212F">03A harness本体</text>
+          <rect x="222" y="68" width="112" height="24" rx="7" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="278" y="84" text-anchor="middle" font-size="10" fill="#19212F">03B roles+互換</text>
+          <line x1="334" y1="66" x2="352" y2="66" stroke="#5F6879" stroke-width="1.5" marker-end="url(#al)"/>
+          <text x="397" y="30" text-anchor="middle" font-size="10.5" fill="#5F6879">Wave 4</text>
+          <rect x="354" y="40" width="86" height="52" rx="9" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="397" y="61" text-anchor="middle" font-size="12" font-weight="600" fill="#19212F">04</text>
+          <text x="397" y="76" text-anchor="middle" font-size="10" fill="#5F6879">hookガード｜直列</text>
+          <line x1="440" y1="66" x2="458" y2="66" stroke="#2C3A8C" stroke-width="1.5" marker-end="url(#al)"/>
+          <rect x="460" y="40" width="96" height="52" rx="9" fill="#E9ECFA" stroke="#2C3A8C" stroke-dasharray="5 3"/>
+          <text x="508" y="61" text-anchor="middle" font-size="11" font-weight="600" fill="#202C6E">一括レビュー</text>
+          <text x="508" y="76" text-anchor="middle" font-size="10" fill="#202C6E">02・03・04まとめて</text>
+          <line x1="556" y1="66" x2="574" y2="66" stroke="#5F6879" stroke-width="1.5" marker-end="url(#al)"/>
+          <text x="632" y="30" text-anchor="middle" font-size="10.5" fill="#5F6879">Wave 5（2レーン並列）</text>
+          <rect x="576" y="40" width="112" height="24" rx="7" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="632" y="56" text-anchor="middle" font-size="10" fill="#19212F">05A 監査(read-only)</text>
+          <rect x="576" y="68" width="112" height="24" rx="7" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="632" y="84" text-anchor="middle" font-size="10" fill="#19212F">05B pilot(identity/知識)</text>
+          <path d="M 688 66 L 710 66 Q 720 66 720 76 L 720 130 Q 720 140 710 140 L 560 140" fill="none" stroke="#5F6879" stroke-width="1.5" marker-end="url(#al)"/>
+          <text x="480" y="120" text-anchor="middle" font-size="10.5" fill="#5F6879">Wave 6</text>
+          <rect x="400" y="128" width="158" height="42" rx="9" fill="#F7F8FB" stroke="#DBDFEA"/>
+          <text x="479" y="146" text-anchor="middle" font-size="11.5" font-weight="600" fill="#19212F">06 E2E＋承認セット｜統合</text>
+          <text x="479" y="161" text-anchor="middle" font-size="10" fill="#5F6879">05の一括レビューもここで消化</text>
+          <line x1="400" y1="149" x2="330" y2="149" stroke="#B4472B" stroke-width="1.5" marker-end="url(#al)"/>
+          <rect x="180" y="128" width="148" height="42" rx="9" fill="#F7E8E2" stroke="#B4472B"/>
+          <text x="254" y="146" text-anchor="middle" font-size="11.5" font-weight="600" fill="#8C3620">★ 人間の最終一括確認</text>
+          <text x="254" y="161" text-anchor="middle" font-size="10" fill="#8C3620">承認セット1枚で判断</text>
+          <text x="10" y="205" font-size="10.5" fill="#5F6879">凡例: 青枠＝都度レビュー（01と06）、点線＝一括レビューの束ね、2段の小箱＝ファイル非交差の並列2レーン（同時write最大2）。</text>
+          <text x="10" y="223" font-size="10.5" fill="#5F6879">共通契約（schema・CLI引数・テンプレ）を変える修正が出た瞬間だけ、一括を待たず即差し戻し。</text>
+        </svg>
+        <figcaption>直列・並列の判断は program.md「直列・並列の実行判断」と各子の「実行形:」宣言が正本。</figcaption>
+      </figure>
+    </section>
+
     <section id="children">
       <h2>6子の中身 — 番号＝実行順（1 Wave＝1子）</h2>
       <p class="slede">子番号を<b>実行順の01〜06に振り直しました</b>（カッコは旧12子時代の統合元）。<b>各子がCodexへ1回で渡せる1かたまり</b>です。</p>
       <div class="deflist">
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 1</span>01 計画テンプレート・lint・委譲入口<span class="pill go">最初に着手・都度レビュー</span></p>
+          <p class="dhead"><span class="pill acc">Wave 1</span>01 計画テンプレート・lint・委譲入口<span class="pill acc">直列1体</span><span class="pill go">最初に着手・都度レビュー</span></p>
           <p class="dbody">（旧05＋06）<b>作る</b>：実行契約付き新テンプレ＋新規3枚（実行指示・実行結果JSON・終了記録）＋plan-lint、plan-triage構成カードの共通語彙化、handoff指示のテンプレ一本化。子数目安・日付最新化・一括レビューの規約反映もここ。<br><b>変わる</b>：場面1「計画＝そのまま指示書」と場面2の入口。全子が依存する共通契約なので<b>ここだけ完了時に即レビュー</b>。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 2</span>02 遷移統制とplanctl同期</p>
+          <p class="dhead"><span class="pill acc">Wave 2</span>02 遷移統制とplanctl同期<span class="pill acc">直列1体</span></p>
           <p class="dbody">（旧01＋07）<b>作る</b>：bucketctlを唯一の移動窓口へ拡張（遷移グラフ・上限・終了区分・archive lint）＋<code>planctl</code>6コマンド（prepare／progress／<b>apply-evaluation</b>／close／sync-check／<b>rename＝日付最新化と参照追従</b>）。<br><b>変わる</b>：場面3・4・6の核心。「手動更新」が「コマンド1発＋安全条件」になる。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 3</span>03 harness・エージェント・ゴールコマンド</p>
+          <p class="dhead"><span class="pill acc">Wave 3</span>03 harness・エージェント・ゴールコマンド<span class="pill acc">並列2レーン</span></p>
           <p class="dbody">（旧08＋09＋<b>program-run新設</b>）<b>作る</b>：delegate・Task専用worktree・Codex/Claudeアダプター、役割3種（explorer/implementer/reviewer）、/codex-impl互換化、そして<b>ゴールコマンド program-run</b>（Wave順に委譲→レビュー→同期を自動進行・危険操作は承認セットへ積んで完走）。<br><b>変わる</b>：場面2の実行と、運転ルールの「完走」が実現。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 4</span>04 Prompt Submitとhookガード<span class="pill warn">登録は承認後</span></p>
+          <p class="dhead"><span class="pill acc">Wave 4</span>04 Prompt Submitとhookガード<span class="pill acc">直列1体</span><span class="pill warn">登録は承認後</span></p>
           <p class="dbody">（旧02＋04＋10）<b>作る</b>：セッション開始の計画案内を新一本道＋レビュー方式込みで最小化、生のgit mvを止めるPreToolガード、同期忘れ・<b>日付の陳腐化</b>を知らせるStop/SubagentStop・session-endガード。<br><b>変わる</b>：場面5の見張りと場面6の抜け道封鎖。<b>本体＋テストまで作り、登録・有効化は承認セットへ</b>。ここまで済んだら<b>02・03・04を3子一括レビュー</b>。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 5</span>05 既存計画とarea標準の適用<span class="pill warn">移動・削除は承認後</span></p>
+          <p class="dhead"><span class="pill acc">Wave 5</span>05 既存計画とarea標準の適用<span class="pill acc">並列2レーン</span><span class="pill warn">移動・削除は承認後</span></p>
           <p class="dbody">（旧03＋11）<b>作る</b>：溜まった既存計画（paused=24等）の総点検と移動候補一覧、identity.md→AGENTS.md統合、「知識/」の行き先判定、代表計画2件の新テンプレ移行（ai運用だけのpilot）。<br><b>変わる</b>：新ルールが既存の実データに繋がる。<b>実行はせず候補一覧まで＝完走ライン</b>。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 6</span>06 E2Eと承認セット</p>
+          <p class="dhead"><span class="pill acc">Wave 6</span>06 E2Eと承認セット<span class="pill acc">統合1体</span></p>
           <p class="dbody">（旧12）<b>作る</b>：合成データでの通し検証5系統（うち2つはprogram-run経由）＋05の一括レビュー消化＋<b>承認セット1枚の整形</b>（hook登録差分・是正候補・横展開可否、根拠と推奨付き）。<br><b>変わる</b>：「どこまで動いて何が承認待ちか」が1枚で見え、あなたの最終一括確認へ。</p>
         </div>
       </div>
@@ -415,6 +539,10 @@
     <section id="log">
       <h2>更新履歴</h2>
       <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">v4</span>2026-07-15</p>
+          <p class="dbody">指摘4点を反映：<b>①直列/並列の判断を正本化</b> — program.mdに実行判断の節、各子に「実行形:」宣言（03と05だけ2レーン並列・他は直列・新図「実行の並び」）。<b>②worktreeのマージ・削除を流れに組込</b> — 8段ライフサイクル（作成→実装→検証→レビュー→同期→統合merge→削除→main人間ゲート）を正本化し新図「worktreeの一生」を追加。統合branchへのmergeとworktree自動削除は計画承認事項として明示（mainは人間ゲートのまま）。<b>③SubagentStart/Endの検査をCodex/Claude両対応で子04へ追加</b>（Startは割当照合・Stopは結果JSON検証）。<b>④hooks-registryを読んだ設計をCodex(reasoning high)が調査</b> — 設計書をreferences/2026-07-15-hooks設計調査.mdへ格納し、子04の必読依存に。矛盾の発見と解消: 「merge/削除の自動完走」と「子03のmerge禁止」が衝突していたため、mainとの区別で契約を精密化。</p>
+        </div>
         <div class="ditem">
           <p class="dhead"><span class="pill acc">v3</span>2026-07-15</p>
           <p class="dbody">指摘を反映：<b>①フォルダ日付を最新化＋改名</b>（2026-07-15-計画立案実行完了基盤。参照2箇所も追従）。<b>②子番号を実行順の01〜06へ振り直し</b>（マップ・本文の相互参照も更新）。<b>③「大幅更新したら日付を最新化」を仕組み化</b> — 規約（01）＋planctl renameコマンド（02）＋セッション終了時のhook検知（04）として計画へ組み込み。<b>④並列実装フロー（7/8）の分析・整理をSonnetサブエージェントへ委任</b>（不要ならmergedでarchive・価値ある情報が残ればpaused）。<b>⑤「この後の進め方」節を新設</b>。旧Q3（改名）・旧Q4（未コミット差分）は解決済みで判断は残り2つ。</p>

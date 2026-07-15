@@ -32,6 +32,7 @@ planning → active → done → archive
 
 ## 完走スキームと人間確認（このprogramの運転ルール）
 
+0. **実行開始ゲート（計画合意・2026-07-15人間指示）**: フル規模のprogram/planは、実行開始（active昇格・program-run起動）の前に次の3点を満たす。(a) **並列宣言（delegated-parallel）の子は、レーンごとの変更可能範囲（ファイル担当マップ）とworktree方針が実行契約に記載済み**であること（未記載なら走らせない。plan-lintとprogram-runが機械検査）。(b) **視覚的な説明（`explain/` の図解HTML）が計画の最新内容と一致**していること。(c) それを**人間へ提示し、双方の理解に相違がないことの明示（「これでいい」）を得てから**走らせる。合意前に実装を開始しない。
 1. **完走ライン**: 全子とも「実装＋テスト＋（適用系は）候補・差分の一覧化」までを人間なしで進める。計画完成後は `program-run`（ゴールコマンド・子03）がWave順に 委譲→実装→レビュー→planctl同期→worktree統合 を自動進行する。
 2. **人間に聞くのは2種類だけ**: (a) 全子完走・統合評価後の**最終一括確認**（承認セット1枚で判断）、(b) 途中で危険操作（削除・移動・hook登録・trust・push等）の**即時実行が避けられない**場合の個別承認。原則(b)は発生させない設計にする — 適用系の操作は実行せず `承認セット` へ差分・根拠・推奨を積んで先へ進む。
 3. **承認セット**: program-runと各子が蓄積し、子06が1文書へ整形する。中身は hook登録差分／既存計画の是正候補／identity・知識の移動候補／横展開可否。人間は最後にこれを見て一括判断する。
@@ -59,7 +60,7 @@ planning → active → done → archive
 - **Wave間は直列**（前Waveの成果が次Waveの契約になるため）。**Wave内・子内の並列は、各子の実行契約 `実行形:` の宣言を正本にする**。
 - 実行形の語彙: `direct`（指揮官が直接編集）／`delegated-single`（worker 1体へ委譲・内部直列）／`delegated-parallel`（ファイル非交差の2レーンまで並列委譲）／`integration`（統合検証の1体）。
 - 本programの判断: 01=delegated-single ／ 02=delegated-single ／ 03=**delegated-parallel**（A=harness本体・B=roles+互換、非交差。program-runはA・B統合後） ／ 04=delegated-single ／ 05=**delegated-parallel**（A=監査read-only・B=pilot） ／ 06=integration。
-- 同時write workerは全体で最大2。並列レーンは変更可能範囲のファイル非交差を宣言してから起動する。
+- 同時write workerは全体で最大2。**`delegated-parallel` を宣言した子は、レーンごとの変更可能範囲（どのレーンがどのpathを書くか）とworktree方針を実行契約に記載しなければ起動できない**（記載が計画に無いまま並列workerを走らせない。plan-lint＝子01とprogram-runの起動前検査＝子03が機械担保する）。
 
 ## レビュー運用（都度と一括の使い分け）
 
@@ -155,9 +156,9 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
 - [ ] `active → done` が「実装済みかつ最終評価mdが全PASS」でのみ進み、`done → archive` は人間の明示確認と終了記録がある時だけ進むことを、規約・CLIテストで確認できる。`planning/active/paused → archive` は非completedの終了区分＋終了記録＋人間確認がある時だけ通る。
 - [ ] `archive` 配下の計画に終了区分・理由・人間確認が必ず残り、conflict/merged/cancelled/supersededの計画をcompletedとして偽装していない。archive lintがこれを機械検査する。
 - [ ] 各 `plans/` root で `active≤3`、`paused≤3`、`done≤8` を移動先ごとに強制し、`planning` と `archive` は上限なしである。超過済みの既存バケットは可視化・流入拒否するが、自動退避しない。
-- [ ] 新規のライト以上の計画が、実行契約を持つ新テンプレートで作成され、plan lintが必須項目・placeholder残存・親backlink不整合を検出する。program子数の目安（基本6〜7・大改修のみ10前後）と計画フォルダ日付の最新化が規約に記載されている。
+- [ ] 新規のライト以上の計画が、実行契約を持つ新テンプレートで作成され、plan lintが必須項目・placeholder残存・親backlink不整合・並列宣言のレーン担当未記載を検出する。program子数の目安（基本6〜7・大改修のみ10前後）・計画フォルダ日付の最新化・**計画合意ゲート（explain図解の提示→相違なしの明示→実行開始）**が規約に記載されている。
 - [ ] result packetと評価MDから、完了条件チェックボックス・実装結果・Programマップを `planctl` で同期でき、未評価・対象外・文言不一致を自動PASSにしない。計画の大幅更新時に `rename` サブコマンドで日付最新化と参照追従が機械的にでき、hookが陳腐化（大幅更新なのに日付が古い）を検知して案内する。
-- [ ] **`program-run`（ゴールコマンド）が、合成programでWave順の 委譲→実装→レビュー→同期 を人間の介在なしに完走し、危険操作を実行せず承認セットへ蓄積し、完走後に統合評価＋承認セットを1回で人間へ提示できる。**
+- [ ] **`program-run`（ゴールコマンド）が、起動前検査（lint全緑・並列子のレーン担当記載）を通過した計画だけを走らせ、合成programでWave順の 委譲→実装→レビュー→同期 を人間の介在なしに完走し、危険操作を実行せず承認セットへ蓄積し、完走後に統合評価＋承認セットを1回で人間へ提示できる。**
 - [ ] **レビュー運用が宣言どおり動く: 01は都度、02・03・04はWave 4後の3子一括、05はE2E時。一括待ちの子をStop guardが止めず、共通契約を変える修正だけが即差し戻しになる。**
 - [ ] workerは親会話を知らなくても、計画本文とrun manifestだけで作業でき、実装agent定義に固定worktree・branch・Program固有背景が無い。write laneごとに明示baseからtask-scoped worktreeを作れる。
 - [ ] OrcaなしでClaude→Codex委譲が動き、既存 `/codex-impl` は互換を維持する。Codex→Claudeは実機CLI仕様の確認後だけ有効化され、未確認フラグを決め打ちしていない。

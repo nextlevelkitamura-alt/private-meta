@@ -28,7 +28,7 @@
   3. `../program.md`（レビュー運用と完走スキーム＝program-runの要求仕様）・この計画
   4. `../references/2026-07-15-計画実行基盤/02_Codex実装指示書_計画実行基盤.md` §13-15
   5. `../references/2026-07-15-計画実行基盤/03_サブエージェント実行指示テンプレート.md`（Task Packetの形・親エージェントの回収手順＝program-runのループ仕様）
-- 実行形: delegated-parallel（Aレーン=harness本体（delegate/manifest/worktree/adapters/schemas）、Bレーン=roles＋/codex-impl互換＋custom-agent-creator修正。ファイル非交差。program-runはA・B統合後に直列で実装）
+- 実行形: delegated-parallel（Aレーン=harness本体（delegate/manifest/worktree/adapters/schemas）、Bレーン=roles＋/codex-impl互換＋custom-agent-creator修正。ファイル非交差・**各レーンはtask-scoped worktreeで作業**。program-runはA・B統合後に直列で実装）
 - 依存成果: 01の実行指示.md・実行結果.jsonテンプレ、02のplanctl（prepare/apply-evaluation/sync-check/close）・bucketctl・run manifest契約
 - 変更可能範囲: `agents-registry/harness/`（新規）、`agents-registry/roles/`（新規）、`agents-registry/claude/agents/`・`codex/agents/`、`agents-registry/claude/commands/codex-impl.md`、`agents-registry/AGENTS.md`、`skills/custom-agent-creator/references/` の旧記述箇所
 - 変更禁止範囲: `skills/plan-ops/`（02所有）、`hooks-registry/`（04所有）、`~/.claude/`・`~/.codex/` のruntime設定、既存 `codex-consult`
@@ -52,7 +52,7 @@
 
 ### C. program-run（ゴールコマンド＝完走オーケストレータ）
 
-6. `program-run` を新設する: program.mdの子マップを読み、**Wave順に自動進行**する。各子について (1) `planctl prepare` でTask Packet生成・task worktree作成 → (2) delegateで実装worker起動（同時write最大2・並列可否は子の `実行形:` 宣言に従う）→ (3) result packet回収・検証 → (4) 子の `レビュー:` 宣言に従い、**都度なら即reviewer起動、一括なら束ねて後で**（束ね先マップ注記に従う。既定は3子程度。一括待ちの間はworktreeを保持）→ (5) 全PASSで `planctl apply-evaluation` → (6) **統合: 統合branchへ `merge --no-ff` → 対象テストのスモーク → worktree削除（cleanup）** → 次へ。FAILは修正MD→同一threadへresume（差し戻し上限=2、超過は停止して人間へ）。mergeのconflictは自動解決せず停止。**mainへの反映はprogram-runの範囲外**（最終承認セットの人間承認後）。
+6. `program-run` を新設する: **起動前検査**として program-lint・plan-lint を全子に実行し、`delegated-parallel` 宣言の子にレーン別の変更可能範囲（ファイル担当マップ）とworktree方針の記載が無ければ**起動を拒否**する（並列workerは計画に書いてから走らせる・2026-07-15人間指示）。検査通過後、program.mdの子マップを読み、**Wave順に自動進行**する。各子について (1) `planctl prepare` でTask Packet生成・task worktree作成 → (2) delegateで実装worker起動（同時write最大2・並列可否は子の `実行形:` 宣言に従う）→ (3) result packet回収・検証 → (4) 子の `レビュー:` 宣言に従い、**都度なら即reviewer起動、一括なら束ねて後で**（束ね先マップ注記に従う。既定は3子程度。一括待ちの間はworktreeを保持）→ (5) 全PASSで `planctl apply-evaluation` → (6) **統合: 統合branchへ `merge --no-ff` → 対象テストのスモーク → worktree削除（cleanup）** → 次へ。FAILは修正MD→同一threadへresume（差し戻し上限=2、超過は停止して人間へ）。mergeのconflictは自動解決せず停止。**mainへの反映はprogram-runの範囲外**（最終承認セットの人間承認後）。
 7. **人間に聞くのは2種類だけ**: (a) 完走後の最終一括確認（統合評価＋承認セット）、(b) 途中で危険操作の**即時実行が避けられない**場合（原則発生しない設計。hook登録・移動・削除・trust等は実行せず `承認セット.md` へ差分・根拠を追記して先へ進む）。それ以外の確認・待ち・軽微な判断はprogram-runと指揮官が解消する。
 8. 停止条件: blocked result・差し戻し上限超過・共通契約（schema/テンプレ/CLI引数）を変える修正が必要・対象path衝突・merge conflict。停止時はrun状態（どの子まで完了・レビュー待ちキュー・保持中worktree・承認セット）を出力し、再開可能にする。
 9. SubagentStart/Stopのhook（04所有）が検査に使う情報（run manifestのworktree_path・branch・base_commit・role・result_path）を、delegateが必ず環境変数 `PLAN_RUN_MANIFEST` で子プロセスへ渡す。hookが実行を担わず検査だけできるのは、この受け渡しがあるからである。
@@ -63,7 +63,7 @@
 - [ ] 生成Task Packetに読む順番・変更可能/禁止範囲・result packet要求が含まれ、run-manifest・result-packetのschema検証が不正データを拒否する。
 - [ ] `roles/` の3定義に固定worktree・branch・タスク固有path・Program固有背景・モデルID・長い性格が無い（grepで機械確認可）。claude/codex両形式がroles/と矛盾しない。
 - [ ] `/codex-impl` が共通delegate経由で従来と同じ入口で使え、合成タスクで 委譲→result→レビュー→apply-evaluation が通る。custom-agent-creatorの旧記述が現行仕様へ更新済み。
-- [ ] `program-run` が合成programで、Wave順の自動進行・並列上限2・レビュー宣言（都度/一括）どおりのreviewer起動・全PASS時のみの同期・FAIL時のresume差し戻し・上限超過での停止を再現できる。
+- [ ] `program-run` が起動前にprogram-lint・plan-lintを実行し、delegated-parallel子のレーン別担当・worktree方針が未記載なら起動を拒否する。検査通過後、合成programでWave順の自動進行・並列上限2・レビュー宣言（都度/一括）どおりのreviewer起動・全PASS時のみの同期・FAIL時のresume差し戻し・上限超過での停止を再現できる。
 - [ ] worktreeライフサイクルが合成taskで一巡する: 明示baseから作成 → 実装commit → レビュー全PASS → 統合branchへ `merge --no-ff` → スモーク → worktree削除。一括レビュー待ちの子はworktreeが保持され、merge conflictでは自動解決せず停止する。mainへは一切触れない。
 - [ ] delegateが起動する全workerに `PLAN_RUN_MANIFEST` が渡り、SubagentStart/Stop hook（04）が検査に必要な項目（worktree_path・branch・base_commit・role・result_path）を読める。
 - [ ] `program-run` が危険操作を実行せず `承認セット.md` へ蓄積して完走し、完走後の出力に統合評価と承認セットが揃う。blocked・契約変更が必要な場合に再開可能な状態で停止する。

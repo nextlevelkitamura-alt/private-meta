@@ -72,6 +72,7 @@ check("(i) 次期本文に最小ゲートと一本道", all(s in candidate for s
     "全YESでない、または不明なら plan-management", "planning→active→done→archive",
     "bucketctl check", "一括は束ねて", "finishはsession-boardの記録を閉じるだけ",
 )))
+check("(i1) 次期本文はhook非所有を明示", "hookはrepo・計画箱・レビュー合否・バケット遷移を決めない" in candidate)
 check("(i2) 次期本文は未有効化", "plan-management" not in guide and "plan_management_guide_candidate" not in common.register_prompt.__code__.co_names)
 
 print(f"\n== 結果: PASS={PASS} FAIL={FAIL} ==")

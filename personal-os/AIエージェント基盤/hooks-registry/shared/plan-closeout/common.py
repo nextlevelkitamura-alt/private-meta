@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ from typing import Any
 PHASES = {"running", "implemented", "review_passed", "synced", "closed", "blocked"}
 ROLES = {"explorer", "implementer", "reviewer"}
 RUNTIMES = {"codex", "claude"}
+TASK_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 MANIFEST_REQUIRED = {
     "version", "task_id", "role", "runtime", "repo_root", "plan_path", "program_path",
     "child_id", "base_commit", "worktree_path", "branch", "result_path", "evaluation_path", "phase",
@@ -38,13 +40,22 @@ def _truthy(value: Any) -> bool:
 def _valid_manifest(value: Any) -> bool:
     if not isinstance(value, dict) or set(value) - (MANIFEST_REQUIRED | {"allowed_paths"}):
         return False
-    if MANIFEST_REQUIRED - set(value) or value.get("version") != 1:
+    if MANIFEST_REQUIRED - set(value) or type(value.get("version")) is not int or value["version"] != 1:
         return False
-    if value.get("role") not in ROLES or value.get("runtime") not in RUNTIMES or value.get("phase") not in PHASES:
+    if not isinstance(value.get("task_id"), str) or not TASK_ID.fullmatch(value["task_id"]):
+        return False
+    if (not isinstance(value.get("role"), str) or value["role"] not in ROLES
+            or not isinstance(value.get("runtime"), str) or value["runtime"] not in RUNTIMES
+            or not isinstance(value.get("phase"), str) or value["phase"] not in PHASES):
         return False
     if not all(isinstance(value.get(key), str) and value[key] for key in ("task_id", "repo_root", "plan_path", "base_commit", "result_path")):
         return False
-    if value["role"] == "implementer" and (not value.get("worktree_path") or not value.get("branch")):
+    if any(value.get(key) is not None and not isinstance(value[key], str) for key in ("program_path", "child_id", "worktree_path", "branch", "evaluation_path")):
+        return False
+    allowed_paths = value.get("allowed_paths")
+    if allowed_paths is not None and (not isinstance(allowed_paths, list) or not all(isinstance(path, str) and path for path in allowed_paths) or len(allowed_paths) != len(set(allowed_paths))):
+        return False
+    if value["role"] == "implementer" and (not isinstance(value.get("worktree_path"), str) or not value["worktree_path"] or not isinstance(value.get("branch"), str) or not value["branch"]):
         return False
     return True
 

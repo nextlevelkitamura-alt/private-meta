@@ -91,7 +91,7 @@
   <div class="wrap">
 
     <header>
-      <p class="eyebrow">計画レビュー用の説明 ・ 2026-07-15 v5（実行開始ゲート＝記載→図解→合意）</p>
+      <p class="eyebrow">計画レビュー用の説明 ・ 2026-07-15 v6（area・repo両対応を明文化）</p>
       <h1>計画立案・実行・完了基盤 — 何がどう変わるのか</h1>
       <p class="lede">フォルダは <b>2026-07-15-計画立案実行完了基盤</b> へ日付更新・改名済み、子番号は<b>実行順の01〜06</b>に振り直し済みです。変わるのは3つ：<b>①計画がそのまま実装指示書になる（実行契約）</b>、<b>②実装後の計画更新が手動→機械になる（planctl）</b>、<b>③計画の閉じ方に理由が残る（終了区分）</b>。完成後は<b>ゴールコマンド1つで実装〜レビューまで完走</b>し、あなたは<b>最後に1回だけ</b>承認セットを確認します。</p>
     </header>
@@ -247,6 +247,10 @@
         <div class="ditem">
           <p class="dhead"><span class="pill go">調査済み</span>hookの設計はCodex(high)が実機仕様を確認済み</p>
           <p class="dbody">hooks-registryの現行4イベント・登録表・runtime公式仕様を読んだ<b>設計書</b>（references/2026-07-15-hooks設計調査.md）を正本に実装します。要点: <b>SubagentStart/StopはCodex・Claude両方に存在</b>し同じ受け口で見張れる／既存のsession-board・Orca hookは置換せず<b>別handlerとして共存</b>／block（継続要求）は「PASSなのに未同期」等を確定検出した時だけ<b>1回まで</b>で、それ以外は必ず素通し（普段の作業を止めない）。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">組み込み済み（v6）</span>areaでも各repoでも同じに動く</p>
+          <p class="dbody">planctl・bucketctl・delegate・ゴールコマンド・plan-lint・hookは<b>すべて「明示path」を受けるrepo非依存の作り</b>で、personal-osのarea計画でも <code>projects/active/仕事</code> などの<b>repo内 plans/ でも同じに動きます</b>（E2Eに「Private以外の合成repoで一巡」を追加）。<b>どの計画箱に入れるかの判断は今までどおり</b> — repo内起点は最寄りAGENTS.md、Private起点は<b>repo-registryのrepo一覧（repo概要.md）→対象repoのAGENTS.md</b>という既存plan-triageの二段ルーティングが正本のままです（壊しません）。実repoへの適用の展開は、activeの「全repoへのAI運用標準移植」programが担当（承認セットで引き継ぎ）。</p>
         </div>
         <div class="ditem">
           <p class="dhead"><span class="pill acc">今後の既定</span>子計画は6〜7が基本・日付は最新に保つ</p>
@@ -543,6 +547,10 @@
     <section id="log">
       <h2>更新履歴</h2>
       <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">v6</span>2026-07-15</p>
+          <p class="dbody">見落とし確認への回答: <b>置き場の解決（repo概要.md→対象repoのAGENTS.md→計画箱）は既存plan-triageの二段ルーティングが正本のままで、本programは壊さない</b>（これは元から維持契約に記載）。一方、<b>「機構がrepo-localでも動く」ことの検証と、activeの「全repoへのAI運用標準移植」programとの接続は未記載だった</b> → program.mdに「どこで動くか」節を新設し、子01/02/03へrepo-local検証の完了条件、E2Eへ6系統目（合成repoで一巡）、承認セットへ実repo適用の引き継ぎ案を追加。</p>
+        </div>
         <div class="ditem">
           <p class="dhead"><span class="pill acc">v5</span>2026-07-15</p>
           <p class="dbody">指摘を反映：<b>「実行開始ゲート」を運転ルールの先頭に組み込み</b>。正直な照合結果 — ①並列前のworktree・レーン記載は「原則」止まりで機械ゲートが無かった → plan-lint（子01）とprogram-run起動前検査（子03）で<b>未記載なら走らせない</b>を機械担保に。②図解HTMLでの視覚説明と③「人間へ提示→相違なしの明示→実行」の合意ゲートは<b>計画に含まれていなかった</b> → 完走スキームの第0項として正本化し、規約反映（plan-registry／areas）を子01の実装範囲に追加。</p>

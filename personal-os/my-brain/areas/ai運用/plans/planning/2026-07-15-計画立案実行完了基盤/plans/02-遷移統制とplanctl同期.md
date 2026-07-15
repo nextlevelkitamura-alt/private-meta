@@ -33,7 +33,7 @@
 - 依存成果: 01のテンプレ（実行指示.md・実行結果.json・終了記録.md）とplan-lint
 - 変更可能範囲: `skills/plan-ops/scripts/`（bucketctl拡張・planctl.py新設・共通core）、`skills/plan-ops/__tests__/`、`SKILL.md`・`references/script-map.md` の該当節、状態意味・遷移・容量・終了区分を定義する規約箇所（`my-brain/areas/AGENTS.md` §3-4、`ai運用/AGENTS.md` §3、`GLOBAL_AGENTS.md` §7、`plan-registry/AGENTS.md` の該当行）
 - 変更禁止範囲: 既存計画フォルダの移動・改名、`hooks-registry/`、`agents-registry/`、session-board本体、progctl・program-lintの既存挙動（呼び出しは可）、テンプレ本文（01所有）
-- 維持する契約: 状態はフォルダだけで持つ／bucketctl・progctlの既存サブコマンド互換／planctlは明示pathのみ受け推測しない／state（manifest・process output）はgitignore配下／対象path限定commit
+- 維持する契約: 状態はフォルダだけで持つ／bucketctl・progctlの既存サブコマンド互換／planctlは明示pathのみ受け推測しない（**`plans/` rootを明示引数で受けるrepo非依存の作り。Privateのareaでもrepo-local `plans/` でも同じに動く**）／state（manifest・process output）はgitignore配下／対象path限定commit
 - 検証: `skills/plan-ops/__tests__/run.sh` 全緑＋遷移・容量・終了記録・evaluation syncの正常/拒否テスト
 - 停止・エスカレーション条件: 規約間の状態語彙矛盾が解消できない／評価.mdの書式で文言一致判定が機械的に成立しない（→01へ差し戻し）／manifest schemaが03と矛盾／未コミット再編差分と対象pathが衝突
 - 完了時に返す情報: result packet（status・base_commit・result_commit・changed_paths・tests・assumptions・blockers・remaining_risks・out_of_scope_findings）
@@ -67,4 +67,4 @@
 - [ ] `planctl prepare` が明示引数からmanifestと実行指示を生成し、stateがgit追跡されない。`progress` は対象子以外をバイト不変に保つ。
 - [ ] `apply-evaluation` が全PASS時のみ `[x]` 同期し、FAIL／対象外／文言不一致／誤った子番号／result commit欠落 をそれぞれ拒否するテストがある。同期後に実装結果・マップ・参照commitが一致する。
 - [ ] `close` がbucketctlの検証を迂回せず、`sync-check` が不整合をJSONで返し整合時0で終了する。result packetのschema検証が不正JSON・必須欠落・不正statusを検出する。
-- [ ] plan-opsの全テストが通り、progctl・bucketctlの単体利用が変更前と同じ挙動である。状態・終了区分を第2の状態台帳にしていない。
+- [ ] plan-opsの全テストが通り、progctl・bucketctlの単体利用が変更前と同じ挙動である。状態・終了区分を第2の状態台帳にしていない。遷移・容量・apply-evaluation・renameが、Private以外の合成repoの `plans/` を明示指定しても同じに動く。

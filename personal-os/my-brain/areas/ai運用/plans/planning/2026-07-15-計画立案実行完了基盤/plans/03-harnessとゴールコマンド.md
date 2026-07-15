@@ -67,4 +67,4 @@
 - [ ] worktreeライフサイクルが合成taskで一巡する: 明示baseから作成 → 実装commit → レビュー全PASS → 統合branchへ `merge --no-ff` → スモーク → worktree削除。一括レビュー待ちの子はworktreeが保持され、merge conflictでは自動解決せず停止する。mainへは一切触れない。
 - [ ] delegateが起動する全workerに `PLAN_RUN_MANIFEST` が渡り、SubagentStart/Stop hook（04）が検査に必要な項目（worktree_path・branch・base_commit・role・result_path）を読める。
 - [ ] `program-run` が危険操作を実行せず `承認セット.md` へ蓄積して完走し、完走後の出力に統合評価と承認セットが揃う。blocked・契約変更が必要な場合に再開可能な状態で停止する。
-- [ ] Claude adapterは実機確認済みフラグのみ使用、または明示的feature-disabled。runtime設定・trust・symlinkに変更が無い。
+- [ ] Claude adapterは実機確認済みフラグのみ使用、または明示的feature-disabled。runtime設定・trust・symlinkに変更が無い。delegate・program-runが `repo_root` の明示指定でPrivate以外の合成repoのplanにも委譲でき、repo固有のpathを内部に決め打ちしていない。

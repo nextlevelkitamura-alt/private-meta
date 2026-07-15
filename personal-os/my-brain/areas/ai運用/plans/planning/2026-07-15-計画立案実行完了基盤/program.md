@@ -62,6 +62,12 @@ planning → active → done → archive
 - 本programの判断: 01=delegated-single ／ 02=delegated-single ／ 03=**delegated-parallel**（A=harness本体・B=roles+互換、非交差。program-runはA・B統合後） ／ 04=delegated-single ／ 05=**delegated-parallel**（A=監査read-only・B=pilot） ／ 06=integration。
 - 同時write workerは全体で最大2。**`delegated-parallel` を宣言した子は、レーンごとの変更可能範囲（どのレーンがどのpathを書くか）とworktree方針を実行契約に記載しなければ起動できない**（記載が計画に無いまま並列workerを走らせない。plan-lint＝子01とprogram-runの起動前検査＝子03が機械担保する）。
 
+## どこで動くか（personal-osのareaと各repoの両対応・2026-07-15人間指示で明文化）
+
+- **機構はすべて「明示path」を受けるrepo非依存の作りにする**。planctl・bucketctl（子02）、delegate・program-run（子03）、plan-lint（子01）、hookガード（子04・`PLAN_RUN_MANIFEST` の `repo_root` 基準）は、`~/Private` のarea計画でも `projects/active/仕事` などのrepo-local `plans/` でも同じに動く。バケット語彙（planning/active/paused/done/archive）はrepo-local `plans/` 規約と同語彙（`areas/AGENTS.md` §3）。
+- **「どの計画箱に入れるか」の解決は本programの対象外＝既存 `plan-triage` の二段ルーティングが正本のまま**: repo内起点は最寄り `AGENTS.md`、Private起点は `repo-registry/repo概要.md` で担当repoを判定 → 対象repoの最寄り `AGENTS.md` が宣言する計画箱 → 既存plan検索。本programはこのroute契約を壊さない（子01の維持する契約）。
+- **各repoへの展開の分担**: repo側のAGENTS・計画箱の整備はactiveの「2026-07-13-全repoへのAI運用標準移植」programが所有する。本programは機構をrepo非依存に作って合成repoで検証するまでを担い、実repoへの適用可否は子06の承認セットで移植program側へ引き継ぐ（同じ機構を二重実装しない）。
+
 ## レビュー運用（都度と一括の使い分け）
 
 - **都度**（完了ごとに即レビュー）: 後続の全子が成果物を直接使う子だけ。このprogramでは **01（共通契約）** と **06（最終統合）**。
@@ -166,13 +172,15 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
 - [ ] UserPromptSubmit の初回ガイドとミラーが、planning起案・active実行・done待機・archive人間確認・バケット上限・レビュー方式（一括/都度）を、過剰な本文複製なしに案内する。session-board はセッション状態の所有者のままで、`finish` が計画archiveの承認・実行にならない。
 - [ ] 既存計画の監査結果と是正候補・identity/知識の移動候補が承認セットに揃い、承認なしの一括移動・削除をしていない。
 - [ ] 新hookのruntime登録・settings変更・symlink・Codex再trust・計画フォルダの承認なき移動改名は行われず、承認後の適用時に既存5イベント＋追加イベントのruntime別E2EとCodex再trustを一度だけ行う。
-- [ ] 変更対象のテスト・plan lint・program-lint・archive lint・E2E 5系統（単発plan／2子Program／conflict archive／completed archive／Stop guard）が合成データで通り、実Turso・実secret・実Dailyを触っていない。既存の未コミット変更（hooks-registry再編差分）を巻き込まず、各Waveが対象path限定の別commitになっている。
+- [ ] 変更対象のテスト・plan lint・program-lint・archive lint・E2E 6系統（単発plan／2子Program／conflict archive／completed archive／Stop guard／**repo-local: Private以外の合成repoのplans/での一巡**）が合成データで通り、実Turso・実secret・実Dailyを触っていない。既存の未コミット変更（hooks-registry再編差分）を巻き込まず、各Waveが対象path限定の別commitになっている。
 
 ## 関連
 
 - 設計資料（今回の採用判断・実装仕様・Task Packetテンプレ）: `references/2026-07-15-計画実行基盤/`
 - 先行資料: `2026-07-08-並列実装フロー`（本programへ統合。2026-07-15人間承認で分析・整理 — 判定と移動先は同計画の終了記録を参照）
 - 接続契約: `../../active/2026-07-14-計画運用ハーネス検証/program.md`（同program子04が本program子04＝旧 `完了判定とアーカイブ運用/plans/02` へPrompt Submit接続契約を引き継ぎ済み・2026-07-15）
+- repo展開の分担先: `../../active/2026-07-13-全repoへのAI運用標準移植/program.md`（repo側AGENTS・計画箱の整備を所有。本programは機構のrepo非依存化と合成repo検証まで）
+- 置き場解決の正本: `../../../../../../AIエージェント基盤/repo-registry/repo概要.md`（担当repo判定）＋ `../../../../../../AIエージェント基盤/skills/plan-triage/`（二段ルーティング・変更しない）
 - 状態・計画規約: `../../../../AGENTS.md` §3-4 ／ `../../../../../../AIエージェント基盤/GLOBAL_AGENTS.md` §7 ／ `../../../../../../AIエージェント基盤/plan-registry/AGENTS.md`
 - 計画操作: `../../../../../../AIエージェント基盤/skills/plan-ops/`
 - 委譲・役割・ゴールコマンド: `../../../../../../AIエージェント基盤/agents-registry/`

@@ -1,5 +1,5 @@
 親計画: ../program.md ／ 分類: 横断 ／ 種別: 新規作成
-並列: 不可 ／ レビュー: 一括（Wave 4完了時に01・08・02の3子をまとめてレビュー。schema・Task Packet等の共通契約を変える修正が必要になった場合だけ即差し戻し）
+並列: 不可 ／ レビュー: 一括（Wave 4完了時に02・03・04の3子をまとめてレビュー。schema・Task Packet等の共通契約を変える修正が必要になった場合だけ即差し戻し）
 人間ゲート: なし（worktree削除は明示cleanupのみ。runtime `~/.claude/agents` 等への露出が必要なら承認セットへ記録）
 
 # harness・エージェント・ゴールコマンド（Wave 3）
@@ -10,8 +10,8 @@
 
 ## 非対象
 
-- planctl本体（01。program-runは01のplanctl・bucketctlを呼ぶ側）
-- hookガード（02）
+- planctl本体（02。program-runは02のplanctl・bucketctlを呼ぶ側）
+- hookガード（04）
 - 3役割を超えるエージェント新設・Orca経路の改修
 - runtime設定変更・trust・symlink露出の実施（差分の用意と承認セットへの記録まで）
 
@@ -28,9 +28,9 @@
   3. `../program.md`（レビュー運用と完走スキーム＝program-runの要求仕様）・この計画
   4. `../references/2026-07-15-計画実行基盤/02_Codex実装指示書_計画実行基盤.md` §13-15
   5. `../references/2026-07-15-計画実行基盤/03_サブエージェント実行指示テンプレート.md`（Task Packetの形・親エージェントの回収手順＝program-runのループ仕様）
-- 依存成果: 05の実行指示.md・実行結果.jsonテンプレ、01のplanctl（prepare/apply-evaluation/sync-check/close）・bucketctl・run manifest契約
+- 依存成果: 01の実行指示.md・実行結果.jsonテンプレ、02のplanctl（prepare/apply-evaluation/sync-check/close）・bucketctl・run manifest契約
 - 変更可能範囲: `agents-registry/harness/`（新規）、`agents-registry/roles/`（新規）、`agents-registry/claude/agents/`・`codex/agents/`、`agents-registry/claude/commands/codex-impl.md`、`agents-registry/AGENTS.md`、`skills/custom-agent-creator/references/` の旧記述箇所
-- 変更禁止範囲: `skills/plan-ops/`（01所有）、`hooks-registry/`（02所有）、`~/.claude/`・`~/.codex/` のruntime設定、既存 `codex-consult`
+- 変更禁止範囲: `skills/plan-ops/`（02所有）、`hooks-registry/`（04所有）、`~/.claude/`・`~/.codex/` のruntime設定、既存 `codex-consult`
 - 維持する契約: push・merge・deployをしない／conflict時は停止／secret非表示／worktree・branchはTask IDで命名し `~/Private` 直下に作らない／`/codex-impl` の入口互換／エージェント定義に固定worktree・branch・Program固有背景・モデルIDを入れない
 - 検証: `harness/tests/`（worktree分離・schema検証・conflict停止・secret非表示・並列分離・program-runのWave進行/停止/承認セット蓄積を合成programで）
 - 停止・エスカレーション条件: Claude CLIの安全なnon-interactive呼び出しが確認できない（→Claude adapterはfeature-disabledで返す）／codex execのwire formatがローカルversionと不一致／差し戻し上限（フル=2）超過
@@ -40,9 +40,9 @@
 
 ### A. harness（1 taskの委譲）
 
-1. `delegate.py`: runtime=`codex|claude`・role=`explorer|implementer|reviewer`・plan path必須・write taskは明示base SHA必須。Task Packet（05の実行指示.mdへ具体値充填）を生成してadapterを起動。テンプレ全文の丸渡しをしない。
+1. `delegate.py`: runtime=`codex|claude`・role=`explorer|implementer|reviewer`・plan path必須・write taskは明示base SHA必須。Task Packet（01の実行指示.mdへ具体値充填）を生成してadapterを起動。テンプレ全文の丸渡しをしない。
 2. worktreeはTask-scoped: write workerの並列・dirty checkout・別repo handoffではtask専用worktreeを明示baseから作り、read-only taskは省略可。task_idから決定的に命名。自動削除しない。
-3. `runtimes/codex.py` は `/codex-impl` のcodex exec `--json`・resume知見を再利用。`runtimes/claude.py` は実機 `claude --help` と公式non-interactive仕様を確認してフラグをテストで固定し、未確認機能はfeature-disabled。`schemas/` にrun-manifest・result-packetを置き01と契約を共有する。
+3. `runtimes/codex.py` は `/codex-impl` のcodex exec `--json`・resume知見を再利用。`runtimes/claude.py` は実機 `claude --help` と公式non-interactive仕様を確認してフラグをテストで固定し、未確認機能はfeature-disabled。`schemas/` にrun-manifest・result-packetを置き02と契約を共有する。
 
 ### B. roles（役割定義）と /codex-impl 互換
 

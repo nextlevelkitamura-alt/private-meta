@@ -102,6 +102,7 @@ Task ID: plan-ops-01
 対象計画: /repo/plans/active/example/plan.md
 base commit: abc1234
 目的: 実行契約を満たすplan-lintを追加する。
+読む順番: 対象repoの最寄りAGENTS.md → 親program → 対象計画 → references → 対象ファイル
 変更可能: skills/plan-ops/scripts/ と __tests__/
 変更禁止: runtime設定、hook登録、symlink露出
 依存成果: なし

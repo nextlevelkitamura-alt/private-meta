@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "task_id": "",
+  "status": "done",
+  "base_commit": "",
+  "result_commit": "",
+  "changed_paths": [],
+  "tests": [],
+  "assumptions": [],
+  "blockers": [],
+  "remaining_risks": [],
+  "out_of_scope_findings": []
+}

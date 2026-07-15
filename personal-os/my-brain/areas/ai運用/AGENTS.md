@@ -8,7 +8,7 @@
 1. 基盤の運営方針・判断軸は `identity.md` に置く。
 2. 完成した恒久・再利用可能な参照mdは `知識/` に置く。未確定の構想は `identity.md` か計画の `方針`、特定計画だけの資料は計画内 `references/` に置く。`知識/` を考えや調査の置き場にしない。
 3. 新規計画は `plans/planning/<YYYY-MM-DD-日本語企画名>/plan.md` に作る。今週実行すると指揮官が決めた時だけ `../AGENTS.md` の `bucketctl` で active へ昇格し、状態に応じてバケット間を移す。計画に紐づく人間向けHTMLは各計画の `explain/` に置く。repo実行が要る計画は成熟後に実行repoへ卒業させる。規約・卒業手順は `../AGENTS.md`。
-4. 計画から派生する作業は `../AGENTS.md` §4.2 に従う（旧 `ops/` 5フォルダ構成は廃止・既存はlegacy）。
+4. 計画から派生する作業は `../AGENTS.md` §4.2 に従う（旧 `ops/` 5フォルダ構成は廃止・既存はlegacy）。規模、レビュー、人間ゲート、各Skill・hookの責務は `../../../AIエージェント基盤/plan-registry/AGENTS.md` を正とし、このareaには再定義しない。
 5. Personal OS基盤・横断repo・Global Skill・repo・loopの計画は、このareaを正本にする。
 
 ## 2. 置かないもの
@@ -17,17 +17,18 @@
 2. 実装repo本体。必要なら `/Users/kitamuranaohiro/Private/projects/` に置く。
 3. secret、token、credential、環境変数の値。
 
-## 3. 計画ルーティング
+## 3. このarea固有の計画配置
 
 1. 1計画は `plans/planning/<YYYY-MM-DD-日本語企画名>/plan.md` に作る。activeへの昇格は `../AGENTS.md` の `bucketctl` だけを使い、他のバケット遷移は `git mv` で行う。
 2. `plan.md` 冒頭に `分類:`、`種別:` を書く。状態はフォルダ（バケット）で持ち、`状態:` フィールドは書かない。
 3. `分類:` は `skill`、`repo`、`loop` を使う。Personal OS基盤や横断運用は、主対象に最も近い分類で扱う。
-4. `種別:` の定義と、バケット（状態）の規約・移動方法は `../AGENTS.md` を正とする。
+4. `種別:` の定義と、バケット（状態）の規約・移動方法は `../AGENTS.md` を正とする。計画の規模・レビュー・人間ゲートは `../../../AIエージェント基盤/plan-registry/AGENTS.md` を見る。
 5. Global Skill / loop 計画はこのareaで育成する。Global Skill計画の卒業可否と箱は `../../../AIエージェント基盤/global-skill-registry/AGENTS.md`、loopの計画と実装の境界は `../../../AIエージェント基盤/loops-registry/AGENTS.md` を正とし、存在しない節や `loops-registry/plans/loop/` を推定しない。repo-local Skill計画は `repo-registry/repo概要.md` で所有repoを決め、所有repo `AGENTS.md` が宣言する計画箱を正本にする。`plans/skills/` を共通pathとして自動作成しない。
 6. repo-local Skillの所属repoが未確定なら、所有repoを決める計画としてこのareaに `分類: repo` で置く。
 7. repo-local SkillをGlobal化する判断が主目的なら、このareaに `分類: skill` で置く。
 8. 旧計画ディレクトリは廃止済み。移行状況は `plans/archive/2026-06-29-plans廃止とarea一本化/plan.md` を見る。
 9. 全repo横断の移植計画はこのareaのprogramを唯一の計画正本にし、移植先repoへ同じprogram・子計画・状態表を複製しない。移植後にrepo固有で発生した依頼だけを、そのrepoの計画箱で別計画として扱う。
+10. **一時WIP例外（2026-07-14 人間承認）**: `plans/active/2026-07-14-計画運用ハーネス検証/` が存在する間だけactive上限は4件。それ以外は3件であり、対象programがactiveを離れれば `bucketctl` も3件へ戻る。枠を空けるための自動退避はしない。
 
 ## 4. 作業ルール
 

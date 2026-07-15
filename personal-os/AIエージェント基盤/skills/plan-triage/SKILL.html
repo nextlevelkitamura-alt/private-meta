@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plan-triage — Skill説明書</title>
+<style>
+:root{color-scheme:light;--ground:#f4f6f9;--surface:#fff;--surface2:#f8fafc;--ink:#172033;--muted:#5f6b7c;--line:#d9e0e8;--accent:#2457a7;--accent-soft:#eaf1fb;--go:#236b4b;--go-soft:#e8f5ee;--warn:#a8452a;--warn-soft:#fff0ea;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{background:#fff;color:var(--ink)}body{margin:0;font-family:var(--sans);line-height:1.7;padding:40px 20px 72px}.wrap{max-width:920px;margin:auto;display:flex;flex-direction:column;gap:34px}.eyebrow,h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}h1{font-size:32px;margin:4px 0 10px}h2{margin:0 0 14px}.lede{max-width:70ch;color:var(--muted);margin:0}section{display:flex;flex-direction:column}p,li{font-size:14px}ul{margin:0;padding-left:21px}.card,figure,.wf,.ref{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:17px 19px;margin:0}.flow{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:8px}.step{background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:9px;text-align:center;font-size:12px}.step.gate{background:var(--warn-soft);border-color:#e7b9aa;color:#7f321f}code,pre{font-family:var(--mono);font-size:12.5px}pre{margin:0;white-space:pre-wrap}.wf,.ref{margin-bottom:10px}.wf h3,.ref h3{margin:0 0 6px;font-size:14px}.muted{color:var(--muted)}.rule{border-left:4px solid var(--warn);background:var(--warn-soft);padding:14px 17px;border-radius:0 10px 10px 0}.good{background:var(--go-soft);border-color:#b8dec9}.foot{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:15px}@media(max-width:760px){.flow{grid-template-columns:1fr 1fr}body{padding:24px 14px 50px}}
+</style>
+</head>
+<body><main class="wrap">
+<header><p class="eyebrow">Skill説明書 · meta</p><h1>plan-triage</h1><p class="lede">依頼1件を、規模・対象repo・計画箱・起動形・モデルが明示された安全なrouteへ変換する入口Skill。計画やrepoへ自分では書き込まない。</p></header>
+
+<section><h2>いつ使うか（発火する発話例）</h2><ul><li>「この作業はどのrepo・どの計画へ入れる？」</li><li>「Privateから仕事repoの計画を立てたい」</li><li>「サクッと／ライト／フルと実行体制を決めて」</li></ul></section>
+
+<section><h2>構造</h2><figure><pre>plan-triage/
+├── SKILL.md                         入口・不変条件の正本
+├── SKILL.html                       この人間向け説明書
+├── workflows/triage.md              7段階の実行手順
+├── references/route-contract.md     route JSON・停止・handoff契約
+├── scripts/
+│   ├── validate-route-cases.mjs     決定性のあるfixture検証
+│   ├── validate-inbox-contract.mjs  caller委譲・白背景の静的検証
+│   └── fixtures/route-cases.json    work / focusmap / 異常系7ケース
+└── examples/                        3規模の合成例</pre></figure></section>
+
+<section><h2>各workflowの中身</h2><div class="wf"><h3><code>workflows/triage.md</code> — 依頼から構成カードまで</h3><p class="muted">起点を固定し、規模を決め、二段ルートでrepoと計画正本を解決する。曖昧な時は停止し、成功時だけhandoff案と構成カードを返す。</p><div class="flow"><div class="step">1 入力固定</div><div class="step">2 規模</div><div class="step">3 repo→AGENTS→plan</div><div class="step gate">曖昧なら exit 3</div><div class="step good">4〜7 構成カード</div></div><p><b>完了条件:</b> route contract適合、既存plan優先、推測path・副作用・secret出力が0件。</p></div></section>
+
+<section><h2>referencesの中身</h2><div class="ref"><h3><code>references/route-contract.md</code> — 唯一の経路契約</h3><ul><li><b>解決順:</b> repo内は最寄りAGENTSから、Privateはregistryで担当repoだけ決めてからAGENTSへ。</li><li><b>計画類型:</b> area-local / repo-root / repo-declared / global-area / none。</li><li><b>出力:</b> <code>plan-triage.route/v1</code> の固定JSON envelope。</li><li><b>停止:</b> 未登録、AGENTS欠損、計画箱欠損・競合、既存plan競合、handoff不正はexit 3。</li><li><b>handoff:</b> canonical repo、plan参照、worktree、許可path、禁止操作、開始Git snapshotの6項目。</li><li><b>境界:</b> plan header・状態・ID・alias解析は所有repoのindex契約へ委譲。</li></ul><p class="muted"><b>いつ読む:</b> 毎回のroute判定と、fixture・出力schemaを変更する時。</p></div></section>
+
+<section><h2>絶対ルール・安全方針</h2><div class="rule">root <code>plans/</code> を推測・自動作成しない。Private起点で対象repoへ書く前に新しい対象repo所有sessionへhandoffする。hookにrepo・領域・計画path判断を持たせない。Skill自身はファイル変更、レーン起動、push、外部書込みを行わない。credential値は出力しない。</div></section>
+
+<p class="foot">更新日: 2026-07-14 ／ 正本: <code>SKILL.md</code>（この説明書は人間向け表示。編集はmd側で行う）</p>
+</main></body></html>

@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # plan-ops / bucketctl — planning 配下の計画を active へ安全に昇格する。
 # 既定は dry-run。active は実行中だけ・最大3件を保ち、追い出しや削除は一切しない。
+# 2026-07-14の人間承認による例外: ai運用の「計画運用ハーネス検証」が
+# active にある間だけ同areaは最大4件。対象programがactiveを離れると自動で3件へ戻る。
 set -euo pipefail
 
-LIMIT=3
+DEFAULT_LIMIT=3
+TEMPORARY_AREA_SUFFIX="/personal-os/my-brain/areas/ai運用/plans"
+TEMPORARY_PROGRAM="2026-07-14-計画運用ハーネス検証"
 
 usage() {
   cat >&2 <<'EOF'
@@ -13,7 +17,8 @@ usage: bucketctl.sh promote <plans/planning/計画フォルダ> --to active [--a
   --apply       git mv だけを適用する。既定は dry-run。
   --commit      git mv を適用し、この移動だけを定型コミットする。
 
-active が3件以上なら昇格を拒否し、現在の active 一覧を表示する。
+active は原則3件。ai運用の「計画運用ハーネス検証」がactiveにある間だけ4件。
+上限以上なら昇格を拒否し、現在の active 一覧を表示する。
 何を paused/archive に移すか、削除、卒業はこのコマンドの対象外。
 EOF
   exit 2
@@ -64,8 +69,15 @@ for d in "$active_dir"/*; do
   active_count=$((active_count + 1))
   active_names+=("$(basename "$d")")
 done
-if [ "$active_count" -ge "$LIMIT" ]; then
-  echo "active は上限${LIMIT}件です（現在${active_count}件）。先に指揮官が paused/archive へ移す計画を選んでください。" >&2
+
+limit="$DEFAULT_LIMIT"
+if [ "$plans_dir" = "$repo_root$TEMPORARY_AREA_SUFFIX" ] && \
+   { [ "$(basename "$source_dir")" = "$TEMPORARY_PROGRAM" ] || [ -d "$active_dir/$TEMPORARY_PROGRAM" ]; }; then
+  limit=4
+fi
+
+if [ "$active_count" -ge "$limit" ]; then
+  echo "active は上限${limit}件です（現在${active_count}件）。先に指揮官が paused/archive へ移す計画を選んでください。" >&2
   if [ "${#active_names[@]}" -gt 0 ]; then
     printf '  - %s\n' "${active_names[@]}" >&2
   fi
@@ -78,7 +90,7 @@ target_rel="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.
 if [ "$apply" = 0 ] && [ "$commit" = 0 ]; then
   echo "── dry-run"
   echo "git -C $repo_root mv -- $source_rel $target_rel"
-  echo "active: ${active_count}/${LIMIT} → $((active_count + 1))/${LIMIT}"
+  echo "active: ${active_count}/${limit} → $((active_count + 1))/${limit}"
   exit 0
 fi
 

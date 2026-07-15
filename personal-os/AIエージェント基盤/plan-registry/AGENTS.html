@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plan Registry — 計画運用の入口</title>
+  <style>
+    :root { color-scheme: light; --ink:#17324d; --muted:#587087; --line:#d9e4ee; --paper:#ffffff; --soft:#f5f9fc; --blue:#1c6fa8; --mint:#dff4ec; --amber:#fff3d9; --rose:#ffe9e7; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif; line-height:1.65; }
+    main { width:min(1120px,calc(100% - 32px)); margin:0 auto; padding:48px 0 64px; }
+    h1,h2,h3,p { margin-top:0; } h1 { font-size:clamp(2rem,5vw,3.4rem); line-height:1.14; margin-bottom:12px; } h2 { font-size:1.45rem; margin:44px 0 16px; } h3 { font-size:1rem; margin-bottom:7px; }
+    .eyebrow { color:var(--blue); font-weight:800; letter-spacing:.08em; font-size:.78rem; text-transform:uppercase; }
+    .lead { max-width:760px; color:var(--muted); font-size:1.08rem; }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin:22px 0 34px; } .chip { border:1px solid var(--line); border-radius:999px; background:#fff; padding:5px 11px; font-size:.86rem; color:var(--muted); }
+    .notice { border-left:5px solid var(--blue); background:var(--soft); padding:16px 18px; border-radius:0 12px 12px 0; }
+    .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } .card { border:1px solid var(--line); border-radius:14px; background:#fff; padding:20px; } .card p { color:var(--muted); margin-bottom:0; }
+    .diagram { margin-top:18px; border:1px solid var(--line); border-radius:16px; background:var(--soft); padding:16px; overflow:auto; }
+    svg { display:block; width:100%; min-width:780px; height:auto; } .node { stroke:#bfd3e3; stroke-width:1.5; rx:12; } .label { fill:var(--ink); font-size:14px; font-weight:700; text-anchor:middle; } .sub { fill:var(--muted); font-size:11px; text-anchor:middle; } .arrow { stroke:#89a8bc; stroke-width:2; fill:none; marker-end:url(#arrow); }
+    table { width:100%; border-collapse:collapse; border:1px solid var(--line); border-radius:12px; overflow:hidden; font-size:.94rem; } th,td { padding:13px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } th { background:var(--soft); } tr:last-child td { border-bottom:0; }
+    code { background:#edf4f8; color:#234b68; padding:2px 5px; border-radius:5px; font-size:.9em; } .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; } .manual { background:var(--amber); } .machine { background:var(--mint); } .boundary { background:var(--rose); }
+    a { color:#075f9b; text-underline-offset:3px; } footer { margin-top:46px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:.9rem; }
+    @media (max-width:760px) { main { width:min(100% - 24px,1120px); padding-top:30px; } .grid,.two { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">Plan Registry / Human Guide</div>
+    <h1>計画管理は、ここから読む</h1>
+    <p class="lead">Plan Registryは「規約と責務地図」の入口です。個別の計画、状態、履歴、session-boardを集める場所ではありません。置き場そのものは、対象repoまたはareaが持ち続けます。</p>
+    <div class="chips"><span class="chip">規模とレビュー</span><span class="chip">program最終一括確認</span><span class="chip">危険操作の個別承認</span><span class="chip">責務地図</span><span class="chip">手動 / script / hook</span><span class="chip">計画本文は移動しない</span></div>
+
+    <div class="notice"><strong>最初の基準:</strong> Plan Registryがサクッと／ライト／フルの基準を定義し、plan-triageが依頼へ適用します。plan-managementは解決済みの基準とrouteを使って、作成・合流・program管理・レビュー遷移を案内します。3条件がすべてYESの時だけサクッと実行できます。</div>
+
+    <h2>誰が何を持つか</h2>
+    <div class="grid">
+      <section class="card"><h3>Plan Registry</h3><p>規模・段階・レビューの基準と責務地図を定義します。個別の計画本文、状態、履歴は持ちません。</p></section>
+      <section class="card"><h3>plan-triage</h3><p>基準を依頼へ適用し、対象repo・既存plan・宣言済み箱の書込みなしrouteを返します。</p></section>
+      <section class="card"><h3>plan-management</h3><p>利用者の目的を作成・合流・program管理・レビュー遷移へ振り分け、triageとopsへ委譲します。</p></section>
+      <section class="card"><h3>人間 / 指揮官</h3><p>人間ゲートと、既存planへ合流するか新規起案するかの最終判断を担います。</p></section>
+      <section class="card"><h3>対象repo / area</h3><p>計画箱、物理バケット、テンプレ、実際の計画本文と状態を持ちます。</p></section>
+      <section class="card"><h3>plan-ops</h3><p>確定した入力だけを雛形、子計画マップ更新、静的lintの手続きとして処理します。</p></section>
+      <section class="card"><h3>hook / session-board</h3><p>実行記録と通知だけを担い、計画本文・状態・repo・計画箱・合否を決めません。</p></section>
+    </div>
+
+    <h2>依頼から完了までの境界</h2>
+    <div class="diagram">
+      <svg viewBox="0 0 980 170" role="img" aria-label="計画運用の責務フロー。Plan Registryが基準を定義し、plan-triageが依頼へ適用して書込みなしrouteを返す。人間または指揮官が最終判断後、plan-ops、実装とレビュー、hookまたはsession-boardへ続く。">
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#89a8bc"/></marker></defs>
+        <path class="arrow" d="M160 85 H175"/><path class="arrow" d="M325 85 H340"/><path class="arrow" d="M500 85 H515"/><path class="arrow" d="M655 85 H670"/><path class="arrow" d="M820 85 H835"/>
+        <rect class="node" x="20" y="45" width="140" height="80" fill="#eaf1fb"/><text class="label" x="90" y="76">Plan Registry</text><text class="sub" x="90" y="98">基準を定義</text><text class="sub" x="90" y="114">規模・段階・レビュー</text>
+        <rect class="node" x="175" y="45" width="150" height="80" fill="#dff4ec"/><text class="label" x="250" y="76">plan-triage</text><text class="sub" x="250" y="98">基準を依頼へ適用</text><text class="sub" x="250" y="114">書込みなしroute</text>
+        <rect class="node" x="340" y="45" width="160" height="80" fill="#fff3d9"/><text class="label" x="420" y="76">人間 / 指揮官</text><text class="sub" x="420" y="98">人間ゲート</text><text class="sub" x="420" y="114">合流・起案の最終判断</text>
+        <rect class="node" x="515" y="45" width="140" height="80" fill="#dff4ec"/><text class="label" x="585" y="76">plan-ops</text><text class="sub" x="585" y="98">確定入力を手続き化</text><text class="sub" x="585" y="114">雛形・更新・lint</text>
+        <rect class="node" x="670" y="45" width="150" height="80" fill="#ffffff"/><text class="label" x="745" y="76">実装 / レビュー</text><text class="sub" x="745" y="98">内容を実装</text><text class="sub" x="745" y="114">意味と合否を確認</text>
+        <rect class="node" x="835" y="45" width="125" height="80" fill="#ffe9e7"/><text class="label" x="897" y="76">hook /</text><text class="label" x="897" y="93">session-board</text><text class="sub" x="897" y="114">記録・通知だけ</text>
+      </svg>
+    </div>
+
+    <h2>規模と人間ゲート</h2>
+    <table>
+      <thead><tr><th>規模</th><th>進め方</th><th>レビュー</th></tr></thead>
+      <tbody>
+        <tr><td>サクッと</td><td>3条件が全YESの時だけ、計画書なしで実装</td><td>実装者の自己確認</td></tr>
+        <tr><td>ライト</td><td>計画 → 実装 → 実装レビュー → 事後報告</td><td>1パス、差し戻しは最大1回</td></tr>
+        <tr><td>フル</td><td>単発planは段階的に最終人間確認へ。programは通常子をAIレビューで閉じ、親の統合評価後に一度だけ人間確認へ進める</td><td>探索を含む。差し戻しは最大2回</td></tr>
+      </tbody>
+    </table>
+    <div class="two" style="margin-top:14px">
+      <section class="card machine"><h3>programの通常子</h3><p>実装 → 独立レビュー → 必要な修正 → 再レビューが全PASSなら、<code>完了（AIレビュー済み・全体人間確認待ち）</code> として閉じます。子ごとに人間確認は待ちません。</p></section>
+      <section class="card manual"><h3>親programの最終確認</h3><p>全子の完了条件と統合評価がPASSになってから、人間が全体を一度確認します。親には <code>人間確認方針: 最終一括</code> を明記します。</p></section>
+    </div>
+    <p>削除・移動・改名・履歴改変・hook/launchd登録・push・main反映・外部公開・本番データ変更・DB migrationは、規模を問わず実行前に人間の明示承認が必要です。これは親の最終確認へ繰り延べません。</p>
+
+    <h2>手動と自動の分け方</h2>
+    <div class="two">
+      <section class="card manual"><h3>人間は二種類の判断をする</h3><p>危険操作は該当する子で実行前に承認します。通常のprogram子はAIレビューで閉じ、全子を統合した最後にだけ人間が全体を確認します。</p></section>
+      <section class="card machine"><h3>scriptは確定入力だけを処理する</h3><p><code>plan-ops</code> は雛形、子計画マップ更新、静的lintを担います。規模基準、置き場、優先度、レビュー合否は決めません。</p></section>
+      <section class="card boundary"><h3>hook / session-boardは記録・通知だけ</h3><p>開始・入力・終了の記録と通知だけです。計画本文・状態を持たず、repoや計画箱、レビュー合否を決めません。</p></section>
+      <section class="card"><h3>runtime露出は保留</h3><p><code>plan-management</code> の正本は基盤配下です。runtimeへのsymlinkとhook接続は人間承認まで行いません。</p></section>
+    </div>
+
+    <h2>参照先</h2>
+    <table>
+      <thead><tr><th>知りたいこと</th><th>正本</th></tr></thead>
+      <tbody>
+        <tr><td>全runtimeが毎回守る最小ルール</td><td><a href="../GLOBAL_AGENTS.md">GLOBAL_AGENTS.md §6–7</a></td></tr>
+        <tr><td>areaのバケット、テンプレ、卒業</td><td><a href="../../my-brain/areas/AGENTS.md">my-brain/areas/AGENTS.md</a></td></tr>
+        <tr><td>ai運用の固有配置</td><td><a href="../../my-brain/areas/ai運用/AGENTS.md">ai運用/AGENTS.md</a></td></tr>
+        <tr><td>置き場の解決（書き込みなし）</td><td><a href="../skills/plan-triage/SKILL.md">skills/plan-triage/</a></td></tr>
+        <tr><td>雛形・子計画マップ・lint</td><td><a href="../skills/plan-ops/SKILL.md">skills/plan-ops/</a></td></tr>
+      </tbody>
+    </table>
+    <footer>このHTMLは人間向けの案内です。正本は同じフォルダの <a href="AGENTS.md">AGENTS.md</a> です。</footer>
+  </main>
+</body>
+</html>

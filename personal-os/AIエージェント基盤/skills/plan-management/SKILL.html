@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plan-management — Skill説明書</title>
+<style>
+:root{color-scheme:light;--paper:#fff;--surface:#fff;--soft:#f5f8fc;--ink:#172033;--muted:#5c6a7c;--line:#d8e1ec;--blue:#2457a7;--blue-soft:#eaf1fb;--green:#236b4b;--green-soft:#e8f5ee;--amber:#98511e;--amber-soft:#fff3df;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SFMono-Regular",Menlo,Consolas,monospace}*{box-sizing:border-box}html,body{background:#fff;color:var(--ink)}body{margin:0;padding:40px 20px 72px;font-family:var(--sans);line-height:1.7}.wrap{max-width:960px;margin:auto;display:flex;flex-direction:column;gap:34px}.eyebrow,h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:650}h1{font-size:32px;line-height:1.25;margin:4px 0 10px}h2{margin:0 0 7px}.lede,.section-lede{color:var(--muted);margin:0}.section-lede{margin-bottom:13px}.nav{display:flex;flex-wrap:wrap;gap:7px}.nav a{border:1px solid #c9d9ef;border-radius:999px;background:var(--blue-soft);padding:4px 10px;color:var(--blue);text-decoration:none;font-size:12px}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.card,figure,.callout{margin:0;border:1px solid var(--line);border-radius:13px;padding:17px 19px;background:var(--surface)}.card h3{margin:0 0 6px;font-size:14px}.card p{margin:0;color:var(--muted);font-size:14px}.card.blue{background:var(--blue-soft);border-color:#c2d4f0}.card.green{background:var(--green-soft);border-color:#bcdfcb}.callout{border-left:4px solid var(--amber);background:var(--amber-soft);font-size:14px}pre,code{font-family:var(--mono);font-size:12.5px}pre{margin:0;white-space:pre-wrap}.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.step{border:1px solid var(--line);border-radius:10px;padding:13px;background:var(--soft);font-size:14px}.step b{display:block;margin-bottom:4px}.deflist{display:grid;gap:9px}.def{border-left:3px solid var(--blue);padding:8px 0 8px 13px}.def b{font-size:14px}.def p{margin:2px 0 0;color:var(--muted);font-size:14px}.foot{border-top:1px solid var(--line);padding-top:15px;color:var(--muted);font-size:12px}@media(max-width:720px){body{padding:24px 14px 50px}.cards,.steps{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main class="wrap">
+<header><p class="eyebrow">Skill説明書 · 計画運用</p><h1>plan-management</h1><p class="lede">計画の作成・合流・program管理・レビュー遷移を、一つの入口から既存の正本へつなぐSkillです。</p></header>
+<nav class="nav" aria-label="この説明書の目次"><a href="#purpose">役割</a><a href="#trigger">起動</a><a href="#flow">流れ</a><a href="#workflows">workflow</a><a href="#boundaries">境界</a><a href="#safety">安全</a><a href="#references">参照先</a></nav>
+<section id="purpose"><h2>入口は一つ、判断と手続きは分離する</h2><p class="section-lede">このSkillは計画を所有せず、利用者の目的に合う既存の正本と手続きへ案内します。</p><div class="cards"><article class="card blue"><h3>作る・合流する</h3><p>routeを解決して、既存planを優先し、必要な時だけ正しい箱へ起案します。</p></article><article class="card green"><h3>programを管理する</h3><p>子計画、依存、並列、親の最終一括確認を扱い、固定scriptには決定的処理だけを渡します。</p></article><article class="card"><h3>レビューを進める</h3><p>通常子は独立レビューのPASSで閉じます。危険操作だけは該当する子で実行前に人間へ止めます。</p></article></div></section>
+<section id="trigger"><h2>こういう時に起動する</h2><p class="section-lede">「計画を作りたい」「既存planへ合流したい」「子計画を追加したい」「レビューして次へ進めたい」で使います。置き場が曖昧なら、書き込む前にroute解決へ進みます。</p></section>
+<section id="flow"><h2>依頼は既存Skillを順に通る</h2><p class="section-lede">基準・route・script・実装監督を混ぜず、どこで何を決めるかを追えるようにします。</p><figure><pre>plan-registry（基準）
+        ↓
+plan-management（利用者の目的をworkflowへ振り分ける）
+        ↓
+plan-triage（書込みなしroute） → 人間/指揮官（最終判断）
+        ↓
+plan-ops（雛形・マップ更新・lint） → 実装 / 独立レビュー
+        ↓
+単発plan: 人間確認 → 完了
+program: 子をAIレビューで閉じる → 親の統合評価 → 人間が一度確認 → 完了</pre></figure></section>
+<section id="workflows"><h2>3つのworkflowは利用目的で選ぶ</h2><p class="section-lede">どのworkflowも、入力・停止条件・人間ゲート・完了確認を持ちます。</p><div class="steps"><article class="step"><b>01 作る／合流する</b><code>create-or-join.md</code><br>routeを解決し、既存planを優先して合流または起案します。曖昧なら書込みません。</article><article class="step"><b>02 programを管理する</b><code>manage-program.md</code><br>子が独立に卒業する時だけprogram化し、親の最終一括方針と子ごとの人間ゲートを明記します。</article><article class="step"><b>03 レビューと遷移</b><code>review-and-transition.md</code><br>通常子は全PASSで閉じ、親の統合評価へ渡します。危険操作だけは、その子で実行前に承認を待ちます。</article></div></section>
+<section id="boundaries"><h2>近いSkillと重ならないようにする</h2><p class="section-lede">入口として案内しても、基準・route・script・実行レーンの所有権は奪いません。</p><div class="deflist"><div class="def"><b>kickoff</b><p>新しい作業の出所をデイリーへ残す起票ゲート。計画の詳細管理はこのSkillが扱います。</p></div><div class="def"><b>plan-triage / plan-ops</b><p>前者は書込みなしのroute、後者は固定script。このSkillは双方を再実装しません。</p></div><div class="def"><b>cockpit-supervisor / hook</b><p>実行中レーンの監督と実行記録を担当します。計画本文・状態・レビュー合否は所有しません。</p></div></div></section>
+<section id="safety"><h2>人間ゲートを飛ばさない</h2><p class="section-lede">計画を便利に扱っても、危険な操作や最終完了を自動決定しません。</p><div class="callout"><b>止める場面を混同しない:</b> 削除・移動・runtime変更・pushなどは、該当する子で実行前に承認を待ちます。通常のprogram子は承認待ちにせずAIレビューで閉じ、全子の統合評価がPASSした時だけ親programを人間確認へ送ります。置き場不明、既存plan競合、レビュー範囲不明、差し戻し上限超過も停止条件です。</div></section>
+<section id="references"><h2>参照先は正本を一つに保つ</h2><p class="section-lede">このSkillは <code>references/</code> を持たず、基準は <code>plan-registry/AGENTS.md</code>、routeは <code>plan-triage</code>、機械手続きは <code>plan-ops</code> を直接参照します。規約本文をここへ複製しません。</p></section>
+<p class="foot">更新日: 2026-07-15 ／ 正本: <code>SKILL.md</code> と3つのworkflow。HTMLは人間向け表示であり、AIの実行導線から参照しません。</p>
+</main></body></html>

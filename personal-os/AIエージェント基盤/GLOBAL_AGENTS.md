@@ -23,10 +23,10 @@
 | `projects/active/仕事/` | 仕事repoの現在位置 |
 
 ## 3. AGENTS.md と CLAUDE.md
-- 各フォルダのルール・構造・導線は、原則としてそのフォルダの `AGENTS.md` を正本にする。
-- `CLAUDE.md` は、同じフォルダの `AGENTS.md` への相対symlinkとして作る。本文コピーは禁止。
+- **各フォルダの基本説明書は `AGENTS.md`** とする。ルール・構造・導線はそのフォルダの `AGENTS.md` を唯一の正本にする。
+- `README.md` は原則として作らない。`AGENTS.md` の代わりに使わず、利用者向けの入口説明が本当に必要な場合だけ、その役割を `AGENTS.md` に明記して置く。
+- `AGENTS.md` があるフォルダには、同階層に **必ず** `CLAUDE.md -> AGENTS.md` の相対symlinkを作る。`CLAUDE.md` の本文コピーは禁止。
 - 作業前に対象ディレクトリの最寄り `AGENTS.md` を読む。
-- `AGENTS.md` があるフォルダでは、同階層に `CLAUDE.md -> AGENTS.md` がある状態を基本とする。
 - mdの人間向けHTML説明書を作る場合は、対になるmdと同じベース名の `.html` にする（`SKILL.md`→`SKILL.html`、`AGENTS.md`→`AGENTS.html`）。同じ場所に複数mdがあってもどのmdの説明か一目で分かる。areaの計画に紐づくHTMLは `<計画>/explain/` に置き、`plan.md` / `program.md` の説明はそれぞれ `explain/plan.html` / `explain/program.html` にする。HTMLは人間向け表示で、正本は常にmd側。AIの実行導線（Skill本文など）からHTMLを参照しない。
 
 ## 4. 正本の扱い
@@ -43,19 +43,16 @@
 - git操作は範囲を確認し、`git add -A` を避ける。
 - push は明示依頼がある時だけ行う（session-board の終了確認①②③④で人間がOKした場合は明示依頼にあたる）。
 
-## 6. セッション運用と計画の置き場
+## 6. セッション運用と計画の最小入口
 - 既定の実行モデルは、単一の責任ある指揮官がテキスト状態を直接配る形とする。無人の複数AIが同じ仕事を取り合う必要が出た時だけ、先にキュー機構を設計する。フォルダロックや第2の状態台帳を増やさない。
-- セッションの開始と終了は `session-board` の手順に従う（開始=当日デイリー「動いているエージェント」へ宣言、終了=完了判断→人間確認①②③④→「終わったこと」へ入れ子で報告＋git仕上げ）。正本は `personal-os/AIエージェント基盤/hooks-registry/hooks/session-board/`（skillは廃止・2026-07-05）。フックが注入・強制する。**完了確認は毎ターンではなく節目**（大目標達成＋満足の気配）でのみ（prompt型フックが判定・2026-07-05）。一区切りは `board.py log` で時刻付きの子を積む。subagent・headlessは独立sessionとして登録しない。session-boardはsession状態とDailyの実行ログを所有し、plan本文・plan状態は所有しない。
-- 計画の置き場は全repo共通pathにしない。`repo-registry/repo概要.md` で担当repoだけを決め、対象repoの最寄り `AGENTS.md` で領域・プロジェクト・計画箱を解決し、宣言された範囲の既存planを先に検索する。既存planがあれば合流し、無ければrepoが宣言した箱へ作る。計画箱が未宣言・複数候補で曖昧・正本不明な場合は、root `plans/` を自動作成せず停止して人間に確認する。personal-os / my-brain系は `my-brain/areas/<領域>/plans/` のバケット規約に従う。
+- セッションの開始と終了は `session-board` の手順に従う（開始=当日デイリー「動いているエージェント」へ宣言、終了=完了判断→人間確認①②③④→「終わったこと」へ入れ子で報告＋git仕上げ）。共通エンジンの正本は `personal-os/AIエージェント基盤/hooks-registry/shared/session-board/`、runtimeが呼ぶイベント本体は同registryの `events/`（skillは廃止・2026-07-05）。開始・入力・終了・subagentの各イベントはcommand型hookで処理する。**完了確認は毎ターンではなく節目**（大目標達成＋満足の気配）でのみ行う。一区切りは `board.py log` で時刻付きの子を積む。subagent・headlessは独立sessionとして登録しない。session-boardはsession状態とDailyの実行ログを所有し、plan本文・plan状態は所有しない。
+- 計画が必要な仕事の規模、段階、レビュー、責務地図は `personal-os/AIエージェント基盤/plan-registry/AGENTS.md` を入口にする。置き場は全repo共通pathにしない。`repo-registry/repo概要.md` で担当repoを絞り、対象repoの最寄り `AGENTS.md` → 既存plan検索 → 宣言済みの計画箱の順に解決する。箱が曖昧ならroot `plans/` を作らず、人間に確認する。
 - Private起点で対象repoへ書き込む前に、canonical repo path・plan参照・worktree cwd・許可path・開始時Git snapshotを引き継ぎ、対象repoをrootとする新しい可視sessionを起動する。既存session IDの移管・reparentはしない。新sessionの登録と対象repo `AGENTS.md` の読込みを確認後、Private側は引継ぎ完了としてfinishする。調整役として残す場合だけ2行併存を許し、役割と終了責任を明記する。
 
-## 7. 実行規模・レビュー・人間ゲート
+## 7. 計画が必要な仕事の最小ゲート
 
-- 段階語彙は、フル=企画 → 計画 → 計画レビュー → 実装 → 実装レビュー →（修正⇄再レビュー）→ 人間確認 → 完了、ライト=計画 → 実装 → 実装レビュー → 完了とする。programの子計画マップでは `企画/計画/計画レビュー/実装/実装レビュー/修正/人間確認/完了` を使い、実運用語として `実装中/計画レビュー待ち/保留`（括弧注記可）を許す。
+- 詳細な段階、レビュー方式、program化、コンポーネントの責務は `personal-os/AIエージェント基盤/plan-registry/AGENTS.md` を正とする。ここには全runtimeが毎回守る最小判断だけを置く。
 - サクッとは「変更1〜2ファイル・容易に戻せる・人間ゲートなし」の全てを満たす時だけ、計画書なしで実行し事後報告する。1つでも外れたらライト以上として計画を置く。
-- ライトは計画→実装→実装レビュー→事後報告、フルは企画の後に計画→計画レビュー→実装→実装レビュー→（修正⇄再レビュー）→人間確認で進める。規模は計画冒頭に宣言し、途中で条件を外れたら上位へ引き上げる。
 - 削除・移動・改名・履歴改変・hook/launchd登録・push・main反映・外部公開・本番データ変更・DB migration適用は、規模に関係なく人間の明示承認が要る。
-- レビューはサクッと=実装者の自己確認、ライト=1パス・差し戻し上限1、フル=探索を含む・差し戻し上限2。独立したライト子は最後に一括レビュー可だが、フルまたは依存する子は都度レビューする。
-- 並列数の目安は、指揮官1名につき3レーン、同時レビューは全体で2本までとする。超える編成は朝会で人間と明示してから動かす。
 - 認証確認・質問・waiting・利用上限は担当AI/指揮官がまず解消し、人間へは人間ゲートの判断だけを上げる。
 - headlessは定期実行かつ人が完了を待たない仕事だけに使う。人が待つ実装・レビューは、状態が見える実行経路で動かす。キュー・headless・hookの方式定義は `loops-registry/AGENTS.md` を正とする。

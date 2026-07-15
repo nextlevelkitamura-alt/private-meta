@@ -25,8 +25,8 @@
 
 ## 完了条件（レビュー項目）
 
-- [ ] `SKILL.md` が70行以内で、3 workflowとregistryを1ホップで参照できる。
-- [ ] 各workflowに、起動条件、入力、期待出力、失敗時の停止、人間ゲート、親Skillへの戻り先、完了確認が書かれている。
-- [ ] `kickoff`、`plan-triage`、`plan-ops`、`cockpit-supervisor` と発火条件・副作用・出力が重複していない。
-- [ ] 正本path、catalog、作成ログ、`SKILL.html` が一致し、runtime symlinkを未承認で作成していない。
-- [ ] `SKILL.html` が白背景で、入口Skill→既存Skill→計画文書の関係を説明できる。
+- [x] `SKILL.md` が70行以内で、3 workflowとregistryを1ホップで参照できる。
+- [x] 各workflowに、起動条件、入力、期待出力、失敗時の停止、人間ゲート、親Skillへの戻り先、完了確認が書かれている。
+- [x] `kickoff`、`plan-triage`、`plan-ops`、`cockpit-supervisor` と発火条件・副作用・出力が重複していない。
+- [x] 正本path、catalog、作成ログ、`SKILL.html` が一致し、runtime symlinkを未承認で作成していない。
+- [x] `SKILL.html` が白背景で、入口Skill→既存Skill→計画文書の関係を説明できる。

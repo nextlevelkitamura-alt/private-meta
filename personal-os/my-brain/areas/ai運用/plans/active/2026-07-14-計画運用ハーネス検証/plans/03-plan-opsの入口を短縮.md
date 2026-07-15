@@ -22,8 +22,8 @@
 
 ## 完了条件（レビュー項目）
 
-- [ ] `plan-ops/SKILL.md` が70行以内で、workflowとreferenceを1ホップで指名している。
-- [ ] 6つの既存scriptのpath、CLI、既定dry-run、書込み条件、手動に残す判断がreferenceまたはworkflowで確認できる。
-- [ ] `scripts/` と `templates/` のファイル移動・改名が0件である。
-- [ ] plan-opsの既存テストが通り、`program-lint` がこの親programに違反なしを返す。
-- [ ] `SKILL.html` が新しいrouter/workflow/reference構成と一致する。
+- [x] `plan-ops/SKILL.md` が70行以内で、workflowとreferenceを1ホップで指名している。
+- [x] 6つの既存scriptのpath、CLI、既定dry-run、書込み条件、手動に残す判断がreferenceまたはworkflowで確認できる。
+- [x] `scripts/` と `templates/` のファイル移動・改名が0件である。
+- [x] plan-opsの既存テストが通り、`program-lint` がこの親programに違反なしを返す。
+- [x] `SKILL.html` が新しいrouter/workflow/reference構成と一致する。

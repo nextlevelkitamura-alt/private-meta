@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plan-ops — Skill説明書</title>
+<style>
+:root{color-scheme:light;--ground:#f5f7fa;--surface:#fff;--surface2:#f8fafc;--ink:#172033;--muted:#5d6978;--line:#d8e0e8;--blue:#2457a7;--blue-soft:#eaf1fb;--green:#236b4b;--green-soft:#e9f6ee;--orange:#9a4c22;--orange-soft:#fff1e8;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SFMono-Regular",Menlo,Consolas,monospace}*{box-sizing:border-box}html,body{background:#fff;color:var(--ink)}body{margin:0;padding:40px 20px 72px;font-family:var(--sans);line-height:1.7}.wrap{max-width:960px;margin:auto;display:flex;flex-direction:column;gap:34px}.eyebrow,h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:650}h1{font-size:32px;line-height:1.25;margin:4px 0 10px}h2{margin:0 0 7px}.lede{max-width:70ch;color:var(--muted);margin:0}.section-lede{margin:0 0 13px;color:var(--muted)}p,li,td,th{font-size:14px}.nav{display:flex;flex-wrap:wrap;gap:7px}.nav a{color:var(--blue);background:var(--blue-soft);border:1px solid #c7d8f0;border-radius:999px;padding:4px 10px;text-decoration:none;font-size:12px}.card,figure,.note{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:17px 19px;margin:0}.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.step{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface2)}.step h3{font-size:14px;margin:0 0 5px}.step p{margin:0;color:var(--muted)}.step.blue{background:var(--blue-soft);border-color:#bfd1ef}.step.green{background:var(--green-soft);border-color:#b8dfc8}.note{border-left:4px solid var(--orange);background:var(--orange-soft)}table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}th,td{text-align:left;vertical-align:top;padding:11px 12px;border-bottom:1px solid var(--line)}th{background:var(--surface2);font-size:12px;color:var(--muted)}tr:last-child td{border-bottom:0}code,pre{font-family:var(--mono);font-size:12.5px}pre{margin:0;white-space:pre-wrap}.muted{color:var(--muted)}.foot{border-top:1px solid var(--line);padding-top:15px;color:var(--muted);font-size:12px}@media(max-width:720px){body{padding:24px 14px 50px}.flow{grid-template-columns:1fr}table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body><main class="wrap">
+<header><p class="eyebrow">Skill説明書 · 手続き</p><h1>plan-ops</h1><p class="lede">計画の内容を決めずに、雛形生成・子計画マップ更新・静的検査・WIP上限付き昇格を、固定pathのscriptで安全に行う入口です。</p></header>
+
+<nav class="nav" aria-label="この説明書の目次"><a href="#principles">要点</a><a href="#workflow">workflow</a><a href="#scripts">script範囲</a><a href="#gate">人間ゲート</a><a href="#layout">置き場</a><a href="#verify">確認</a></nav>
+
+<section id="principles"><h2>最初に押さえる3点</h2><p class="section-lede">計画の判断、機械手続き、レビュー判断を混ぜないことで、AIの動作を追える状態に保ちます。</p><div class="flow"><div class="step blue"><h3>判断は外へ委譲</h3><p>置き場と規模はplan-triage、目的と内容は計画の所有者が決めます。</p></div><div class="step green"><h3>手続きだけを固定化</h3><p>このSkillは6つの既存CLIを選んで呼び、本文の意味を解釈しません。</p></div><div class="step"><h3>状態とゲートはplan本文に残す</h3><p>親の <code>人間確認方針</code>、子の <code>人間ゲート</code>、子計画マップと各plan本文が正本で、第2の台帳は作りません。</p></div></div></section>
+
+<section><h2>判断から結果までの流れ</h2><p class="section-lede">機械化する範囲を中央に閉じ、前後の判断責任を明確に分けます。</p><figure><pre>判断・置き場の解決                 機械手続き                    内容と合否の判断
+plan-triage / 判断系Skill  ──→  plan-ops  ──→  計画の所有者 / レビュー担当
+                               │
+                 scripts/ の固定CLIだけを呼ぶ
+             （新しい状態台帳や判断ロジックは作らない）</pre></figure></section>
+
+<section id="workflow"><h2>目的ごとにworkflowを選ぶ</h2><p class="section-lede">コマンドを探す前に、やりたい手続きから読むファイルを一つに絞ります。</p><div class="flow"><div class="step blue"><h3>雛形と更新</h3><p><code>workflows/scaffold-and-update.md</code><br>plan / program / 子計画を作る。既存NNのstate・next・refを更新する。</p></div><div class="step green"><h3>検証と昇格</h3><p><code>workflows/validate-and-promote.md</code><br>programをlintし、レビュー項目の節を確認し、planningからactiveへ昇格する。</p></div><div class="step"><h3>自動・手動の境界</h3><p><code>references/script-map.md</code><br>6つのCLI、固定path、書込み条件、手動に残す判断を一望する。</p></div></div></section>
+
+<section id="scripts"><h2>6つのscriptは「事実」だけを自動化する</h2><p class="section-lede">各CLIができることと、人が判断したまま残すことを並べて確認できます。</p><table><thead><tr><th>script</th><th>自動化すること</th><th>人が決めること</th></tr></thead><tbody><tr><td><code>new-plan.sh</code></td><td>plan / program雛形の新規生成</td><td>置き場、目的、完了条件</td></tr><tr><td><code>new-child.sh</code></td><td>子雛形と親への相対backlink</td><td>マップへの新規NN追加、内容</td></tr><tr><td><code>progctl.sh</code></td><td>既存NNのstate / next / refを冪等更新</td><td>状態・次の一手の意味</td></tr><tr><td><code>program-lint.sh</code></td><td>親子対応・backlink・状態語彙の静的検査</td><td>内容とレビュー合否</td></tr><tr><td><code>check-section.sh</code></td><td>指定節だけの表示・pattern照合</td><td>一致の意味と合否</td></tr><tr><td><code>bucketctl.sh</code></td><td>planning→activeのdry-run / 移動</td><td>優先順位、退避、archive・卒業</td></tr></tbody></table></section>
+
+<section id="gate"><h2>書込みはdry-runと人間ゲートの後にだけ行う</h2><p class="section-lede">移動・commitの自動実行は、計画の優先順位や安全性を代わりに決めるものではありません。</p><div class="note"><b>既定は安全側。</b> templatesは親の <code>人間確認方針: 最終一括</code> と子の <code>人間ゲート:</code> を置きますが、scriptはその意味も承認有無も判断しません。<code>progctl.sh</code> と <code>bucketctl.sh</code> はまずdry-runで差分を見ます。<code>bucketctl --apply</code> / <code>--commit</code> は移動を伴うため、人間の明示承認が必要です。activeは原則3件で、2026-07-14に承認されたai運用の限定例外だけ、指定programがactiveの間は4件です。</div></section>
+
+<section id="layout"><h2>実体は既存の置き場に残す</h2><p class="section-lede">入口文書を分けても、CLI・テンプレ・テストのpathは変わりません。</p><figure><pre>plan-ops/
+├── SKILL.md                         AI向けの短い入口（正本）
+├── SKILL.html                       人間向け説明書
+├── workflows/
+│   ├── scaffold-and-update.md        生成・既存マップ更新
+│   └── validate-and-promote.md       lint・節確認・昇格
+├── references/script-map.md          6 CLIの自動/手動境界
+├── scripts/                          CLI実体（移動・改名しない）
+├── templates/                        5種のテンプレ正本
+└── __tests__/                        CLI契約の回帰テスト</pre></figure></section>
+
+<section id="verify"><h2>入口と実装のずれをテストで防ぐ</h2><p class="section-lede">CLIを変えた時だけでなく、説明を書き換えた時も実装との突き合わせを行います。</p><div class="card"><pre>bash __tests__/run.sh</pre><p class="muted">script本体の変更時は回帰テストを実行します。入口文書だけを変えた時も、workflow / referenceの説明とCLIの実装を突き合わせます。</p></div></section>
+
+<p class="foot">更新日: 2026-07-15 ／ 正本: <code>SKILL.md</code> とmdのworkflow/reference。このHTMLは人間向け表示であり、AIの実行導線からは参照しません。</p>
+</main></body></html>

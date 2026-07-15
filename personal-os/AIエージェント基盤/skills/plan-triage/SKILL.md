@@ -1,115 +1,46 @@
 ---
 name: plan-triage
-description: 「やりたいこと」1件を受けて、規模(フル/ライト/サクッと)・経路(対象repo→計画置き場→担当指揮官)・起動形(2ペイン既定/3ペイン例外)・モデル(既定sonnet5/クリティカルパスのみopus4.8 fast)の4判断を1回で行い、構成カード+計画スケルトン(ライト以上)を出す入口トリアージスキル。cockpit-supervisorは実行中の監督判断、本スキルは着手前の入口判断でライフサイクルが異なる別スキル。inbox-triage(依頼インボックス巡回)もここを通す。Use when 人間が「やりたいこと」を1件持ち込んだ時、依頼インボックス巡回が対象行をトリアージする時、規模・経路・起動形・モデルの4判断を一度に決めてレーン起動前の構成カードを作りたい時。
+description: 「やりたいこと」1件を受け、規模・対象repo・計画箱・起動形・モデルを決める入口Skill。Private起点ではrepo-registryで担当repoだけを選び、対象repoの最寄りAGENTS.md→既存plan検索→宣言済み計画箱の順に二段ルーティングする。repo内起点、計画の置き場、構成カード、既存plan合流を判断したい時に使う。実装中の監督、単なる要約、Skill作成には使わない。
 ---
 
-# plan-triage（入口トリアージ）
+# plan-triage
 
-「やりたいこと」1件が来た瞬間に、(1)規模 (2)経路 (3)起動形 (4)モデル を1回の判断で決め、オルカのレーンに流せる形（構成カード＋計画スケルトン）にするSkill。
-**判断とその出力（構成カード・計画スケルトン）を作るところまでが仕事。レーンの起動そのものは行わない**（フルは人間のOK後、ライト以下は起動後に事後報告）。
+「やりたいこと」1件を、実行前に安全な計画経路へ変換する。判断と構成カードまでが仕事で、repoへの書込み・レーン起動は行わない。
 
-## 0. 位置づけ（重複を作らない）
+## 1. 必ず読む
 
-- cockpit-supervisor＝**実行中**の監督判断（起きたら何をするか）。本Skill＝**入口**の判断（始める前に何で始めるか）。ライフサイクルが違うため別Skill。
-- 規模・段階・人間ゲートの語彙の正本はGLOBAL_AGENTS.md §7。本Skillは語彙を新設しない（下記の判断1はGLOBAL_AGENTS.md §7の該当行を適用する手順であって、独自の定義ではない）。
-- `../inbox-triage/SKILL.md`（巡回の起案）は本Skillの判断基準を参照する側に回る（基準の本文は複製しない）。起動経路は人間依頼と巡回の両方が本Skillを通す。巡回は構成カード起案までが自動、レーン起動は従来どおり指揮官/人間。
+1. `workflows/triage.md`: 規模・経路・起動形・モデルを順番に判断する実行手順。
+2. `references/route-contract.md`: 二段ルーティング、fail-closed、出力JSON、handoffの唯一の契約。
+3. route変更時は `scripts/fixtures/route-cases.json`、`scripts/validate-route-cases.mjs`、caller変更時は `scripts/validate-inbox-contract.mjs` を使う。
 
-## 1. 入力契約
+## 2. 規模と入力
 
-- やりたいこと1行 ＋ 対象repo見当（不明なら「不明」でよい）。
-- 追加質問は最大2問まで。影響範囲（触るファイル数・repo数）と戻しやすさ（元に戻せるか）が入力から読み取れない時のみ聞く。それ以外は保守的な既定（迷ったらフル寄り）で進め、判断メモに「迷った点と選んだ理由」を残す。
-- 人間が対話でこのSkillを直接呼ぶ場合のみ追加質問してよい。巡回（headless起動）から渡された場合は対話的な質問ツールを使わず、保守的既定で自走する。
-- naiyou-suriawase 経由で入る場合は、すり合わせ済みの理解・ゴール・曖昧点を入力として引き継ぎ、既に答えの出た質問を追加質問2問枠で再消費しない（mokuteki-jissoから吸収 2026-07-03）。
+1. やりたいこと1行。
+2. 起点pathまたは起点種別（repo内 / Private / headless）。
+3. 対象repo見当。不明でよい。
+4. 影響範囲と戻しやすさ。不明な時だけ追加質問は最大2問。
+5. 1〜2ファイル・1手で戻せる・人間ゲートなしなら `サクッと`、1レーン完結なら `ライト`、独立子計画2本以上・複数レーン・複数ゲートなら `フル`。詳細はworkflow Step 2。
 
-## 2. 判断1: 規模（フル / ライト / サクッと）
+## 3. 経路の不変条件
 
-正本: `~/Private/personal-os/AIエージェント基盤/GLOBAL_AGENTS.md` §7。語彙・条件の本文はここで再定義しない（下記はGLOBAL_AGENTS.md §7の該当行をそのまま適用する手順）。
+1. repo内起点は最寄り `AGENTS.md` から始め、repo-registryを読まない。
+2. Private起点はrepo-registryで担当repoだけを決め、領域・project・計画箱は対象repoの最寄り `AGENTS.md` から決める。
+3. 宣言範囲で既存planを先に検索し、一意なら合流する。新規作成は一致0件かつ宣言箱が一意な時だけ提案する。
+4. 計画箱未宣言、同順位複数、既存plan競合、正本不明はexit 3で停止する。root `plans/` を推測・自動作成しない。
+5. Private起点で対象repoへ書く前は、新しい対象repo所有sessionへのhandoffを必須にする。既存session IDを移管・reparentしない。
+6. plan header・状態・ID・alias解析は所有repoのindex契約へ委譲し、このSkillで再実装しない。
+7. hookはrepo・領域・計画pathを決めない。
 
-判定手順（GLOBAL_AGENTS.md §7の構造3条件を順に当てる）:
+## 4. 出力
 
-1. 変更は1〜2ファイルに収まるか。
-2. 容易に戻せるか（1手で元に戻せるか）。
-3. 人間ゲート事項（削除・履歴改変・hook/launchd登録・push・main反映・外部公開）を含まないか。
+1. `plan-triage.route/v1` JSON。
+2. 規模、起動形、モデルを含む構成カード。
+3. ライト以上は解決済みpathを渡す計画スケルトン案。
+4. 停止時はfinding code、人間が決める事項、書込み0件を返す。
 
-→ 1〜3すべてYES = **サクッと**（GLOBAL_AGENTS.md §7該当行。時間の見積りは条件に使わない＝AIの時間見積りは判定を濁すため）。
-→ サクッとでなく、1レーンで完結し完了条件が3行で書ける = **ライト**。
-→ 独立に卒業する子計画が2本以上、または複数レーン、または人間ゲート事項が複数 = **フル**。
-→ 迷ったらフル側に倒す（契約は「省略時フル」）。
+## 5. 境界
 
-## 3. 判断2: 経路（対象repo → 計画置き場 → 担当指揮官）
-
-1. **対象repoを特定する**。依頼がpersonal-os構造・横断運用そのものを指すなら「repo無し（ai運用領域）」として扱う。
-2. **計画置き場を決める**:
-   - repo-local作業 → 対象repoの `plans/`（規約は所有repo側 `AGENTS.md` が正本）。
-   - Global Skill / loop / 横断・personal-os構造 → `~/Private/personal-os/my-brain/areas/ai運用/plans/planning/<YYYY-MM-DD-日本語企画名>/plan.md`（置き場の規約: `~/Private/personal-os/my-brain/areas/ai運用/AGENTS.md` §3、テンプレ: `~/Private/personal-os/my-brain/areas/AGENTS.md` §3）。指揮官が実行を決めた時だけ plan-ops の `bucketctl` で active へ昇格する。
-3. **担当指揮官を決める**: 1プロジェクト（program）=指揮官1名の原則（`~/Private/personal-os/my-brain/areas/ai運用/決定ログ.md` #3）。対象プロジェクトに既存の指揮官チャットがあればそこへ合流させる。無ければ新規指揮官チャットを起こすかどうかは人間の判断（本Skillは決めない）。
-
-## 4. 判断3: 起動形（2ペイン既定 / 3ペイン例外）
-
-正本: `../orca-cockpit/references/role-prompts.md` §0。判断基準の詳細: `../cockpit-supervisor/SKILL.md` §4。
-
-- **既定 = 2ペイン**（実装/レビュー）。計画が子計画文書として完成している通常ケース。
-- **3ペイン例外**（計画+監督ペインを追加）は次のいずれかに該当する時だけ、構成カードで明示宣言する。
-  - 計画がまだ子計画文書として固まっていない（企画〜計画段階から始める）。
-  - 現場判断（要件の揺れ・仕様の即興決定）が多く見込まれる。
-  - 実装ペインへの配布そのものを1ペインに任せたい規模。
-  - 外部サービスの仕様・料金・API挙動・実現可能性・複数アプローチ比較が絡み、レーン起動前に調査を計画へ明示すべき（「計画未成熟」の典型例。agent-task-orchestratorから吸収 2026-07-03）。
-
-## 5. 判断4: モデル
-
-正本: 役割と既定モデルは `../../AIモデル一覧.md`。構成カードの起動時のeffort・クリティカルパス例外は `../cockpit-supervisor/SKILL.md` §3-4。
-
-- クリティカルパス例外: 問い「**このレーンが遅いと誰が待つか**」に答えを持つ。誰か（人間・他レーン）が直列で待つなら実装をopus4.8 fastへ格上げしてよい。誰も待たない（並列で吸収される）なら一覧の既定のまま。
-- レビューeffortは規模連動（フル=xhigh、ライト=high）とする。
-- 格上げは構成カード（フル）または事後報告（ライト以下）で必ず宣言する。黙って変えない。
-
-## 6. 出力
-
-### 6.1 構成カード（`cockpit.sh plan` の様式に合わせる）
-
-```
-── コックピット構成カード（起動前確認・未起動）──
-レーン(title): <やりたいことから一言>
-repo/branch  : <repo> / <branch案>   (base: <base>)
-規模/scope   : <サクッと/ライト/フル>
-レビュー方式 : <サクッと=なし / ライト=1パス上限1・codex high / フル=探索込み上限2・codex xhigh>（規模から導出・例外は宣言）
-ペイン構成:
-  左   計画    <未使用 or claude>     権限: read-allowlist   ※3ペイン例外時のみ
-  右上 実装    claude <model>         権限: acceptEdits
-  右下 レビュー codex <model: フル=xhigh/ライト=high>   権限: read-allowlist
-権限方式     : 役割別 .claude/settings.json を worktree に配布
-起動コマンド : cockpit.sh up --repo <repo> --branch <branch> --pane "..."
-※これは提示のみ。人間のOK後に up を実行する（モデル構成をAIが黙って決めない）。
-```
-
-**サクッと**はGLOBAL_AGENTS.md §7の定義どおり計画書なしの即実行なので、構成カードは省略してよい（指揮官直または単発ペイン。事後報告のみ）。**ライト以上**は必ず構成カードを出す。
-
-### 6.2 計画スケルトン（ライト以上）
-
-雛形生成は `../plan-ops/scripts/new-plan.sh --out <plan.mdの絶対パス> [--program] [--class <分類>] [--kind <種別>]` を使う（テンプレ正本 `../plan-ops/templates/` からの生成・既存ファイルは上書き拒否。使い方の正本は `../plan-ops/SKILL.md` §2.2。2026-07-09修正: 旧記述「自動scriptは無い」はstaleだった＝new-plan.sh は2026-07-02子07で実在する）。手動で書く場合のテンプレ規約は `~/Private/personal-os/my-brain/areas/AGENTS.md` §3。
-
-冒頭 `分類:`／`種別:`／`規模:`（判断1の結果をそのまま書く）／`優先:`（任意）。必須セクション `目的`／`現状`／`方針`／`完了条件（レビュー項目）`。`現状` に元の「やりたいこと」1行と出所を残す。
-
-## 7. ゲート
-
-- **フル**: 構成カード＋計画スケルトンを人間へ提示し、OKを得てから起動する。
-- **ライト・サクッと**: 起動後の事後報告でよい（構成カード〔ライトのみ〕＋判断根拠を一言添える）。
-- 起動経路: 人間依頼と巡回（`../inbox-triage/SKILL.md`）の両方が本Skillを通す。巡回は構成カード起案までが自動。レーン起動は指揮官/人間が行う。
-- headless時の読み替え（inbox-triage経由・2026-07-09裁定Q3）: 「人間へ提示」は「起案先の `plans/planning/` にドラフトを置いて通知する＝提示」と読み替える（対話相手がいないため。active化・レーン起動はその後の人間承認）。
-
-## 8. やらないこと（境界）
-
-- 実運用のレーン起動そのもの（構成カード提示・計画スケルトン起案までが仕事）。
-- 規模・段階・ゲート語彙の再定義（正本を複製しない）。
-- 削除・push・main反映・hook/launchd登録などの破壊操作。
-
-## 9. 関連
-
-- 規模・段階・人間ゲートの正本: `~/Private/personal-os/AIエージェント基盤/GLOBAL_AGENTS.md` §7。
-- 経路（1プロジェクト1指揮官）の決定: `~/Private/personal-os/my-brain/areas/ai運用/決定ログ.md` #3・#5。
-- 計画置き場の規約: `~/Private/personal-os/my-brain/areas/ai運用/AGENTS.md` §3。テンプレ: `~/Private/personal-os/my-brain/areas/AGENTS.md` §3。
-- 起動形・モデル選定の判断基準: `../cockpit-supervisor/SKILL.md` §3-4。
-- ペイン構成の既定・役割プロンプト: `../orca-cockpit/references/role-prompts.md` §0-4。
-- 計画ライフサイクルの機械手続き: `../plan-ops/SKILL.md`。
-- 巡回からの入口: `../inbox-triage/SKILL.md`。
-- 実演例: `examples/`。
+1. 実行中の監督は `cockpit-supervisor`。
+2. 雛形生成・lint・root bucket操作は `plan-ops`。`bucketctl` を領域planへ使わない。
+3. repo新規作成・整備は `repo-create`。
+4. 削除、push、main反映、hook/launchd登録、外部書込みは人間承認なしに行わない。

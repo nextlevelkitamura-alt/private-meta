@@ -32,10 +32,34 @@ planning → active → done → archive
 
 ## 完走スキームと人間確認（このprogramの運転ルール）
 
-1. **完走ライン**: 全子とも「実装＋テスト＋（適用系は）候補・差分の一覧化」までを人間なしで進める。計画完成後は `program-run`（ゴールコマンド・子03）がWave順に 委譲→実装→レビュー→planctl同期 を自動進行する。
+1. **完走ライン**: 全子とも「実装＋テスト＋（適用系は）候補・差分の一覧化」までを人間なしで進める。計画完成後は `program-run`（ゴールコマンド・子03）がWave順に 委譲→実装→レビュー→planctl同期→worktree統合 を自動進行する。
 2. **人間に聞くのは2種類だけ**: (a) 全子完走・統合評価後の**最終一括確認**（承認セット1枚で判断）、(b) 途中で危険操作（削除・移動・hook登録・trust・push等）の**即時実行が避けられない**場合の個別承認。原則(b)は発生させない設計にする — 適用系の操作は実行せず `承認セット` へ差分・根拠・推奨を積んで先へ進む。
 3. **承認セット**: program-runと各子が蓄積し、子06が1文書へ整形する。中身は hook登録差分／既存計画の是正候補／identity・知識の移動候補／横展開可否。人間は最後にこれを見て一括判断する。
 4. 認証・質問・waiting・利用上限は指揮官が解消し、人間へは上の(a)(b)だけを上げる。
+
+### worktreeのライフサイクル（write実装の1 Taskはこの流れで閉じる）
+
+```text
+① 作成    planctl prepare + harness: 明示base SHAからtask専用worktree（task_id命名）
+② 実装    workerがworktree内で実装し、対象path限定でcommit → result packet
+③ 検証    result packetのschema検証・禁止範囲違反チェック
+④ レビュー 子の宣言どおり（都度=即 ／ 一括=Wave束ねまで worktree保持のまま待機）
+⑤ 同期    全PASS → planctl apply-evaluation（計画・マップを機械更新）
+⑥ 統合    program-runが統合branchへ merge --no-ff → 対象テストのスモーク
+⑦ 削除    worktreeを削除（cleanup）。branchは統合branchへ集約済み
+⑧ main反映 最終承認セットの人間承認後に一括（それまでmainへ触れない）
+```
+
+- read-only task（explorer/reviewer）はworktreeを作らない（①⑥⑦なし）。
+- conflict（⑥）は自動解決せず停止して人間へ。mergeと削除を実行するのはharness/program-run（子03）であり、**hookは検知・案内・検証のみ**（子04）。
+- SubagentStart（worker起動時）: 割当worktree・base・branchが manifest と一致するかを検査し、不一致なら編集前に止める。SubagentStop（worker終了時）: result packet の存在とschemaを検査する。両hookはCodex/Claude双方の受け口（`events/subagent/`）に置く。
+
+## 直列・並列の実行判断（正本）
+
+- **Wave間は直列**（前Waveの成果が次Waveの契約になるため）。**Wave内・子内の並列は、各子の実行契約 `実行形:` の宣言を正本にする**。
+- 実行形の語彙: `direct`（指揮官が直接編集）／`delegated-single`（worker 1体へ委譲・内部直列）／`delegated-parallel`（ファイル非交差の2レーンまで並列委譲）／`integration`（統合検証の1体）。
+- 本programの判断: 01=delegated-single ／ 02=delegated-single ／ 03=**delegated-parallel**（A=harness本体・B=roles+互換、非交差。program-runはA・B統合後） ／ 04=delegated-single ／ 05=**delegated-parallel**（A=監査read-only・B=pilot） ／ 06=integration。
+- 同時write workerは全体で最大2。並列レーンは変更可能範囲のファイル非交差を宣言してから起動する。
 
 ## レビュー運用（都度と一括の使い分け）
 
@@ -111,6 +135,11 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
     人間ゲート: なし（承認セットの提示まで。適用は承認後）
     次: program-run経由のE2E・05の一括レビュー・全lintを通し、承認セット1枚を人間の最終一括確認へ上げる
     場所: plans/06 ／ 依存: 01, 02, 03, 04, 05
+
+## 本programの計画承認に含まれる承認事項（Q1承認と同時に有効になる）
+
+- **task worktreeの自動削除**: 「統合branchへの `merge --no-ff` 完了＋対象テストのスモーク通過」を満たしたtask worktreeに限り、program-runが⑦段として自動削除してよい。条件未達・conflict・一括レビュー待ちのworktreeは削除せず保持して報告する（mainへのmerge・pushは引き続き人間ゲート）。
+- **統合branchへのmerge**: mainではない作業branch（例: `program/計画立案実行完了基盤`）への `merge --no-ff` は、レビュー全PASS＋planctl同期後の⑥段としてprogram-runが自動実行してよい。
 
 ## 人間ゲート（承認セットで最後に一括判断する項目）
 

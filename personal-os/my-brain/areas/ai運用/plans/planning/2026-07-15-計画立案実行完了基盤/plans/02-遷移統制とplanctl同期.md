@@ -29,6 +29,7 @@
   2. `../program.md`（レビュー運用と完走スキーム）・この計画
   3. `../references/2026-07-15-計画実行基盤/02_Codex実装指示書_計画実行基盤.md` §9-12（archive再定義・bucketctl・planctl・result packet）
   4. `../references/2026-07-15-計画実行基盤/01_計画実行基盤_現状調査と再設計.md` §9-11（終了区分・同期の安全条件・run manifest・phase語彙）
+- 実行形: delegated-single（bucketctl→planctlは同一scripts群で契約が密なため内部直列）
 - 依存成果: 01のテンプレ（実行指示.md・実行結果.json・終了記録.md）とplan-lint
 - 変更可能範囲: `skills/plan-ops/scripts/`（bucketctl拡張・planctl.py新設・共通core）、`skills/plan-ops/__tests__/`、`SKILL.md`・`references/script-map.md` の該当節、状態意味・遷移・容量・終了区分を定義する規約箇所（`my-brain/areas/AGENTS.md` §3-4、`ai運用/AGENTS.md` §3、`GLOBAL_AGENTS.md` §7、`plan-registry/AGENTS.md` の該当行）
 - 変更禁止範囲: 既存計画フォルダの移動・改名、`hooks-registry/`、`agents-registry/`、session-board本体、progctl・program-lintの既存挙動（呼び出しは可）、テンプレ本文（01所有）
@@ -55,8 +56,8 @@
 6. `planctl.py` を新設し、progctl・bucketctlは互換のままfaçadeとして束ねる。サブコマンド: `prepare`（明示引数からrun manifest＋実行指示を生成。stateはgitignore配下）／`progress`（子ブロック更新・対象子以外バイト不変）／`apply-evaluation`（下記7）／`close`（終了区分・人間確認を記録しbucketctl経由でarchive）／`sync-check`（result・評価・完了条件・子状態・マップ・bucket・終了記録の整合をJSONで返す）。
 7. `apply-evaluation` の安全条件: 対象計画一致・完了条件の文言完全一致・全PASS・対象外/未採点なし・result commit実在・禁止範囲違反なし・（Program子は）親backlinkと子番号一致。1つでも欠ければ完了にせず理由を返す。満たす時だけ `[x]` 同期・実装結果追記・マップ同期・参照記録・lint実行・phaseを `synced` へ。
 8. run manifest（version・task_id・role・runtime・repo_root・plan_path・program_path・child_id・base_commit・worktree_path・branch・result_path・evaluation_path・phase）はgit管理しない。phase語彙: `running/implemented/review_passed/synced/closed/blocked`。result packet（実行結果.json）のschema検証で未実行テストのpassed偽装を検出する。
-9. `rename` サブコマンドを追加する（2026-07-15人間指示: 計画を大幅更新したらフォルダ日付を最新化する）。`planctl rename --plan <path> --date YYYY-MM-DD` が `git mv` による日付部分の更新と、repo内の旧フォルダ名参照（program.md・子・explain・boardの計画列など、grepで検出した箇所）の追従書き換えを既定dry-runで行う。名前部分の変更や日付以外のrenameは対象外（人間ゲートのまま）。バケット移動とは独立で、上限検査は不要。
-9. 状態意味・遷移・容量・終了区分の規約箇所を同じ作業単位で同期し、既存の完了・アーカイブ・WIP規則の参照箇所をgrepで追従確認する。
+9. `rename` サブコマンドを追加する（2026-07-15人間指示: 計画を大幅更新したらフォルダ日付を最新化する）。`planctl rename --plan <path> --date YYYY-MM-DD` が `git mv` による日付部分の更新と、repo内の旧フォルダ名参照（program.md・子・explain・boardの計画列など、grepで検出した箇所）の追従書き換えを既定dry-runで行う。名前部分の変更や日付以外のrenameは対象外（人間ゲートのまま）。バケット移動とは独立で、上限検査は不要。あわせて `rename --check` の機械判定契約を定める: 「大幅更新日」は `progress`／`apply-evaluation` が計画メタデータへ記録した最新日付とフォルダ日付の比較で判定し、`rename_required` をJSONで返す。**ファイルmtimeによる推測判定は採用しない**（hooks設計調査 §1・04のsession-end案内はこの `--check` を呼ぶだけにする）。
+10. 状態意味・遷移・容量・終了区分の規約箇所を同じ作業単位で同期し、既存の完了・アーカイブ・WIP規則の参照箇所をgrepで追従確認する。
 
 ## 完了条件（レビュー項目）
 

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>session-start — 実行フロー</title>
+  <style>
+    :root { color:#1f2937; background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; }
+    body { max-width:980px; margin:0 auto; padding:52px 28px 80px; line-height:1.65; background:#ffffff; }
+    h1 { font-size:34px; margin:0 0 8px; letter-spacing:-.03em; } h2 { margin:38px 0 14px; font-size:19px; }
+    .lead { font-size:18px; color:#475569; } .note { font-size:14px; color:#64748b; }
+    .timeline { border-left:2px solid #93c5fd; margin:24px 0 0 12px; padding-left:26px; }
+    .item { position:relative; margin:0 0 24px; padding:15px 17px; border:1px solid #dbe4ee; border-radius:12px; background:#f8fbff; }
+    .item::before { content:""; position:absolute; width:12px; height:12px; border:3px solid #2563eb; background:#ffffff; border-radius:50%; left:-36px; top:19px; }
+    .item b { color:#0f4c81; } table { width:100%; border-collapse:collapse; border:1px solid #dbe4ee; }
+    th,td { text-align:left; padding:12px; border-bottom:1px solid #e7edf4; } th { background:#eff6ff; color:#1e3a5f; } tr:last-child td { border-bottom:0; }
+    code { color:#0f4c81; background:#edf6ff; padding:2px 5px; border-radius:4px; }
+    @media (max-width:620px) { body { padding:32px 18px; } }
+  </style>
+</head>
+<body>
+  <p class="note">正本: AGENTS.md / このHTMLは人間向け表示のみ</p>
+  <h1>session-start の実行フロー</h1>
+  <p class="lead">開始時は「通知だけ」。ボードの行を作るのは、次の意味ある入力が来た時。</p>
+
+  <div class="timeline">
+    <div class="item"><b>SessionStart が発火</b><br><code>reconcile-and-notify.py --runtime claude|codex</code> が stdin JSON を受け取る。</div>
+    <div class="item"><b>生存照合</b><br>古い🟢/🔵行を実体トランスクリプトで照合し、必要なら⏸へ直す。</div>
+    <div class="item"><b>キーだけを通知</b><br>この時点ではボード行を作らない。補助セッションを🟢の幽霊枠にしないため。</div>
+    <div class="item"><b>最初の意味ある入力</b><br><code>../prompt-register/register-and-guide.py</code> が行を登録し、開始ガイドをAIへ注入する。</div>
+    <div class="item"><b>AIが一度だけ整える</b><br>依頼を理解した後、目標・種別・今・計画・モデルを <code>board.py update</code> で正す。</div>
+  </div>
+
+  <h2>出力だけruntimeで違う</h2>
+  <table><thead><tr><th>runtime</th><th>引数</th><th>返すもの</th></tr></thead>
+  <tbody><tr><td>Claude</td><td><code>--runtime claude</code></td><td>plain text の開始通知</td></tr>
+  <tr><td>Codex</td><td><code>--runtime codex</code></td><td><code>additionalContext</code> を含む JSON</td></tr></tbody></table>
+  <p>状態ロジックは共通の <code>shared/session-board/common.py</code> にあり、このファイルは出力形式だけを選ぶ。</p>
+
+  <h2>登録表はruntimeごとに違う</h2>
+  <p>Claudeは <code>~/.claude/settings.json</code> の <code>hooks</code> 項目から、Codexはrepoの <code>codex/hooks.json</code> から、この共通Pythonを呼ぶ。Claude用の同期ファイルや別Pythonは置かない。</p>
+</body>
+</html>

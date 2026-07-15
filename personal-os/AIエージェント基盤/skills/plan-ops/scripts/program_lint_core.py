@@ -48,6 +48,7 @@ def resolve_child_path(base_dir, path_part):
     m = re.match(r"^plans/(\d{2})$", path_part)
     if m:
         candidates = sorted(glob.glob(os.path.join(base_dir, "plans", f"{m.group(1)}-*.md")))
+        candidates = [c for c in candidates if not re.search(r"-(評価|修正)\d+\.md$", c)]
         return candidates[0] if candidates else None
     p = os.path.join(base_dir, path_part)
     return p if os.path.isfile(p) else None

@@ -15,7 +15,7 @@
 - 判断・企画・設計壁打ち: claude/fable5
 - 指揮・通常の対話作業: claude/opus4.8
 - 実装（委譲）: codex（既定モデル=gpt-5.6-terra・reasoning high。既定の正本は `~/.codex/config.toml`。計画本文・agent定義へモデルIDを埋め込まない）
-- レビュー: 実装と異系統のread-only（codex実装→claude/sonnet5、claude実装→codex）
+- レビュー: codex exec直駆動・実装とは別スレッドの独立read-only（実装がcodexでもスレッド分離と読み専用で独立性を担保。サブエージェント経由にしない）
 - 他レーンを待たせるクリティカルパスだけ、指揮官が実装モデルの格上げ（claude系での直接実装など）を明示する。
 
 ## 運用

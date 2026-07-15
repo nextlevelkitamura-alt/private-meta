@@ -1,31 +1,24 @@
-# claude/ — Claude Code 受け口の箱（イベント別）
+# claude/ — Claude の直接登録を説明する場所
 
-Claude Code は **SessionStart / UserPromptSubmit / Stop / SubagentStart / SubagentStop** の hooks を使う。
-この箱は Claude の受け口を **イベント別フォルダ**に置く（`runtime → イベント → 機構ファイル`）。
-中身は薄いシムで、実処理は共有本体 `../hooks/<機構>/`（session-board なら `board.py`・`common.py`）に集約。
+Claudeの実行本体は `../events/` に1セットだけある。このフォルダは登録ファイルの置き場ではなく、Claudeのグローバル登録先と更新規則を説明する。
 
-## レイアウト
+## 登録表はrepo外の `~/.claude/settings.json`
 
-- `session-start/session-board-session-start.py` … SessionStart: 行の枠登録＋キー通知1行（plain text）
-- `prompt-register/session-board-prompt-register.py` … UserPromptSubmit: 登録保険／⏸→🟢復帰／「今」初回仮置き＋二段注入（目標未記入=フルガイド／記入済み=2〜3行ミラー・plain text）
-- `session-end/session-board-session-end.py` … Stop(command): run のとき⏸へ flip・**ブロックしない**
-- `milestone/session-board-milestone.md` … Stop(**prompt型**): 節目確認（**Claude専用**・Codex は型が無い）
-- `subagent/session-board-subagent.py` … SubagentStart/SubagentStop: サブ体数を `sub-start`/`sub-end` で自動増減（開始で🔵・全終了で🟢復帰。payload の session_id は**親**セッション＝親キーで操作。Codex 箱と同型）
+Claudeは、ユーザー設定ファイル `~/.claude/settings.json` の `hooks` 項目を登録表として直接読む。model・permissions・envなども同じ設定ファイルに同居するため、hooksだけを別ファイルへ切り出す機能は使わない。
 
-ファイル名は `<機構>-<イベント>` で自己記述（folder＝イベントと二重確認）。
-将来フックが増えたら同じイベントfolderに `<新機構>-<イベント>.py` を足す。
+- `~/.claude/settings.json` 全体をsymlinkにしない。Claudeが設定を書き戻すと、repoへ設定値が流入するおそれがある。
+- repo内にClaude専用 `hooks.json`、適用スクリプト、runtime別Pythonシムは置かない。
+- 登録コマンドは `~/.claude/agent-hooks/events/... --runtime claude` を直接指す。この窓は親 `hooks-registry/` へのsymlinkなので、実行本体は両runtimeで共通になる。
+- 保存後は自動反映され、Claudeのtrust操作は不要。
 
-## 受け口の共通ルール
+## 現在の登録対象
 
-- 各 `.py` は `realpath` で実体を解決し `../../hooks/session-board/common.py` を import
-  （`~/.claude/agent-hooks` 窓越しで起動されても `board.py` を正しく指す）。
-- Claude hook の一般知識（5型・trust不要・終了コード）は `../references/claude-hooks.md`。
+| Claudeイベント | 共通実行本体 |
+| --- | --- |
+| `SessionStart` | `events/session-start/reconcile-and-notify.py --runtime claude` |
+| `UserPromptSubmit` | `events/prompt-register/register-and-guide.py --runtime claude` |
+| `Stop` | `events/session-end/mark-wait.py` |
+| `SubagentStart` | `events/subagent/sync-subagent-status.py` |
+| `SubagentStop` | `events/subagent/sync-subagent-status.py` |
 
-## 登録（窓経由・包括承認）
-
-- `~/.claude/settings.json`（SessionStart＋UserPromptSubmit＋Stop×2＝command と prompt）。
-  パスは窓 `~/.claude/agent-hooks/<イベント>/<機構>-<イベント>.py`（→ `hooks-registry/claude/`）。
-- **trust 不要**・保存で自動反映。session-board の登録・露出は**包括承認**（ルールB・2026-07-05）。現況は `../hooks/session-board/registered.sh`。
-- SubagentStart/SubagentStop は受け口実装済み・**settings.json への登録は未適用**（スニペットは共有本体 `../hooks/session-board/README.md` の「登録」節・適用は人間）。
-
-対の Codex 箱は `../codex/AGENTS.md`、共有本体は `../hooks/session-board/AGENTS.md`、Claude hooks 契約は `../references/claude-hooks.md`。`CLAUDE.md` は `AGENTS.md` への相対symlink。
+現在のイベント内容は `../events/<イベント>/AGENTS.md`、runtime契約は `../references/claude-hooks.md`、窓の読み取り診断は `../shared/session-board/registered.sh` を読む。`CLAUDE.md` は `AGENTS.md` への相対symlink。

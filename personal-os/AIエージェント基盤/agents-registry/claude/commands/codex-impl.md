@@ -11,7 +11,7 @@ description: Codexに実装を委任する（共通delegate経由・計画→実
 ## 手順
 
 1. 規模を判定する。構造3条件（変更1〜2ファイル／容易に戻せる／人間ゲートなし）が全YESなら、通常の直接実装・diff確認・報告で終える。1つでもNOなら対象計画の「完了条件（レビュー項目）」を読む。
-2. `PLAN_PATH` を対象計画の絶対path、`BASE_SHA` を明示した基準commitとして確定する。write taskはbase SHAなしで起動しない。Task Packetとrun manifestのworktree方針に従い、worker自身に作業場所・branchを選ばせない。
+2. `PLAN_PATH` を対象計画の絶対path、`REPO_ROOT` を対象repoの絶対path、`BASE_SHA` を明示した基準commitとして確定する。さらに task ID と、少なくとも1つの変更可能pathを決める。write taskはこれらなしで起動しない。Task Packetとrun manifestのworktree方針に従い、worker自身に作業場所・branchを選ばせない。
 3. 共通delegateを次の契約で起動する。`delegate.py` のCLI定義が正本であり、runtime、role、plan path、write taskのbase SHAを省略しない。
 
    ```bash
@@ -19,7 +19,10 @@ description: Codexに実装を委任する（共通delegate経由・計画→実
      --runtime codex \
      --role implementer \
      --plan "$PLAN_PATH" \
-     --base-commit "$BASE_SHA"
+     --repo-root "$REPO_ROOT" \
+     --task-id "$TASK_ID" \
+     --base-commit "$BASE_SHA" \
+     --allowed-path "path/to/change"
    ```
 
 4. result packetをschema検証し、result commitとchanged pathsを実物で確認する。禁止範囲違反、base不一致、blockedはその場で停止する。

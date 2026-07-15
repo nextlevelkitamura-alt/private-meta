@@ -91,9 +91,9 @@
   <div class="wrap">
 
     <header>
-      <p class="eyebrow">計画レビュー用の説明 ・ 2026-07-15 v2（6子へ統合）</p>
+      <p class="eyebrow">計画レビュー用の説明 ・ 2026-07-15 v3（改名・01-06振り直し・進め方）</p>
       <h1>計画立案・実行・完了基盤 — 何がどう変わるのか</h1>
-      <p class="lede">計画の置き場・バケット・program+子の形は<b>変わりません</b>。変わるのは3つ：<b>①計画がそのまま実装指示書になる（実行契約）</b>、<b>②実装後の計画更新が手動→機械になる（planctl）</b>、<b>③計画の閉じ方に理由が残る（終了区分）</b>。それを<b>6個の子計画</b>で作り、完成後は<b>ゴールコマンド1つで実装〜レビューまで完走</b>し、あなたは<b>最後に1回だけ</b>承認セットを確認します。</p>
+      <p class="lede">フォルダは <b>2026-07-15-計画立案実行完了基盤</b> へ日付更新・改名済み、子番号は<b>実行順の01〜06</b>に振り直し済みです。変わるのは3つ：<b>①計画がそのまま実装指示書になる（実行契約）</b>、<b>②実装後の計画更新が手動→機械になる（planctl）</b>、<b>③計画の閉じ方に理由が残る（終了区分）</b>。完成後は<b>ゴールコマンド1つで実装〜レビューまで完走</b>し、あなたは<b>最後に1回だけ</b>承認セットを確認します。</p>
     </header>
 
     <nav class="chips">
@@ -103,7 +103,8 @@
       <a class="chip" href="#scenes">場面別Before/After</a>
       <a class="chip" href="#children">6子の中身</a>
       <a class="chip" href="#safe">勝手にやらないこと</a>
-      <a class="chip" href="#ask">あなたに決めてほしいこと</a>
+      <a class="chip" href="#susume">この後の進め方</a>
+      <a class="chip" href="#ask">残る判断</a>
       <a class="chip" href="#log">更新履歴</a>
     </nav>
 
@@ -227,19 +228,19 @@
       <div class="deflist">
         <div class="ditem">
           <p class="dhead"><span class="pill go">組み込み済み</span>ゴールコマンドで完走する</p>
-          <p class="dbody">計画を作り終えたら <b><code>program-run</code>（子08で実装）が Wave順に 委譲→実装→レビュー→計画同期 を自動進行</b>します。途中であなたに聞くのは「危険操作を今すぐ実行しないと進めない場合」だけで、<b>原則発生させない設計</b> — hook登録・移動・削除などの適用系は実行せず<b>承認セットに差分と推奨を積んで先へ進み</b>、全部終わってから1回だけ確認に上げます。</p>
+          <p class="dbody">計画を作り終えたら <b><code>program-run</code>（子03で実装）が Wave順に 委譲→実装→レビュー→計画同期 を自動進行</b>します。途中であなたに聞くのは「危険操作を今すぐ実行しないと進めない場合」だけで、<b>原則発生させない設計</b> — hook登録・移動・削除などの適用系は実行せず<b>承認セットに差分と推奨を積んで先へ進み</b>、全部終わってから1回だけ確認に上げます。</p>
         </div>
         <div class="ditem">
           <p class="dhead"><span class="pill go">組み込み済み</span>レビューは3子まとめて一括が基本</p>
-          <p class="dbody"><b>都度レビューは「後続の全子が成果を直接使う子」だけ</b>（＝最初の共通契約05と最後の統合12）。実装の本体である<b>01・08・02はWave 4完了時に3子まとめて一括レビュー</b>、03はE2E時に消化。ただし<b>schema・CLI引数など共通契約を変える修正が出た瞬間だけは即差し戻し</b>（後続の手戻り防止）。この使い分けは委譲時のTask Packetとセッション終了時の案内（hook）にも注入され、AIが毎回意識します。</p>
+          <p class="dbody"><b>都度レビューは「後続の全子が成果を直接使う子」だけ</b>（＝最初の共通契約01と最後の統合06）。実装の本体である<b>02・03・04はWave 4完了時に3子まとめて一括レビュー</b>、05はE2E時に消化。ただし<b>schema・CLI引数など共通契約を変える修正が出た瞬間だけは即差し戻し</b>（後続の手戻り防止）。この使い分けは委譲時のTask Packetとセッション終了時の案内（hook）にも注入され、AIが毎回意識します。</p>
         </div>
         <div class="ditem">
           <p class="dhead"><span class="pill go">組み込み済み</span>人間確認は最後に承認セット1枚</p>
-          <p class="dbody">全子の完走・統合評価の後、<b>承認セット1枚</b>（hook登録差分／rename案／既存計画の是正候補／identity・知識の移動候補／横展開可否、それぞれ根拠と推奨付き）だけを確認します。<b>子ごとの人間確認はありません</b>。認証・質問・待ちはAI側が解消します。</p>
+          <p class="dbody">全子の完走・統合評価の後、<b>承認セット1枚</b>（hook登録差分／既存計画の是正候補／identity・知識の移動候補／横展開可否、それぞれ根拠と推奨付き）だけを確認します。<b>子ごとの人間確認はありません</b>。認証・質問・待ちはAI側が解消します。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">今後の既定</span>子計画の数は6〜7が基本</p>
-          <p class="dbody">今回12子は細かすぎたので<b>6子へ統合</b>しました。今後の既定として「<b>基本6〜7子まで・OSレベルの大改修だけ10前後</b>」を、子05が触るprogram判定の規約（plan-registry）にも反映します。</p>
+          <p class="dhead"><span class="pill acc">今後の既定</span>子計画は6〜7が基本・日付は最新に保つ</p>
+          <p class="dbody">今回12子は細かすぎたので<b>6子へ統合</b>しました。今後の既定として「<b>基本6〜7子まで・OSレベルの大改修だけ10前後</b>」と「<b>計画を大幅更新したらフォルダ日付を最新化</b>」を規約へ反映します（子01）。日付更新は機械コマンド <code>planctl rename</code>（子02）で参照ごと安全に行い、<b>更新忘れはセッション終了時にhookが検知して案内</b>します（子04）。</p>
         </div>
       </div>
     </section>
@@ -270,38 +271,38 @@
         </div>
         <div class="ditem">
           <p class="dhead"><span class="pill acc">場面 6</span>計画が溜まってきたとき</p>
-          <p class="dbody"><b>今</b>：上限はactiveの3件だけ。pausedは24件・doneは18件たまっている。<br><b>後</b>：<b>active=3／paused=3／done=8</b> を移動のたびに機械チェック。満杯なら「どれを動かすか」を<b>あなたに聞く</b>（AIが勝手に退避して枠を作ることは禁止）。既存の超過分も勝手には動かさず、子03で監査して<b>候補一覧→あなたが個別に選ぶ</b>。</p>
+          <p class="dbody"><b>今</b>：上限はactiveの3件だけ。pausedは24件・doneは18件たまっている。<br><b>後</b>：<b>active=3／paused=3／done=8</b> を移動のたびに機械チェック。満杯なら「どれを動かすか」を<b>あなたに聞く</b>（AIが勝手に退避して枠を作ることは禁止）。既存の超過分も勝手には動かさず、05で監査して<b>候補一覧→あなたが個別に選ぶ</b>。</p>
         </div>
       </div>
     </section>
 
     <section id="children">
-      <h2>6子の中身 — 1 Wave＝1子で順番に</h2>
-      <p class="slede">v1の12子を<b>6子へ統合</b>しました（統合元をカッコで示します）。番号は管理ID・並びが実行順です。<b>各子がCodexへ1回で渡せる1かたまり</b>です。</p>
+      <h2>6子の中身 — 番号＝実行順（1 Wave＝1子）</h2>
+      <p class="slede">子番号を<b>実行順の01〜06に振り直しました</b>（カッコは旧12子時代の統合元）。<b>各子がCodexへ1回で渡せる1かたまり</b>です。</p>
       <div class="deflist">
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 1</span>子05 計画テンプレート・lint・委譲入口<span class="pill go">最初に着手・都度レビュー</span></p>
-          <p class="dbody">（旧05＋旧06を統合）<b>作る</b>：実行契約付き新テンプレ＋新規3枚（実行指示・実行結果JSON・終了記録）＋plan-lint、plan-triage構成カードの共通語彙化、handoff指示のテンプレ一本化。<br><b>変わる</b>：場面1「計画＝そのまま指示書」と場面2の入口。全子が依存する共通契約なので<b>ここだけ完了時に即レビュー</b>。</p>
+          <p class="dhead"><span class="pill acc">Wave 1</span>01 計画テンプレート・lint・委譲入口<span class="pill go">最初に着手・都度レビュー</span></p>
+          <p class="dbody">（旧05＋06）<b>作る</b>：実行契約付き新テンプレ＋新規3枚（実行指示・実行結果JSON・終了記録）＋plan-lint、plan-triage構成カードの共通語彙化、handoff指示のテンプレ一本化。子数目安・日付最新化・一括レビューの規約反映もここ。<br><b>変わる</b>：場面1「計画＝そのまま指示書」と場面2の入口。全子が依存する共通契約なので<b>ここだけ完了時に即レビュー</b>。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 2</span>子01 遷移統制とplanctl同期</p>
-          <p class="dbody">（旧01＋旧07を統合）<b>作る</b>：bucketctlを唯一の移動窓口へ拡張（遷移グラフ・上限・終了区分・archive lint）＋<code>planctl</code>5コマンド（prepare／progress／<b>apply-evaluation</b>／close／sync-check）。<br><b>変わる</b>：場面3・4・6の核心。「手動更新」が「コマンド1発＋安全条件」になる。</p>
+          <p class="dhead"><span class="pill acc">Wave 2</span>02 遷移統制とplanctl同期</p>
+          <p class="dbody">（旧01＋07）<b>作る</b>：bucketctlを唯一の移動窓口へ拡張（遷移グラフ・上限・終了区分・archive lint）＋<code>planctl</code>6コマンド（prepare／progress／<b>apply-evaluation</b>／close／sync-check／<b>rename＝日付最新化と参照追従</b>）。<br><b>変わる</b>：場面3・4・6の核心。「手動更新」が「コマンド1発＋安全条件」になる。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 3</span>子08 harness・エージェント・ゴールコマンド</p>
-          <p class="dbody">（旧08＋旧09を統合＋<b>program-run新設</b>）<b>作る</b>：delegate・Task専用worktree・Codex/Claudeアダプター、役割3種（explorer/implementer/reviewer）、/codex-impl互換化、そして<b>ゴールコマンド program-run</b>（Wave順に委譲→レビュー→同期を自動進行・危険操作は承認セットへ積んで完走）。<br><b>変わる</b>：場面2の実行と、運転ルールの「完走」が実現。</p>
+          <p class="dhead"><span class="pill acc">Wave 3</span>03 harness・エージェント・ゴールコマンド</p>
+          <p class="dbody">（旧08＋09＋<b>program-run新設</b>）<b>作る</b>：delegate・Task専用worktree・Codex/Claudeアダプター、役割3種（explorer/implementer/reviewer）、/codex-impl互換化、そして<b>ゴールコマンド program-run</b>（Wave順に委譲→レビュー→同期を自動進行・危険操作は承認セットへ積んで完走）。<br><b>変わる</b>：場面2の実行と、運転ルールの「完走」が実現。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 4</span>子02 Prompt Submitとhookガード<span class="pill warn">登録は承認後</span></p>
-          <p class="dbody">（旧02＋旧04＋旧10を統合）<b>作る</b>：セッション開始の計画案内を新一本道＋レビュー方式込みで最小化、生のgit mvを止めるPreToolガード、同期忘れを止めるStop/SubagentStopガード。<br><b>変わる</b>：場面5の見張りと場面6の抜け道封鎖。<b>本体＋テストまで作り、登録・有効化は承認セットへ</b>。ここまで済んだら<b>01・08・02を3子一括レビュー</b>。</p>
+          <p class="dhead"><span class="pill acc">Wave 4</span>04 Prompt Submitとhookガード<span class="pill warn">登録は承認後</span></p>
+          <p class="dbody">（旧02＋04＋10）<b>作る</b>：セッション開始の計画案内を新一本道＋レビュー方式込みで最小化、生のgit mvを止めるPreToolガード、同期忘れ・<b>日付の陳腐化</b>を知らせるStop/SubagentStop・session-endガード。<br><b>変わる</b>：場面5の見張りと場面6の抜け道封鎖。<b>本体＋テストまで作り、登録・有効化は承認セットへ</b>。ここまで済んだら<b>02・03・04を3子一括レビュー</b>。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 5</span>子03 既存計画とarea標準の適用<span class="pill warn">移動・削除は承認後</span></p>
-          <p class="dbody">（旧03＋旧11を統合）<b>作る</b>：溜まった既存計画（paused=24等）の総点検と移動候補一覧、identity.md→AGENTS.md統合、「知識/」の行き先判定、代表計画2件の新テンプレ移行（ai運用だけのpilot）。<br><b>変わる</b>：新ルールが既存の実データに繋がる。<b>実行はせず候補一覧まで＝完走ライン</b>。</p>
+          <p class="dhead"><span class="pill acc">Wave 5</span>05 既存計画とarea標準の適用<span class="pill warn">移動・削除は承認後</span></p>
+          <p class="dbody">（旧03＋11）<b>作る</b>：溜まった既存計画（paused=24等）の総点検と移動候補一覧、identity.md→AGENTS.md統合、「知識/」の行き先判定、代表計画2件の新テンプレ移行（ai運用だけのpilot）。<br><b>変わる</b>：新ルールが既存の実データに繋がる。<b>実行はせず候補一覧まで＝完走ライン</b>。</p>
         </div>
         <div class="ditem">
-          <p class="dhead"><span class="pill acc">Wave 6</span>子12 E2Eと承認セット</p>
-          <p class="dbody">（旧12）<b>作る</b>：合成データでの通し検証5系統（うち2つはprogram-run経由）＋03の一括レビュー消化＋<b>承認セット1枚の整形</b>（hook登録差分・rename案・是正候補・横展開可否、根拠と推奨付き）。<br><b>変わる</b>：「どこまで動いて何が承認待ちか」が1枚で見え、あなたの最終一括確認へ。</p>
+          <p class="dhead"><span class="pill acc">Wave 6</span>06 E2Eと承認セット</p>
+          <p class="dbody">（旧12）<b>作る</b>：合成データでの通し検証5系統（うち2つはprogram-run経由）＋05の一括レビュー消化＋<b>承認セット1枚の整形</b>（hook登録差分・是正候補・横展開可否、根拠と推奨付き）。<br><b>変わる</b>：「どこまで動いて何が承認待ちか」が1枚で見え、あなたの最終一括確認へ。</p>
         </div>
       </div>
     </section>
@@ -313,11 +314,11 @@
         <div class="ccol">
           <p class="h"><span class="pill warn">承認まで動かない</span>人間ゲート</p>
           <ul>
-            <li><b>hook登録</b>（settings.json・hooks.json・symlink・Codex再trust）</li>
-            <li><b>計画フォルダの移動・改名</b>（このprogram自体のrename案も）</li>
-            <li><b>既存計画のバケット移動</b>（子03は候補提示まで）</li>
-            <li><b>identity.md削除・知識/の移動</b>（子11は一覧提示まで）</li>
+            <li><b>hook登録</b>（settings.json・hooks.json・symlink・Codex再trust・注入文の有効化）</li>
+            <li><b>既存計画のバケット移動</b>（05は候補提示まで）</li>
+            <li><b>identity.md削除・知識/の移動</b>（05は一覧提示まで）</li>
             <li><b>push・main反映・本番変更</b></li>
+            <li>※ 本programの改名・番号振り直し・並列実装フロー整理は<b>今日あなたが承認済み → 実施済み</b></li>
           </ul>
         </div>
         <div class="ccol">
@@ -333,44 +334,91 @@
       </div>
     </section>
 
-    <section id="ask">
-      <h2>あなたに決めてほしいこと（4件）</h2>
-      <p class="slede">未決はこの4つ。<b>Q1とQ2に答えが出れば実装を開始できます</b>。Q3・Q4は今すぐでなくて構いません。</p>
+    <section id="susume">
+      <h2>この後の進め方 — 8ステップ（あなたの出番は★の2箇所だけ）</h2>
+      <p class="slede">承認と枠が揃えば、あとは<b>最終確認まで私が回します</b>。1点だけ正直に：ゴールコマンド自体がこのprogramの成果物なので、<b>今回の実装は私が指揮官として手動でWaveを回し</b>、完成後の次の計画からゴールコマンド完走が使えます。</p>
       <ol class="steps">
         <li>
-          <span class="stepno">Q1</span>
+          <span class="stepno">★1</span>
           <div>
-            <p class="h">この計画（6子・完走スキーム込み）で実装を始めてよいですか？</p>
-            <p><b>推奨：承認 → Wave 1の子05から</b>。承認と枠（Q2）が揃えば、以降はゴールコマンド方式で最終承認セットまで完走します。直したい子があれば、その子だけ修正してから始めます。</p>
+            <p class="h">あなた：開始の承認と、active枠の判断</p>
+            <p>下の「残る判断」2つに答える。<b>ここが唯一の待ちポイント</b>。</p>
           </div>
         </li>
         <li>
-          <span class="stepno">Q2</span>
+          <span class="stepno">2</span>
           <div>
-            <p class="h">activeの枠が満杯です（4/4）。どう空けますか？</p>
-            <p>実装開始にはこのprogramをactiveへ昇格する必要がありますが、現在4件で一時上限も4。<b>推奨：「計画運用ハーネス検証」program（残り子05のみ・ほぼ完走）の完了確認を先に済ませて枠を空ける</b>。代替：他のactive計画（hooks再編／Turso移行／標準移植）のどれかをpausedへ。上限の再拡大は推奨しません。</p>
+            <p class="h">私：activeへ昇格（bucketctl）</p>
+            <p>枠が空いたら <code>bucketctl promote</code> で planning→active。ここから実装期間。</p>
           </div>
         </li>
         <li>
-          <span class="stepno">Q3</span>
+          <span class="stepno">3</span>
           <div>
-            <p class="h">フォルダ名の改名はどうしますか？（急ぎません）</p>
-            <p>中身は「計画立案・実行・完了基盤」になりましたが、フォルダ名は「2026-07-13-完了判定とアーカイブ運用」のまま。<b>推奨：保留</b> — 改名は人間ゲートなので、子12の承認セットでまとめて判断。</p>
+            <p class="h">Wave 1：01 共通契約をCodexへ委譲 → 即レビュー</p>
+            <p>新テンプレ・plan-lint・委譲入口。<b>全子の土台なのでここだけ都度レビュー</b>で固める。</p>
           </div>
         </li>
         <li>
-          <span class="stepno">Q4</span>
+          <span class="stepno">4</span>
           <div>
-            <p class="h">子02・04に前セッションの未コミット変更が残っています。どうしますか？</p>
-            <p>hooks再編パスへの追従＋接続契約の追記で、今回の再編と整合する内容です。<b>推奨：そのまま残し、進行中のhooks再編作業と一緒にcommit</b>（私のcommitには混ぜていません）。</p>
+            <p class="h">Wave 2〜4：02→03→04 を連続実装（レビューは貯める）</p>
+            <p>遷移統制+planctl → harness+ゴールコマンド → hookガード。<b>Wave 4完了時に3子まとめて一括レビュー</b>。契約を変える修正が出た時だけ即差し戻し。hook登録は行わず承認セットへ。</p>
+          </div>
+        </li>
+        <li>
+          <span class="stepno">5</span>
+          <div>
+            <p class="h">Wave 5：05 既存計画の監査とpilot（候補一覧まで）</p>
+            <p>paused=24等の総点検・identity統合・知識/分類。<b>移動・削除は一切せず候補一覧を作る</b>。</p>
+          </div>
+        </li>
+        <li>
+          <span class="stepno">6</span>
+          <div>
+            <p class="h">Wave 6：06 E2Eと承認セット整形</p>
+            <p>合成データで5系統の通し検証＋05の一括レビュー消化＋<b>承認セット1枚</b>に整形。</p>
+          </div>
+        </li>
+        <li>
+          <span class="stepno">★7</span>
+          <div>
+            <p class="h">あなた：最終一括確認（承認セット1枚）</p>
+            <p>hook登録差分・是正候補・identity/知識の移動・横展開可否を、根拠と推奨付きで一度に判断。</p>
+          </div>
+        </li>
+        <li>
+          <span class="stepno">8</span>
+          <div>
+            <p class="h">承認後：適用して完了</p>
+            <p>hook登録＋E2E＋Codex再trust（1回）、承認された是正・移動の適用。以降、<b>全計画がこの基盤（ゴールコマンド完走）で回る</b>。</p>
           </div>
         </li>
       </ol>
     </section>
 
+    <section id="ask">
+      <h2>残る判断（2つだけ）</h2>
+      <p class="slede">改名（旧Q3）と未コミット差分（旧Q4）は本日解決済み。並列実装フロー（7/8）の整理はSonnetが分析・実行中です。</p>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill warn">判断 1</span>この計画（6子・01〜06）で実装を始めてよいですか？</p>
+          <p class="dbody"><b>推奨：承認 → Wave 1の01から</b>。直したい子があれば、その子だけ直してから始めます。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill warn">判断 2</span>activeの枠が満杯です（4/4）。どう空けますか？</p>
+          <p class="dbody">昇格には枠が1つ必要です（並列実装フローはplanningにあるため、その整理では<b>枠は空きません</b>）。<b>推奨：「計画運用ハーネス検証」program（残り子05のみ・ほぼ完走）の完了確認を先に済ませて枠を空ける</b>。代替：hooks再編／Turso移行／標準移植のどれかをpausedへ。上限の再拡大は推奨しません。</p>
+        </div>
+      </div>
+    </section>
+
     <section id="log">
       <h2>更新履歴</h2>
       <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">v3</span>2026-07-15</p>
+          <p class="dbody">指摘を反映：<b>①フォルダ日付を最新化＋改名</b>（2026-07-15-計画立案実行完了基盤。参照2箇所も追従）。<b>②子番号を実行順の01〜06へ振り直し</b>（マップ・本文の相互参照も更新）。<b>③「大幅更新したら日付を最新化」を仕組み化</b> — 規約（01）＋planctl renameコマンド（02）＋セッション終了時のhook検知（04）として計画へ組み込み。<b>④並列実装フロー（7/8）の分析・整理をSonnetサブエージェントへ委任</b>（不要ならmergedでarchive・価値ある情報が残ればpaused）。<b>⑤「この後の進め方」節を新設</b>。旧Q3（改名）・旧Q4（未コミット差分）は解決済みで判断は残り2つ。</p>
+        </div>
         <div class="ditem">
           <p class="dhead"><span class="pill acc">v2</span>2026-07-15</p>
           <p class="dbody">指摘3点を反映：<b>①細分化しすぎ → 12子を6子へ統合</b>（1 Wave＝1子。今後の既定「基本6〜7子・大改修のみ10前後」も規約反映対象に）。<b>②レビューは一括で → 「運転ルール」節を新設</b>（01・08・02はWave 4後に3子一括、都度は共通契約の05と最終の12だけ、契約変更時のみ即差し戻し。hookとTask Packetにこの意識づけを注入）。<b>③人間確認は最後に1回 → ゴールコマンド（program-run）と承認セットを子08・12へ組み込み</b>（正直な報告: v1時点では完走ランナーと一括レビューは未組み込みでした。今回計画正本に追加済み）。</p>
@@ -385,9 +433,9 @@
     <section>
       <h2>根拠・正本の場所</h2>
       <ul class="source">
-        <li><b>親program正本</b> — personal-os/my-brain/areas/ai運用/plans/planning/2026-07-13-完了判定とアーカイブ運用/program.md（commit e3762f9）</li>
-        <li><b>12子の計画本文</b> — 同フォルダ plans/01〜12（各子に実行契約・完了条件を記載）</li>
-        <li><b>設計資料3枚</b> — 同フォルダ references/2026-07-15-計画実行基盤/（01=現状調査と再設計、02=実装仕様、03=Task Packetテンプレ）</li>
+        <li><b>親program正本</b> — personal-os/my-brain/areas/ai運用/plans/planning/2026-07-15-計画立案実行完了基盤/program.md（改名前は 2026-07-13-完了判定とアーカイブ運用。commit 0e2aa60・95fd021）</li>
+        <li><b>6子の計画本文</b> — 同フォルダ plans/01〜06（各子に実行契約・完了条件を記載）</li>
+        <li><b>設計資料3枚</b> — 同フォルダ references/2026-07-15-計画実行基盤/（01=現状調査と再設計、02=実装仕様、03=Task Packetテンプレ。資料内の旧名・旧番号は当時のまま）</li>
         <li><b>現状の責務地図</b> — personal-os/AIエージェント基盤/plan-registry/AGENTS.md</li>
         <li><b>この説明の正本はmd側</b> — このHTMLは表示用。判断・編集はprogram.mdと各子で行う</li>
       </ul>

@@ -77,6 +77,8 @@ class HarnessTest(unittest.TestCase):
             delegate.delegate(self.args(task_id="running-b"), runner=self.fake_done)
 
     def test_schema_validation_rejects_bad_data(self) -> None:
+        planctl_manifest = {"version": 1, "task_id": "prepare-01", "role": "implementer", "runtime": "codex", "repo_root": str(self.repo), "plan_path": str(self.repo / "plan.md"), "program_path": None, "child_id": None, "base_commit": self.base, "worktree_path": "/tmp/worktree", "branch": "plan-task/prepare-01", "result_path": "/tmp/result.json", "evaluation_path": None, "phase": "running"}
+        self.assertEqual(manifest.validate_manifest(planctl_manifest)["task_id"], "prepare-01")
         with self.assertRaises(manifest.ValidationError):
             manifest.validate_manifest({"version": 1})
         invalid = {"version": 1, "task_id": "x", "status": "done", "base_commit": "a", "result_commit": "b", "changed_paths": [], "tests": [{"command": "", "status": "passed", "summary": ""}], "assumptions": [], "blockers": [], "remaining_risks": [], "out_of_scope_findings": []}

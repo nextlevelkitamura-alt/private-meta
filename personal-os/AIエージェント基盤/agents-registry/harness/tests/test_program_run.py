@@ -197,6 +197,23 @@ class ProgramRunTest(unittest.TestCase):
             text = role.read_text(encoding="utf-8")
             self.assertNotRegex(text, r"(?im)^.*(?:/Users/|plan-task/|gpt-[\w.-]+|claude-[\w.-]+).*$")
 
+    def test_evaluation_parser_accepts_only_explicit_all_pass(self) -> None:
+        folder = Path(tempfile.mkdtemp(prefix="evaluation-parser-"))
+        try:
+            target = folder / "評価.md"
+            target.write_text("## 総合判定\n全PASS\n", encoding="utf-8")
+            self.assertTrue(program_run.parse_evaluation(target).passed)
+            target.write_text("## 項目別採点\n- [FAIL] 条件\n\n## 総合判定\n全PASS\n", encoding="utf-8")
+            failed = program_run.parse_evaluation(target)
+            self.assertFalse(failed.passed)
+            self.assertIn("FAIL", failed.reason)
+            target.write_text("## 総合判定\n確認中\n", encoding="utf-8")
+            self.assertFalse(program_run.parse_evaluation(target).passed)
+            target.write_text("# 評価\n", encoding="utf-8")
+            self.assertFalse(program_run.parse_evaluation(target).passed)
+        finally:
+            shutil.rmtree(folder, ignore_errors=True)
+
 
 class RealGitProgramRunTest(unittest.TestCase):
     """本物のgitだけを使い、runtimeはPATH上の一時fake CLIへ閉じ込める。"""
@@ -248,17 +265,28 @@ if manifest['role'] == 'reviewer':
         if line.startswith('## '): break
         if line.startswith('- ['):
             items.append(line.split('] ', 1)[1])
-    body = '対象計画: ' + manifest['plan_path'] + ' ／ ラウンド: 01\\n\\n# 評価\\n\\n## 項目別採点\\n' + ''.join('- [PASS] ' + item + '\\n  根拠: fake Codexで実物を確認\\n' for item in items) + '\\n## 総合判定\\n全PASS\\n'
+    sequence = os.environ.get('FAKE_REVIEW_SEQUENCE', 'PASS').split(',')
+    counter_path = os.environ.get('FAKE_REVIEW_COUNTER')
+    count = int(pathlib.Path(counter_path).read_text()) if counter_path and pathlib.Path(counter_path).exists() else 0
+    if counter_path: pathlib.Path(counter_path).write_text(str(count + 1))
+    verdict = sequence[min(count, len(sequence) - 1)].strip()
+    mark = 'FAIL' if verdict == 'FAIL' else 'PASS'
+    summary = 'FAILあり' if verdict == 'FAIL' else '全PASS'
+    body = '対象計画: ' + manifest['plan_path'] + ' ／ ラウンド: 01\\n\\n# 評価\\n\\n## 項目別採点\\n' + ''.join('- [' + mark + '] ' + item + '\\n  根拠: fake Codexで実物を確認\\n' for item in items) + '\\n## 総合判定\\n' + summary + '\\n'
     output = pathlib.Path(sys.argv[sys.argv.index('-o') + 1])
     output.write_text(body, encoding='utf-8')
     json.dump({'version':1,'task_id':manifest['task_id'],'status':'done','base_commit':manifest['base_commit'],'result_commit':manifest['base_commit'],'changed_paths':[],'tests':[],'assumptions':[],'blockers':[],'remaining_risks':[],'out_of_scope_findings':[]}, open(manifest['result_path'], 'w', encoding='utf-8'), ensure_ascii=False)
     print(json.dumps({'type':'thread.started','thread_id':'fake-thread-' + manifest['task_id']}))
     raise SystemExit(0)
-path = root / manifest['allowed_paths'][0]
-path.parent.mkdir(parents=True, exist_ok=True)
-path.write_text('worker\\n', encoding='utf-8')
-subprocess.run(['git', 'add', '--', str(path.relative_to(root))], cwd=root, check=True)
-subprocess.run(['git', 'commit', '-m', 'worker change'], cwd=root, check=True, stdout=subprocess.DEVNULL)
+if 'resume' in sys.argv:
+    log = os.environ.get('FAKE_RESUME_LOG')
+    if log: pathlib.Path(log).write_text(' '.join(sys.argv), encoding='utf-8')
+else:
+    path = root / manifest['allowed_paths'][0]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('worker\\n', encoding='utf-8')
+    subprocess.run(['git', 'add', '--', str(path.relative_to(root))], cwd=root, check=True)
+    subprocess.run(['git', 'commit', '-m', 'worker change'], cwd=root, check=True, stdout=subprocess.DEVNULL)
 commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=root, check=True, capture_output=True, text=True).stdout.strip()
 json.dump({'version':1,'task_id':manifest['task_id'],'status':'done','base_commit':manifest['base_commit'],'result_commit':commit,'changed_paths':manifest['allowed_paths'],'tests':[],'assumptions':[],'blockers':[],'remaining_risks':[],'out_of_scope_findings':[]}, open(manifest['result_path'], 'w', encoding='utf-8'), ensure_ascii=False)
 print(json.dumps({'type':'thread.started','thread_id':'fake-thread-' + manifest['task_id']}))
@@ -327,6 +355,54 @@ print(json.dumps({'result': body}, ensure_ascii=False))
         evaluation = program.parent / "plans" / "評価01.md"
         self.assertEqual(result["status"], "completed")
         self.assertIn("全PASS", evaluation.read_text(encoding="utf-8"))
+
+    def test_real_subprocess_resume_after_fail_then_pass(self) -> None:
+        program = self.write_program([{"nn": "01"}])
+        counter, log = self.tmp / "review-count", self.tmp / "resume-command"
+        previous = {key: os.environ.get(key) for key in ("FAKE_REVIEW_SEQUENCE", "FAKE_REVIEW_COUNTER", "FAKE_RESUME_LOG")}
+        os.environ.update({"FAKE_REVIEW_SEQUENCE": "FAIL,PASS", "FAKE_REVIEW_COUNTER": str(counter), "FAKE_RESUME_LOG": str(log)})
+        class ObserveOperations(program_run.Operations):
+            def __init__(self) -> None:
+                super().__init__("codex")
+                self.apply_calls = 0
+            def apply(self, task: program_run.Task, review: program_run.Review, repo_root: Path) -> None:
+                self.apply_calls += 1
+                super().apply(task, review, repo_root)
+        ops = ObserveOperations()
+        try:
+            result = program_run.ProgramRunner(program, self.repo, self.repo / ".planops-state", operations=ops, run_id="resume-pass").run()
+        finally:
+            for key, value in previous.items():
+                if value is None: os.environ.pop(key, None)
+                else: os.environ[key] = value
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(ops.apply_calls, 1)
+        self.assertIn("resume: 01:1", result["events"])
+        self.assertLess(result["events"].index("review: 01:FAIL"), result["events"].index("integrated: 01"))
+        command = log.read_text(encoding="utf-8")
+        self.assertIn("exec resume fake-thread-resume-pass-01", command)
+        self.assertNotIn("--last", command)
+
+    def test_real_subprocess_resume_limit_keeps_worktree_and_state(self) -> None:
+        program = self.write_program([{"nn": "01"}])
+        counter, log = self.tmp / "review-count", self.tmp / "resume-command"
+        previous = {key: os.environ.get(key) for key in ("FAKE_REVIEW_SEQUENCE", "FAKE_REVIEW_COUNTER", "FAKE_RESUME_LOG")}
+        os.environ.update({"FAKE_REVIEW_SEQUENCE": "FAIL,FAIL,FAIL", "FAKE_REVIEW_COUNTER": str(counter), "FAKE_RESUME_LOG": str(log)})
+        try:
+            result = program_run.ProgramRunner(program, self.repo, self.repo / ".planops-state", operations=program_run.Operations("codex"), run_id="resume-limit").run()
+        finally:
+            for key, value in previous.items():
+                if value is None: os.environ.pop(key, None)
+                else: os.environ[key] = value
+        held = self.tmp / ".repo-planops-worktrees" / "repo" / "resume-limit-01"
+        thread_state = self.repo / ".planops-state" / "resume-limit-01-thread.json"
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn("上限", result["reason"])
+        self.assertEqual(sum(event.startswith("resume: 01:") for event in result["events"]), 2)
+        self.assertTrue(held.is_dir())
+        self.assertTrue(thread_state.is_file())
+        self.assertIn("fake-thread-resume-limit-01", log.read_text(encoding="utf-8"))
+        self.assertNotIn("--last", log.read_text(encoding="utf-8"))
 
     def test_real_git_conflict_is_not_auto_resolved_and_worktree_is_retained(self) -> None:
         (self.repo / "conflict.txt").write_text("base\n", encoding="utf-8")

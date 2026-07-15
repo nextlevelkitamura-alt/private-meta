@@ -64,6 +64,22 @@ class Review:
     reason: str = ""
 
 
+def parse_evaluation(path: Path) -> Review:
+    """評価本文の総合判定を読む。曖昧な本文をPASSへ倒さない。"""
+    text = path.read_text(encoding="utf-8")
+    section = re.search(r"^##\s*総合判定\s*$\n(?P<body>.*?)(?=^##\s|\Z)", text, re.M | re.S)
+    if section is None:
+        return Review(False, reason="評価MDに総合判定がありません")
+    body = section.group("body")
+    if re.search(r"^\s*- \[FAIL\]", text, re.M):
+        return Review(False, reason="評価MDにFAIL項目があります")
+    if "FAILあり" in body:
+        return Review(False, reason="評価MDの総合判定がFAILです")
+    if "全PASS" not in body:
+        return Review(False, reason="評価MDの総合判定を判定できません")
+    return Review(True, path)
+
+
 @dataclass
 class RunState:
     run_id: str
@@ -244,7 +260,7 @@ class Operations:
             return Review(False, reason="reviewerの評価本文がありません")
         evaluation = task.child.plan.parent / f"評価{task.child.nn}.md"
         evaluation.write_text(final.read_text(encoding="utf-8"), encoding="utf-8")
-        return Review(True, evaluation)
+        return parse_evaluation(evaluation)
 
     def resume(self, task: Task, reason: str) -> Task:
         answer = delegate.resume(task.manifest_path, reason)

@@ -101,4 +101,65 @@ assert_eq "(g) --commitは1コミットだけ作る" "$(git -C "$COMMIT_REPO" re
 [ -d "$COMMIT_REPO/plans/active/コミット対象" ] && assert_eq "(g) commit後にactiveへ移動する" "yes" "yes" || assert_eq "(g) commit後にactiveへ移動する" "no" "yes"
 assert_eq "(g) 作業ツリーを残さない" "$(git -C "$COMMIT_REPO" status --short)" ""
 
+# (h) 許可遷移、誤遷移、超過バケットからの退出、completed archive拒否を個別に検査する。
+TRANS="$WORKDIR/transitions"
+for bucket in planning active paused done archive; do mkdir -p "$TRANS/plans/$bucket"; done
+make_plan() { mkdir -p "$1"; printf '# plan\n\n## 完了条件\n- [%s] 確認\n' "$2" > "$1/plan.md"; }
+make_record() { cat > "$1/終了記録.md" <<EOF
+# 終了記録
+- 終了区分: $2
+- 終了日時: 2026-07-15 12:00 JST
+- 人間確認: 確認済み
+- 理由: テスト
+- 後継・統合先: ${3:-該当なし}
+- 実装済み範囲: テスト
+- 未完了事項: なし
+- レビュー・判断根拠: テスト
+- 関連commit/評価: test
+EOF
+}
+make_plan "$TRANS/plans/active/active-to-paused" ' '
+make_plan "$TRANS/plans/paused/paused-to-planning" ' '
+make_plan "$TRANS/plans/paused/paused-to-active" ' '
+make_plan "$TRANS/plans/done/done-to-active" x
+make_plan "$TRANS/plans/planning/cancel-to-archive" ' '
+make_record "$TRANS/plans/planning/cancel-to-archive" cancelled
+make_plan "$TRANS/plans/done/completed-unchecked" ' '
+make_record "$TRANS/plans/done/completed-unchecked" completed
+make_plan "$TRANS/plans/done/completed-fail-eval" x
+make_record "$TRANS/plans/done/completed-fail-eval" completed
+cat > "$TRANS/plans/done/completed-fail-eval/評価01.md" <<'EOF'
+## 項目別採点
+- [FAIL] 確認
+## 総合判定
+FAIL
+EOF
+git -C "$TRANS" init -q && git -C "$TRANS" config user.name test && git -C "$TRANS" config user.email test@example.invalid
+git -C "$TRANS" add plans && git -C "$TRANS" commit -qm seed
+"$SCRIPTS/bucketctl.sh" move "$TRANS/plans/active/active-to-paused" --to paused --apply >/dev/null
+assert_eq "(h) active→pausedを許可" "$(test -d "$TRANS/plans/paused/active-to-paused"; echo $?)" "0"
+"$SCRIPTS/bucketctl.sh" move "$TRANS/plans/paused/paused-to-planning" --to planning --apply >/dev/null
+assert_eq "(h) paused→planningを許可" "$(test -d "$TRANS/plans/planning/paused-to-planning"; echo $?)" "0"
+"$SCRIPTS/bucketctl.sh" move "$TRANS/plans/paused/paused-to-active" --to active --apply >/dev/null
+assert_eq "(h) paused→activeを許可" "$(test -d "$TRANS/plans/active/paused-to-active"; echo $?)" "0"
+"$SCRIPTS/bucketctl.sh" move "$TRANS/plans/done/done-to-active" --to active --apply >/dev/null
+assert_eq "(h) done→activeを許可" "$(test -d "$TRANS/plans/active/done-to-active"; echo $?)" "0"
+"$SCRIPTS/bucketctl.sh" move "$TRANS/plans/planning/cancel-to-archive" --to archive --apply >/dev/null
+assert_eq "(h) 非completed直接archiveを許可" "$(test -d "$TRANS/plans/archive/cancel-to-archive"; echo $?)" "0"
+wrong_out="$($SCRIPTS/bucketctl.sh move "$TRANS/plans/planning/paused-to-planning" --to done 2>&1)"; wrong_rc=$?
+assert_eq "(h) planning→doneは拒否" "$wrong_rc" "2"
+assert_contains "(h) 誤遷移理由を返す" "$wrong_out" "許可されない遷移"
+unchecked_out="$($SCRIPTS/bucketctl.sh move "$TRANS/plans/done/completed-unchecked" --to archive 2>&1)"; unchecked_rc=$?
+assert_eq "(h) 未チェックcompleted archiveは拒否" "$unchecked_rc" "1"
+assert_contains "(h) 未チェック理由を返す" "$unchecked_out" "全完了条件"
+fail_eval_out="$($SCRIPTS/bucketctl.sh move "$TRANS/plans/done/completed-fail-eval" --to archive 2>&1)"; fail_eval_rc=$?
+assert_eq "(h) FAIL評価completed archiveは拒否" "$fail_eval_rc" "1"
+assert_contains "(h) FAIL評価理由を返す" "$fail_eval_out" "最終評価"
+for n in 1 2 3 4; do make_plan "$TRANS/plans/paused/over-$n" ' '; done
+git -C "$TRANS" add plans/paused && git -C "$TRANS" commit -qm overflow
+overcheck="$($SCRIPTS/bucketctl.sh check "$TRANS/plans" --json 2>&1)"; overcheck_rc=$?
+assert_eq "(h) 既存超過のcheckは非0" "$overcheck_rc" "1"
+"$SCRIPTS/bucketctl.sh" move "$TRANS/plans/paused/over-1" --to planning --apply >/dev/null
+assert_eq "(h) 超過バケットからの退出を許可" "$(test -d "$TRANS/plans/planning/over-1"; echo $?)" "0"
+
 report

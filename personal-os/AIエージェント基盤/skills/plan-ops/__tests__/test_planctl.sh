@@ -163,4 +163,95 @@ assert_eq "(j) 候補lint失敗は非0" "$atomic_rc" "1"
 assert_eq "(j) 候補lint失敗は本文を不変にする" "$(cat "$ATOMIC/plan.md")" "$atomic_before"
 assert_contains "(j) 原子的失敗理由を返す" "$atomic_out" "変更は反映しない"
 
+# (k) Program子の候補lint失敗では子本文・親マップの両方をバイト不変に保つ。
+CHILD_PROG="$REPO/plans/active/2026-07-08-子原子性"; mkdir -p "$CHILD_PROG/plans"
+cat > "$CHILD_PROG/program.md" <<'EOF'
+分類: 横断 ／ 種別: 既存改善 ／ 形態: program
+## 子計画マップ
+- [ ] 01  子 … 実装
+    役割: 実装
+    対象repo: repo無し
+    並列: 不可
+    レビュー: 都度
+    人間ゲート: なし
+    次: 同期
+    場所: plans/01-子.md
+    依存: ―
+    参照: ―
+EOF
+{ printf '親計画: ../program.md\n'; cat "$BAD/plan.md"; printf '\n<placeholder>\n'; } > "$CHILD_PROG/plans/01-子.md"
+cat > "$CHILD_PROG/plans/01-子-評価01.md" <<'EOF'
+対象計画: 01-子.md
+## 項目別採点
+- [PASS] `a.py` が存在する
+## 総合判定
+全PASS
+EOF
+child_before="$(cat "$CHILD_PROG/plans/01-子.md")"; parent_before="$(cat "$CHILD_PROG/program.md")"
+child_atomic="$(python3 "$SCRIPTS/planctl.py" apply-evaluation --plan "$CHILD_PROG/plans/01-子.md" --plans-root "$REPO/plans" --program "$CHILD_PROG/program.md" --evaluation "$CHILD_PROG/plans/01-子-評価01.md" --result "$REPO/plans/archive/2026-07-01-同期試験/実行結果.json" --repo-root "$REPO" 2>&1)"; child_atomic_rc=$?
+assert_eq "(k) Program子候補lint失敗は非0" "$child_atomic_rc" "1"
+assert_eq "(k) 子本文はバイト不変" "$(cat "$CHILD_PROG/plans/01-子.md")" "$child_before"
+assert_eq "(k) 親Programマップはバイト不変" "$(cat "$CHILD_PROG/program.md")" "$parent_before"
+
+# (l) apply-evaluationの4拒否とsync-checkの成功/不整合JSONを個別に固定する。
+MISMATCH="$REPO/plans/planning/2026-07-09-評価拒否"; mkdir -p "$MISMATCH"; cp "$BAD/plan.md" "$MISMATCH/plan.md"
+cat > "$MISMATCH/対象違い.md" <<'EOF'
+対象計画: other.md
+## 項目別採点
+- [PASS] `a.py` が存在する
+## 総合判定
+全PASS
+EOF
+target_out="$(python3 "$SCRIPTS/planctl.py" apply-evaluation --plan "$MISMATCH/plan.md" --plans-root "$REPO/plans" --evaluation "$MISMATCH/対象違い.md" --result "$REPO/plans/archive/2026-07-01-同期試験/実行結果.json" --repo-root "$REPO" 2>&1)"; target_rc=$?
+assert_eq "(l) 対象計画不一致を拒否" "$target_rc" "1"
+assert_contains "(l) 対象計画不一致の理由" "$target_out" "対象計画が一致しない"
+cat > "$MISMATCH/文言違い.md" <<'EOF'
+対象計画: plan.md
+## 項目別採点
+- [PASS] 別の文言
+## 総合判定
+全PASS
+EOF
+word_out="$(python3 "$SCRIPTS/planctl.py" apply-evaluation --plan "$MISMATCH/plan.md" --plans-root "$REPO/plans" --evaluation "$MISMATCH/文言違い.md" --result "$REPO/plans/archive/2026-07-01-同期試験/実行結果.json" --repo-root "$REPO" 2>&1)"; word_rc=$?
+assert_eq "(l) 完了条件文言不一致を拒否" "$word_rc" "1"
+assert_contains "(l) 完了条件文言不一致の理由" "$word_out" "完全一致しない"
+python3 - "$MISMATCH/欠損commit.json" "$BASE" <<'PY'
+import json, sys
+json.dump({"version":1,"task_id":"missing","status":"done","base_commit":sys.argv[2],"result_commit":"0000000000000000000000000000000000000000","changed_paths":[],"tests":[],"assumptions":[],"blockers":[],"remaining_risks":[],"out_of_scope_findings":[]}, open(sys.argv[1], "w"))
+PY
+commit_out="$(python3 "$SCRIPTS/planctl.py" apply-evaluation --plan "$MISMATCH/plan.md" --plans-root "$REPO/plans" --evaluation "$MISMATCH/文言違い.md" --result "$MISMATCH/欠損commit.json" --repo-root "$REPO" 2>&1)"; commit_rc=$?
+assert_eq "(l) 存在しないresult commitを拒否" "$commit_rc" "1"
+assert_contains "(l) result commit欠損の理由" "$commit_out" "result commitが実在しない"
+WRONG="$REPO/plans/active/2026-07-10-子番号拒否"; mkdir -p "$WRONG/plans"
+cat > "$WRONG/program.md" <<'EOF'
+分類: 横断 ／ 種別: 既存改善 ／ 形態: program
+## 子計画マップ
+- [ ] 02  別子 … 実装
+    役割: 実装
+    対象repo: repo無し
+    並列: 不可
+    レビュー: 都度
+    人間ゲート: なし
+    次: 同期
+    場所: plans/02-別子.md
+    依存: ―
+    参照: ―
+EOF
+{ printf '親計画: ../program.md\n'; cat "$BAD/plan.md"; } > "$WRONG/plans/01-子.md"
+python3 - "$WRONG/plans/01-子.md" <<'PY'
+from pathlib import Path
+p = Path(__import__('sys').argv[1])
+p.write_text(p.read_text().replace('- [ ] `a.py` が存在する', '- [x] `a.py` が存在する'), encoding='utf-8')
+PY
+cp "$CHILD_PROG/plans/01-子-評価01.md" "$WRONG/plans/01-子-評価01.md"
+nn_out="$(python3 "$SCRIPTS/planctl.py" apply-evaluation --plan "$WRONG/plans/01-子.md" --plans-root "$REPO/plans" --program "$WRONG/program.md" --evaluation "$WRONG/plans/01-子-評価01.md" --result "$REPO/plans/archive/2026-07-01-同期試験/実行結果.json" --repo-root "$REPO" 2>&1)"; nn_rc=$?
+assert_eq "(l) 誤った子番号を拒否" "$nn_rc" "1"
+assert_contains "(l) 子番号不一致の理由" "$nn_out" "子番号が一致しない"
+sync_ok="$(python3 "$SCRIPTS/planctl.py" sync-check --plan "$REPO/plans/archive/2026-07-01-同期試験/plan.md" --plans-root "$REPO/plans" --repo-root "$REPO" --result "$REPO/plans/archive/2026-07-01-同期試験/実行結果.json" --evaluation "$REPO/plans/archive/2026-07-01-同期試験/評価01.md")"; sync_ok_rc=$?
+assert_eq "(l) 整合済みsync-checkは0" "$sync_ok_rc" "0"
+assert_contains "(l) 整合済みsync-checkはJSON" "$sync_ok" '"ok": true'
+sync_bad="$(python3 "$SCRIPTS/planctl.py" sync-check --plan "$WRONG/plans/01-子.md" --plans-root "$REPO/plans" --program "$WRONG/program.md" --repo-root "$REPO" 2>&1)"; sync_bad_rc=$?
+assert_eq "(l) マップ乖離sync-checkは非0" "$sync_bad_rc" "1"
+assert_contains "(l) マップ乖離sync-checkはJSON" "$sync_bad" '"ok": false'
+
 report

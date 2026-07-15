@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>hooks-registry — 最終構造</title>
+  <style>
+    :root { color:#1f2937; background:#fff; font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif; }
+    * { box-sizing:border-box; } body { max-width:1120px; margin:0 auto; padding:52px 28px 80px; line-height:1.65; background:#fff; }
+    h1 { font-size:34px; letter-spacing:-.03em; margin:0 0 8px; } h2 { font-size:20px; margin:42px 0 10px; } p { margin:8px 0; }
+    .lead { color:#475569; font-size:18px; } .note { color:#64748b; font-size:14px; }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin:22px 0; } .chip { border:1px solid #bfdbfe; color:#1d4f7a; background:#eff6ff; border-radius:999px; padding:4px 10px; font-size:14px; text-decoration:none; }
+    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } .card { border:1px solid #dbe4ee; border-radius:14px; padding:17px; background:#f8fbff; } .card b { color:#0f4c81; display:block; margin-bottom:4px; }
+    .diagram { overflow:auto; border:1px solid #dbe4ee; border-radius:14px; background:#f8fbff; padding:16px; } svg { display:block; min-width:760px; width:100%; height:auto; } .tree { border:1px solid #dbe4ee; border-radius:14px; padding:20px; background:#f8fbff; white-space:pre-wrap; font:14px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace; color:#334155; }
+    table { width:100%; border-collapse:collapse; border:1px solid #dbe4ee; background:#fff; } th,td { padding:12px; text-align:left; vertical-align:top; border-bottom:1px solid #e7edf4; } th { background:#eff6ff; color:#1e3a5f; } tr:last-child td { border-bottom:0; }
+    .steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; } .step { border:1px solid #dbe4ee; border-radius:12px; padding:16px; background:#fff; } .num { color:#0f4c81; font-weight:700; font-size:14px; } code { color:#0f4c81; background:#edf6ff; border-radius:4px; padding:2px 5px; }
+    @media (max-width:720px) { body { padding:32px 18px; } .cards,.steps { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <p class="note">正本: AGENTS.md / このHTMLは人間向けの表示だけを担う</p>
+  <h1>hooks-registry の最終構造</h1>
+  <p class="lead">Claude と Codex は同じPython本体を実行し、違うのは「どこに登録を書くか」だけです。</p>
+
+  <nav class="chips" aria-label="目次">
+    <a class="chip" href="#roles">役割</a><a class="chip" href="#flow">接続図</a><a class="chip" href="#tree">フォルダ</a><a class="chip" href="#events">イベント</a><a class="chip" href="#change">変更手順</a>
+  </nav>
+
+  <section id="roles">
+    <h2>実行・説明・登録を混ぜない</h2>
+    <p>迷ったら、動くものは <code>events/</code>、状態を持つものは <code>shared/</code>、登録表はruntimeごとの場所です。</p>
+    <div class="cards">
+      <div class="card"><b>events/</b><code>.py</code> がruntimeに実行される本体。隣の同名 <code>.md</code> はその処理の説明。</div>
+      <div class="card"><b>shared/session-board/</b>状態遷移、デイリー永続化、CLIを持つ共通エンジン。runtime固有の処理は置かない。</div>
+      <div class="card"><b>登録表</b>Claudeは <code>~/.claude/settings.json</code>、Codexはrepoの <code>codex/hooks.json</code>。ここだけが非対称。</div>
+    </div>
+  </section>
+
+  <section id="flow">
+    <h2>2つのruntimeは1組の実行本体へ集まる</h2>
+    <p>Claudeのsettings全体はsymlinkにしません。Codexだけは登録表をrepoからsymlink露出します。</p>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 310" role="img" aria-label="ClaudeとCodexが共通eventsとshared session-boardへ接続する図">
+        <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#5b7b95"/></marker></defs>
+        <rect x="30" y="32" width="250" height="80" rx="12" fill="#ffffff" stroke="#bdd6ea"/><text x="55" y="63" fill="#0f4c81" font-size="17" font-weight="700">Claude</text><text x="55" y="88" fill="#334155" font-size="14">~/.claude/settings.json</text><text x="55" y="107" fill="#64748b" font-size="13">hooks 項目に直接登録</text>
+        <rect x="30" y="196" width="250" height="80" rx="12" fill="#ffffff" stroke="#bdd6ea"/><text x="55" y="227" fill="#0f4c81" font-size="17" font-weight="700">Codex</text><text x="55" y="252" fill="#334155" font-size="14">repo/codex/hooks.json</text><text x="55" y="271" fill="#64748b" font-size="13">~/.codex/hooks.json へsymlink</text>
+        <path d="M280 72 H412" stroke="#5b7b95" stroke-width="2" marker-end="url(#arrow)"/><path d="M280 236 H412" stroke="#5b7b95" stroke-width="2" marker-end="url(#arrow)"/>
+        <rect x="425" y="82" width="270" height="145" rx="12" fill="#eff6ff" stroke="#93c5fd"/><text x="450" y="114" fill="#0f4c81" font-size="18" font-weight="700">agent-hooks の窓</text><text x="450" y="142" fill="#334155" font-size="14">~/.&lt;runtime&gt;/agent-hooks</text><text x="450" y="165" fill="#64748b" font-size="13">→ hooks-registry/</text><text x="450" y="195" fill="#334155" font-size="14">events/ の共通Pythonを指す</text>
+        <path d="M695 154 H790" stroke="#5b7b95" stroke-width="2" marker-end="url(#arrow)"/>
+        <rect x="803" y="50" width="170" height="95" rx="12" fill="#ffffff" stroke="#bdd6ea"/><text x="827" y="82" fill="#0f4c81" font-size="17" font-weight="700">events/</text><text x="827" y="107" fill="#334155" font-size="14">実行 .py</text><text x="827" y="128" fill="#64748b" font-size="13">+ 同名 .md</text>
+        <rect x="803" y="178" width="170" height="95" rx="12" fill="#ffffff" stroke="#bdd6ea"/><text x="827" y="210" fill="#0f4c81" font-size="17" font-weight="700">shared/</text><text x="827" y="235" fill="#334155" font-size="14">session-board</text><text x="827" y="256" fill="#64748b" font-size="13">状態・永続化・CLI</text>
+        <path d="M888 145 V176" stroke="#5b7b95" stroke-width="2" marker-end="url(#arrow)"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="tree">
+    <h2>フォルダを開いた時の読み順</h2>
+    <p>最初にrootの <code>AGENTS.md</code>、次にイベントの <code>AGENTS.md</code> と同名 <code>.md</code> を読む構成です。</p>
+    <div class="tree">hooks-registry/
+├── events/                         実行本体はここだけ
+│   ├── session-start/               reconcile-and-notify.py + .md
+│   ├── prompt-register/             register-and-guide.py + .md
+│   ├── session-end/                 mark-wait.py + .md
+│   └── subagent/                    sync-subagent-status.py + .md
+├── shared/session-board/            共通エンジン
+├── claude/                          settings.json の登録規則を説明
+├── codex/hooks.json                 Codex登録のrepo正本
+└── references/                      runtime仕様の恒久知識</div>
+  </section>
+
+  <section id="events">
+    <h2>現在登録するイベントは5種類</h2>
+    <p>SessionStartでは行を作らず、最初の意味ある入力で初めてボードへ登録します。</p>
+    <table>
+      <thead><tr><th>発火</th><th>実行本体</th><th>結果</th></tr></thead>
+      <tbody>
+        <tr><td>SessionStart</td><td>reconcile-and-notify.py</td><td>生存照合とキー通知</td></tr>
+        <tr><td>UserPromptSubmit</td><td>register-and-guide.py</td><td>枠登録と開始ガイド</td></tr>
+        <tr><td>Stop</td><td>mark-wait.py</td><td>🟢を⏸へ更新</td></tr>
+        <tr><td>SubagentStart</td><td>sync-subagent-status.py</td><td>🔵と体数を加算</td></tr>
+        <tr><td>SubagentStop</td><td>sync-subagent-status.py</td><td>体数を減算し0なら🟢</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="change">
+    <h2>変更はこの順で追える</h2>
+    <p>Pythonだけ、設定だけを先に変えず、説明・登録・診断を1つの流れとして確認します。</p>
+    <div class="steps">
+      <div class="step"><span class="num">01</span><br><b>本体と説明をそろえる</b><br>対象イベントの <code>.py</code> と同名 <code>.md</code>、AGENTS.mdを更新する。</div>
+      <div class="step"><span class="num">02</span><br><b>登録表を更新する</b><br>Claudeはsettingsのhooks項目、Codexはrepoのhooks.jsonを更新する。</div>
+      <div class="step"><span class="num">03</span><br><b>窓とtrustを確認する</b><br>registered.shで読み取り診断。Codexは人間が<code>/hooks</code>で再trustする。</div>
+    </div>
+  </section>
+</body>
+</html>

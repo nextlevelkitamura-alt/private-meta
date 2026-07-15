@@ -206,7 +206,7 @@ n = json.loads(sys.argv[1])
 
 ## 12. 実装例の意味
 
-`~/.codex/hooks.json` に `SessionStart`・`UserPromptSubmit`・`Stop` の3つを登録すれば、セッション開始時・ユーザー入力時・ターン停止時にそれぞれ Python スクリプトを実行できる。スクリプト側で stdin の JSON を読み、必要なら `additionalContext` を返して作業ルールやワークスペース文脈を注入する。`SubagentStart`／`SubagentStop` を足せば、サブエージェント稼働状態を記録できる。
+`~/.codex/hooks.json` に `SessionStart`・`UserPromptSubmit`・`Stop`・`SubagentStart`・`SubagentStop` を登録すれば、開始・入力・停止・サブエージェントの開始/終了ごとにPythonを実行できる。スクリプト側でstdinのJSONを読み、必要なら `additionalContext` を返して作業ルールやワークスペース文脈を注入する。現在のsession-boardではrepo正本 `../codex/hooks.json` を `~/.codex/hooks.json` へsymlink露出し、共通の `../events/` を呼ぶ。
 
 ## 13. Claude との違い（早見）
 
@@ -225,5 +225,5 @@ n = json.loads(sys.argv[1])
 
 - 公式: Codex Hooks（https://developers.openai.com/codex/hooks）／Subagents（https://developers.openai.com/codex/subagents）／Advanced config・notify（https://developers.openai.com/codex/config-advanced）。
 - 対の Claude 版: `claude-hooks.md`／比較: `claude-vs-codex-hooks.md`。
-- ローカル確認: `~/.codex/config.toml`、`codex --help`、session-board 実装（`../session-board/codex/`）。
+- ローカル確認: `~/.codex/config.toml`、`codex --help`、session-board 実装（`../events/`・`../shared/session-board/`）。
 - 確認日: 2026-07-06（`codex-cli 0.142.5`）

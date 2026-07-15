@@ -114,14 +114,14 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
     次: 評価02全PASS(6/6)・統合branchへmerge済み(スモーク120pass)・worktree削除済み。成果は子02以降が使用
     場所: plans/01 ／ 依存: ―
     参照: task/pf01=5583899・評価01→修正01→評価02(全PASS)
-- [ ] 02  遷移統制とplanctl同期 … 実装レビュー（一括待ち）
+- [ ] 02  遷移統制とplanctl同期 … 修正
     役割: 実装（bucketctl拡張・終了区分・planctl同期・日付rename）
     対象repo: ~/Private（private-meta）
     並列: 不可 ／ レビュー: 一括（Wave4後に02・03・04を3子一括。共通契約を変える修正のみ即差し戻し）
     人間ゲート: なし（既存計画の実移動は05が所有）
-    次: 実装完了(132pass全緑・task/pf02=8d7fc3a・worktree保持中)。Wave4の3子一括レビューで消化
+    次: 一括レビュー評価01(4PASS/2FAIL: planctl明示path・実差分照合・progress不変・rename --check・回帰テスト)の修正01を、write worker枠(最大2)が空き次第codex resumeで差し戻す
     場所: plans/02 ／ 依存: 01
-    参照: task/pf02=8d7fc3a（132pass・一括レビュー待ち）
+    参照: task/pf02=8d7fc3a・評価01→修正01
 - [ ] 03  harness・エージェント・ゴールコマンド … 修正
     役割: 実装（delegate・roles・program-run）
     対象repo: ~/Private（private-meta）

@@ -160,7 +160,11 @@ def _contract(child: Path, nn: str, map_block: list[str]) -> Child:
     execution = match.group(0) if match else raw_execution
     top = lines[:6]
     review = _field(top, "レビュー:") or _field(map_block[1:], "レビュー:") or "都度"
-    paths = tuple(dict.fromkeys(re.findall(r"`([^`]+)`", _field(contract, "変更可能範囲:"))))
+    scope = _field(contract, "変更可能範囲:")
+    backticked = re.findall(r"`([^`]+)`", scope)
+    paths = tuple(dict.fromkeys(backticked)) if backticked else tuple(
+        dict.fromkeys(item.strip().rstrip("/") for item in re.split(r"[,、]", scope) if item.strip() and item.strip() not in {"なし", "該当なし"})
+    )
     dependencies = tuple(re.findall(r"\b(\d{2})\b", _field(map_block[1:], "依存:")))
     due = re.search(r"Wave\s*(\d+)", review)
     gate = _field(top, "人間ゲート:") or _field(map_block[1:], "人間ゲート:")
@@ -232,7 +236,7 @@ class Operations:
         state_dir.mkdir(parents=True, exist_ok=True)
         planned = worktree.task_worktree_path(repo_root, worktree_root, task.task_id)
         branch = worktree.task_branch(task.task_id)
-        command = [sys.executable, str(PLANOPS / "planctl.py"), "prepare", "--plan", str(task.child.plan), "--task-id", task.task_id, "--role", "implementer", "--runtime", "codex", "--repo-root", str(repo_root), "--base-commit", task.base_commit, "--worktree-path", str(planned), "--branch", branch, "--state-dir", str(state_dir)]
+        command = [sys.executable, str(PLANOPS / "planctl.py"), "prepare", "--plan", str(task.child.plan), "--plans-root", str(repo_root / "plans"), "--task-id", task.task_id, "--role", "implementer", "--runtime", "codex", "--repo-root", str(repo_root), "--base-commit", task.base_commit, "--worktree-path", str(planned), "--branch", branch, "--state-dir", str(state_dir)]
         done = subprocess.run(command, capture_output=True, text=True)
         if done.returncode:
             raise ProgramRunBlocked("planctl prepareに失敗しました")
@@ -274,7 +278,7 @@ class Operations:
     def apply(self, task: Task, review: Review, repo_root: Path) -> None:
         if not review.evaluation_path or not task.result:
             raise ProgramRunBlocked("評価またはresult packetがありません")
-        command = [sys.executable, str(PLANOPS / "planctl.py"), "apply-evaluation", "--plan", str(task.child.plan), "--evaluation", str(review.evaluation_path), "--result", str(task.result_path), "--repo-root", str(repo_root), "--manifest", str(task.manifest_path)]
+        command = [sys.executable, str(PLANOPS / "planctl.py"), "apply-evaluation", "--plan", str(task.child.plan), "--plans-root", str(repo_root / "plans"), "--evaluation", str(review.evaluation_path), "--result", str(task.result_path), "--repo-root", str(repo_root), "--manifest", str(task.manifest_path)]
         done = subprocess.run(command, capture_output=True, text=True)
         if done.returncode:
             raise ProgramRunBlocked("planctl apply-evaluationに失敗しました")

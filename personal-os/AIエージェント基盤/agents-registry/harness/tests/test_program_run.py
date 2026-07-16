@@ -323,7 +323,7 @@ print(json.dumps({'result': body}, ensure_ascii=False))
             gate = item.get("gate", "なし")
             blocks.append(f"- [ ] {nn}  子{nn} … 実装\n    役割: 実装\n    対象repo: fixture\n    並列: 不可\n    レビュー: {review}\n    人間ゲート: {gate}\n    次: fixture\n    場所: plans/{nn}\n    依存: {item.get('dependencies', '―')}\n    参照: ―\n")
             (plans / f"{nn}-子.md").write_text(
-                f"親計画: ../program.md ／ 分類: 横断 ／ 種別: 新規作成\n並列: 不可 ／ レビュー: {review}\n人間ゲート: {gate}\n\n# 子{nn}\n\n## 目的\n\nfixture\n\n## 非対象\n\nなし\n\n## 現状\n\nなし\n\n## 実行契約\n\n- 対象repo: fixture\n- 実行形: delegated-single\n- 最初に読む順番: fixture\n- 依存成果: なし\n- 変更可能範囲: `src/{nn}.py`\n- 変更禁止範囲: なし\n- 維持する契約: なし\n- 検証: fixture\n- 停止・エスカレーション条件: blocked\n- 完了時に返す情報: result\n\n## 方針\n\nfixture\n\n## 完了条件（レビュー項目）\n\n- [ ] src/{nn}.pyが実装されている\n",
+                f"親計画: ../program.md ／ 分類: 横断 ／ 種別: 新規作成\n並列: 不可 ／ レビュー: {review}\n人間ゲート: {gate}\n\n# 子{nn}\n\n## 目的\n\nfixture\n\n## 非対象\n\nなし\n\n## 現状\n\nなし\n\n## 実行契約\n\n- 対象repo: fixture\n- 実行形: delegated-single\n- 最初に読む順番: fixture\n- 依存成果: なし\n- 変更可能範囲: src/{nn}.py\n- 変更禁止範囲: なし\n- 維持する契約: なし\n- 検証: fixture\n- 停止・エスカレーション条件: blocked\n- 完了時に返す情報: result\n\n## 方針\n\nfixture\n\n## 完了条件（レビュー項目）\n\n- [ ] src/{nn}.pyが実装されている\n",
                 encoding="utf-8",
             )
         program = root / "program.md"

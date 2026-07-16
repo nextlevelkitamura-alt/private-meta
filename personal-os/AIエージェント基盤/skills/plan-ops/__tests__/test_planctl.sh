@@ -254,4 +254,112 @@ sync_bad="$(python3 "$SCRIPTS/planctl.py" sync-check --plan "$WRONG/plans/01-子
 assert_eq "(l) マップ乖離sync-checkは非0" "$sync_bad_rc" "1"
 assert_contains "(l) マップ乖離sync-checkはJSON" "$sync_bad" '"ok": false'
 
+# (m) 変更可能範囲がbacktick付き・`・`/`、`混在の実書式でも、範囲内の実差分は正しく許可する。
+RANGE_OK="$REPO/plans/planning/2026-07-11-backtick範囲試験"; mkdir -p "$RANGE_OK"
+cat > "$RANGE_OK/plan.md" <<'EOF'
+分類: 横断 ／ 種別: 既存改善
+
+# backtick範囲試験
+
+## 目的
+同期する。
+## 非対象
+なし。
+## 現状
+未同期。
+## 実行契約
+- 対象repo: repo無し
+- 実行形: delegated-single
+- 最初に読む順番: この計画
+- 依存成果: なし
+- 変更可能範囲: `src/backtick.py`（実装本体）、`docs/`・`config/backtick.yaml`
+- 変更禁止範囲: なし
+- 維持する契約: 明示path
+- 検証: bash test
+- 停止・エスカレーション条件: 不一致時停止
+- 完了時に返す情報: result packet
+## 方針
+同期する。
+## 完了条件（レビュー項目）
+- [ ] 変更が実装されている
+EOF
+git -C "$REPO" add "plans/planning/2026-07-11-backtick範囲試験/plan.md"
+git -C "$REPO" commit -qm "backtick範囲試験の計画"
+RANGE_OK_BASE="$(git -C "$REPO" rev-parse HEAD)"
+mkdir -p "$REPO/src" "$REPO/docs/deep" "$REPO/config"
+printf 'x\n' > "$REPO/src/backtick.py"
+printf 'y\n' > "$REPO/docs/deep/note.txt"
+printf 'z\n' > "$REPO/config/backtick.yaml"
+git -C "$REPO" add src/backtick.py docs/deep/note.txt config/backtick.yaml
+git -C "$REPO" commit -qm "backtick範囲試験の実装"
+RANGE_OK_RESULT="$(git -C "$REPO" rev-parse HEAD)"
+cat > "$RANGE_OK/実行結果.json" <<EOF
+{"version":1,"task_id":"range-ok","status":"done","base_commit":"$RANGE_OK_BASE","result_commit":"$RANGE_OK_RESULT","changed_paths":["src/backtick.py","docs/deep/note.txt","config/backtick.yaml"],"tests":[{"command":"test -f src/backtick.py","status":"passed","summary":"存在を確認"}],"assumptions":[],"blockers":[],"remaining_risks":[],"out_of_scope_findings":[]}
+EOF
+cat > "$RANGE_OK/評価01.md" <<'EOF'
+対象計画: plan.md ／ ラウンド: 01
+
+## 項目別採点
+- [PASS] 変更が実装されている
+  根拠: 3ファイルの実装を確認
+## 総合判定
+全PASS＝完了可
+EOF
+range_ok_out="$(python3 "$SCRIPTS/planctl.py" apply-evaluation --plan "$RANGE_OK/plan.md" --plans-root "$REPO/plans" --evaluation "$RANGE_OK/評価01.md" --result "$RANGE_OK/実行結果.json" --repo-root "$REPO" 2>&1)"; range_ok_rc=$?
+assert_eq "(m) backtick+・混在の変更可能範囲内は許可" "$range_ok_rc" "0"
+assert_contains "(m) backtick+・混在の同期成功" "$range_ok_out" "synced"
+
+# (n) 同じbacktick+・混在の範囲定義でも、宣言範囲外の実差分は引き続き拒否する（範囲検査は緩めない）。
+RANGE_BAD="$REPO/plans/planning/2026-07-12-backtick範囲外試験"; mkdir -p "$RANGE_BAD"
+cat > "$RANGE_BAD/plan.md" <<'EOF'
+分類: 横断 ／ 種別: 既存改善
+
+# backtick範囲外試験
+
+## 目的
+同期する。
+## 非対象
+なし。
+## 現状
+未同期。
+## 実行契約
+- 対象repo: repo無し
+- 実行形: delegated-single
+- 最初に読む順番: この計画
+- 依存成果: なし
+- 変更可能範囲: `src/backtick.py`（実装本体）、`docs/`・`config/backtick.yaml`
+- 変更禁止範囲: なし
+- 維持する契約: 明示path
+- 検証: bash test
+- 停止・エスカレーション条件: 不一致時停止
+- 完了時に返す情報: result packet
+## 方針
+同期する。
+## 完了条件（レビュー項目）
+- [ ] 変更が実装されている
+EOF
+git -C "$REPO" add "plans/planning/2026-07-12-backtick範囲外試験/plan.md"
+git -C "$REPO" commit -qm "backtick範囲外試験の計画"
+RANGE_BAD_BASE="$(git -C "$REPO" rev-parse HEAD)"
+mkdir -p "$REPO/other"
+printf 'w\n' > "$REPO/other/outside.py"
+git -C "$REPO" add other/outside.py
+git -C "$REPO" commit -qm "backtick範囲外試験の逸脱差分"
+RANGE_BAD_RESULT="$(git -C "$REPO" rev-parse HEAD)"
+cat > "$RANGE_BAD/実行結果.json" <<EOF
+{"version":1,"task_id":"range-bad","status":"done","base_commit":"$RANGE_BAD_BASE","result_commit":"$RANGE_BAD_RESULT","changed_paths":["other/outside.py"],"tests":[{"command":"test -f other/outside.py","status":"passed","summary":"存在を確認"}],"assumptions":[],"blockers":[],"remaining_risks":[],"out_of_scope_findings":[]}
+EOF
+cat > "$RANGE_BAD/評価01.md" <<'EOF'
+対象計画: plan.md ／ ラウンド: 01
+
+## 項目別採点
+- [PASS] 変更が実装されている
+  根拠: ダミー
+## 総合判定
+全PASS＝完了可
+EOF
+range_bad_out="$(python3 "$SCRIPTS/planctl.py" apply-evaluation --plan "$RANGE_BAD/plan.md" --plans-root "$REPO/plans" --evaluation "$RANGE_BAD/評価01.md" --result "$RANGE_BAD/実行結果.json" --repo-root "$REPO" 2>&1)"; range_bad_rc=$?
+assert_eq "(n) backtick+・混在でも範囲外差分は拒否" "$range_bad_rc" "1"
+assert_contains "(n) 範囲外差分の理由" "$range_bad_out" "変更可能範囲外"
+
 report

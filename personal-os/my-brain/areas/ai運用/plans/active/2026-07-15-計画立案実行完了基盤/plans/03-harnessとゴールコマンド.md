@@ -59,12 +59,16 @@
 
 ## 完了条件（レビュー項目）
 
-- [ ] `delegate.py` が明示引数（runtime・role・plan path・base SHA）で動き、write taskのbase未指定を拒否し、task-scoped worktreeの分離・read-only省略・conflict停止・secret非表示・並列2taskの非交差がテストで確認できる。
-- [ ] 生成Task Packetに読む順番・変更可能/禁止範囲・result packet要求が含まれ、run-manifest・result-packetのschema検証が不正データを拒否する。
-- [ ] `roles/` の3定義に固定worktree・branch・タスク固有path・Program固有背景・モデルID・長い性格が無い（grepで機械確認可）。claude/codex両形式がroles/と矛盾しない。
-- [ ] `/codex-impl` が共通delegate経由で従来と同じ入口で使え、合成タスクで 委譲→result→レビュー→apply-evaluation が通る。custom-agent-creatorの旧記述が現行仕様へ更新済み。
-- [ ] `program-run` が起動前にprogram-lint・plan-lintを実行し、delegated-parallel子のレーン別担当・worktree方針が未記載なら起動を拒否する。検査通過後、合成programでWave順の自動進行・並列上限2・レビュー宣言（都度/一括）どおりのreviewer起動・全PASS時のみの同期・FAIL時のresume差し戻し・上限超過での停止を再現できる。
-- [ ] worktreeライフサイクルが合成taskで一巡する: 明示baseから作成 → 実装commit → レビュー全PASS → 統合branchへ `merge --no-ff` → スモーク → worktree削除。一括レビュー待ちの子はworktreeが保持され、merge conflictでは自動解決せず停止する。mainへは一切触れない。
-- [ ] delegateが起動する全workerに `PLAN_RUN_MANIFEST` が渡り、SubagentStart/Stop hook（04）が検査に必要な項目（worktree_path・branch・base_commit・role・result_path）を読める。
-- [ ] `program-run` が危険操作を実行せず `承認セット.md` へ蓄積して完走し、完走後の出力に統合評価と承認セットが揃う。blocked・契約変更が必要な場合に再開可能な状態で停止する。
-- [ ] Claude adapterは実機確認済みフラグのみ使用、または明示的feature-disabled。runtime設定・trust・symlinkに変更が無い。delegate・program-runが `repo_root` の明示指定でPrivate以外の合成repoのplanにも委譲でき、repo固有のpathを内部に決め打ちしていない。
+- [x] `delegate.py` が明示引数（runtime・role・plan path・base SHA）で動き、write taskのbase未指定を拒否し、task-scoped worktreeの分離・read-only省略・conflict停止・secret非表示・並列2taskの非交差がテストで確認できる。
+- [x] 生成Task Packetに読む順番・変更可能/禁止範囲・result packet要求が含まれ、run-manifest・result-packetのschema検証が不正データを拒否する。
+- [x] `roles/` の3定義に固定worktree・branch・タスク固有path・Program固有背景・モデルID・長い性格が無い（grepで機械確認可）。claude/codex両形式がroles/と矛盾しない。
+- [x] `/codex-impl` が共通delegate経由で従来と同じ入口で使え、合成タスクで 委譲→result→レビュー→apply-evaluation が通る。custom-agent-creatorの旧記述が現行仕様へ更新済み。
+- [x] `program-run` が起動前にprogram-lint・plan-lintを実行し、delegated-parallel子のレーン別担当・worktree方針が未記載なら起動を拒否する。検査通過後、合成programでWave順の自動進行・並列上限2・レビュー宣言（都度/一括）どおりのreviewer起動・全PASS時のみの同期・FAIL時のresume差し戻し・上限超過での停止を再現できる。
+- [x] worktreeライフサイクルが合成taskで一巡する: 明示baseから作成 → 実装commit → レビュー全PASS → 統合branchへ `merge --no-ff` → スモーク → worktree削除。一括レビュー待ちの子はworktreeが保持され、merge conflictでは自動解決せず停止する。mainへは一切触れない。
+- [x] delegateが起動する全workerに `PLAN_RUN_MANIFEST` が渡り、SubagentStart/Stop hook（04）が検査に必要な項目（worktree_path・branch・base_commit・role・result_path）を読める。
+- [x] `program-run` が危険操作を実行せず `承認セット.md` へ蓄積して完走し、完走後の出力に統合評価と承認セットが揃う。blocked・契約変更が必要な場合に再開可能な状態で停止する。
+- [x] Claude adapterは実機確認済みフラグのみ使用、または明示的feature-disabled。runtime設定・trust・symlinkに変更が無い。delegate・program-runが `repo_root` の明示指定でPrivate以外の合成repoのplanにも委譲でき、repo固有のpathを内部に決め打ちしていない。
+
+## 実装結果
+
+- 2026-07-16 評価03で全PASS（評価01=4PASS/5FAIL→修正01→評価02=7PASS/2FAIL→修正02→全PASS・差し戻し上限2以内）。実装=task/pf03（base 8d7fc3a → 0c65bfc・A/Bレーン並列+統合ラウンド・codex terra）。harnessテスト25件+roles検査PASS。統合branchへのmergeは02の評価後にWave順で実施。runtime露出は未実施（承認セット行き）。

@@ -30,13 +30,13 @@
     <p class="lead">Plan Registryは「規約と責務地図」の入口です。個別の計画、状態、履歴、session-boardを集める場所ではありません。置き場そのものは、対象repoまたはareaが持ち続けます。</p>
     <div class="chips"><span class="chip">規模とレビュー</span><span class="chip">program最終一括確認</span><span class="chip">危険操作の個別承認</span><span class="chip">責務地図</span><span class="chip">手動 / script / hook</span><span class="chip">計画本文は移動しない</span></div>
 
-    <div class="notice"><strong>最初の基準:</strong> Plan Registryがサクッと／ライト／フルの基準を定義し、plan-triageが依頼へ適用します。plan-managementは解決済みの基準とrouteを使って、作成・合流・program管理・レビュー遷移を案内します。3条件がすべてYESの時だけサクッと実行できます。</div>
+    <div class="notice"><strong>最初の基準:</strong> Plan Registryがサクッと／ライト／フルの基準を定義し、plan-triageが依頼へ適用します。plan-create-reviewは解決済みの基準とrouteを使って、作成・合流・program管理・評価・終了（archive）を案内します。3条件がすべてYESの時だけサクッと実行できます。</div>
 
     <h2>誰が何を持つか</h2>
     <div class="grid">
       <section class="card"><h3>Plan Registry</h3><p>規模・段階・レビューの基準と責務地図を定義します。個別の計画本文、状態、履歴は持ちません。</p></section>
       <section class="card"><h3>plan-triage</h3><p>基準を依頼へ適用し、対象repo・既存plan・宣言済み箱の書込みなしrouteを返します。</p></section>
-      <section class="card"><h3>plan-management</h3><p>利用者の目的を作成・合流・program管理・レビュー遷移へ振り分け、triageとopsへ委譲します。</p></section>
+      <section class="card"><h3>plan-create-review</h3><p>利用者の目的を作成・合流・program管理・評価・終了（archive）へ振り分け、triageとopsへ委譲します。</p></section>
       <section class="card"><h3>人間 / 指揮官</h3><p>人間ゲートと、既存planへ合流するか新規起案するかの最終判断を担います。</p></section>
       <section class="card"><h3>対象repo / area</h3><p>計画箱、物理バケット、テンプレ、実際の計画本文と状態を持ちます。</p></section>
       <section class="card"><h3>plan-ops</h3><p>確定した入力だけを雛形、子計画マップ更新、静的lintの手続きとして処理します。</p></section>
@@ -77,7 +77,7 @@
       <section class="card manual"><h3>人間は二種類の判断をする</h3><p>危険操作は該当する子で実行前に承認します。通常のprogram子はAIレビューで閉じ、全子を統合した最後にだけ人間が全体を確認します。</p></section>
       <section class="card machine"><h3>scriptは確定入力だけを処理する</h3><p><code>plan-ops</code> は雛形、子計画マップ更新、静的lintを担います。規模基準、置き場、優先度、レビュー合否は決めません。</p></section>
       <section class="card boundary"><h3>hook / session-boardは記録・通知だけ</h3><p>開始・入力・終了の記録と通知だけです。計画本文・状態を持たず、repoや計画箱、レビュー合否を決めません。</p></section>
-      <section class="card"><h3>runtime露出は保留</h3><p><code>plan-management</code> の正本は基盤配下です。runtimeへのsymlinkとhook接続は人間承認まで行いません。</p></section>
+      <section class="card"><h3>runtime露出は承認制</h3><p><code>plan-create-review</code> の正本は基盤配下で、5runtimeへsymlink露出済み（2026-07-16人間承認）。以後の露出変更も人間承認ゲートです。</p></section>
     </div>
 
     <h2>参照先</h2>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>share-as-zip — Skill説明書</title>
+<style>
+  :root{--surface:#fff;--ground:#f5f7fa;--ink:#19212f;--muted:#5f6879;--line:#dbe1ea;--accent:#2c3a8c;--accent-soft:#e9ecfa;--warn:#8c3620;--warn-soft:#f7e8e2;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} body{margin:0;padding:40px 20px 72px;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7} main{max-width:820px;margin:auto} header,section{margin-bottom:32px} .eyebrow,h2{margin:0 0 10px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase} h1{margin:0;font-size:30px;line-height:1.2} .lede{margin:12px 0 0;color:var(--muted)} .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px} ul{margin:0;padding-left:20px} li{margin:7px 0} pre{margin:0;font-family:var(--mono);font-size:13px;line-height:1.8;white-space:pre-wrap} code{font-family:var(--mono);background:#f5f6fa;padding:1px 5px;border-radius:5px}.rule{border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:0 10px 10px 0;padding:12px 16px}.foot{border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Global applied skill</p>
+    <h1>share-as-zip</h1>
+    <p class="lede">指定したファイルを、元の名前を保った共有用ZIPにして、デスクトップにはZIPだけを出す。</p>
+  </header>
+  <section>
+    <h2>いつ使うか</h2>
+    <div class="card"><ul><li>「スクショをZIPにして共有したい」</li><li>「Finderの画像と補足をまとめてZIPにして」</li><li>「share as zip」</li></ul></div>
+  </section>
+  <section>
+    <h2>構造</h2>
+    <div class="card"><pre>share-as-zip/
+├── SKILL.md    実行用の正本
+└── SKILL.html  人間向け説明書</pre></div>
+  </section>
+  <section>
+    <h2>実行の流れ</h2>
+    <div class="card"><ul><li>ローカルで読める指定ファイルと任意の補足文を確認する。</li><li>同名ファイルの衝突を止め、先頭ファイル名と日時からZIP名を決める。</li><li>一時フォルダでZIPを検証してからデスクトップへ置き、一時ファイルを消す。</li></ul></div>
+  </section>
+  <section>
+    <h2>安全方針</h2>
+    <div class="rule">元ファイルを変更せず、デスクトップに個別コピーを残さない。外部サービスへの送信は行わない。</div>
+  </section>
+  <p class="foot">更新日: 2026-07-15。実行の正本はSKILL.mdであり、この説明書は実行時に参照しない。</p>
+</main>
+</body>
+</html>

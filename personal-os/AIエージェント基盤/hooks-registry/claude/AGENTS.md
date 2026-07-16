@@ -21,4 +21,6 @@ Claudeは、ユーザー設定ファイル `~/.claude/settings.json` の `hooks`
 | `SubagentStart` | `events/subagent/sync-subagent-status.py` |
 | `SubagentStop` | `events/subagent/sync-subagent-status.py` |
 
+承認セットの適用候補（未登録）は`../registration-diff-04-plan-closeout.md`にある。既存handlerを置換せず、`PreToolUse`、`Stop`、`SubagentStart`、`SubagentStop`へ追加する。
+
 現在のイベント内容は `../events/<イベント>/AGENTS.md`、runtime契約は `../references/claude-hooks.md`、窓の読み取り診断は `../shared/session-board/registered.sh` を読む。`CLAUDE.md` は `AGENTS.md` への相対symlink。

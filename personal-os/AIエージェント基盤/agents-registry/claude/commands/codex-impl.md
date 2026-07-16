@@ -1,59 +1,39 @@
 ---
-description: Codexに実装を委任する（計画→実装→評価→修正のMD駆動ループ・メインが直接 codex exec を駆動）
+description: Codexに実装を委任する（共通delegate経由・計画→実装→評価→修正のMD駆動ループ）
 ---
 
-あなた（メインエージェント）が直接 Codex を駆動して実装させ、規模に応じて評価・修正ループを回す。監督サブエージェントは挟まない（2026-07-11廃止）。指示の伝達は口頭要約でなく**MD文書**で行う（計画=plan.md／採点=評価NN.md／差し戻し=修正NN.md。規約: my-brain/areas/AGENTS.md §3、雛形: plan-ops templates/）。
+`/codex-impl <依頼>` は従来どおり Codex 実装委任の入口である。実行本体は `agents-registry/harness/delegate.py` に一本化し、このコマンドは直接 `codex exec` を組み立てない。
 
-## 手順0: 規模判定（最初に必ず）
+## 使い方
 
-構造3条件——①変更1〜2ファイル ②容易に戻せる ③人間ゲート事項（削除・push・hook登録・本番データ等）を含まない——を判定する。
+ライト以上では、依頼に対象計画の絶対pathを含める。Task Packetの生成時に runtime、role、base SHA、result packet出力先を決める。サクッとは既存の規模判定どおり計画なしで終了してよいが、delegateへ渡す実装は必ず計画を持つ。
 
-- **全YES＝サクッと**: 計画・評価なしで手順1〜3だけ実行し、diff要約を人間へ即報告して終了。
-- **1つでもNO＝ライト以上**: plan.md必須。無ければ先に作る（「完了条件（レビュー項目）」を「こうなっていれば正しい」形式・対象明示で書いてから着手）。規模は plan.md の `規模:` 宣言に従う（ライト/フル。迷ったらフル）。
-- 実行中に3条件を外れたら（3ファイル目・戻しにくい変更・人間ゲート事項に接触）、その場で停止して上位規模へ昇格を申告する。
+## 手順
 
-## 手順1: 依頼文を組み立てて起動
+1. 規模を判定する。構造3条件（変更1〜2ファイル／容易に戻せる／人間ゲートなし）が全YESなら、通常の直接実装・diff確認・報告で終える。1つでもNOなら対象計画の「完了条件（レビュー項目）」を読む。
+2. `PLAN_PATH` を対象計画の絶対path、`REPO_ROOT` を対象repoの絶対path、`BASE_SHA` を明示した基準commitとして確定する。さらに task ID と、少なくとも1つの変更可能pathを決める。write taskはこれらなしで起動しない。Task Packetとrun manifestのworktree方針に従い、worker自身に作業場所・branchを選ばせない。
+3. 共通delegateを次の契約で起動する。`delegate.py` のCLI定義が正本であり、runtime、role、plan path、write taskのbase SHAを省略しない。
 
-依頼文は自己完結で書く（Codexはこの会話を読めない）。**ライト以上は依頼文の冒頭に必ず入れる**: 「まず <plan.mdの絶対パス> を読み、『完了条件（レビュー項目）』を満たすように実装せよ」。制約・触ってはいけない範囲も明記する。
+   ```bash
+   python3 personal-os/AIエージェント基盤/agents-registry/harness/delegate.py \
+     --runtime codex \
+     --role implementer \
+     --plan "$PLAN_PATH" \
+     --repo-root "$REPO_ROOT" \
+     --task-id "$TASK_ID" \
+     --base-commit "$BASE_SHA" \
+     --allowed-path "path/to/change"
+   ```
 
-```
-codex exec --json -c model_reasoning_effort=high -C <作業dir> -o <最終メッセージ用一時file> "<依頼文>" > <イベントログ用一時file>
-```
+4. result packetをschema検証し、result commitとchanged pathsを実物で確認する。禁止範囲違反、base不一致、blockedはその場で停止する。
+5. ライト以上は既存の `impl-reviewer` を起動し、計画・diff範囲・規模を渡す。評価本文は計画と同じ場所の `評価NN.md` とし、PASS/FAIL/対象外を完了条件と同順で照合する。
+6. FAILは `修正NN.md` を作成し、同じdelegateの実装threadへresumeする。上限はライト=1回、フル=2回。全PASSだけ `planctl apply-evaluation` と `planctl sync-check` へ進む。
 
-- イベントログ1行目 `{"type":"thread.started","thread_id":"<uuid>"}` から thread_id を控える
-- 10分以内に終わる見込みなら前面実行（Bash timeout 600000）。超えそうなら run_in_background で起動し、イベントログに `turn.completed` が出るまでポーリングする
-- sandbox・approval はCodexのグローバル既定に従う。Codexからの質問・途中停止には `codex exec resume <thread_id>` で応える
+## 維持する制約
 
-## 手順2: 健全性チェック（あなた自身で）
-
-`git status` / `git diff` で、依頼した対象だけが変わっているか・無関係ファイルに触れていないかを確認する。ここは完了条件との照合ではなく事故検知。問題があれば即 resume で差し戻す。
-
-## 手順3: サクッとの終了
-
-サクッとはここで diff要約を人間へ報告して終了（AIレビューなし・自己チェックが保険）。以降はライト以上のみ。
-
-## 手順4: 評価（impl-reviewer）
-
-impl-reviewer サブエージェントを起動する（入力: plan.mdパス・diff範囲・規模）。実装=Codex系×評価=Claude系の異系統クロスチェック。戻ってきた採点本文を計画と同じ場所に **評価NN.md** として保存する（単発: `評価01.md`／program子: `plans/NN-子名-評価01.md`。NN=ラウンド番号）。
-
-## 手順5: 判定と差し戻し
-
-- **全PASS** → 手順6へ。
-- **FAILあり** → 評価NNの修正指示ドラフトを **修正NN.md** に具体化する（テンプレ準拠: FAIL項目ごとに 対象:箇所／今の状態／期待する状態／修正方法の指定／やらないこと。曖昧語禁止）。そして:
-  ```
-  codex exec resume <thread_id> "<修正NN.mdの絶対パス> を読み、記載の全項目を修正せよ。『やらないこと』欄に触れるな"
-  ```
-  修正完了後、手順2→手順4（評価NN+1）を繰り返す。
-- **差し戻し上限**: ライト=1回・フル=2回。超えたら止めて人間へエスカレーション（評価mdのパスを添えて）。
-
-## 手順6: 報告
-
-人間へ報告する: 変更ファイル・最終評価（全PASSの評価NN.mdパス）・thread_id（後日の続きに使える）。done移動は最終評価が全PASSであることが条件。コミット・pushはユーザーの指示とrepoルールに従う。
-
-## 例外
-
-- 独立タスク2本以上の並列時だけ、general-purpose サブエージェントにこの手順ごと委任してよい（大量ログの文脈隔離）。
-- 相談・レビューだけ（実装なし）なら codex-consult（exec直接駆動・read-only固定）を使う。
-- resume に `--last` を使わない（並列時に他スレッドを誤爆する）。thread_id明示。
+- Task Packet、run manifest、result packetを正本とし、親会話の要約で置き換えない。
+- push、mainへのmerge、deploy、worktree削除、runtime設定・symlink変更は行わない。
+- `impl-reviewer` の既存名・入力（計画path／diff範囲／規模）・read-only評価を維持する。
+- delegateの実行時引数・adapter wire formatはこのラッパーに複製しない。変更はharnessの契約として行う。
 
 タスク: $ARGUMENTS

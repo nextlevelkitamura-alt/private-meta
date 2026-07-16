@@ -2,11 +2,20 @@
 
 # loopレジストリTurso正本化 program
 
+人間確認方針: 段階的個別承認（契約承認・branch/worktree統合順・実行検証許可・Turso migration適用・write API有効化・canary→全展開・push/本番反映・旧一覧削除の各段階で「人間ゲート」節の項目ごとに承認する。最終一括ではない）
+
 ## 目的
 
 Macで動く自作loopの定義・内部処理・希望状態・実行履歴をTursoへ一元化し、Focusmapで
 Personal OS / 仕事のloopを確認できるようにする。AIは型付きMCPから取得・更新し、一覧Markdownを
 手編集しない。実装コードはGit、実機状態はlaunchd、secretはKeychainを正とし、同じ事実を二重管理しない。
+
+## 非対象
+
+- Focusmapの既存workspace機能（space・課金・メンバー管理）の変更
+- Turso migration適用・本番反映・現行7loopへの書き込み有効化（子04の人間ゲート通過後に限る）
+- 仕事repo・Focusmapの既存loop実装（`scripts/`・plist・launchd設定）の移動（子05は `loops/` root導入のみを担当し、既存実装は動かさない）
+- secret、token、credential、agent認証情報の値をDB・MCP response・Git差分・ログへ出すこと
 
 ## 現状
 
@@ -28,7 +37,9 @@ Personal OS / 仕事のloopを確認できるようにする。AIは型付きMCP
 5. Keychain / 既存secret保管: token、credential。DB・MCP・Markdown・ログへ値を出さない。
 6. `loops-registry/AGENTS.md`: 内容をコピーせず、MCP取得・更新・人間ゲート・障害時の禁止事項だけを持つ入口。
 
-## 全体アーキテクチャ
+## 全体像・実行Wave
+
+### アーキテクチャ
 
 ```text
 AI ──型付きMCP──> Focusmap v1 API ──> Turso loop registry
@@ -42,7 +53,17 @@ Focusmap Mac Agent <──agent API── claim / observation / run event
         └─ script / plist / testsはGit側を参照
 ```
 
-## 実装順と並列条件
+### 実装順と並列条件
+
+```text
+01 共通契約とDB・API・MCP（直列クリティカルパス）
+  ↓ 契約レビューPASS
+  ├─ 02 Mac同期と既存loop移行 ──┐（並列）
+  └─ 03 Focusmap一覧UI ────────┘
+        ↓
+     04 統合・切替・旧一覧廃止（cutover）
+  05 repo-local loop標準とLoop Creator（01・02完了後、04と独立に進行可）
+```
 
 1. 01でschema、状態語彙、API response、MCP引数、人間ゲート、fixtureを固定する。ここは全レーンの直列クリティカルパス。
 2. 01の契約レビューPASS後、02 Mac同期と03 UIを別サブエージェントで並列実装する。共通型を各担当が再定義しない。
@@ -53,24 +74,45 @@ Focusmap Mac Agent <──agent API── claim / observation / run event
 ## 子計画マップ
 
 - [ ] 01 共通契約とDB・API・MCP … 実装（静的レビューPASS・実行検証待ち）
+    役割: 契約（schema・API/MCP・人間ゲート・fixtureの共通契約）
+    対象repo: projects/active/focusmap（実装）／ ~/Private loops-registry（契約文書の参照点）
+    並列: 不可 ／ レビュー: 都度（全レーンの直列クリティカルパスのため契約確定を最優先でレビュー）
+    人間ゲート: このprogramと共通契約の承認、実行検証（test/lint/build）許可
     次: 01契約commit f0361b0dを基準に02 Mac同期と03 UIを別worktreeで並列実装する
-    参照: focusmap@f0361b0d
     場所: plans/01-共通契約とDB・API・MCP.md ／ 依存: ―
+    参照: focusmap@f0361b0d
 - [ ] 02 Mac同期と既存loop移行 … 実装（静的レビューPASS・実行検証待ち）
+    役割: 実装（Mac Agent同期・既存7loop移行の観測とapply）
+    対象repo: projects/active/focusmap（Mac Agent）／ projects/active/仕事（source reference接続点のみ・実装変更なし）
+    並列: 可（03と並列実装） ／ レビュー: 都度
+    人間ゲート: 実行検証（test/lint/build）許可、Focusmap branch/worktree統合順の判断
     次: 01〜03統合branchでMac Agent・API・import preflightの実行検証許可を待つ
-    参照: focusmap@d281bec9
     場所: plans/02-Mac同期と既存loop移行.md ／ 依存: 01
+    参照: focusmap@d281bec9
 - [ ] 03 Focusmap一覧UI … 実装（静的レビューPASS・実行検証待ち）
+    役割: 実装（read-only UI・PC/モバイル表示）
+    対象repo: projects/active/focusmap
+    並列: 可（02と並列実装） ／ レビュー: 都度
+    人間ゲート: 実行検証（test/lint/build/Browser確認）許可
     次: 01〜03統合branchでtest・lint・build・Browser確認の人間許可を待つ
-    参照: focusmap@837a9bdc
     場所: plans/03-Focusmap一覧UI.md ／ 依存: 01
+    参照: focusmap@837a9bdc
 - [ ] 04 統合・切替・旧一覧廃止 … 実装（統合・専用検証PASS・Browser確認待ち）
+    役割: 統合（01-03統合・cutover・旧一覧廃止）
+    対象repo: projects/active/focusmap ／ ~/Private（旧一覧削除）／ projects/active/仕事（反映確認）
+    並列: 不可（01-03の統合後に直列で進行） ／ レビュー: 都度（評価01実施済み）
+    人間ゲート: Turso migration適用・現行7loop初期import・write API有効化・canary→全展開・push/本番反映・旧一覧削除
     次: 3001のPersonal OS説明サーバーを止める人間承認後にFocusmap UIをBrowser確認し、その後Turso migrationのdry-run判断へ進む
-    参照: focusmap@d3f29a5c
     場所: plans/04-統合・切替・旧一覧廃止.md ／ 依存: 01,02,03
+    参照: focusmap@d3f29a5c
 - [ ] 05 repo-local loop標準とLoop Creator … 実装（repo-local標準・Skill導入完了／Turso連携は04へ）
-    次: 2026-07-14のread-only baselineを参照し、Turso source reference・7loop import・切替は04の人間ゲート後に進める
+    役割: 実装（repo-local loops root標準・Global Skill `loop-creator`）
+    対象repo: ~/Private（Global Skill `loop-creator` 正本）／ projects/active/仕事・projects/active/focusmap（`loops/` root導入のみ・既存実装は移動しない）
+    並列: 可（基盤契約→repo root導入は順次） ／ レビュー: 都度
+    人間ゲート: なし（repo-local標準・Skill導入は完了済み。Turso連携・既存loop移動は04の人間ゲートに従う）
+    次: 2026-07-14のread-only baselineを参照し、Turso source reference・7loop import・切替は04の人間ゲート後に進める（01・02完了後、04の統合作業とは独立に進行可）
     場所: plans/05-repo-local-loop標準とLoop Creator.md ／ 依存: 01,02
+    参照: ―（個別実装レビュー記録は子計画内「実装レビュー」節）
 
 ## 人間ゲート
 
@@ -116,3 +158,7 @@ Focusmap Mac Agent <──agent API── claim / observation / run event
 - 現行registry: `/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/`
 - Focusmap: `/Users/kitamuranaohiro/Private/projects/active/focusmap/`
 - 仕事repo: `/Users/kitamuranaohiro/Private/projects/active/仕事/`
+
+## 終了記録
+
+archive時に必須。実行中は記入しない。

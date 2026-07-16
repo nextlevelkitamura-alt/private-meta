@@ -25,6 +25,21 @@ TYPES = "計画|実装|リサーチ|レビュー|その他"
 TYPE_DEFS = ("種別: 計画=進め方を決め文書化／実装=変更して動かす／リサーチ=調べてまとめる（何も変えない）／"
              "レビュー=評価して指摘（自分で直さない）／迷ったら その他（後で update で直すのが正常）")
 
+# 2026-07-15 子04で用意した次期Prompt Submit本文。runtime登録と注入文の有効化は
+# 人間の承認セットまで保留するため、register_prompt() からはまだ呼ばない。
+# 本文の唯一の生成元を common.py に保ち、runtime別シムへ複製しないための候補関数である。
+def plan_management_guide_candidate():
+    return (
+        "計画入口: サクッと3条件（1〜2ファイル・容易に戻せる・人間ゲート無し）が全YESでない、"
+        "または不明なら plan-management。既存計画を確認し、なければ対象repo最寄りAGENTS.mdが宣言する"
+        "計画箱へ起案する。hookはrepo・計画箱・レビュー合否・バケット遷移を決めない。\n"
+        "状態は planning→active→done→archive。指揮官がactive化し、最終評価全PASSでdone、"
+        "archiveは人間の明示確認だけで行う。容量は active=3／paused=3／done=8（planning・archiveは無制限）で、"
+        "事実確認は bucketctl check。満杯でも自動退避しない。\n"
+        "子のレビュー宣言を確認: 一括は束ねて実施し、後続が成果を直接使う子だけ都度レビュー。"
+        "finishはsession-boardの記録を閉じるだけで、archiveの承認・実行ではない。"
+    )
+
 
 def load_input():
     """stdin の JSON を返す。非対話（AIJOBS_RUN）・不正JSONは None。"""

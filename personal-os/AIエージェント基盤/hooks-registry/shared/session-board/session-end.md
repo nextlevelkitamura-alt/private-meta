@@ -22,7 +22,9 @@
 
 **人間OK →**
 
-- **計画種別のセッションは finish 前に** `plan-ops` の `program-lint.sh <program.md>` を1回流す（program計画のみ・違反があれば直してから締める）。
+- **計画種別のセッションは finish 前に** `plan-ops` の `program-lint.sh <program.md>` を1回流す（program計画のみ・違反があれば直してから締める）。計画taskの実装・レビュー完了前は `planctl sync-check` で同期を確認する。一括レビュー待ちがN件あれば、次Wave前に束ねてレビューする。
+- このセッションで計画の目的・子構成を大幅更新した場合は、`planctl rename --plan <plan.md> --date <YYYY-MM-DD> --check` を確認し、必要ならフォルダ日付を最新化してから終了する。
+- `finish`はsession-boardの記録を閉じるだけであり、計画のarchive承認・実行ではない。
 
 1. `<board> finish --key <キー> --repo <repo> --parent <目標名> --entry <成果1行>`（`--entry` は数だけ繰り返し・親名=行の目標名にする）。
    自行がボードから消え、成果が「終わったこと」の該当repo見出しに **親＋時刻・所要(+Nm)付き子** で入る

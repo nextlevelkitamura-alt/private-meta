@@ -12,7 +12,8 @@ description: 計画ライフサイクルの機械手続き（program.md子計画
 | やりたいこと | 読むworkflow | 使うscript |
 |---|---|---|
 | plan / program / 子計画の雛形を作る、既存子のマップを更新する | `workflows/scaffold-and-update.md` | `new-plan.sh` / `new-child.sh` / `progctl.sh` |
-| programを検査する、レビュー項目を節単位で確認する、planningからactiveへ昇格する | `workflows/validate-and-promote.md` | `program-lint.sh` / `check-section.sh` / `bucketctl.sh` |
+| plan / 子計画 / program の実行契約を検査する | このSkillと `references/script-map.md` | `plan-lint.sh` |
+| バケット遷移・終了記録を検証する、実装結果と評価を同期する | `references/script-map.md` | `bucketctl.sh` / `planctl.py` |
 | 自動・手動の境界、各scriptのpathとCLIを確認する | `references/script-map.md` | 6 scripts |
 
 ## 実行前に確認する正本
@@ -25,8 +26,8 @@ description: 計画ライフサイクルの機械手続き（program.md子計画
 
 1. 置き場の解決・既存planへの合流・規模判定は `plan-triage`、計画内容の判断は判断系Skillが担当する。
 2. このSkillは固定pathのscriptを呼ぶ窓口であり、`scripts/`、`templates/`、`__tests__/` を移動・改名しない。
-3. scriptの既定dry-runを先に確認し、書込み・`git mv`・commitはworkflowの条件と人間ゲートに従う。pushはしない。
-4. `program.md` の子計画マップと各plan本文がテキスト状態の正本であり、第2の台帳は作らない。
+3. `plan-lint.sh` は明示pathだけを読む。雛形直後だけは `--allow-placeholders` を使えるが、実行開始前はplaceholder無しで通す。書込み・`git mv`・commitはworkflowの条件と人間ゲートに従う。pushはしない。
+4. バケット（フォルダ）と `program.md` の子計画マップ、各plan本文が状態の正本であり、第2の台帳は作らない。run manifestはgitignore配下の実行時情報であり、状態台帳ではない。
 5. secret・token・認証値をplan、出力、commit対象へ入れない。
 
 ## 使わない場面

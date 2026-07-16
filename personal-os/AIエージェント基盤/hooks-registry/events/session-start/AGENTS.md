@@ -23,6 +23,7 @@
 
 機能の入出力・副作用・失敗時の扱いは [reconcile-and-notify.md](reconcile-and-notify.md) が正本。
 開始後のボード操作の共通ルールは `../../shared/session-board/AGENTS.md`、終了は `../session-end/AGENTS.md` を読む。
+`finish`はsession-board記録を閉じる操作だけで、計画のarchive承認・実行はしない。計画同期はplan-opsが所有する。
 
 ## 登録と変更時
 

@@ -12,4 +12,6 @@ Codexの実行本体は `../events/` に1セットだけある。このフォル
 
 `hooks.json` は内容またはパスが変わると信頼hashが変わる。`[hooks.state]` と `notify` はローカル `~/.codex/config.toml` の状態であり、repoへ移さない。
 
+子04の追加候補は`../registration-diff-04-plan-closeout.md`にのみ記録し、この`hooks.json`と`~/.codex/hooks.json`は承認セットまで変更しない。
+
 イベント内容は `../events/<イベント>/AGENTS.md`、runtime契約は `../references/codex-hooks.md` を読む。Claudeは別の登録表 `~/.claude/settings.json` を直接使うので、ここへClaude設定を混ぜない。`CLAUDE.md` は `AGENTS.md` への相対symlink。

@@ -114,22 +114,22 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
     次: 評価02全PASS(6/6)・統合branchへmerge済み(スモーク120pass)・worktree削除済み。成果は子02以降が使用
     場所: plans/01 ／ 依存: ―
     参照: task/pf01=5583899・評価01→修正01→評価02(全PASS)
-- [ ] 02  遷移統制とplanctl同期 … 修正
+- [x] 02  遷移統制とplanctl同期 … 完了
     役割: 実装（bucketctl拡張・終了区分・planctl同期・日付rename）
     対象repo: ~/Private（private-meta）
     並列: 不可 ／ レビュー: 一括（Wave4後に02・03・04を3子一括。共通契約を変える修正のみ即差し戻し）
     人間ゲート: なし（既存計画の実移動は05が所有）
-    次: 一括レビュー評価01(4PASS/2FAIL: planctl明示path・実差分照合・progress不変・rename --check・回帰テスト)の修正01を、write worker枠(最大2)が空き次第codex resumeで差し戻す
+    次: 評価04全PASS・統合branchへmerge済み(32a46d6・スモーク178pass)・worktree削除済み
     場所: plans/02 ／ 依存: 01
-    参照: task/pf02=8d7fc3a・評価01→修正01
-- [ ] 03  harness・エージェント・ゴールコマンド … 修正
+    参照: task/pf02=a2334b6・評価01→修正01→評価02→修正02→評価03→指揮官fixture追加→評価04(全PASS)
+- [x] 03  harness・エージェント・ゴールコマンド … 完了
     役割: 実装（delegate・roles・program-run）
     対象repo: ~/Private（private-meta）
     並列: 不可 ／ レビュー: 一括（Wave4後に02・03・04を3子一括。共通契約を変える修正のみ即差し戻し）
     人間ゲート: なし（worktree削除は明示cleanupのみ・露出は承認セットへ）
-    次: 一括レビュー評価01(4PASS/5FAIL: schema検証・Claudeレビュー経路・resume・実gitテスト・承認セット同期)の修正01をcodex resumeで対応中
+    次: 評価03全PASS・統合branchへmerge済み(統合修正=planctl新契約適合32a46d6込み・harnessテスト全緑)・worktree削除済み
     場所: plans/03 ／ 依存: 01, 02
-    参照: task/pf03=fec91a9・評価01→修正01
+    参照: task/pf03=0c65bfc・評価01→修正01→評価02→修正02→評価03(全PASS)
 - [x] 04  Prompt Submitとhookガード … 完了
     役割: 実装（注入更新・PreTool・plan-closeout guard）
     対象repo: ~/Private（private-meta）

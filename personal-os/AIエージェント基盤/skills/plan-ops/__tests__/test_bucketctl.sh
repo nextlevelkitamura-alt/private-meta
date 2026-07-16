@@ -134,6 +134,8 @@ cat > "$TRANS/plans/done/completed-fail-eval/評価01.md" <<'EOF'
 ## 総合判定
 FAIL
 EOF
+make_plan "$TRANS/plans/done/completed-no-eval" x
+make_record "$TRANS/plans/done/completed-no-eval" completed
 git -C "$TRANS" init -q && git -C "$TRANS" config user.name test && git -C "$TRANS" config user.email test@example.invalid
 git -C "$TRANS" add plans && git -C "$TRANS" commit -qm seed
 "$SCRIPTS/bucketctl.sh" move "$TRANS/plans/active/active-to-paused" --to paused --apply >/dev/null
@@ -155,6 +157,9 @@ assert_contains "(h) 未チェック理由を返す" "$unchecked_out" "全完了
 fail_eval_out="$($SCRIPTS/bucketctl.sh move "$TRANS/plans/done/completed-fail-eval" --to archive 2>&1)"; fail_eval_rc=$?
 assert_eq "(h) FAIL評価completed archiveは拒否" "$fail_eval_rc" "1"
 assert_contains "(h) FAIL評価理由を返す" "$fail_eval_out" "最終評価"
+no_eval_out="$($SCRIPTS/bucketctl.sh move "$TRANS/plans/done/completed-no-eval" --to archive 2>&1)"; no_eval_rc=$?
+assert_eq "(h) 最終評価なしcompleted archiveは拒否（完了条件は全チェック済み）" "$no_eval_rc" "1"
+assert_contains "(h) 最終評価なし理由を返す" "$no_eval_out" "最終評価"
 for n in 1 2 3 4; do make_plan "$TRANS/plans/paused/over-$n" ' '; done
 git -C "$TRANS" add plans/paused && git -C "$TRANS" commit -qm overflow
 overcheck="$($SCRIPTS/bucketctl.sh check "$TRANS/plans" --json 2>&1)"; overcheck_rc=$?

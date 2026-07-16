@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI運用制限の実効性監査 — 2026-07-13</title>
+<style>
+:root{--white:#fff;--paper:#f7f8fb;--ink:#19212f;--muted:#5f6879;--line:#dbe0ea;--blue:#2c3a8c;--blue-soft:#e9ecfa;--green:#1e6b4b;--green-soft:#e3f1ea;--orange:#913c25;--orange-soft:#f7e8e2;--font:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--white);color:var(--ink);font-family:var(--font);line-height:1.75}.page{max-width:920px;margin:auto;padding:42px 20px 76px}.stack{display:grid;gap:42px}.eyebrow{margin:0 0 10px;font-size:12px;letter-spacing:.13em;color:var(--muted);font-weight:700}.date{font-variant-numeric:tabular-nums}h1{font-size:clamp(29px,7vw,43px);line-height:1.18;letter-spacing:-.03em;margin:0}h2{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}.lede{max-width:66ch;color:var(--muted);font-size:16px;margin:15px 0 0}.lede b{color:var(--ink)}.slead{margin:0 0 16px;font-size:15px}.chips{display:flex;gap:8px;flex-wrap:wrap}.chips a{font-size:12px;color:#202c6e;background:var(--blue-soft);padding:5px 12px;border-radius:999px;text-decoration:none;border:1px solid transparent}.chips a:hover{border-color:var(--blue)}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.card,.box,.ditem,figure,details,.tablewrap{border:1px solid var(--line);border-radius:14px;background:var(--white)}.card{padding:17px}.card h3{font-size:14px;margin:0 0 7px}.card p,.ditem p{margin:0;font-size:13.5px;color:var(--muted)}.card b,.ditem b{color:var(--ink)}.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;line-height:1.55;vertical-align:1px}.ok{color:var(--green);background:var(--green-soft)}.warn{color:var(--orange);background:var(--orange-soft)}.info{color:#202c6e;background:var(--blue-soft)}figure{padding:17px;margin:0}svg{display:block;width:100%;height:auto}figcaption{font-size:12px;color:var(--muted);margin-top:9px}.dlist{display:grid;gap:10px}.ditem{padding:14px 16px}.dhead{font-size:14px!important;font-weight:700!important;color:var(--ink)!important;margin-bottom:5px!important}.ditem ul{font-size:13.5px;color:var(--muted);padding-left:19px;margin:7px 0 0}.ditem li{margin:3px 0}.compare{display:grid;grid-template-columns:1fr 1fr;gap:13px}.box{padding:16px}.box h3{font-size:13px;margin:0 0 9px}.box p{font-size:13.5px;color:var(--muted);margin:0}.callout{border:1px solid #d88a70;background:var(--orange-soft);border-radius:14px;padding:15px 17px}.callout h3{font-size:12px;color:var(--orange);letter-spacing:.05em;margin:0 0 3px}.callout p{margin:0;font-size:13.5px}.steps{padding:0;margin:0;list-style:none}.steps li{display:grid;grid-template-columns:27px 1fr;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line)}.steps li:last-child{border-bottom:0}.num{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--blue-soft);color:#202c6e;font-size:12px;font-weight:700;margin-top:2px}.steps h3{font-size:13.5px;margin:0}.steps p{margin:0;color:var(--muted);font-size:13px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px;min-width:620px}th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}tr:last-child td{border:0}code{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:1px 4px}details{padding:12px 16px}summary{cursor:pointer;color:#202c6e;font-size:13px;font-weight:700}details p{font-size:13px;color:var(--muted);margin:8px 0 0}.source{margin:0;padding:0;list-style:none;display:grid;gap:8px;color:var(--muted);font-size:12.5px}.source b{color:var(--ink)}.footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}@media(max-width:700px){.page{padding:28px 16px 56px}.stack{gap:34px}.cards,.compare{grid-template-columns:1fr}.lede{font-size:15px}}
+</style>
+</head>
+<body>
+<main class="page"><div class="stack">
+  <header>
+    <p class="eyebrow">AI OPERATIONS AUDIT · <span class="date">2026-07-13 JST</span></p>
+    <h1>AI運用制限の実効性監査</h1>
+    <p class="lede"><b>areaごとのactive最大3件は、規約・入口・機械ガード・hookの4層で作用しています。</b>ただし全体合計は現在4件であり、数値上限の対象は「全体」ではなく「areaごと」です。ファイル数も、配置規約はある一方で数値上限は未定義です。</p>
+  </header>
+
+  <nav class="chips" aria-label="ページ内目次">
+    <a href="#result">結論</a><a href="#flow">作用する導線</a><a href="#facts">実測</a><a href="#limits">制限の範囲</a><a href="#gaps">残る穴</a><a href="#next">改善案</a>
+  </nav>
+
+  <section id="result">
+    <h2>監査結論</h2>
+    <div class="cards">
+      <article class="card"><h3><span class="pill ok">機能中</span> WIPの通常入口</h3><p><b>planningからactiveへは<code>bucketctl</code>が数を数える。</b>3件以上なら昇格を拒否するテストも通過した。</p></article>
+      <article class="card"><h3><span class="pill ok">機能中</span> AIへの注意喚起</h3><p><b>最初の依頼で計画ルートを注入。</b>以後のプロンプトでも計画参照とズレ修正を短く促す。</p></article>
+      <article class="card"><h3><span class="pill warn">要裁定</span> 「3件」の意味</h3><p><b>現在の規約は1 areaあたり3件。</b>全area合計3件ではないため、合計は4件になっている。</p></article>
+    </div>
+  </section>
+
+  <section id="flow">
+    <h2>制限が作用する導線</h2>
+    <p class="slead">「正本に書く」だけで終わらず、起案・昇格・プロンプト・runtime露出まで連結されています。</p>
+    <figure>
+      <svg viewBox="0 0 820 260" role="img" aria-label="依頼から計画の状態管理と実行までの流れ">
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#5f6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+        <rect x="26" y="104" width="124" height="52" rx="11" fill="#e9ecfa" stroke="#2c3a8c"/><text x="88" y="127" text-anchor="middle" font-family="system-ui" font-size="14" fill="#202c6e">依頼</text><text x="88" y="145" text-anchor="middle" font-family="system-ui" font-size="11" fill="#202c6e">hookが手順を注入</text>
+        <line x1="150" y1="130" x2="209" y2="130" stroke="#5f6879" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="212" y="104" width="148" height="52" rx="11" fill="#fff" stroke="#dbe0ea"/><text x="286" y="127" text-anchor="middle" font-family="system-ui" font-size="14" fill="#19212f">planning</text><text x="286" y="145" text-anchor="middle" font-family="system-ui" font-size="11" fill="#5f6879">ライト以上の起案先</text>
+        <line x1="360" y1="130" x2="419" y2="130" stroke="#5f6879" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="422" y="87" width="180" height="86" rx="11" fill="#e3f1ea" stroke="#1e6b4b"/><text x="512" y="116" text-anchor="middle" font-family="system-ui" font-size="14" font-weight="600" fill="#1e5a40">bucketctl</text><text x="512" y="136" text-anchor="middle" font-family="system-ui" font-size="11" fill="#1e5a40">active数を確認</text><text x="512" y="153" text-anchor="middle" font-family="system-ui" font-size="11" fill="#1e5a40">3件以上は拒否</text>
+        <line x1="602" y1="130" x2="661" y2="130" stroke="#5f6879" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="664" y="104" width="130" height="52" rx="11" fill="#fff" stroke="#dbe0ea"/><text x="729" y="127" text-anchor="middle" font-family="system-ui" font-size="14" fill="#19212f">active</text><text x="729" y="145" text-anchor="middle" font-family="system-ui" font-size="11" fill="#5f6879">areaごと最大3件</text>
+        <path d="M512 173 V220 H286 V165" fill="none" stroke="#5f6879" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrow)"/><text x="399" y="239" text-anchor="middle" font-family="system-ui" font-size="11" fill="#5f6879">計画の正本: areas/AGENTS.md ／ runtimeはsymlink露出</text>
+      </svg>
+      <figcaption>赤い強制点は「昇格時の<code>bucketctl</code>」。hookは作業開始時に導線を思い出させる層で、移動自体を拒否する層ではありません。</figcaption>
+    </figure>
+  </section>
+
+  <section id="facts">
+    <h2>実測した現在状態</h2>
+    <p class="slead">調査日時点のactiveは、area単位ではすべて上限内です。</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>area</th><th>active件数</th><th>上限</th><th>判定</th></tr></thead>
+      <tbody>
+        <tr><td>ai運用</td><td>2</td><td>3</td><td><span class="pill ok">上限内</span></td></tr>
+        <tr><td>work</td><td>2</td><td>3</td><td><span class="pill ok">上限内</span></td></tr>
+        <tr><td>health</td><td>0</td><td>3</td><td><span class="pill ok">上限内</span></td></tr>
+        <tr><td>money</td><td>0</td><td>3</td><td><span class="pill ok">上限内</span></td></tr>
+        <tr><td>全area合計</td><td>4</td><td>未定義</td><td><span class="pill warn">全体上限ではない</span></td></tr>
+      </tbody>
+    </table></div>
+    <details><summary>テストとruntime露出の確認結果</summary><p><b>192 PASS / 0 FAIL。</b> <code>bucketctl</code> の昇格・上限拒否等が20件、session-boardの計画注入・shim・永続化等が172件。さらに <code>~/.codex/AGENTS.md</code>、<code>~/.claude/CLAUDE.md</code>、<code>~/.codex/hooks.json</code> は基盤正本へのsymlinkとして存在し、このセッションでもCodexの計画ガイド注入を実測しました。</p></details>
+  </section>
+
+  <section id="limits">
+    <h2>「制限されているもの」と「されていないもの」</h2>
+    <p class="slead">いまの設計は、置き場所と状態の散らばりを強く抑えます。一方、すべてのファイル数を数えて止める設計ではありません。</p>
+    <div class="compare">
+      <article class="box"><h3><span class="pill ok">明確に制限済み</span></h3><p><b>active:</b> 1 areaあたり最大3件。<br><b>昇格:</b> planningからactiveへ。<br><b>正本:</b> 状態はバケット、本文はplan.md/program.md。<br><b>配置:</b> 考えはidentity/方針、資料はreferences、恒久知識は知識へ。</p></article>
+      <article class="box"><h3><span class="pill warn">数値上限が未定義</span></h3><p><b>全area合計のactive数。</b><br><b>planning・pausedの件数。</b><br><b>references内の資料数。</b><br><b>programの子計画数。</b><br>「読みやすい時だけ追加」は人の判断で、機械判定できません。</p></article>
+    </div>
+  </section>
+
+  <section id="gaps">
+    <h2>今のままでは防げない穴</h2>
+    <p class="slead">ここは不具合ではなく、現在の設計が意図的に人間・指揮官へ残している判断領域です。</p>
+    <div class="dlist">
+      <article class="ditem"><p class="dhead"><span class="pill warn">重要</span> 全体WIPの上限はない</p><p><b>「3件」が全体上限なら未達です。</b> 現状はai運用とworkが各2件で、合計4件。per-area WIPとしては正しく動いています。</p></article>
+      <article class="ditem"><p class="dhead"><span class="pill warn">重要</span> 直接の移動は技術的に可能</p><p><b><code>bucketctl</code>は使った昇格を確実に守るが、直接<code>git mv</code>までは遮断しません。</b> 設計上、何をpaused/archiveへ出すかを自動で決めないためです。</p></article>
+      <article class="ditem"><p class="dhead"><span class="pill info">確認済み</span> hookは注意喚起・記録の層</p><p><b>UserPromptSubmitは正しい置き場とレビュー条件を注入します。</b> ただしhook自身が計画作成・バケット移動を禁止するものではありません。</p></article>
+    </div>
+  </section>
+
+  <section id="next">
+    <h2>より良くする次の4手</h2>
+    <p class="slead">先に上限の意味を決め、その後に見える化と機械検査を足す順が安全です。</p>
+    <ol class="steps">
+      <li><span class="num">1</span><div><h3>「3件」の対象を裁定する</h3><p><b>推奨:</b> まずはper-area 3を維持。全体3に変えるなら、現在4件から何を止めるかを人間が先に選ぶ。</p></div></li>
+      <li><span class="num">2</span><div><h3>読み取り専用のWIP監査を定期化する</h3><p>全areaのactive数、symlink切れ、想定外の計画直下ファイルを1枚で報告する。違反を自動修正しない。</p></div></li>
+      <li><span class="num">3</span><div><h3>ファイル上限を運用契約へ明文化する</h3><p><b>候補:</b> 直下はplan.md/program.mdと派生HTMLのみ、独立した子は最大3件、資料はreferencesへ。それ以上は別計画へ分割。</p></div></li>
+      <li><span class="num">4</span><div><h3>昇格ルールの文言を一本化する</h3><p><b>planning→activeはbucketctlのみ。</b> 他の状態遷移は人間判断のgit mv、とAGENTS・skill・手順で同じ表現に揃える。</p></div></li>
+    </ol>
+    <div class="callout" style="margin-top:16px"><h3>実装前に必要な人間判断</h3><p>全体上限に変えるか、per-area上限を維持するか。ここを決めずに強制hookや自動退避を入れると、正しい進行中の計画を止めるリスクがあります。</p></div>
+  </section>
+
+  <section>
+    <h2>監査根拠</h2>
+    <ul class="source">
+      <li><b>計画状態・WIP正本</b> — <code>personal-os/my-brain/areas/AGENTS.md</code> §3・§4・§6</li>
+      <li><b>昇格ガード</b> — <code>skills/plan-ops/SKILL.md</code> と <code>scripts/bucketctl.sh</code></li>
+      <li><b>入口導線</b> — <code>skills/kickoff/SKILL.md</code>、<code>skills/plan-triage/SKILL.md</code></li>
+      <li><b>prompt/hook共通実装</b> — <code>hooks-registry/hooks/session-board/common.py</code></li>
+      <li><b>runtime露出</b> — Codex/Claude adapter AGENTS、<code>~/.codex/hooks.json</code> とglobal AGENTSのsymlink</li>
+    </ul>
+  </section>
+  <p class="footer">このHTMLは表示用の派生物です。監査内容の正本は同名のMarkdownにあります。Cloudflare公開時は一時URLであり、Macが稼働中の間だけ有効です。</p>
+</div></main>
+</body>
+</html>

@@ -4,36 +4,95 @@
       {
         "matcher": "startup|resume",
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/session-start/reconcile-and-notify.py --runtime codex", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/session-start/reconcile-and-notify.py --runtime codex",
+            "timeout": 10
+          }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/prompt-register/register-and-guide.py --runtime codex", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/prompt-register/register-and-guide.py --runtime codex",
+            "timeout": 10
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/session-end/mark-wait.py", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/session-end/mark-wait.py",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/session-end/guard-plan-closeout.py --runtime codex",
+            "timeout": 10
+          }
         ]
       }
     ],
     "SubagentStart": [
       {
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/subagent/sync-subagent-status.py", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/subagent/sync-subagent-status.py",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/subagent/verify-plan-worker.py --runtime codex",
+            "timeout": 10
+          }
         ]
       }
     ],
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/subagent/sync-subagent-status.py", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/subagent/sync-subagent-status.py",
+            "timeout": 10
+          }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/subagent/verify-plan-worker.py --runtime codex",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/pre-tool-use/guard-plan-bucket-move.py --runtime codex",
+            "timeout": 10
+          }
+        ],
+        "matcher": "^Bash$"
       }
     ]
   }

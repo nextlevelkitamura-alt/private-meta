@@ -25,9 +25,9 @@ TYPES = "計画|実装|リサーチ|レビュー|その他"
 TYPE_DEFS = ("種別: 計画=進め方を決め文書化／実装=変更して動かす／リサーチ=調べてまとめる（何も変えない）／"
              "レビュー=評価して指摘（自分で直さない）／迷ったら その他（後で update で直すのが正常）")
 
-# 2026-07-15 子04で用意した次期Prompt Submit本文。runtime登録と注入文の有効化は
-# 人間の承認セットまで保留するため、register_prompt() からはまだ呼ばない。
-# 本文の唯一の生成元を common.py に保ち、runtime別シムへ複製しないための候補関数である。
+# 2026-07-15 子04で用意したPrompt Submit本文。2026-07-16の承認セット承認により有効化し、
+# _first_guide がこの本文を初回注入へ含める（ミラーはレビュー宣言の1行のみ）。
+# 本文の唯一の生成元を common.py に保ち、runtime別シムへ複製しない。
 def plan_management_guide_candidate():
     return (
         "計画入口: サクッと3条件（1〜2ファイル・容易に戻せる・人間ゲート無し）が全YESでない、"
@@ -196,6 +196,7 @@ def _first_guide(key, repo, runtime):
         "（SubagentStart/Stop 受け口の登録環境では sub-start/sub-end が体数ごと自動増減・手動不要）。"
         "完了は人間確認後に finish。開始フローの正本: "
         + os.path.join(os.path.dirname(os.path.dirname(CORE_DIR)), "events", "session-start", "AGENTS.md"),
+        plan_management_guide_candidate(),
     ]
     return "\n".join(lines)
 
@@ -220,6 +221,9 @@ def _mirror(key, row):
     elif plan == PLACEHOLDER:
         lines.append("計画:? → 拠り所（実装・レビュー）/置き先（計画）を update --plan で。"
                      "①1〜2ファイル②容易に戻せる③人間ゲート無し 全YESなら --plan なし。")
+    if row.get("type") in ("計画", "実装") and plan not in (PLACEHOLDER, "なし"):
+        lines.append("レビュー宣言を確認: 一括の子は束ねてまとめて実施、後続が成果を直接使う子だけ都度。"
+                     "同期は planctl・遷移は bucketctl（finish≠archive承認）。")
     return "\n".join(lines)
 
 

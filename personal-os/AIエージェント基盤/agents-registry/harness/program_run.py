@@ -112,7 +112,10 @@ def _field(lines: list[str], label: str) -> str:
 
 
 def _section(lines: list[str], heading: str) -> list[str]:
-    start = next((i + 1 for i, line in enumerate(lines) if line.rstrip() == f"## {heading}"), None)
+    # 前方一致: 正本テンプレは見出し直後に注記が続く（例:「## 子計画マップ   ※ …」）。
+    # _planops_map.find_section() と同じ解釈に揃える（bareな見出しも引き続き一致する）。
+    prefix = f"## {heading}"
+    start = next((i + 1 for i, line in enumerate(lines) if line.rstrip().startswith(prefix)), None)
     if start is None:
         return []
     result: list[str] = []

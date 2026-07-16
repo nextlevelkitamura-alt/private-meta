@@ -119,7 +119,8 @@ class ProgramRunTest(unittest.TestCase):
                 encoding="utf-8",
             )
         program = self.program_dir / "program.md"
-        program.write_text("# 合成program\n\n## 子計画マップ\n\n" + "\n".join(blocks), encoding="utf-8")
+        # 見出しは正本テンプレ（skills/plan-ops/templates/program.md）と同じ注記付き形式にする。
+        program.write_text("# 合成program\n\n## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新\n\n" + "\n".join(blocks), encoding="utf-8")
         return program
 
     def runner(self, program: Path, ops: FakeOperations, run_id: str = "fixture") -> program_run.ProgramRunner:
@@ -327,7 +328,8 @@ print(json.dumps({'result': body}, ensure_ascii=False))
                 encoding="utf-8",
             )
         program = root / "program.md"
-        program.write_text("# 合成program\n\n## 子計画マップ\n\n" + "\n".join(blocks), encoding="utf-8")
+        # 見出しは正本テンプレ（skills/plan-ops/templates/program.md）と同じ注記付き形式にする。
+        program.write_text("# 合成program\n\n## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新\n\n" + "\n".join(blocks), encoding="utf-8")
         self.git("add", "plans")
         self.git("commit", "-m", "合成計画")
         return program

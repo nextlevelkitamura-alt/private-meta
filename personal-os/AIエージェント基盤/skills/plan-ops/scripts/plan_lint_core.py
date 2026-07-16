@@ -4,8 +4,10 @@ import argparse
 import os
 import re
 import sys
+from pathlib import Path
 
 from _planops_map import find_blocks, find_field_line, find_section, read_lines
+import bucketctl_core
 
 PLAN_SECTIONS = ["目的", "非対象", "現状", "実行契約", "方針", "完了条件"]
 CONTRACT_FIELDS = [
@@ -74,6 +76,9 @@ def lint_plan(path, lines, allow_placeholders, out):
         for idx, line in enumerate(lines, 1):
             if PLACEHOLDER_RE.search(line):
                 report(path, idx, "placeholderが残っている", out)
+    if Path(path).parent.parent.name == "archive":
+        for error in bucketctl_core.archive_errors(Path(path).parent):
+            report(path, 1, f"archive lint: {error}", out)
 
 
 def map_value(lines, block, label):

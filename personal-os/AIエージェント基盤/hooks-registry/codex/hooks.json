@@ -4,35 +4,35 @@
       {
         "matcher": "startup|resume",
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/session-start/session-board-session-start.py", "timeout": 10 }
+          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/session-start/reconcile-and-notify.py --runtime codex", "timeout": 10 }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/prompt-register/session-board-prompt-register.py", "timeout": 10 }
+          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/prompt-register/register-and-guide.py --runtime codex", "timeout": 10 }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/session-end/session-board-session-end.py", "timeout": 10 }
+          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/session-end/mark-wait.py", "timeout": 10 }
         ]
       }
     ],
     "SubagentStart": [
       {
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/subagent/session-board-subagent.py", "timeout": 10 }
+          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/subagent/sync-subagent-status.py", "timeout": 10 }
         ]
       }
     ],
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/subagent/session-board-subagent.py", "timeout": 10 }
+          { "type": "command", "command": "/Users/kitamuranaohiro/.codex/agent-hooks/events/subagent/sync-subagent-status.py", "timeout": 10 }
         ]
       }
     ]

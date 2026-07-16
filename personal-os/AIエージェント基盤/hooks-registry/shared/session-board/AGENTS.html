@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>session-board — 共通エンジン</title>
+  <style>
+    :root { color:#1f2937; background:#fff; font-family:-apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; }
+    body { max-width:980px; margin:0 auto; padding:52px 28px 80px; line-height:1.65; background:#fff; } h1{font-size:34px;margin:0 0 8px;} h2{font-size:19px;margin:38px 0 14px;} .lead{font-size:18px;color:#475569}.note{font-size:14px;color:#64748b}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{border:1px solid #dbe4ee;background:#f8fbff;border-radius:12px;padding:16px}.card b{color:#0f4c81} code{color:#0f4c81;background:#edf6ff;padding:2px 5px;border-radius:4px}.states{display:flex;gap:10px;flex-wrap:wrap}.state{border:1px solid #dbe4ee;background:#fff;border-radius:20px;padding:6px 11px}@media(max-width:620px){body{padding:32px 18px}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <p class="note">正本: AGENTS.md / このHTMLは人間向け表示のみ</p><h1>session-board の共通エンジン</h1>
+  <p class="lead">イベント本体が共通で呼ぶ、状態・デイリー・CLIの正本。</p>
+  <h2>役割分担</h2><div class="grid"><div class="card"><b>common.py</b><br>状態遷移と注入文。イベント本体はここを呼ぶ。</div><div class="card"><b>board.py</b><br>CLI調停。Markdown確定後にTursoへベストエフォート送信。</div><div class="card"><b>md/</b><br>デイリーの永続化、ロック、原子的置換。</div><div class="card"><b>turso/</b><br>DBミラーと失敗時spool。Markdownを直接触らない。</div></div>
+  <h2>状態は3つだけ</h2><div class="states"><span class="state">🟢 動作中</span><span class="state">⏸ 停止・確認待ち</span><span class="state">🔵 サブ稼働中</span></div>
+  <p>イベント本体は <code>../../events/</code>、登録表はClaudeの <code>~/.claude/settings.json</code> とCodexの <code>../../codex/hooks.json</code> に分かれる。開始の正本は <code>../../events/session-start/AGENTS.md</code>、終了時の人間向け手順は <code>session-end.md</code> を見る。</p>
+</body>
+</html>

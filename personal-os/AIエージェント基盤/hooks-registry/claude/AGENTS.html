@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claude hooks — 直接登録</title>
+  <style>
+    :root { color:#1f2937; background:#fff; font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif; } *{box-sizing:border-box} body{max-width:980px;margin:0 auto;padding:52px 28px 80px;line-height:1.65;background:#fff} h1{font-size:34px;margin:0 0 8px;letter-spacing:-.03em} h2{font-size:20px;margin:40px 0 10px}.lead{font-size:18px;color:#475569}.note{font-size:14px;color:#64748b}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{border:1px solid #dbe4ee;border-radius:13px;padding:16px;background:#f8fbff}.card b{display:block;color:#0f4c81;margin-bottom:4px}.callout{border-left:4px solid #eab308;background:#fffbeb;padding:14px 16px;color:#5b4a13}.flow{display:grid;grid-template-columns:1fr 54px 1fr;align-items:center;gap:12px}.box{border:1px solid #bdd6ea;border-radius:13px;padding:18px;background:#fff}.arrow{text-align:center;color:#53758f;font-size:28px}table{width:100%;border-collapse:collapse;border:1px solid #dbe4ee;background:#fff}th,td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #e7edf4}th{background:#eff6ff;color:#1e3a5f}tr:last-child td{border-bottom:0}code{color:#0f4c81;background:#edf6ff;border-radius:4px;padding:2px 5px}@media(max-width:680px){body{padding:32px 18px}.cards,.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}}
+  </style>
+</head>
+<body>
+  <p class="note">正本: AGENTS.md / このHTMLは人間向けの表示だけを担う</p>
+  <h1>Claude hooks は settings.json に直接登録する</h1>
+  <p class="lead">repoには共通の実行本体を置き、Claude固有の登録表だけはユーザー設定の <code>hooks</code> 項目を使います。</p>
+
+  <h2>役割を3つに分ける</h2>
+  <p>このフォルダは設定ファイルのコピー置き場ではなく、登録先を説明する入口です。</p>
+  <div class="cards">
+    <div class="card"><b>events/</b>runtimeが実行する共通Python。Claude専用のPythonコピーは置かない。</div>
+    <div class="card"><b>settings.json の hooks</b>Claudeのグローバル登録表。保存後に反映され、trustは不要。</div>
+    <div class="card"><b>claude/</b>この登録規則とイベント対応を説明するAGENTS.mdだけを置く。</div>
+  </div>
+
+  <h2>設定から共通実装へ直接つなぐ</h2>
+  <p><code>~/.claude/agent-hooks</code> はhooks-registry全体へのsymlinkなので、登録は共通のイベントPythonを直接指せます。</p>
+  <div class="flow">
+    <div class="box"><b>~/.claude/settings.json</b><br><code>hooks</code> 項目に5イベントを登録</div>
+    <div class="arrow">→</div>
+    <div class="box"><b>~/.claude/agent-hooks/events/…</b><br>共通Python本体を <code>--runtime claude</code> 付きで実行</div>
+  </div>
+
+  <h2>現在の5イベント</h2>
+  <table>
+    <thead><tr><th>イベント</th><th>実行本体</th></tr></thead>
+    <tbody>
+      <tr><td>SessionStart</td><td>reconcile-and-notify.py</td></tr>
+      <tr><td>UserPromptSubmit</td><td>register-and-guide.py</td></tr>
+      <tr><td>Stop</td><td>mark-wait.py</td></tr>
+      <tr><td>SubagentStart</td><td>sync-subagent-status.py</td></tr>
+      <tr><td>SubagentStop</td><td>sync-subagent-status.py</td></tr>
+    </tbody>
+  </table>
+
+  <h2>settings全体をrepoへ置かない理由</h2>
+  <p>Claudeのsettingsにはhooks以外の設定も同居します。hooksだけを別ファイルへincludeする仕組みは使わず、必要な時に <code>hooks</code> 項目だけを直接更新します。</p>
+  <div class="callout"><b>安全境界:</b> settings全体をsymlinkにすると、Claudeの書き戻しがrepoへ流入し得ます。model・permissions・envなどの設定値をrepoや説明書へコピーしません。</div>
+</body>
+</html>

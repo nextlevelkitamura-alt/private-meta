@@ -105,7 +105,13 @@ def contract_value(plan, label):
 
 
 def range_items(value):
-    return [item.strip().rstrip("/") for item in re.split(r"[,、]", value) if item.strip() and item.strip() not in {"なし", "該当なし"}]
+    # program_run.py::_contract() と同じ規則: backtick付きpathがあれば区切り文字に関係なく
+    # backtickの中身だけを項目にする（program_run.pyのtemplateはbacktick・`・`混在が標準形）。
+    # backtickが無い場合だけ、,／、／・ 区切り＋「なし」「該当なし」等の注記語除外へフォールバックする。
+    backticked = re.findall(r"`([^`]+)`", value)
+    if backticked:
+        return list(dict.fromkeys(backticked))
+    return list(dict.fromkeys(item.strip().rstrip("/") for item in re.split(r"[,、・]", value) if item.strip() and item.strip() not in {"なし", "該当なし"}))
 
 
 def matches_range(path, item):

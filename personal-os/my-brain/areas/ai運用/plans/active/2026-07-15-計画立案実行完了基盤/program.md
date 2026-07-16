@@ -146,12 +146,12 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
     次: 評価02全PASS(監査67件網羅増補c8edeee+pilot)。候補は承認セットへ集約済み・統合branchへmerge済み
     場所: plans/05 ／ 依存: 01, 02, 04
     参照: ―
-- [ ] 06  E2Eと承認セット … 計画
+- [x] 06  E2Eと承認セット … 完了
     役割: 統合（E2E 6系統・一括レビュー消化・承認セット整形）
     対象repo: ~/Private（private-meta）
     並列: 不可 ／ レビュー: 都度（この子自体が最終の統合レビュー。05の一括もここで消化）
     人間ゲート: なし（承認セットの提示まで。適用は承認後）
-    次: program-run経由のE2E・05の一括レビュー・全lintを通し、承認セット1枚を人間の最終一括確認へ上げる
+    次: 評価01全PASS(E2E6系統・承認セット提示→2026-07-16人間承認「全部OK」→①③⑤適用済み)。残=Codex再trust(人間)・②是正の個別裁定
     場所: plans/06 ／ 依存: 01, 02, 03, 04, 05
     参照: ―
 
@@ -171,20 +171,20 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
 
 ## 完了条件（レビュー項目）
 
-- [ ] `active → done` が「実装済みかつ最終評価mdが全PASS」でのみ進み、`done → archive` は人間の明示確認と終了記録がある時だけ進むことを、規約・CLIテストで確認できる。`planning/active/paused → archive` は非completedの終了区分＋終了記録＋人間確認がある時だけ通る。
-- [ ] `archive` 配下の計画に終了区分・理由・人間確認が必ず残り、conflict/merged/cancelled/supersededの計画をcompletedとして偽装していない。archive lintがこれを機械検査する。
-- [ ] 各 `plans/` root で `active≤3`、`paused≤3`、`done≤8` を移動先ごとに強制し、`planning` と `archive` は上限なしである。超過済みの既存バケットは可視化・流入拒否するが、自動退避しない。
-- [ ] 新規のライト以上の計画が、実行契約を持つ新テンプレートで作成され、plan lintが必須項目・placeholder残存・親backlink不整合・並列宣言のレーン担当未記載を検出する。program子数の目安（基本6〜7・大改修のみ10前後）・計画フォルダ日付の最新化・**計画合意ゲート（explain図解の提示→相違なしの明示→実行開始）**が規約に記載されている。
-- [ ] result packetと評価MDから、完了条件チェックボックス・実装結果・Programマップを `planctl` で同期でき、未評価・対象外・文言不一致を自動PASSにしない。計画の大幅更新時に `rename` サブコマンドで日付最新化と参照追従が機械的にでき、hookが陳腐化（大幅更新なのに日付が古い）を検知して案内する。
-- [ ] **`program-run`（ゴールコマンド）が、起動前検査（lint全緑・並列子のレーン担当記載）を通過した計画だけを走らせ、合成programでWave順の 委譲→実装→レビュー→同期 を人間の介在なしに完走し、危険操作を実行せず承認セットへ蓄積し、完走後に統合評価＋承認セットを1回で人間へ提示できる。**
-- [ ] **レビュー運用が宣言どおり動く: 01は都度、02・03・04はWave 4後の3子一括、05はE2E時。一括待ちの子をStop guardが止めず、共通契約を変える修正だけが即差し戻しになる。**
-- [ ] workerは親会話を知らなくても、計画本文とrun manifestだけで作業でき、実装agent定義に固定worktree・branch・Program固有背景が無い。write laneごとに明示baseからtask-scoped worktreeを作れる。
-- [ ] OrcaなしでClaude→Codex委譲が動き、既存 `/codex-impl` は互換を維持する。Codex→Claudeは実機CLI仕様の確認後だけ有効化され、未確認フラグを決め打ちしていない。
-- [ ] Stop Hookは計画を直接編集せず、run manifestが `review_passed` かつ未同期の時だけ継続を要求する。SubagentStopはwrite workerのresult packet欠落を検出する。manifest不在時は通す。
-- [ ] UserPromptSubmit の初回ガイドとミラーが、planning起案・active実行・done待機・archive人間確認・バケット上限・レビュー方式（一括/都度）を、過剰な本文複製なしに案内する。session-board はセッション状態の所有者のままで、`finish` が計画archiveの承認・実行にならない。
-- [ ] 既存計画の監査結果と是正候補・identity/知識の移動候補が承認セットに揃い、承認なしの一括移動・削除をしていない。
-- [ ] 新hookのruntime登録・settings変更・symlink・Codex再trust・計画フォルダの承認なき移動改名は行われず、承認後の適用時に既存5イベント＋追加イベントのruntime別E2EとCodex再trustを一度だけ行う。
-- [ ] 変更対象のテスト・plan lint・program-lint・archive lint・E2E 6系統（単発plan／2子Program／conflict archive／completed archive／Stop guard／**repo-local: Private以外の合成repoのplans/での一巡**）が合成データで通り、実Turso・実secret・実Dailyを触っていない。既存の未コミット変更（hooks-registry再編差分）を巻き込まず、各Waveが対象path限定の別commitになっている。
+- [x] `active → done` が「実装済みかつ最終評価mdが全PASS」でのみ進み、`done → archive` は人間の明示確認と終了記録がある時だけ進むことを、規約・CLIテストで確認できる。`planning/active/paused → archive` は非completedの終了区分＋終了記録＋人間確認がある時だけ通る。
+- [x] `archive` 配下の計画に終了区分・理由・人間確認が必ず残り、conflict/merged/cancelled/supersededの計画をcompletedとして偽装していない。archive lintがこれを機械検査する。
+- [x] 各 `plans/` root で `active≤3`、`paused≤3`、`done≤8` を移動先ごとに強制し、`planning` と `archive` は上限なしである。超過済みの既存バケットは可視化・流入拒否するが、自動退避しない。
+- [x] 新規のライト以上の計画が、実行契約を持つ新テンプレートで作成され、plan lintが必須項目・placeholder残存・親backlink不整合・並列宣言のレーン担当未記載を検出する。program子数の目安（基本6〜7・大改修のみ10前後）・計画フォルダ日付の最新化・**計画合意ゲート（explain図解の提示→相違なしの明示→実行開始）**が規約に記載されている。
+- [x] result packetと評価MDから、完了条件チェックボックス・実装結果・Programマップを `planctl` で同期でき、未評価・対象外・文言不一致を自動PASSにしない。計画の大幅更新時に `rename` サブコマンドで日付最新化と参照追従が機械的にでき、hookが陳腐化（大幅更新なのに日付が古い）を検知して案内する。
+- [x] **`program-run`（ゴールコマンド）が、起動前検査（lint全緑・並列子のレーン担当記載）を通過した計画だけを走らせ、合成programでWave順の 委譲→実装→レビュー→同期 を人間の介在なしに完走し、危険操作を実行せず承認セットへ蓄積し、完走後に統合評価＋承認セットを1回で人間へ提示できる。**
+- [x] **レビュー運用が宣言どおり動く: 01は都度、02・03・04はWave 4後の3子一括、05はE2E時。一括待ちの子をStop guardが止めず、共通契約を変える修正だけが即差し戻しになる。**
+- [x] workerは親会話を知らなくても、計画本文とrun manifestだけで作業でき、実装agent定義に固定worktree・branch・Program固有背景が無い。write laneごとに明示baseからtask-scoped worktreeを作れる。
+- [x] OrcaなしでClaude→Codex委譲が動き、既存 `/codex-impl` は互換を維持する。Codex→Claudeは実機CLI仕様の確認後だけ有効化され、未確認フラグを決め打ちしていない。
+- [x] Stop Hookは計画を直接編集せず、run manifestが `review_passed` かつ未同期の時だけ継続を要求する。SubagentStopはwrite workerのresult packet欠落を検出する。manifest不在時は通す。
+- [x] UserPromptSubmit の初回ガイドとミラーが、planning起案・active実行・done待機・archive人間確認・バケット上限・レビュー方式（一括/都度）を、過剰な本文複製なしに案内する。session-board はセッション状態の所有者のままで、`finish` が計画archiveの承認・実行にならない。
+- [x] 既存計画の監査結果と是正候補・identity/知識の移動候補が承認セットに揃い、承認なしの一括移動・削除をしていない。
+- [x] 新hookのruntime登録・settings変更・symlink・Codex再trust・計画フォルダの承認なき移動改名は行われず、承認後の適用時に既存5イベント＋追加イベントのruntime別E2EとCodex再trustを一度だけ行う。
+- [x] 変更対象のテスト・plan lint・program-lint・archive lint・E2E 6系統（単発plan／2子Program／conflict archive／completed archive／Stop guard／**repo-local: Private以外の合成repoのplans/での一巡**）が合成データで通り、実Turso・実secret・実Dailyを触っていない。既存の未コミット変更（hooks-registry再編差分）を巻き込まず、各Waveが対象path限定の別commitになっている。
 
 ## 関連
 
@@ -201,3 +201,8 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
 ## 終了記録
 
 archive時に終了区分・人間確認とともに追記する（テンプレ: plan-ops `templates/終了記録.md`）。
+
+## 実装結果（program統合・2026-07-16）
+
+- 全6子が最終評価全PASSで完走。E2E 6系統PASS・全suite緑(main HEAD)・承認セット提示→人間承認「全部OK」。適用済み: hook4本登録+注入文有効化(①)・identity.md削除+追従(③)・main反映merge c1da7b9(⑤)。引き継ぎ: 実repo展開=移植program(④)・既存計画の是正=人間の個別裁定後にbucketctlで順次(②)。残る人間操作: Codex /hooks 再trust。
+- 本program自身のdone移動は、doneバケットが容量超過(18>8)のため新ゲートが正しく拒否する状態。②の是正でdoneを排水後に active→done→(終了記録+確認)→archive を実施する。

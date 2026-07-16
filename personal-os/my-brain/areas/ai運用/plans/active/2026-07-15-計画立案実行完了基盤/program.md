@@ -143,7 +143,7 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
     対象repo: ~/Private（private-meta）
     並列: 不可 ／ レビュー: 一括（Wave6のE2E・統合評価と合わせて消化）
     人間ゲート: バケット移動・identity削除・知識/移動は実行せず承認セットへ（適用は承認後）
-    次: A=監査完了(references/2026-07-15-子05A-既存計画監査.md)・B=pilot実装中(task/pf05b・sonnet5・base 32a46d6)
+    次: A=監査完了・B=pilot完了(task/pf05b=ebf8f43・6commit・lint緑・承認セット.md新設)。一括レビュー実行中(sonnet5)・消化はWave6
     場所: plans/05 ／ 依存: 01, 02, 04
     参照: ―
 - [ ] 06  E2Eと承認セット … 計画

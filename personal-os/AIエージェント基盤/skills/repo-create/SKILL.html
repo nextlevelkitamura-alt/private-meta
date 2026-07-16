@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>repo-create — Skill説明書</title>
+<style>
+  :root{--ground:#f1f3f7;--surface:#fff;--soft:#f7f8fb;--ink:#172033;--muted:#5b6679;--line:#d9dfeb;--accent:#315fbd;--accent-soft:#edf2ff;--go:#16865d;--go-soft:#e5f6ee;--warn:#b75a12;--warn-soft:#fff2da;--danger:#b83246;--danger-soft:#fdebef;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono",Menlo,monospace}
+  *{box-sizing:border-box} html{color-scheme:light} body{margin:0;padding:40px 20px 72px;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased} .wrap{max-width:900px;margin:auto;display:flex;flex-direction:column;gap:34px}
+  h1{margin:0;font-size:30px;line-height:1.2} h2{margin:0 0 13px;font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)} p{margin:0 0 10px;font-size:14px} ul{margin:0;padding-left:22px;font-size:14px} li{margin-bottom:6px} code{font-family:var(--mono);font-size:12.5px;background:var(--soft);padding:2px 6px;border-radius:6px}.eyebrow{margin:0 0 8px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}.lede{max-width:68ch;margin:12px 0 0;color:var(--muted);font-size:15.5px}
+  figure,.card,.ref,.rule{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:17px 19px}.tree{margin:0;white-space:pre;overflow-x:auto;font:12.5px/1.9 var(--mono)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card h3,.ref h3{margin:0 0 7px;font-size:14px}.steps{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px;font-size:12px}.step{padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}.gate{border-color:#d9a46a;background:var(--warn-soft);color:#875000;font-weight:700}.arr{color:var(--muted)}.ref{margin-bottom:10px}.ref ul{font-size:13px}.rule{border-left:4px solid var(--danger);background:var(--danger-soft);border-radius:0 12px 12px 0}.notice{border-left:4px solid var(--go);background:var(--go-soft);padding:13px 16px;border-radius:0 12px 12px 0}.foot{padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}.pill{display:inline-block;border-radius:999px;padding:2px 8px;background:var(--accent-soft);color:#244f9e;font-size:11px;font-weight:700}
+  @media(max-width:680px){body{padding:28px 14px 56px}.grid{grid-template-columns:1fr}h1{font-size:26px}}
+</style>
+</head>
+<body><main class="wrap">
+  <header>
+    <p class="eyebrow">Skill説明書 · Global / repo</p>
+    <h1>repo-create</h1>
+    <p class="lede">新しいrepoの最小構成を作る、または既存repoを安全に評価・改善する入口です。repo横断移植では、書き込む前にcanonical identityと計画箱を解決し、値を出さない監査契約を使います。</p>
+  </header>
+
+  <section>
+    <h2>いつ使うか（発火する発話例）</h2>
+    <ul>
+      <li>「新しいrepoを作って」「既存repoをAIが作業しやすい状態へ整えて」</li>
+      <li>「AGENTS.md / CLAUDE.mdを見直して」「remoteやupstreamを確認して」</li>
+      <li>「別repoへAI運用標準を移せるか、まず安全に監査して」</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>構造</h2>
+    <figure><pre class="tree">repo-create/
+├── SKILL.md                         # 実行正本・workflow選択
+├── SKILL.html                       # この人間向け説明
+├── workflows/
+│   ├── create-repo.md               # 新規repoの最小構成
+│   └── improve-repo.md              # 既存repoの最小改善
+├── references/
+│   ├── agents-md-criteria.md        # repo種別と入口品質
+│   ├── repo-safety.md               # Git・secret・承認境界
+│   └── migration-contract.md        # 横断移植の監査契約
+└── scripts/fixtures/
+    └── migration-cases.json         # 値なし合成fixture 15件</pre></figure>
+  </section>
+
+  <section>
+    <h2>各workflowの中身</h2>
+    <div class="grid">
+      <article class="card">
+        <h3><code>create-repo.md</code> — 新規repo</h3>
+        <p>目的・公開範囲・置き場を決め、AGENTS、CLAUDE symlink、README、gitignoreを中心に最小構成だけ作ります。</p>
+        <div class="steps"><span class="step">目的と種別</span><span class="arr">→</span><span class="step gate">Git / public / push承認</span><span class="arr">→</span><span class="step">status確認</span></div>
+      </article>
+      <article class="card">
+        <h3><code>improve-repo.md</code> — 既存repo</h3>
+        <p>Git状態と入口文書をread-onlyで確認し、「今すぐ直す／整える／任意」に分類して必要最小限だけ編集します。</p>
+        <div class="steps"><span class="step">read-only監査</span><span class="arr">→</span><span class="step">最小差分</span><span class="arr">→</span><span class="step">整合確認</span></div>
+      </article>
+    </div>
+    <div style="height:12px"></div>
+    <div class="notice"><p><b>横断移植の位置づけ:</b> 現時点では契約とfixtureまでです。<code>audit-repo</code> などの実行scriptは後続packageで実装するため、契約だけを見て「監査コマンドが利用可能」とは扱いません。</p></div>
+  </section>
+
+  <section>
+    <h2>referencesの中身</h2>
+    <article class="ref"><h3><code>agents-md-criteria.md</code> — repo入口の評価基準</h3><ul><li><b>共通構成:</b> 目的、禁止、フォルダ、開始・更新・確認方法</li><li><b>repo種別:</b> 業務運用repoとcoding repoで必要な説明を分ける</li><li><b>評価:</b> 初見の分かりやすさと危険操作の停止可否</li></ul></article>
+    <article class="ref"><h3><code>repo-safety.md</code> — 副作用と人間承認</h3><ul><li><b>Git:</b> 未コミット差分を保護し、remote・main・force操作を承認制にする</li><li><b>Secret:</b> 値を表示・記録・commitしない</li><li><b>配置:</b> repo本体をPrivate直下へ増やさず、物理移動はrepo-relocationへ渡す</li></ul></article>
+    <article class="ref"><h3><code>migration-contract.md</code> — 横断移植の決定的監査契約 <span class="pill">K01</span></h3><ul><li><b>Identity:</b> registry、Git common dir、worktree/container、未mountを区別してdedupe</li><li><b>計画箱:</b> repo AGENTSを正本にし、未宣言・曖昧ならexit 3でfail-closed</li><li><b>出力:</b> 同じJSON envelope、固定sort、exit 0/2/3/4、secret値出力0</li><li><b>Fixture:</b> 仕事・focusmap・symlink・計画箱・未mountなど15件の合成ケース</li></ul></article>
+  </section>
+
+  <section>
+    <h2>絶対ルール・安全方針</h2>
+    <div class="rule"><b>既存ファイルを勝手に上書きしません。</b> 削除・移動・改名・commit・push・hook/launchd登録は契約だけでは許可されません。<code>CLAUDE.md</code> は同階層の <code>AGENTS.md</code> への相対symlinkを基本とし、固有内容がある時は先に損失なく統合します。secretは存在と件数だけを扱い、値は出力しません。</div>
+  </section>
+
+  <p class="foot">更新日: 2026-07-13 ／ 正本: <code>SKILL.md</code>（このHTMLは人間向け表示。実行導線はmdと参照ファイルを使う）</p>
+</main></body>
+</html>

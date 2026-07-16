@@ -24,10 +24,11 @@ repoを作る、または既存repoをAIが作業しやすい状態へ整えるS
 
 ## 3. References
 
-referenceは2つだけ。増やす前に、この2つへ統合できないか確認する。
+referenceは3つだけ。増やす前に、この3つへ統合できないか確認する。
 
 1. `references/agents-md-criteria.md`: `AGENTS.md` の書き方、repo種別、業務運用repo / coding repoの評価基準。
 2. `references/repo-safety.md`: Git、GitHub、secret、削除、repo-registry、pushの安全ルール。
+3. `references/migration-contract.md`: repo横断移植のread-only監査、計画箱解決、決定的JSON、fixture、exit codeの契約。
 
 ## 4. 対象外
 

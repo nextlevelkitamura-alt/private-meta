@@ -1,0 +1,588 @@
+{
+  "schema_version": "repo-create.migration-fixtures.v1",
+  "contract": "../../references/migration-contract.md",
+  "normalization": {
+    "fixture_root": "$FIXTURE_ROOT",
+    "private_root": "$PRIVATE",
+    "repo_root": "$REPO",
+    "sort": [
+      "path",
+      "code",
+      "id"
+    ],
+    "timestamps": "omitted",
+    "secret_values": "forbidden"
+  },
+  "failure_guards": {
+    "invalid_input_exit_code": 4,
+    "runtime_error_exit_code": 4,
+    "nonzero_secret_values_exit_code": 4,
+    "nonzero_secret_values_output": "discard"
+  },
+  "cases": [
+    {
+      "id": "business-pre-gate0",
+      "command": "audit-repo",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/business-pre-gate0",
+          "registry_id": "work",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "business-ops"
+        },
+        "git": {
+          "branch": "main",
+          "dirty_count": 10,
+          "ahead_count": 5,
+          "worktree_count": 1
+        },
+        "governance": {
+          "agents_present": true,
+          "claude_kind": "symlink",
+          "plan_box_declarations": [
+            "domain-scoped"
+          ],
+          "inverted_domain_links": 6,
+          "cross_repo_skill_symlinks": 3
+        },
+        "plans": {
+          "candidate_count": 14,
+          "index_state": "stale"
+        },
+        "synthetic_secret_present": true
+      },
+      "expected": {
+        "exit_code": 2,
+        "pass": false,
+        "canonical_identity": "registry:work",
+        "dedupe_key": "registry:work",
+        "findings": [
+          "CLAUDE_DIRECTION_INVERTED",
+          "CROSS_REPO_SKILL_SYMLINK",
+          "GATE0_REQUIRED",
+          "GIT_DIRTY",
+          "PLAN_INDEX_STALE",
+          "SECRET_REFERENCE_DETECTED"
+        ],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "business-post-gate0",
+      "command": "audit-repo",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/business-post-gate0",
+          "registry_id": "work",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "business-ops"
+        },
+        "git": {
+          "branch": "main",
+          "dirty_count": 0,
+          "ahead_count": 6,
+          "worktree_count": 1
+        },
+        "governance": {
+          "agents_present": true,
+          "claude_kind": "symlink",
+          "plan_box_declarations": [
+            "domain-scoped"
+          ],
+          "inverted_domain_links": 0,
+          "cross_repo_skill_symlinks": 0
+        },
+        "plans": {
+          "candidate_count": 14,
+          "index_state": "generated-current"
+        },
+        "synthetic_secret_present": false
+      },
+      "expected": {
+        "exit_code": 0,
+        "pass": true,
+        "canonical_identity": "registry:work",
+        "dedupe_key": "registry:work",
+        "findings": [],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "coding-focusmap-main",
+      "command": "audit-repo",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/focusmap-main",
+          "registry_id": "focusmap",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "coding"
+        },
+        "git": {
+          "branch": "main",
+          "dirty_count": 0,
+          "ahead_count": 0,
+          "worktree_count": 8
+        },
+        "governance": {
+          "agents_present": true,
+          "claude_kind": "regular-file",
+          "claude_unique_content": true,
+          "plan_box_declarations": [
+            "docs/ai/plans/active"
+          ]
+        },
+        "plans": {
+          "candidate_boxes": [
+            "docs/ai/plans/active",
+            "docs/plans/active"
+          ],
+          "root_plans_present": false
+        }
+      },
+      "expected": {
+        "exit_code": 2,
+        "pass": false,
+        "canonical_identity": "registry:focusmap",
+        "dedupe_key": "registry:focusmap",
+        "findings": [
+          "CLAUDE_NOT_SYMLINK",
+          "CLAUDE_UNIQUE_CONTENT"
+        ],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "coding-focusmap-diverged-branch",
+      "command": "audit-repo",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/focusmap-diverged",
+          "registry_id": "focusmap",
+          "lifecycle": "active",
+          "identity": "linked-worktree",
+          "repo_type": "coding"
+        },
+        "git": {
+          "branch": "temp-cleanup-branch",
+          "dirty_count": 0,
+          "behind_main": 162,
+          "ahead_main": 9,
+          "worktree_count": 8
+        },
+        "governance": {
+          "agents_present": true,
+          "claude_kind": "regular-file",
+          "plan_box_declarations": [
+            "docs/ai/plans/active"
+          ]
+        },
+        "plans": {
+          "candidate_boxes": [
+            "docs/ai/plans/active",
+            "docs/plans/active",
+            "plans/active"
+          ],
+          "root_plans_present": true,
+          "root_plans_declared": false
+        }
+      },
+      "expected": {
+        "exit_code": 3,
+        "pass": false,
+        "canonical_identity": "registry:focusmap",
+        "dedupe_key": "registry:focusmap",
+        "findings": [
+          "CLAUDE_NOT_SYMLINK",
+          "MULTIPLE_WORKTREES",
+          "NON_CANONICAL_BASE",
+          "UNDECLARED_PLAN_BOX_CANDIDATE"
+        ],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "linked-worktree-dedup",
+      "command": "audit-all",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/focusmap-worktree",
+          "registry_id": "focusmap",
+          "lifecycle": "active",
+          "identity": "linked-worktree",
+          "repo_type": "coding"
+        },
+        "git": {
+          "common_dir_id": "focusmap-common",
+          "worktree_count": 8
+        },
+        "audit_all": {
+          "matching_common_dir_entries": 8
+        }
+      },
+      "expected": {
+        "exit_code": 0,
+        "pass": true,
+        "canonical_identity": "registry:focusmap",
+        "dedupe_key": "registry:focusmap",
+        "findings": [
+          "WORKTREE_DEDUPED"
+        ],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "worktree-container-parent-git-false-positive",
+      "command": "audit-all",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/focusmap-worktrees",
+          "registry_id": null,
+          "lifecycle": "active",
+          "identity": "worktree-container",
+          "repo_type": "unknown"
+        },
+        "git": {
+          "own_git_metadata": false,
+          "parent_git_detected": true,
+          "child_worktree_git_files": 3
+        }
+      },
+      "expected": {
+        "exit_code": 0,
+        "pass": true,
+        "canonical_identity": "container:$FIXTURE_ROOT/focusmap-worktrees",
+        "dedupe_key": "path:$FIXTURE_ROOT/focusmap-worktrees",
+        "findings": [
+          "PARENT_GIT_IGNORED",
+          "WORKTREE_CONTAINER"
+        ],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "paused-unmounted-deferred",
+      "command": "audit-all",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/paused-repo",
+          "registry_id": "paused-sample",
+          "lifecycle": "paused",
+          "mount_state": "deferred-unmounted",
+          "identity": "non-repo",
+          "repo_type": "unknown"
+        }
+      },
+      "expected": {
+        "exit_code": 3,
+        "pass": false,
+        "canonical_identity": "registry:paused-sample",
+        "dedupe_key": "registry:paused-sample",
+        "findings": [
+          "REPO_DEFERRED_UNMOUNTED"
+        ],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "plan-box-missing-fail-closed",
+      "command": "audit-repo",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/plan-box-missing",
+          "registry_id": "missing-box",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "coding"
+        },
+        "governance": {
+          "agents_present": true,
+          "plan_box_declarations": []
+        },
+        "plans": {
+          "candidate_boxes": [],
+          "root_plans_present": false
+        }
+      },
+      "expected": {
+        "exit_code": 3,
+        "pass": false,
+        "canonical_identity": "registry:missing-box",
+        "dedupe_key": "registry:missing-box",
+        "findings": [
+          "PLAN_BOX_MISSING"
+        ],
+        "operations": [],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "plan-box-ambiguous-human-gate",
+      "command": "audit-repo",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/plan-box-ambiguous",
+          "registry_id": "ambiguous-box",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "business-ops"
+        },
+        "governance": {
+          "agents_present": true,
+          "plan_box_declarations": [
+            "docs/ai/plans/active",
+            "plans/active"
+          ]
+        },
+        "plans": {
+          "candidate_boxes": [
+            "docs/ai/plans/active",
+            "plans/active"
+          ]
+        }
+      },
+      "expected": {
+        "exit_code": 3,
+        "pass": false,
+        "canonical_identity": "registry:ambiguous-box",
+        "dedupe_key": "registry:ambiguous-box",
+        "findings": [
+          "PLAN_BOX_AMBIGUOUS"
+        ],
+        "operations": [],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "legacy-plan-mixed-classification",
+      "command": "inventory-legacy-plans",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/legacy-mixed",
+          "registry_id": "legacy-mixed",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "coding"
+        },
+        "plans": {
+          "entries": [
+            {
+              "path": "docs/ai/plans/active/current.md",
+              "classification": "current-execution"
+            },
+            {
+              "path": "docs/plans/archive/old.md",
+              "classification": "history"
+            },
+            {
+              "path": "docs/plans/product.md",
+              "classification": "product-plan"
+            },
+            {
+              "path": "docs/plans/unknown.md",
+              "classification": "unknown"
+            },
+            {
+              "path": "docs/specs/requirements.md",
+              "classification": "spec"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "exit_code": 3,
+        "pass": false,
+        "canonical_identity": "registry:legacy-mixed",
+        "dedupe_key": "registry:legacy-mixed",
+        "findings": [
+          "LEGACY_PLAN_CLASSIFICATION_REQUIRED"
+        ],
+        "operations": [],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "claude-regular-with-unique-content",
+      "command": "audit-repo",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/claude-regular",
+          "registry_id": "claude-regular",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "coding"
+        },
+        "governance": {
+          "agents_present": true,
+          "claude_kind": "regular-file",
+          "claude_unique_content": true,
+          "plan_box_declarations": [
+            "docs/ai/plans/active"
+          ]
+        }
+      },
+      "expected": {
+        "exit_code": 2,
+        "pass": false,
+        "canonical_identity": "registry:claude-regular",
+        "dedupe_key": "registry:claude-regular",
+        "findings": [
+          "CLAUDE_NOT_SYMLINK",
+          "CLAUDE_UNIQUE_CONTENT"
+        ],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "claude-relative-symlink-pass",
+      "command": "audit-repo",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/claude-symlink",
+          "registry_id": "claude-symlink",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "coding"
+        },
+        "governance": {
+          "agents_present": true,
+          "claude_kind": "symlink",
+          "claude_target": "AGENTS.md",
+          "plan_box_declarations": [
+            "docs/ai/plans/active"
+          ]
+        }
+      },
+      "expected": {
+        "exit_code": 0,
+        "pass": true,
+        "canonical_identity": "registry:claude-symlink",
+        "dedupe_key": "registry:claude-symlink",
+        "findings": [],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "secret-redaction-synthetic-sentinel",
+      "command": "audit-repo",
+      "mode": "read-only",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/secret-redaction",
+          "registry_id": "secret-redaction",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "business-ops"
+        },
+        "governance": {
+          "agents_present": true,
+          "plan_box_declarations": [
+            "domains/scoped"
+          ]
+        },
+        "synthetic_secret_present": true,
+        "synthetic_secret_reference_count": 1
+      },
+      "expected": {
+        "exit_code": 2,
+        "pass": false,
+        "canonical_identity": "registry:secret-redaction",
+        "dedupe_key": "registry:secret-redaction",
+        "findings": [
+          "SECRET_REFERENCE_DETECTED"
+        ],
+        "secret_references_detected": 1,
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "scaffold-empty-coding-dry-run",
+      "command": "scaffold-repo",
+      "mode": "dry-run",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/scaffold-empty-coding",
+          "registry_id": "scaffold-empty",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "coding"
+        },
+        "governance": {
+          "agents_present": true,
+          "claude_kind": "symlink",
+          "plan_box_declarations": [
+            "plans/active"
+          ]
+        },
+        "missing_paths": [
+          "plans/active",
+          "plans/done",
+          "plans/paused",
+          "plans/planning"
+        ]
+      },
+      "expected": {
+        "exit_code": 2,
+        "pass": false,
+        "canonical_identity": "registry:scaffold-empty",
+        "dedupe_key": "registry:scaffold-empty",
+        "findings": [
+          "SCAFFOLD_CHANGES_PROPOSED"
+        ],
+        "operations": [
+          "create-directory:plans/active",
+          "create-directory:plans/done",
+          "create-directory:plans/paused",
+          "create-directory:plans/planning"
+        ],
+        "secret_values_emitted": 0
+      }
+    },
+    {
+      "id": "scaffold-existing-second-apply-noop",
+      "command": "scaffold-repo",
+      "mode": "dry-run",
+      "input": {
+        "target": {
+          "path": "$FIXTURE_ROOT/scaffold-existing",
+          "registry_id": "scaffold-existing",
+          "lifecycle": "active",
+          "identity": "repo",
+          "repo_type": "coding"
+        },
+        "governance": {
+          "agents_present": true,
+          "claude_kind": "symlink",
+          "plan_box_declarations": [
+            "plans/active"
+          ]
+        },
+        "missing_paths": [],
+        "previous_apply_completed": true
+      },
+      "expected": {
+        "exit_code": 0,
+        "pass": true,
+        "canonical_identity": "registry:scaffold-existing",
+        "dedupe_key": "registry:scaffold-existing",
+        "findings": [],
+        "operations": [],
+        "secret_values_emitted": 0
+      }
+    }
+  ]
+}

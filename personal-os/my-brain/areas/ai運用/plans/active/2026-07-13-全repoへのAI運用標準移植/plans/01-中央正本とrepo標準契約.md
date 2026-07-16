@@ -1,5 +1,5 @@
 親計画: ../program.md ／ 分類: repo ／ 種別: 統合整理 ／ 規模: フル
-並列: 可 ／ レビュー: 都度
+並列: 可 ／ レビュー: 既存評価済み（今回のReview 1 / Review 2には含めない）
 
 # 中央正本とrepo標準契約
 
@@ -29,14 +29,19 @@
 8. session-boardの正本である `hooks/session-board/session-start.md`、`common.py`、`README.md` を同じ契約へ揃え、session状態・Daily実行ログとplan本文・plan状態の責務を分ける。
 9. 本programを横断移植の唯一の計画正本とし、仕事repoへ同じ移植計画を複製しない。移植後のrepo固有計画だけを所有repoの計画箱へ作る。
 
+## 実行パッケージと証拠
+
+- **C00 中央契約**: 実装・独立レビュー済み。証拠は現行 `評価01.md`、10/10・80/80・59/59のテスト、program-lint PASS。
+- `評価01.md` は内容上の唯一の評価証拠だが、program子の接頭辞命名規約より古い。renameは破壊的操作として人間承認まで行わず、後続実装開始時に扱う。
+
 ## 完了条件（レビュー項目）
 
-- [ ] `GLOBAL_AGENTS.md` §7、`my-brain/areas/AGENTS.md`、`my-brain/areas/ai運用/AGENTS.md` のrepo計画pathと状態語彙が一致する。
-- [ ] Global契約から「全repoは必ずroot plans」という前提が外れ、repo `AGENTS.md` が計画箱を宣言する二段ルーティングが定義されている。
-- [ ] repo registry→対象repo AGENTS→既存計画検索→計画箱、の責務と失敗時の停止条件を人間が追える。
-- [ ] `rg` で、存在しない基盤AGENTS節、`plans/skills/`、廃止済みrenderer自動反映、旧 `ops/` 必須化のactiveな指示が0件である。
-- [ ] `plan-triage` のSkill実装は子04、`repo-create` のcriteria・監査実装は子08が所有すると一意に切り分けられ、子01に同じ手順を複製していない。
-- [ ] session-boardの注入文・実装・READMEにroot `plans/` 固定がなく、repo `AGENTS.md` が解決したplan参照を表示できる。
-- [ ] session-boardがsession状態とDaily実行ログを所有し、plan本文・plan状態を所有しないことが正本と実装で一致する。
-- [ ] `ai運用/決定ログ.md` に、標準契約・棄却した代替案・影響先が1件記録されている。
-- [ ] secret、repo-local Skill本文、hook本文を中央契約へコピーしていない。
+- [x] `GLOBAL_AGENTS.md`、`my-brain/areas/AGENTS.md`、`my-brain/areas/ai運用/AGENTS.md` のrepo計画pathと状態語彙が一致する。
+- [x] Global契約から「全repoは必ずroot plans」という前提が外れ、repo `AGENTS.md` が計画箱を宣言する二段ルーティングが定義されている。
+- [x] repo registry→対象repo AGENTS→既存計画検索→計画箱、の責務と失敗時の停止条件を人間が追える。
+- [x] `rg` で、存在しない基盤AGENTS節、`plans/skills/`、廃止済みrenderer自動反映、旧 `ops/` 必須化のactiveな指示が0件である。
+- [x] `plan-triage` のSkill実装は子04、`repo-create` のcriteria・監査実装は子08が所有すると一意に切り分けられ、子01に同じ手順を複製していない。
+- [x] session-boardの注入文・実装・READMEにroot `plans/` 固定がなく、repo `AGENTS.md` が解決したplan参照を表示できる。
+- [x] session-boardがsession状態とDaily実行ログを所有し、plan本文・plan状態を所有しないことが正本と実装で一致する。
+- [x] `ai運用/決定ログ.md` に、標準契約・棄却した代替案・影響先が1件記録されている。
+- [x] secret、repo-local Skill本文、hook本文を中央契約へコピーしていない。

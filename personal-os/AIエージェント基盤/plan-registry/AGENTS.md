@@ -50,7 +50,7 @@ programの子計画マップは `企画 / 計画 / 計画レビュー / 実装 /
 | `ai運用/AGENTS.md` | Personal OS基盤・横断計画のarea固有配置 | Global共通規約の複製 |
 | `plan-triage` | registryのサクッと基準を適用した書込みなしのroute解決（対象repo・既存plan・宣言済み箱） | 規模基準の定義、ファイル書込み、計画内容、レビュー合否の判断 |
 | `plan-ops` | 雛形、子計画マップ更新、静的lintなど決定的な手続き | 置き場、優先度、レビュー合否の判断 |
-| `plan-management` | 利用者の目的を作成・合流・program管理・レビュー遷移のworkflowへ振り分け、triage/opsへ委譲する入口 | 規模基準・route・script・計画本文・レビュー合否・runtime露出の所有 |
+| `plan-create-review` | 利用者の目的を作成・合流・program管理・評価・終了（archive）のworkflowへ振り分け、triage/opsへ委譲する一本入口 | 規模基準・route・script・計画本文・レビュー合否・runtime露出の所有 |
 | hook / session-board | 実行記録、通知、sessionの開始・終了 | 計画本文・計画状態、repo/計画箱/レビュー合否の決定 |
 
 ## 4. 手動・script・hookの境界
@@ -80,7 +80,7 @@ programの子計画マップは `企画 / 計画 / 計画レビュー / 実装 /
 - runtime最小ルール: `../GLOBAL_AGENTS.md` §6–7
 - areaの物理バケット・テンプレ・卒業: `../../my-brain/areas/AGENTS.md`
 - ai運用areaの固有配置: `../../my-brain/areas/ai運用/AGENTS.md`
-- 利用者向けの計画管理入口: `../skills/plan-management/`
+- 利用者向けの計画管理入口: `../skills/plan-create-review/`
 - 経路解決（書き込みなし）: `../skills/plan-triage/`
 - 機械手続き: `../skills/plan-ops/`
 - 実行記録・通知: `../hooks-registry/`

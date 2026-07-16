@@ -1,11 +1,11 @@
 ---
-name: plan-management
-description: 計画を作る・既存計画へ合流する・programの子計画を管理する・レビューと遷移を進める時に、plan-registryと既存のplan-triage/plan-opsへ正しくつなぐ利用者向け入口Skill。Use when「この仕事の計画を作って」「既存計画に入れたい」「子計画を追加したい」「計画をレビュー・完了へ進めたい」。作業の起票、route基準の定義、scriptの再実装、実装レーンの監督には使わない。
+name: plan-create-review
+description: 計画を作る・既存計画へ合流する・programの子計画を管理する・評価（レビュー）と遷移を進める・終了を伝えてdone/archiveへ閉じる時に、plan-registryと既存のplan-triage/plan-opsへ正しくつなぐ利用者向け入口Skill。Use when「この仕事の計画を作って」「既存計画に入れたい」「子計画を追加したい」「計画を評価して」「この計画は終了・archiveへ」。作業の起票、route基準の定義、scriptの再実装、実装レーンの監督には使わない。
 ---
 
-# plan-management
+# plan-create-review
 
-計画ライフサイクルを扱う人間・AI向けの入口。経路判断・script・レビュー合否を自分で再実装せず、既存の正本へつなぐ。
+計画ライフサイクルを扱う人間・AI向けの一本入口（create=作る・review=評価する。終了→archiveまで受ける）。経路判断・script・レビュー合否を自分で再実装せず、既存の正本へつなぐ。
 
 ## まず読む正本
 
@@ -17,7 +17,7 @@ description: 計画を作る・既存計画へ合流する・programの子計画
 
 1. `workflows/create-or-join.md`: 「計画を作る」「既存計画へ入れる」。routeを解決してから合流または起案する。
 2. `workflows/manage-program.md`: 「子計画を足す」「programの状態を更新する」。親子と子計画マップを管理する。
-3. `workflows/review-and-transition.md`: 「レビューする」「完了・archiveへ進める」。通常のprogram子はAIレビューで閉じ、親だけを最終人間確認へ送る。危険操作は該当子で実行前に止める。
+3. `workflows/review-and-transition.md`: 「レビューする」「完了・archiveへ進める」「終了を伝えられた（done→終了記録→archive）」。通常のprogram子はAIレビューで閉じ、親だけを最終人間確認へ送る。危険操作は該当子で実行前に止める。
 
 ## 委譲と境界
 

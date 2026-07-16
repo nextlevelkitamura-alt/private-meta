@@ -68,13 +68,13 @@ check("(h) 計画ミラーもrepo固有箱", len(out) == 4
       and out[3].startswith("レビュー宣言を確認"))
 
 # (i) 承認待ちの次期Prompt Submit本文はcommon.pyだけが生成元で、責務境界を含む
-candidate = common.plan_management_guide_candidate()
+candidate = common.plan_create_review_guide_candidate()
 check("(i) 次期本文に最小ゲートと一本道", all(s in candidate for s in (
-    "全YESでない、または不明なら plan-management", "planning→active→done→archive",
+    "全YESでない、または不明なら plan-create-review", "planning→active→done→archive",
     "bucketctl check", "一括は束ねて", "finishはsession-boardの記録を閉じるだけ",
 )))
 check("(i1) 次期本文はhook非所有を明示", "hookはrepo・計画箱・レビュー合否・バケット遷移を決めない" in candidate)
-check("(i2) 本文は有効化済み（2026-07-16承認）: 初回ガイドが候補文を含む", "plan-management" in guide and "自動退避しない" in guide)
+check("(i2) 本文は有効化済み（2026-07-16承認）: 初回ガイドが候補文を含む", "plan-create-review" in guide and "自動退避しない" in guide)
 
 print(f"\n== 結果: PASS={PASS} FAIL={FAIL} ==")
 sys.exit(1 if FAIL else 0)

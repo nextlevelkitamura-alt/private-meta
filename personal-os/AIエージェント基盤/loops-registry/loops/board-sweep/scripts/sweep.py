@@ -5,7 +5,7 @@
 #   - 当日＋前日ボードの⏸行を列挙（board.py を import して parse_line 等を再利用。board.py 本体は不可侵）。
 #   - 実体transcript照合: Claude=~/.claude/projects/**.jsonl／Codex=~/.codex/sessions/**/rollout-*.jsonl
 #     （探索根は SESSION_BOARD_TX_ROOTS で差替可・board._tx_roots と共通）。codex は末尾の task_complete を機械確認。
-#   - 定型台帳マッチ: hooks-registry/hooks/session-board/routine-ledger.md（SWEEP_LEDGER で差替可）。
+#   - 定型台帳マッチ: hooks-registry/shared/session-board/routine-ledger.md（SWEEP_LEDGER で差替可）。
 #   - headless LLM判定: 残り行をまとめて1回（SWEEP_LLM_CMD・stdin=プロンプト/stdout=JSON。テストはstub）。
 #     プロンプトには各行の 依頼の原点（初回プロンプト）・目的への帰属（goal/種別/計画）・会話ダイジェスト
 #     （ユーザー発話とAI応答の連なり。ツール呼び出し・ツール結果は含めない）を付す。
@@ -41,9 +41,9 @@ def board_dir():
     if env:
         return env
     here = os.path.dirname(os.path.realpath(__file__))
-    # loops-registry/loops/board-sweep/scripts → AIエージェント基盤 → hooks-registry/hooks/session-board
+    # loops-registry/loops/board-sweep/scripts → AIエージェント基盤 → hooks-registry/shared/session-board
     base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(here))))
-    return os.path.join(base, "hooks-registry", "hooks", "session-board")
+    return os.path.join(base, "hooks-registry", "shared", "session-board")
 
 
 sys.path.insert(0, board_dir())

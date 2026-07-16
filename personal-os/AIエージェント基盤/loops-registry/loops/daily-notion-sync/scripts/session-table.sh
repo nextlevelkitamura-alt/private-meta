@@ -64,6 +64,11 @@ warn_exit0() {
   exit 0
 }
 
+fail_parse() {
+  echo "session-table: 解析失敗: $1（Notion API呼び出し前に中止）" >&2
+  exit 1
+}
+
 # ensure_fresh_for_today <state_file> <today> : state_fileの中身が「今日」のものでなければ
 # 捨てる（次のresolve処理が新規解決するよう仕向ける）。有効日は state_file の隣の .date が持つ。
 ensure_fresh_for_today() {
@@ -201,11 +206,20 @@ create_done_row() {
 # メインフロー
 # ============================================================
 
-# --- secret取得（値は変数に保持するのみ。以降どの出力にも絶対に出さない） ---
-notion_fetch_token "$KEYCHAIN_SERVICE" || warn_exit0 "Notionトークン取得失敗（キーチェーン未設定の可能性。security find-generic-password -s $KEYCHAIN_SERVICE を人間が登録する）"
-
 work="$(mktemp -d "${TMPDIR:-/tmp}/session-table.XXXXXX")" || warn_exit0 "一時ディレクトリ作成に失敗"
 trap 'rm -rf "$work"' EXIT
+
+date_str="$(TZ=Asia/Tokyo date '+%Y-%m-%d')"
+daily_file="$(daily_file_for "$date_str")"
+
+# --- 最初に入力を解析。未知形式ならsecret取得やNotion APIより前にfail-closed ---
+sessions_tsv="$work/sessions.tsv"
+"$SCRIPT_DIR/parse-daily.sh" sessions "$daily_file" > "$sessions_tsv" || fail_parse "parse-daily.sh(sessions)"
+done_tsv="$work/done.tsv"
+"$SCRIPT_DIR/parse-daily.sh" done "$daily_file" > "$done_tsv" || fail_parse "parse-daily.sh(done)"
+
+# --- secret取得（値は変数に保持するのみ。以降どの出力にも絶対に出さない） ---
+notion_fetch_token "$KEYCHAIN_SERVICE" || warn_exit0 "Notionトークン取得失敗（キーチェーン未設定の可能性。security find-generic-password -s $KEYCHAIN_SERVICE を人間が登録する）"
 
 # --- parent page（Personal OS）解決。renderer(N1/N2/N3)が発見済みならそのキャッシュを共有する ---
 notion_resolve_parent_id "$CONF_FILE" "$STATE_DIR" "$HELPER"
@@ -215,9 +229,6 @@ if [ "$rc" -eq 2 ]; then
 elif [ "$rc" -eq 3 ]; then
   warn_exit0 "conf未設定かつ「Personal OS」ページのsearchが不発（notion.confのNOTION_PARENT_PAGE_IDを人間が設定する）"
 fi
-
-date_str="$(TZ=Asia/Tokyo date '+%Y-%m-%d')"
-daily_file="$(daily_file_for "$date_str")"
 
 # --- 日付ページ解決（state → 全体search → 無ければ作成）。表A/表Bはこの直下に作る ---
 ensure_fresh_for_today "$DATE_PAGE_STATE_FILE" "$date_str"
@@ -274,12 +285,6 @@ done_db_id="$database_id"
 done_schema_body="$work/done-db-schema-body.json"
 python3 "$HELPER" done-db-schema-payload > "$done_schema_body" || warn_exit0 "表B DBスキーマpayloadの構築に失敗"
 notion_http_call PATCH "/databases/$done_db_id" "$done_schema_body" || warn_exit0 "Notion API呼び出しに失敗(表B DBスキーマ追加, status=${HTTP_STATUS:-?})"
-
-# --- データ源: 当日デイリーの2節をparse-daily.shで解析（未生成なら空・0件として扱う） ---
-sessions_tsv="$work/sessions.tsv"
-"$SCRIPT_DIR/parse-daily.sh" sessions "$daily_file" > "$sessions_tsv" || warn_exit0 "parse-daily.sh(sessions)の実行に失敗"
-done_tsv="$work/done.tsv"
-"$SCRIPT_DIR/parse-daily.sh" done "$daily_file" > "$done_tsv" || warn_exit0 "parse-daily.sh(done)の実行に失敗"
 
 # --- 既存行の全件query（archived行はNotion仕様上query結果に出ない） ---
 existing_session_rows="$work/existing-session-rows.tsv"

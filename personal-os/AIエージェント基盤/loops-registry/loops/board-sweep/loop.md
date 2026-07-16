@@ -24,7 +24,7 @@ board-reconcile（5分毎・機械の生存照合・状態flipのみ）とは別
   1. ⏸列挙（当日＋前日ボード。`board.py` を import して `parse_line` 等を再利用・**board.py 本体は不可侵**）。
   2. 実体transcript照合（Claude: `~/.claude/projects/**.jsonl`／Codex: `~/.codex/sessions/**/rollout-*.jsonl`
      末尾の `task_complete`。探索根は `SESSION_BOARD_TX_ROOTS` で差替可）。
-  3. 定型台帳マッチ（`hooks-registry/hooks/session-board/routine-ledger.md`）。
+  3. 定型台帳マッチ（`hooks-registry/shared/session-board/routine-ledger.md`）。
   4. headless LLM判定（台帳・対象外以外の残り行を**まとめて1回**・`SWEEP_LLM_CMD`。未設定なら unknown。
      機械証跡を持つ行もここへ入る＝二重鍵のLLM側）。
   5. dry-run（既定）: 判定（done/not-done/unknown＋根拠）をログへ書くだけ・ボード無変更。
@@ -80,7 +80,7 @@ board-reconcile（5分毎・機械の生存照合・状態flipのみ）とは別
 
 ## 定型台帳
 
-- 正本: `../../../hooks-registry/hooks/session-board/routine-ledger.md`
+- 正本: `../../../hooks-registry/shared/session-board/routine-ledger.md`
   （1定型=1節・キー5つ: 一致/終わり/確認/記載/判定。書式の説明は台帳先頭）。
 - 節内に「ドラフト」の語がある間は自動finishしない（dry-runログにのみ出る）。
   初期3件（架電・印刷・focusmap定期）はドラフト・人間確認待ち。

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # daily-notion-sync / _paths.sh — 共通パス既定値。source して使う（単体実行しない）。
 # renderer/daily-digest 配下には依存しない（独立loop化・plan.md方針1）。
-# GOAL_BASE は board.py（hooks-registry/hooks/session-board/board.py）の daily_path() と
+# GOAL_BASE は board.py（hooks-registry/shared/session-board/board.py）の daily_path() と
 # 同じ既定値・同じ組み立て規則にする（データ源が同一ファイルであるため）。
 : "${GOAL_BASE:=$HOME/Private/personal-os/my-brain/ゴール}"
 export GOAL_BASE

@@ -17,7 +17,7 @@ LOOP_DIR="$(cd "$TESTS_DIR/.." && pwd)"
 SCRIPTS_DIR="$LOOP_DIR/scripts"
 FIXTURES_DIR="$TESTS_DIR/fixtures"
 STUB_PY="$FIXTURES_DIR/notion-curl-stub.py"
-BOARD_PY="$LOOP_DIR/../../../hooks-registry/hooks/session-board/board.py"
+BOARD_PY="$LOOP_DIR/../../../hooks-registry/shared/session-board/board.py"
 
 TODAY="$(TZ=Asia/Tokyo date '+%Y-%m-%d')"
 
@@ -100,8 +100,13 @@ t1_parse_sessions_ok() (
   write_daily "$daily" "# デイリー $TODAY
 
 ## 動いているエージェント
-- 09:00 | Private | 実装 | テスト要約 | 🟢動作中 <!-- s:key001 -->
-- 10:15 | focusmap | レビュー | 別の要約 | ⏸停止・確認待ち <!-- s:key002 -->
+<!-- goals-summary -->
+### 本日の目標
+- 🟢 テスト要約
+  - 🟢 09:00 | テスト要約 | 今:実装中 | Private | 実装 | codex/test | 計画:? <!-- s:key001 -->
+- ⏸ 別の要約
+  - ⏸ 10:15 | 別の要約 | 今:確認待ち | focusmap | レビュー | claude/test | 計画:plans/test.md <!-- s:key002 -->
+<!-- /goals-summary -->
 
 ## 終わったこと
 "
@@ -177,7 +182,7 @@ t5_secret_never_leaks() (
   write_daily "$daily" "# デイリー $TODAY
 
 ## 動いているエージェント
-- 09:00 | Private | 実装 | 秘密テスト | 🟢動作中 <!-- s:secretkey -->
+  - 🟢 09:00 | 秘密テスト | 今:検証 | Private | 実装 | codex/test | 計画:? <!-- s:secretkey -->
 
 ## 終わったこと
 "
@@ -206,7 +211,7 @@ t6_idempotent_two_runs() (
   write_daily "$daily" "# デイリー $TODAY
 
 ## 動いているエージェント
-- 09:00 | Private | 実装 | 冪等テスト | 🟢動作中 <!-- s:idem001 -->
+  - 🟢 09:00 | 冪等テスト | 今:検証 | Private | 実装 | codex/test | 計画:? <!-- s:idem001 -->
 
 ## 終わったこと
 ### Private
@@ -244,8 +249,8 @@ t7_upsert_and_archive() (
   write_daily "$daily" "# デイリー $TODAY
 
 ## 動いているエージェント
-- 09:00 | Private | 実装 | セッションA | 🟢動作中 <!-- s:aaa -->
-- 10:00 | Private | 実装 | セッションB | 🟢動作中 <!-- s:bbb -->
+  - 🟢 09:00 | セッションA | 今:実装 | Private | 実装 | codex/test | 計画:? <!-- s:aaa -->
+  - 🟢 10:00 | セッションB | 今:実装 | Private | 実装 | codex/test | 計画:? <!-- s:bbb -->
 
 ## 終わったこと
 ### Private
@@ -268,7 +273,7 @@ t7_upsert_and_archive() (
   write_daily "$daily" "# デイリー $TODAY
 
 ## 動いているエージェント
-- 09:00 | Private | 実装 | セッションA・更新済み | ⏸停止・確認待ち <!-- s:aaa -->
+  - ⏸ 09:00 | セッションA・更新済み | 今:確認待ち | Private | 実装 | codex/test | 計画:? <!-- s:aaa -->
 
 ## 終わったこと
 ### Private
@@ -299,16 +304,16 @@ print('ok')
 )
 
 # ============================================================
-# t8: session-table.sh — 0件ガード（1回目は誤archive防止でskip・2回連続で実行）
+# t8: session-table.sh — 正しい空節は0件の真実として即時archive
 # ============================================================
-t8_zero_count_guard() (
+t8_valid_empty_archives_immediately() (
   set -uo pipefail
   d="$(new_workdir)"
   daily="$(daily_path_for "$d" "$TODAY")"
   write_daily "$daily" "# デイリー $TODAY
 
 ## 動いているエージェント
-- 09:00 | Private | 実装 | ガードテスト | 🟢動作中 <!-- s:guard001 -->
+  - 🟢 09:00 | 空節archiveテスト | 今:検証 | Private | 実装 | codex/test | 計画:? <!-- s:guard001 -->
 
 ## 終わったこと
 "
@@ -332,20 +337,12 @@ t8_zero_count_guard() (
 ## 終わったこと
 "
   run_st >/dev/null || return 1
-  alive1="$(python3 -c "
+  alive="$(python3 -c "
 import json
 s = json.load(open('$d/stub-state.json', encoding='utf-8'))
 print(sum(1 for r in s.get('db_rows', {}).values() if not r['archived']))
 ")"
-  [ "$alive1" -eq 1 ] || { echo "1回目0件でarchiveされてしまった: alive=$alive1" >&2; return 1; }
-
-  run_st >/dev/null || return 1
-  alive2="$(python3 -c "
-import json
-s = json.load(open('$d/stub-state.json', encoding='utf-8'))
-print(sum(1 for r in s.get('db_rows', {}).values() if not r['archived']))
-")"
-  [ "$alive2" -eq 0 ]
+  [ "$alive" -eq 0 ]
 )
 
 # ============================================================
@@ -358,7 +355,7 @@ t9_sync_no_change_zero_api_calls() (
   write_daily "$daily" "# デイリー $TODAY
 
 ## 動いているエージェント
-- 09:00 | Private | 実装 | sync検証 | 🟢動作中 <!-- s:syncchk -->
+  - 🟢 09:00 | sync検証 | 今:実装 | Private | 実装 | codex/test | 計画:? <!-- s:syncchk -->
 
 ## 終わったこと
 "
@@ -389,7 +386,7 @@ t10_sync_failure_keeps_signature_for_retry() (
   write_daily "$daily" "# デイリー $TODAY
 
 ## 動いているエージェント
-- 09:00 | Private | 実装 | リトライ検証 | 🟢動作中 <!-- s:retrychk -->
+  - 🟢 09:00 | リトライ検証 | 今:実装 | Private | 実装 | codex/test | 計画:? <!-- s:retrychk -->
 
 ## 終わったこと
 "
@@ -445,6 +442,140 @@ t11_sync_lock_prevents_concurrent_run() (
 )
 
 # ============================================================
+# t12: parse-daily.sh — 見出し欠落と未知行を正常0件にしない
+# ============================================================
+t12_parse_rejects_missing_section_and_unknown_row() (
+  set -uo pipefail
+  d="$(new_workdir)"
+  missing="$d/goal/missing-section.md"
+  write_daily "$missing" "# デイリー $TODAY
+
+## 終わったこと
+"
+  if "$d/scripts/parse-daily.sh" sessions "$missing" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  unknown="$d/goal/unknown-row.md"
+  write_daily "$unknown" "# デイリー $TODAY
+
+## 動いているエージェント
+  - 🟢 09:00 | 壊れたv3行 | 今:検証 <!-- s:broken001 -->
+
+## 終わったこと
+"
+  if "$d/scripts/parse-daily.sh" sessions "$unknown" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  repo_only="$d/goal/repo-only.md"
+  write_daily "$repo_only" "# デイリー $TODAY
+
+## 動いているエージェント
+
+## 終わったこと
+### Private
+"
+  if "$d/scripts/parse-daily.sh" done "$repo_only" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  parent_only="$d/goal/parent-only.md"
+  write_daily "$parent_only" "# デイリー $TODAY
+
+## 動いているエージェント
+
+## 終わったこと
+### Private
+- 子成果のない親
+"
+  if "$d/scripts/parse-daily.sh" done "$parent_only" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  broken_plan="$d/goal/broken-plan.md"
+  write_daily "$broken_plan" "# デイリー $TODAY
+
+## 動いているエージェント
+
+## 終わったこと
+### Private
+- 壊れた計画マーカー ‹計画: plans/test.md
+  - 12:00 この成果は同期しない
+"
+  if "$d/scripts/parse-daily.sh" done "$broken_plan" >/dev/null 2>&1; then
+    return 1
+  fi
+)
+
+# ============================================================
+# t13: sync.sh — 解析不能時はNotion stub・archive・signature更新へ進まない
+# ============================================================
+t13_sync_parse_failure_is_fail_closed() (
+  set -uo pipefail
+  d="$(new_workdir)"
+  daily="$(daily_path_for "$d" "$TODAY")"
+  write_daily "$daily" "# デイリー $TODAY
+
+## 動いているエージェント
+  - 🟢 09:00 | 未知形式 | 今:検証 <!-- s:broken002 -->
+
+## 終わったこと
+"
+  make_security_ok "$d/security-ok.sh" "FAKE-TOKEN"
+  GOAL_BASE="$d/goal" \
+    NOTION_SYNC_CONF="$d/notion-empty.conf" \
+    NOTION_SYNC_STATE_DIR="$d/state" \
+    NOTION_SECURITY_CMD="$d/security-ok.sh" \
+    NOTION_CURL_CMD="python3 $STUB_PY" \
+    NOTION_STUB_STATE_FILE="$d/stub-state.json" \
+    NOTION_STUB_LOG_FILE="$d/stub-log.txt" \
+    "$d/scripts/sync.sh" >/dev/null 2>&1
+  rc=$?
+  [ "$rc" -ne 0 ] || return 1
+  [ ! -e "$d/state/notion-session-table-sync-signature" ] || return 1
+  [ ! -e "$d/stub-log.txt" ] || [ ! -s "$d/stub-log.txt" ]
+)
+
+# ============================================================
+# t14: session-table.sh直呼び — 解析失敗はsecurity/Notion APIより前に停止
+# ============================================================
+t14_session_table_parse_failure_precedes_credentials_and_api() (
+  set -uo pipefail
+  d="$(new_workdir)"
+  daily="$(daily_path_for "$d" "$TODAY")"
+  write_daily "$daily" "# デイリー $TODAY
+
+## 動いているエージェント
+
+## 終わったこと
+### Private
+"
+  security_marker="$d/security-called"
+  security_stub="$d/security-logging.sh"
+  cat > "$security_stub" <<EOF
+#!/usr/bin/env bash
+printf 'called' > '$security_marker'
+printf 'FAKE-TOKEN'
+EOF
+  chmod +x "$security_stub"
+
+  GOAL_BASE="$d/goal" \
+    NOTION_SYNC_CONF="$d/notion-empty.conf" \
+    NOTION_SYNC_STATE_DIR="$d/state" \
+    NOTION_SECURITY_CMD="$security_stub" \
+    NOTION_CURL_CMD="python3 $STUB_PY" \
+    NOTION_STUB_STATE_FILE="$d/stub-state.json" \
+    NOTION_STUB_LOG_FILE="$d/stub-log.txt" \
+    "$d/scripts/session-table.sh" >/dev/null 2>&1
+  rc=$?
+  [ "$rc" -ne 0 ] || return 1
+  [ ! -e "$security_marker" ] || return 1
+  [ ! -e "$d/state/notion-session-table-sync-signature" ] || return 1
+  [ ! -e "$d/stub-log.txt" ] || [ ! -s "$d/stub-log.txt" ]
+)
+
+# ============================================================
 run_test t1_parse_sessions_ok
 run_test t2_parse_done_nested
 run_test t3_parse_missing_file
@@ -452,10 +583,13 @@ run_test t4_parse_matches_real_board_py
 run_test t5_secret_never_leaks
 run_test t6_idempotent_two_runs
 run_test t7_upsert_and_archive
-run_test t8_zero_count_guard
+run_test t8_valid_empty_archives_immediately
 run_test t9_sync_no_change_zero_api_calls
 run_test t10_sync_failure_keeps_signature_for_retry
 run_test t11_sync_lock_prevents_concurrent_run
+run_test t12_parse_rejects_missing_section_and_unknown_row
+run_test t13_sync_parse_failure_is_fail_closed
+run_test t14_session_table_parse_failure_precedes_credentials_and_api
 
 echo "============================================================"
 echo "結果: PASS=$pass_count FAIL=$fail_count"

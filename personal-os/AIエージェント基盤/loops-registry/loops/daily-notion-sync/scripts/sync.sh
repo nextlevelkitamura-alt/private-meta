@@ -21,8 +21,8 @@
 # draft。人間がbootstrap/symlink登録するまで無効。手順は loop.md 参照）。
 #
 # フェイルセーフ: 多重起動防止（mkdirによる簡易ロック。stale判定=300秒超で自己修復）。
-# parse-daily.sh失敗・signature計算失敗は警告1行+exit 0で吸収する（このloopが人間の作業や
-# 他のloop・hookに一切影響しないため）。
+# 解析失敗は「0件」と区別して非0終了し、session-table.sh・archive・signature更新へ
+# 進まない。signature計算失敗は従来どおり警告1行+exit 0で吸収する。
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
@@ -36,6 +36,11 @@ LOCK_STALE_SECONDS=300
 warn_exit0() {
   echo "sync: 警告: $1" >&2
   exit 0
+}
+
+fail_closed() {
+  echo "sync: 解析失敗: $1（Notion同期・archive・signature更新を中止）" >&2
+  exit 1
 }
 
 mkdir -p "$STATE_DIR" 2>/dev/null || warn_exit0 "state保存先の作成に失敗: $STATE_DIR"
@@ -57,8 +62,8 @@ trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT
 date_str="$(TZ=Asia/Tokyo date '+%Y-%m-%d')"
 daily_file="$(daily_file_for "$date_str")"
 
-sessions_content="$("$SCRIPT_DIR/parse-daily.sh" sessions "$daily_file")" || warn_exit0 "parse-daily.sh(sessions)の実行に失敗(signature計算不能)"
-done_content="$("$SCRIPT_DIR/parse-daily.sh" done "$daily_file")" || warn_exit0 "parse-daily.sh(done)の実行に失敗(signature計算不能)"
+sessions_content="$("$SCRIPT_DIR/parse-daily.sh" sessions "$daily_file")" || fail_closed "parse-daily.sh(sessions)"
+done_content="$("$SCRIPT_DIR/parse-daily.sh" done "$daily_file")" || fail_closed "parse-daily.sh(done)"
 
 signature_input="$sessions_content
 ---

@@ -19,9 +19,9 @@ Notion・スマホ側で古い🟢が残って見える。このloopはその隙
 
 ## 各回の実行
 
-- `scripts/reconcile.sh` → `hooks-registry/hooks/session-board/board.py reconcile` を1回。
+- `scripts/reconcile.sh` → `hooks-registry/shared/session-board/board.py reconcile` を1回。
 - board.py 自身が flock を持つためロック不要。当日ボードが無ければ何もしない（空ファイルを作らない）。
-- 対象は当日ボードのみ（日付跨ぎの前日掃除は既知の制約・session-board README 参照）。
+- 対象は当日ボードのみ（日付跨ぎの前日掃除は既知の制約・session-board `AGENTS.md` 参照）。
 
 ## 完了・停止条件
 

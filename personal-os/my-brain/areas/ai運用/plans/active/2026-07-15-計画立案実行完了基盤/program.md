@@ -135,15 +135,15 @@ Wave 6  06 E2Eと承認セット                     ← 05の一括レビュー
     対象repo: ~/Private（private-meta）
     並列: 不可 ／ レビュー: 一括（Wave4後に02・03・04を3子一括。共通契約を変える修正のみ即差し戻し）
     人間ゲート: runtime登録・注入文の有効化・Codex再trustは実行せず承認セットへ（適用は承認後）
-    次: 評価02全PASS(8/8・テスト132件)。統合branchへのmergeは02・03の評価後にWave順で実施。登録・有効化は承認セット確認後
+    次: 統合branchへmerge済み(スモーク全緑・worktree削除済み)。登録・有効化は承認セット確認後
     場所: plans/04 ／ 依存: 02, 03, 計画運用ハーネス子04
     参照: task/pf04=81772b2・評価01→修正01→評価02(全PASS)・登録差分=hooks-registry/registration-diff-04-plan-closeout.md
-- [ ] 05  既存計画とarea標準の適用 … 計画
+- [ ] 05  既存計画とarea標準の適用 … 実装
     役割: 統合（既存計画の監査・ai運用pilot）
     対象repo: ~/Private（private-meta）
     並列: 不可 ／ レビュー: 一括（Wave6のE2E・統合評価と合わせて消化）
     人間ゲート: バケット移動・identity削除・知識/移動は実行せず承認セットへ（適用は承認後）
-    次: 全バケット監査＋identity→AGENTS統合＋知識/分類＋代表計画の新テンプレ移行を行い、候補一覧を承認セットへ記録する
+    次: A=監査完了(references/2026-07-15-子05A-既存計画監査.md)・B=pilot実装中(task/pf05b・sonnet5・base 32a46d6)
     場所: plans/05 ／ 依存: 01, 02, 04
     参照: ―
 - [ ] 06  E2Eと承認セット … 計画

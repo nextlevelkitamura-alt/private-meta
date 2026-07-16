@@ -61,10 +61,14 @@
 
 ## 完了条件（レビュー項目）
 
-- [ ] 規約の `done`・`archive` 定義が一本道と一致し、`archive=閉じた計画`＋終了区分5種が規約側にあり、`active→archive` 直接遷移を案内していない。
-- [ ] 全許可遷移と容量（active=3・paused=3・done=8・planning/archive=無制限）が一箇所で定義され、成功・評価不足・誤バケット・上限到達・既存超過・超過バケットからの退出のテストがある。`--force`・自動退避が無い。
-- [ ] `done→archive`・非completed archiveが確認記録＋終了記録なしに実行できず、`completed` は全 `[x]`＋最終評価全PASSなしに通らず、`superseded/merged/conflict` は後継・統合先なしに通らないことを成功・拒否双方でテストできる。archive lintが終了記録欠落・completed偽装を検出する。
-- [ ] `planctl prepare` が明示引数からmanifestと実行指示を生成し、stateがgit追跡されない。`progress` は対象子以外をバイト不変に保つ。
-- [ ] `apply-evaluation` が全PASS時のみ `[x]` 同期し、FAIL／対象外／文言不一致／誤った子番号／result commit欠落 をそれぞれ拒否するテストがある。同期後に実装結果・マップ・参照commitが一致する。
-- [ ] `close` がbucketctlの検証を迂回せず、`sync-check` が不整合をJSONで返し整合時0で終了する。result packetのschema検証が不正JSON・必須欠落・不正statusを検出する。
-- [ ] plan-opsの全テストが通り、progctl・bucketctlの単体利用が変更前と同じ挙動である。状態・終了区分を第2の状態台帳にしていない。遷移・容量・apply-evaluation・renameが、Private以外の合成repoの `plans/` を明示指定しても同じに動く。
+- [x] 規約の `done`・`archive` 定義が一本道と一致し、`archive=閉じた計画`＋終了区分5種が規約側にあり、`active→archive` 直接遷移を案内していない。
+- [x] 全許可遷移と容量（active=3・paused=3・done=8・planning/archive=無制限）が一箇所で定義され、成功・評価不足・誤バケット・上限到達・既存超過・超過バケットからの退出のテストがある。`--force`・自動退避が無い。
+- [x] `done→archive`・非completed archiveが確認記録＋終了記録なしに実行できず、`completed` は全 `[x]`＋最終評価全PASSなしに通らず、`superseded/merged/conflict` は後継・統合先なしに通らないことを成功・拒否双方でテストできる。archive lintが終了記録欠落・completed偽装を検出する。
+- [x] `planctl prepare` が明示引数からmanifestと実行指示を生成し、stateがgit追跡されない。`progress` は対象子以外をバイト不変に保つ。
+- [x] `apply-evaluation` が全PASS時のみ `[x]` 同期し、FAIL／対象外／文言不一致／誤った子番号／result commit欠落 をそれぞれ拒否するテストがある。同期後に実装結果・マップ・参照commitが一致する。
+- [x] `close` がbucketctlの検証を迂回せず、`sync-check` が不整合をJSONで返し整合時0で終了する。result packetのschema検証が不正JSON・必須欠落・不正statusを検出する。
+- [x] plan-opsの全テストが通り、progctl・bucketctlの単体利用が変更前と同じ挙動である。状態・終了区分を第2の状態台帳にしていない。遷移・容量・apply-evaluation・renameが、Private以外の合成repoの `plans/` を明示指定しても同じに動く。
+
+## 実装結果
+
+- 2026-07-16 評価04で全PASS（評価01→修正01→評価02→修正02→評価03(残1)→指揮官直接fixture追加→評価04全PASS。上限到達後の残1件は人間承認の指揮官直接対応）。実装=task/pf02（base 5583899 → a2334b6・codex terra＋指揮官）。plan-opsテスト178件全緑。

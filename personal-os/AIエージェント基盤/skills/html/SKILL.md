@@ -30,8 +30,9 @@ description: 回答や作業結果を、人間が見る1枚もののself-contain
 
 ## 4. 直接参照するファイル
 
-1. 共通のHTML規約: `references/html-structure.md`。
-2. 通常HTMLの品質: `references/mode-quick.md` / `references/mode-full.md`。
-3. メタ説明固有の見せ方: `references/meta-explain-layout.md`。
-4. 骨組み: `assets/artifact-template.html`。
-5. スマホ表示: `workflows/mobile-preview.md` / `scripts/mobile_preview.py`。
+1. 共通のHTML規約: `references/html-structure.md`（選択ラダーの1段目は図解判定）。
+2. 図解レシピ集: `references/diagram-recipes.md`（内容→図の対応表・量の目安。雛形実体はテンプレ側）。
+3. 通常HTMLの品質: `references/mode-quick.md` / `references/mode-full.md`。
+4. メタ説明固有の見せ方: `references/meta-explain-layout.md`。
+5. 骨組み: `assets/artifact-template.html`（部品CSSと図解レシピ雛形R1〜R6の正本）。
+6. スマホ表示: `workflows/mobile-preview.md` / `scripts/mobile_preview.py`。

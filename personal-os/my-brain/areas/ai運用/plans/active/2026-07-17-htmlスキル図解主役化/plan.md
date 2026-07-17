@@ -1,4 +1,5 @@
 分類: skill ／ 種別: 既存改善
+大幅更新日: 2026-07-17
 規模: ライト
 形態判定: 単発 ／ 理由: skills/html配下だけで完結し1commitで戻せる文言・雛形改修
 並列: 不可 ／ レビュー: 都度
@@ -35,8 +36,8 @@
   2. この計画
   3. /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/skills/html/ 配下の現行ファイル一式
 - 依存成果: 設計合意済みArtifact「htmlスキル 図解強化の修正計画 v2」（2026-07-17・レシピ6種・既定レイアウト・ルール文言の方針）
-- 変更可能範囲: personal-os/AIエージェント基盤/skills/html/ の SKILL.md・SKILL.html・references/・assets/artifact-template.html
-- 変更禁止範囲: skills/html/workflows/mobile-preview.md と scripts/（今回の対象外）、runtime露出symlink（既存露出のまま・新規露出はしない）、他Skill・registry
+- 変更可能範囲: `personal-os/AIエージェント基盤/skills/html/SKILL.md`・`personal-os/AIエージェント基盤/skills/html/SKILL.html`・`personal-os/AIエージェント基盤/skills/html/references`・`personal-os/AIエージェント基盤/skills/html/assets/artifact-template.html`
+- 変更禁止範囲: `personal-os/AIエージェント基盤/skills/html/workflows`・`personal-os/AIエージェント基盤/skills/html/scripts`（今回の対象外。加えてruntime露出symlinkは既存のまま・新規露出はしない・他Skill・registryも触らない）
 - ファイル担当マップ: 不要
 - worktree方針: 不要
 - 維持する契約: 白背景ライト単色（dark分岐禁止）／self-contained・JSなし／部品CSSと雛形実体の正本はartifact-template.htmlのみ（md側へSVG本文を複製しない）
@@ -67,18 +68,20 @@
 
 ## 完了条件（レビュー項目）
 
-- [ ] `references/diagram-recipes.md` が存在し、6レシピすべてに「使い所」と「テンプレ内雛形への参照」があり、SVGコード本文を複製していない
-- [ ] `assets/artifact-template.html` に図解部品CSSと6レシピのSVG雛形実体があり、dark分岐・暗色背景が無い
-- [ ] `references/html-structure.md` §3の1段目が図解判定になっており、フォルダ構成の割当がボックス型ツリー図（.treeは補足用）へ変わっている
-- [ ] `references/html-structure.md` §5の節の型が「リード1行→図＋キャプション→補足」を既定として含む
-- [ ] `references/mode-quick.md` に「図とインタラクションは基本入れない」が残っておらず、雛形ベースの図既定（1〜2枚・装飾禁止）が書かれている
-- [ ] `references/mode-full.md` に目安「主要節の過半で図が主役・1ページ最低1枚」と公開前チェックの追加項がある
-- [ ] `references/meta-explain-layout.md` §3がdiagram-recipes.mdのレシピ名を参照し、図法の定義本文を複製していない
-- [ ] `SKILL.md` §4にdiagram-recipes.mdが追記され、`SKILL.html` が再生成されている
-- [ ] 実題材（AIエージェント基盤のフォルダ構成説明）のquick生成で図が1枚以上主役になり、full生成で主要節の過半が図主役になる
-- [ ] 全変更が skills/html/ 配下に収まり、workflows/mobile-preview.md・scripts/・runtime露出symlinkに変更が無い
+- [x] `references/diagram-recipes.md` が存在し、6レシピすべてに「使い所」と「テンプレ内雛形への参照」があり、SVGコード本文を複製していない
+- [x] `assets/artifact-template.html` に図解部品CSSと6レシピのSVG雛形実体があり、dark分岐・暗色背景が無い
+- [x] `references/html-structure.md` §3の1段目が図解判定になっており、フォルダ構成の割当がボックス型ツリー図（.treeは補足用）へ変わっている
+- [x] `references/html-structure.md` §5の節の型が「リード1行→図＋キャプション→補足」を既定として含む
+- [x] `references/mode-quick.md` に「図とインタラクションは基本入れない」が残っておらず、雛形ベースの図既定（1〜2枚・装飾禁止）が書かれている
+- [x] `references/mode-full.md` に目安「主要節の過半で図が主役・1ページ最低1枚」と公開前チェックの追加項がある
+- [x] `references/meta-explain-layout.md` §3がdiagram-recipes.mdのレシピ名を参照し、図法の定義本文を複製していない
+- [x] `SKILL.md` §4にdiagram-recipes.mdが追記され、`SKILL.html` が再生成されている
+- [x] 実題材（AIエージェント基盤のフォルダ構成説明）のquick生成で図が1枚以上主役になり、full生成で主要節の過半が図主役になる
+- [x] 全変更が skills/html/ 配下に収まり、workflows/mobile-preview.md・scripts/・runtime露出symlinkに変更が無い
 
 ## 実装結果
+- result: 22badc5 ／ 評価: 評価01.md
+
 
 実装後にplanctlが追記・更新する。実行前は記入しない。
 

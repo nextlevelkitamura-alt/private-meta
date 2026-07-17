@@ -1,0 +1,496 @@
+<title>当日情報SQL化・壁打ちマップ</title>
+<style>
+  :root{
+    --ground:#FFFFFF; --surface:#FFFFFF; --surface-2:#F7F8FB;
+    --ink:#19212F; --muted:#5F6879; --line:#DBDFEA;
+    --accent:#2C3A8C; --accent-ink:#202C6E; --accent-soft:#E9ECFA;
+    --go:#2E7D5B; --go-ink:#1E5A40; --go-soft:#E3F1EA;
+    --warn:#B4472B; --warn-ink:#8C3620; --warn-soft:#F7E8E2;
+    --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP","Segoe UI",sans-serif;
+    --mono:"SF Mono","SFMono-Regular","JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .page{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;padding:40px 20px 72px}
+  .wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:42px}
+  .eyebrow{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 12px}
+  h1{font-size:30px;font-weight:600;letter-spacing:-.01em;margin:0;line-height:1.25;text-wrap:balance}
+  .lede{margin:14px 0 0;font-size:15.5px;color:var(--muted);max-width:60ch}
+  .lede b{color:var(--ink);font-weight:600}
+  h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 6px}
+  .slede{margin:0 0 16px;font-size:14.5px;color:var(--ink);max-width:64ch}
+  section{display:flex;flex-direction:column}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-block;font-size:12px;font-weight:500;padding:5px 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);text-decoration:none;border:1px solid transparent}
+  .chip:hover{border-color:var(--accent)}
+
+  .pill{display:inline-block;font-size:11.5px;font-weight:500;padding:2px 10px;border-radius:999px;vertical-align:1px}
+  .pill.go{background:var(--go-soft);color:var(--go-ink)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
+  .pill.acc{background:var(--accent-soft);color:var(--accent-ink)}
+
+  figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px}
+  figcaption{font-size:12px;color:var(--muted);margin-top:10px}
+
+  .deflist{display:flex;flex-direction:column;gap:10px}
+  .ditem{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 17px}
+  .ditem .dhead{margin:0 0 6px;font-size:14px;font-weight:600;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .ditem .dbody{margin:0;font-size:13.5px;color:var(--muted)}
+  .ditem .dbody b,.ditem li b{color:var(--ink);font-weight:600}
+  .ditem ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--muted)}
+  .ditem li{margin:3px 0}
+
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .steps li{display:flex;gap:14px;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .stepno{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .stepno.now{background:var(--go-soft);color:var(--go-ink)}
+  .steps .h{font-size:13.5px;font-weight:600;margin:0}
+  .steps p{margin:0;font-size:13px;color:var(--muted)}
+  .steps p b{color:var(--ink)}
+
+  .compare2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.compare2{grid-template-columns:1fr}}
+  .ccol{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:16px;min-width:0}
+  .ccol .h{font-size:13px;font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .ccol ul{margin:0;padding-left:20px;font-size:13.5px;color:var(--muted)}
+  .ccol li{margin:4px 0}
+  .ccol li b{color:var(--ink);font-weight:600}
+  .ccol .foot{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
+
+  details.disc{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px 17px}
+  details.disc summary{cursor:pointer;font-size:13.5px;font-weight:500;color:var(--accent-ink)}
+  details.disc[open] summary{margin-bottom:8px}
+  details.disc .dbody{font-size:13.5px;color:var(--muted);margin:0}
+
+  .source{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted)}
+  .source b{color:var(--ink);font-weight:600}
+
+  /* ── スマホ画面モック ── */
+  .mockwrap{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
+  @media(max-width:720px){.mockwrap{grid-template-columns:1fr}}
+  .mock{position:relative;width:100%;max-width:330px;margin:0 auto;background:var(--surface);border:1.5px solid var(--ink);border-radius:24px;padding:16px 14px;display:flex;flex-direction:column;gap:12px}
+  .fab{position:absolute;right:14px;bottom:14px;width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;box-shadow:0 3px 10px rgba(44,58,140,.35)}
+  .mbar{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600}
+  .mbar .nav{color:var(--muted);font-weight:400}
+  .msec{border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+  .msec .mh{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.04em;margin:0 0 7px}
+  .mitem{display:flex;align-items:flex-start;gap:7px;padding:4.5px 0;font-size:12px;line-height:1.5}
+  .mitem .t{min-width:0;flex:1}
+  .mitem .sub{display:block;font-size:10px;color:var(--muted)}
+  .cb{flex:none;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-top:2px}
+  .cb.done{border-color:var(--go);background:var(--go-soft);position:relative}
+  .cb.done::after{content:"✓";position:absolute;top:-4px;left:1px;font-size:11px;color:var(--go-ink);font-weight:700}
+  .done-t{color:var(--muted);text-decoration:line-through}
+  .fchip{flex:none;display:inline-block;font-size:9.5px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);margin-top:2px}
+  .fchip.work{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink)}
+  .fchip.ai{background:var(--go-soft);border-color:transparent;color:var(--go-ink)}
+  .fchip.due{background:var(--warn-soft);border-color:transparent;color:var(--warn-ink)}
+  .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:5px}
+  .dot.run{background:#34A853}
+  .dot.wait{background:#F0A020}
+  .minput{display:flex;align-items:center;gap:7px;border:1.5px dashed var(--line);border-radius:10px;padding:7px 10px;font-size:11.5px;color:var(--muted)}
+  .mbtn{display:block;text-align:center;background:var(--accent);color:#fff;border-radius:11px;padding:9px 0;font-size:13px;font-weight:600}
+  .seg{display:flex;gap:5px;flex-wrap:wrap}
+  .seg span{font-size:11px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .seg span.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+  .flabel{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.04em;margin:2px 0 5px}
+  .finput{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12.5px;color:var(--muted)}
+  .msum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .msum div{border:1px solid var(--line);border-radius:10px;padding:6px 4px;text-align:center}
+  .msum .v{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+  .msum .k{font-size:9px;color:var(--muted)}
+  .anno{flex:none;display:inline-flex;width:18px;height:18px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:10.5px;font-weight:700;align-items:center;justify-content:center;vertical-align:-3px}
+  .anno.new{background:var(--warn-soft);color:var(--warn-ink)}
+  .legend{display:flex;flex-direction:column;gap:8px}
+  .lrow{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--muted)}
+  .lrow b{color:var(--ink)}
+  .lrow .anno{margin-top:3px}
+  .dgroup{font-size:10.5px;font-weight:700;color:var(--accent-ink);letter-spacing:.05em;margin:2px 0 1px}
+  .fchip.st0{background:#EFF1F5;border-color:transparent;color:#5F6879}
+  .fchip.st1{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink)}
+  .fchip.st2{background:var(--go-soft);border-color:transparent;color:var(--go-ink)}
+  .fchip.st3{background:#FFF3D1;border-color:transparent;color:#8A6410}
+  .mockrow{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  @media(max-width:720px){.mockrow{grid-template-columns:1fr}}
+  .mocktri{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}
+  @media(max-width:760px){.mocktri{grid-template-columns:1fr}}
+  .vlabel{font-size:12px;font-weight:700;color:var(--accent-ink);margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .cal .ch{font-size:8.5px;text-align:center;color:var(--muted);font-weight:600}
+  .cal .cd{border:1px solid var(--line);border-radius:7px;min-height:34px;padding:2px 3px;font-size:9px;color:var(--muted)}
+  .cal .cd .n{font-weight:600;color:var(--ink);font-size:9.5px}
+  .cal .cd.today{border-color:var(--accent);background:var(--accent-soft)}
+  .cal .cd .b{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-right:1.5px}
+  .cal .cd.dim .n{color:#B7BCC8;font-weight:400}
+</style>
+
+<div class="page">
+  <div class="wrap">
+
+    <header>
+      <p class="eyebrow">2026-07-17 ・ 壁打ち v6 — FAB導線と月カレンダー</p>
+      <h1>当日ボードのUIファースト設計</h1>
+      <p class="lede">指摘を反映: <b>起票は一覧右下の＋（FAB）→ 起票画面へ遷移</b>（現行focusmapの予定追加と同じ操作感）、<b>切替ビューは月カレンダー表示</b>に変更。該当する写真モック3枚を再生成中。残るゲートは「これでいい（計画起案へ）」の一言。</p>
+    </header>
+
+    <nav class="chips">
+      <a class="chip" href="#decided">決まったこと</a>
+      <a class="chip" href="#mock-a">モックA: 今日</a>
+      <a class="chip" href="#mock-b">モックB: 2週間</a>
+      <a class="chip" href="#mock-c">モックC: 起票</a>
+      <a class="chip" href="#box">箱の設計</a>
+      <a class="chip" href="#plan">進め方</a>
+      <a class="chip" href="#open">未決事項</a>
+    </nav>
+
+    <section id="decided">
+      <h2>① 結論 — ここまでで決まったこと</h2>
+      <p class="slede">UIファーストで進める。この1枚のモックが合意できたら、箱→配線→反転の順に実装する。</p>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">決定</span>UI・箱を先に、DB配線は後</p>
+          <p class="dbody">テーブル置き先（board/inbox/統合）の議論は<b>箱の形が確定してから</b>。先に入力UIと画面で「何を入れて何を見るか」を固める。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">決定</span>仕事の当日タスクも新しい「やること」箱に入れる</p>
+          <p class="dbody">仕事repoのタスク管理はまだ固まっていないが、<b>別計画にせず区分ラベル「仕事」でこの箱に同居</b>させる。専用の仕組みが必要になったらその時に切り出す。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">決定</span>画面と起票の形（v6で確定）</p>
+          <p class="dbody">今日ボード=やること最上段＋AI検知バッジ。ビュー=B-1リスト（2週間）既定＋B-2は月カレンダー。起票=<b>一覧右下の＋（FAB）→ C-3画面へ遷移</b>（任せる必須・実行repoはrepo-registryの一覧から選択・私用は「なし」）。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">決定</span>AI実行後は人間確認ゲート（確認待ち）</p>
+          <p class="dbody">AIが実行し終えた行は勝手に完了にならず<b>「確認待ち」で止まる</b>。人間がワンタップ承認して完了、問題があれば差し戻し。focusmap既存の ai_tasks の awaiting_approval と同じ思想で、「AIが管理・実行し、人間は俯瞰・承認する」に一致する。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill acc">前提</span>正本の線引きはv1の案を維持</p>
+          <p class="dbody">機械が高頻度に書く運用データ＝DB正本、計画書・的の文面・知識＝mdのまま（DBは参照だけ）。詳細は下の「v1の現状整理」に格納。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="mock-a">
+      <h2>② モックA — 「今日」ボード（ホーム画面）</h2>
+      <p class="slede">朝いちで開く画面。<span class="anno new">新</span>が新設の箱、<span class="anno">既</span>が既存データでそのまま出せる区画。</p>
+      <div class="mockwrap">
+        <div class="mock">
+          <div class="mbar"><span class="nav">‹</span><span>7/17（金）今日</span><span class="nav">›</span></div>
+          <div class="msec">
+            <p class="mh"><span class="anno new">新</span>今日のやること　5件</p>
+            <div class="mitem"><span class="cb"></span><span class="t">中島さんへLINE文を送付<span class="sub">自分でやる・事前分</span></span><span class="fchip work">仕事</span></div>
+            <div class="mitem"><span class="cb"></span><span class="t">志望動機スキルのWF構成を確定<span class="sub">AI検知 13:58 → 立案に着手</span></span><span class="fchip st1">⚙ AI立案中</span></div>
+            <div class="mitem"><span class="cb"></span><span class="t">求人票の下書きを作る<span class="sub">14:05 起票・急遽分</span></span><span class="fchip st0">未検知</span></div>
+            <div class="mitem"><span class="cb"></span><span class="t">候補者リストの更新<span class="sub">AI完了 14:20 → 承認で完了に</span></span><span class="fchip st3">確認待ち</span></div>
+            <div class="mitem"><span class="cb done"></span><span class="t done-t">求人8件の分類と志望動機4案</span><span class="fchip st2">✓ AI完了</span></div>
+          </div>
+          <div class="msec">
+            <p class="mh"><span class="anno">既</span>動いているエージェント　3体</p>
+            <div class="mitem"><span class="dot run"></span><span class="t">当日情報SQL化の計画<span class="sub">今: UIモックで討論中</span></span></div>
+            <div class="mitem"><span class="dot run"></span><span class="t">仕事repoレビュー構造の方針<span class="sub">今: 現状配線を調査中</span></span></div>
+            <div class="mitem"><span class="dot wait"></span><span class="t">志望動機クリエーターのスキル化<span class="sub">待機 42分 — 確認待ち</span></span></div>
+          </div>
+          <div class="msec">
+            <p class="mh"><span class="anno">既</span>終わったこと　7件</p>
+            <div class="mitem"><span class="t">中島さん志望動機 <span class="sub">4件 ・ 12:31〜13:25</span></span></div>
+            <div class="mitem"><span class="t">志望動機スキル化の調査 <span class="sub">3件 ・ 13:34〜13:57</span></span></div>
+          </div>
+          <div class="msec">
+            <p class="mh"><span class="anno">既</span>本日サマリ</p>
+            <div class="msum">
+              <div><div class="v">3h12m</div><div class="k">実行</div></div>
+              <div><div class="v">48m</div><div class="k">待ち</div></div>
+              <div><div class="v">3体</div><div class="k">稼働中</div></div>
+            </div>
+          </div>
+          <div class="fab">＋</div>
+        </div>
+        <div class="legend">
+          <div class="lrow"><span class="anno new">新</span><p><b>事前分も当日急遽分も同じ箱</b>。チェック＝完了。チップは実行repo（仕事/focusmap/…・私用は無地）。起票は<b>右下の＋（FAB・現行focusmapの予定追加と同じ）→ モックCの画面へ遷移</b>。リスト内のインライン追加は置かない。</p></div>
+          <div class="lrow"><span class="anno new">新</span><p><b>AIの検知状態が行ごとに見える</b>: 未検知 → AI検知 → 立案中/実行中 → <b>確認待ち</b> → 完了。記入した瞬間は「未検知」、指揮官AIが拾うとバッジが進み、AIが終えたら「確認待ち」で止まって人間の承認で完了になる。「自分でやる」行にはバッジを付けない。</p></div>
+          <div class="lrow"><span class="anno">既</span><p><b>下3区画は既存データの配線だけ</b>。エージェント状態=sessions、終わったこと=session_logs、サマリ=集計SQL3本。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="mock-b">
+      <h2>③ モックB — 「2週間」ビュー（先の見通し）</h2>
+      <p class="slede"><b>両方採用で決定</b>: 既定はB-1縦リスト（2週間先まで）、切替のB-2は<b>月カレンダー表示</b>（同じ箱を月の範囲で引くだけ）。</p>
+      <div class="mockrow">
+        <div>
+          <p class="vlabel"><span class="pill go">決定・既定ビュー</span>B-1 日付グループの縦リスト</p>
+          <div class="mock">
+            <div class="mbar"><span>2週間先まで</span><span class="nav">⇄ 格子</span></div>
+            <div class="seg"><span class="on">すべて</span><span>仕事</span><span>focusmap</span><span>私用</span></div>
+            <div class="msec">
+              <p class="dgroup">今日 7/17（金）</p>
+              <div class="mitem"><span class="cb"></span><span class="t">中島さんへLINE文を送付</span><span class="fchip work">仕事</span></div>
+              <div class="mitem"><span class="cb"></span><span class="t">志望動機スキルのWF確定</span><span class="fchip ai">AI</span></div>
+              <p class="dgroup">明日 7/18（土）</p>
+              <div class="mitem"><span class="cb"></span><span class="t">LINE返信の確認・次アクション</span><span class="fchip work">仕事</span></div>
+              <p class="dgroup">来週 7/21（火）〜</p>
+              <div class="mitem"><span class="cb"></span><span class="t">スライド案件の壁打ち</span><span class="fchip">副業</span></div>
+              <div class="mitem"><span class="cb"></span><span class="t">履歴書WFへのスキル組込</span><span class="fchip ai">AI</span></div>
+              <p class="dgroup">再来週 7/28（火）〜</p>
+              <div class="mitem"><span class="cb"></span><span class="t">求人応募の期限</span><span class="fchip due">〆 7/30</span></div>
+            </div>
+            <div class="fab">＋</div>
+          </div>
+        </div>
+        <div>
+          <p class="vlabel"><span class="pill go">決定・切替タブ</span>B-2 月カレンダー（タップで日別）</p>
+          <div class="mock">
+            <div class="mbar"><span class="nav">‹</span><span>2026年7月</span><span class="nav">› ・ ⇄ リスト</span></div>
+            <div class="cal">
+              <span class="ch">月</span><span class="ch">火</span><span class="ch">水</span><span class="ch">木</span><span class="ch">金</span><span class="ch">土</span><span class="ch">日</span>
+              <div class="cd dim"><span class="n">29</span></div>
+              <div class="cd dim"><span class="n">30</span></div>
+              <div class="cd"><span class="n">1</span></div>
+              <div class="cd"><span class="n">2</span></div>
+              <div class="cd"><span class="n">3</span></div>
+              <div class="cd"><span class="n">4</span></div>
+              <div class="cd"><span class="n">5</span></div>
+              <div class="cd"><span class="n">6</span></div>
+              <div class="cd"><span class="n">7</span></div>
+              <div class="cd"><span class="n">8</span></div>
+              <div class="cd"><span class="n">9</span></div>
+              <div class="cd"><span class="n">10</span></div>
+              <div class="cd"><span class="n">11</span></div>
+              <div class="cd"><span class="n">12</span></div>
+              <div class="cd"><span class="n">13</span></div>
+              <div class="cd"><span class="n">14</span></div>
+              <div class="cd"><span class="n">15</span></div>
+              <div class="cd"><span class="n">16</span></div>
+              <div class="cd today"><span class="n">17</span><br><span class="b"></span><span class="b"></span></div>
+              <div class="cd"><span class="n">18</span><br><span class="b"></span></div>
+              <div class="cd"><span class="n">19</span></div>
+              <div class="cd"><span class="n">20</span></div>
+              <div class="cd"><span class="n">21</span><br><span class="b"></span><span class="b"></span></div>
+              <div class="cd"><span class="n">22</span></div>
+              <div class="cd"><span class="n">23</span></div>
+              <div class="cd"><span class="n">24</span></div>
+              <div class="cd"><span class="n">25</span></div>
+              <div class="cd"><span class="n">26</span></div>
+              <div class="cd"><span class="n">27</span></div>
+              <div class="cd"><span class="n">28</span></div>
+              <div class="cd"><span class="n">29</span></div>
+              <div class="cd"><span class="n">30</span></div>
+              <div class="cd"><span class="n">31</span></div>
+              <div class="cd dim"><span class="n">1</span></div>
+              <div class="cd dim"><span class="n">2</span></div>
+            </div>
+            <div class="msec">
+              <p class="mh">7/17（金）をタップ中　2件</p>
+              <div class="mitem"><span class="cb"></span><span class="t">中島さんへLINE文を送付</span><span class="fchip work">仕事</span></div>
+              <div class="mitem"><span class="cb"></span><span class="t">志望動機スキルのWF確定</span><span class="fchip ai">AI</span></div>
+            </div>
+            <div class="fab">＋</div>
+          </div>
+        </div>
+      </div>
+      <div style="height:14px"></div>
+      <div class="legend">
+        <div class="lrow"><span class="anno new">新</span><p><b>B-1が既定</b>（2週間先までのリスト）、<b>B-2は月カレンダー</b>で月全体の分布を見渡す（指摘反映: 格子は1ヶ月表示まで）。箱は同じで、ビューの取得範囲が違うだけ。実装順は計画で確定。</p></div>
+        <div class="lrow"><span class="anno">既</span><p>締切〆は「やる日」と別に持ち赤チップ表示。フィルタは実行repo＋私用で絞り、「本日の仕事の一元管理」は「仕事」タブが担う。</p></div>
+      </div>
+    </section>
+
+    <section id="mock-c">
+      <h2>④ モックC — クイック起票（どこからでも企画→実行）</h2>
+      <p class="slede"><b>C-3（任せる必須）で決定</b>。導線は<b>一覧右下の＋（FAB）→ この画面へ遷移</b>（現行focusmapの予定追加と同じ操作感）。「区分」は実行repoの選択式で、どのrepoで実行するかが起票時に確定する。</p>
+      <div class="mockwrap">
+        <div class="mock">
+          <div class="mbar"><span class="nav">←</span><span>やることを追加</span><span></span></div>
+          <div class="finput">何をやる？</div>
+          <div><p class="flabel">いつ</p><div class="seg"><span class="on">今日</span><span>明日</span><span>今週</span><span>来週</span><span>日付…</span></div></div>
+          <div><p class="flabel">実行repo（repo-registryの一覧から）</p><div class="seg"><span class="on">仕事</span><span>focusmap</span><span>Private</span><span>なし（私用）</span></div></div>
+          <div><p class="flabel">任せる（必須）</p><div class="seg"><span>自分でやる</span><span class="on">AIに任せる</span></div></div>
+          <div class="mbtn">追加する</div>
+          <div class="minput">締切・メモ・的への紐付けは「詳しく ▾」へ</div>
+        </div>
+        <div class="legend">
+          <div class="lrow"><span class="anno new">新</span><p><b>「AIに任せる」＋実行repo</b>で、Mac側の指揮官が迷わない: repoが決まっているので、そのrepoのAGENTS.md・計画箱に沿ってそのまま実行できる（既存のsession handoff規約と同じ流れ）。進行はモックAの検知バッジで追う。</p></div>
+          <div class="lrow"><span class="anno new">新</span><p><b>repo選択肢の正本はrepo-registry</b>（現登録: 仕事・focusmap・Private・AIエージェント基盤）。DBには選択肢の参照コピー（reposマスタ）だけ持ち、md正本を崩さない。私用タスクは「なし（私用）」。</p></div>
+          <div class="lrow"><span class="anno">既</span><p><b>C-1/C-2は不採用</b>（回答: C-3がすごく良い）。web書込経路は既存の目標追加フォームと同じ仕組みで、認証つきfocusmap本番URLから使える。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="box">
+      <h2>⑤ 箱の設計 — モック3枚は「新設1箱＋既存」で全部成立する</h2>
+      <p class="slede">画面から逆算すると、必要な新設は「やること」1箱だけ。名前も項目もここで討論して確定する。</p>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill warn">新設</span>「やること」箱（テーブル名の仮: todos）</p>
+          <ul>
+            <li><b>title</b>: 内容1行（必須）</li>
+            <li><b>do_date</b>: やる日（今日ボード・2週間ビューの並び基準）</li>
+            <li><b>due_date</b>: 締切（任意・赤チップ表示）</li>
+            <li><b>repo</b>: 実行repo = repo-registry登録repoから選択（私用は「なし」。フィルタ兼AIの実行先。選択肢はreposマスタ表・正本はrepo-registry）</li>
+            <li><b>assignee</b>: 自分 or AI（AI行は起票キューとして拾われる）</li>
+            <li><b>ai_status</b>: AIの検知状態 = 未検知 → 検知 → 立案中/実行中 → <b>確認待ち</b> → 完了（確認待ち=人間承認ゲート。今日ボードのバッジの元）</li>
+            <li><b>status</b>: 未着手／完了／取りやめ</li>
+            <li><b>goal_ref</b>: 的slugへの参照（任意・方向修正ビュー用の伏線）</li>
+            <li><b>note / source / created_at / completed_at</b>: メモ・入力元（web/chat/cli）・時刻</li>
+          </ul>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">既存で足りる</span>残りの区画</p>
+          <p class="dbody">エージェント状態=<code>sessions</code>、状態遷移=<code>session_events</code>、終わったこと=<code>session_logs</code>、目標宣言=<code>goals</code>、時間サマリ=集計SQL3本。<b>今日ボードの過半は配線だけで動く</b>。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead">「目標(goals)」と「やること」の関係</p>
+          <p class="dbody">目標=その日の親見出し（既にある）、やること=粒のタスク（新設）。当面は独立でよく、将来 <code>goal_ref</code> で紐付けて「的→今日の粒」の逆算表示に使う。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="plan">
+      <h2>⑥ 進め方 — UIファーストに並べ直した5段階</h2>
+      <p class="slede">v1の4段階を「UIが先」に組み替えた。いま①にいる。</p>
+      <ol class="steps">
+        <li>
+          <span class="stepno now">1</span>
+          <div>
+            <p class="h">モック合意（今ここ）</p>
+            <p>この1枚で画面と箱を討論→確定。<b>合意まで実装しない</b>。</p>
+          </div>
+        </li>
+        <li>
+          <span class="stepno">2</span>
+          <div>
+            <p class="h">「やること」箱＋今日ボード＋起票UIを実装</p>
+            <p>focusmapに画面と入力を作る。箱の置き先（board/inbox/統合）とreposマスタ（repo-registry→DB参照コピー）は<b>この時点で確定</b>。まず自分が毎日使って育てる。</p>
+          </div>
+        </li>
+        <li>
+          <span class="stepno">3</span>
+          <div>
+            <p class="h">2週間ビュー＋AI起票キューの導線</p>
+            <p>「AIに任せる」行をMac側が拾う流れ（kickoff接続）まで。</p>
+          </div>
+        </li>
+        <li>
+          <span class="stepno">4</span>
+          <div>
+            <p class="h">セッション状態・ログの正本反転</p>
+            <p>board.pyをDB先書きへ。デイリーmdの2節は生成表示か廃止かをここで判断（朝会・夜会への影響込み）。</p>
+          </div>
+        </li>
+        <li>
+          <span class="stepno">5</span>
+          <div>
+            <p class="h">方向修正ビュー＋ミラー廃止</p>
+            <p>的（slug）×実績の照合画面。md同期を止めて一本化。</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="open">
+      <h2>⑦ 未決事項 — この3つを決めれば計画に落とせる</h2>
+      <p class="slede"><b>未決なし — 3つとも回答済み</b>。残るゲートは「これでいい（計画起案へ）」の一言だけ。</p>
+      <div class="deflist">
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">回答済み</span>未決1: 今日ボードの並び順</p>
+          <p class="dbody">回答: <b>やることを最上段で確定</b>。追加要件「事前分＋当日急遽分の同居」「起票→AIが検知したかの見える化」をモックAへ反映（箱に ai_status 追加）。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">回答済み</span>未決2: 2週間ビューの形</p>
+          <p class="dbody">回答: <b>両方採用</b>。B-1縦リスト（2週間）を既定、B-2は切替タブ。追加指摘で<b>B-2は月カレンダー表示</b>へ変更（v6反映）。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">回答済み</span>未決3: 起票の必須項目</p>
+          <p class="dbody">回答: <b>C-3（任せる必須）で確定</b>。追加要件として「区分」を実行repoの選択式（repo-registry準拠・私用は「なし」）へ変更し、モックCと箱（repo・reposマスタ）へ反映。</p>
+        </div>
+        <div class="ditem">
+          <p class="dhead"><span class="pill go">回答済み</span>未決4: AI実行後の人間確認</p>
+          <p class="dbody">回答: <b>必要</b>。状態チェーンに「確認待ち」を追加し、人間の承認（ワンタップ）で完了・差し戻しも同じ場所から。モックAと箱の ai_status へ反映済み。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>v1の現状整理（参照用・折りたたみ）</h2>
+      <details class="disc">
+        <summary>現状マップ: board.py → md正本 → Tursoミラー → focusmap表示</summary>
+        <figure style="border:0;padding:6px 0 0">
+          <svg width="100%" viewBox="0 0 720 312" role="img" aria-label="session-boardからTursoを経てfocusmapへ流れる現状構成図">
+            <defs>
+              <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M2 1L8 5L2 9" fill="none" stroke="#5F6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </marker>
+            </defs>
+            <rect x="16" y="16" width="190" height="46" rx="10" fill="#F7F8FB" stroke="#DBDFEA"/>
+            <text x="111" y="44" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#19212F">AIセッション（hook）・人間</text>
+            <line x1="111" y1="62" x2="111" y2="105" stroke="#5F6879" stroke-width="1.5" marker-end="url(#ar)"/>
+            <rect x="16" y="112" width="190" height="46" rx="10" fill="#F7F8FB" stroke="#DBDFEA"/>
+            <text x="111" y="140" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#19212F">board.py（CLI）</text>
+            <text x="111" y="180" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="#5F6879">② ミラー送信</text>
+            <text x="111" y="195" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="#5F6879">（失敗はspool再送）</text>
+            <rect x="250" y="16" width="200" height="46" rx="10" fill="#E9ECFA" stroke="#2C3A8C"/>
+            <text x="350" y="36" text-anchor="middle" font-family="var(--sans)" font-size="12.5" font-weight="600" fill="#202C6E">デイリーmd（8節）</text>
+            <text x="350" y="52" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="#202C6E">いまの正本</text>
+            <line x1="206" y1="122" x2="244" y2="54" stroke="#5F6879" stroke-width="1.5" marker-end="url(#ar)"/>
+            <text x="256" y="90" text-anchor="start" font-family="var(--sans)" font-size="10.5" fill="#5F6879">① 先にmd確定</text>
+            <line x1="206" y1="135" x2="232" y2="135" stroke="#5F6879" stroke-width="1.5" marker-end="url(#ar)"/>
+            <rect x="238" y="104" width="468" height="84" rx="12" fill="#F7F8FB" stroke="#DBDFEA"/>
+            <rect x="252" y="118" width="214" height="56" rx="10" fill="#FFFFFF" stroke="#DBDFEA"/>
+            <text x="359" y="140" text-anchor="middle" font-family="var(--sans)" font-size="12.5" font-weight="600" fill="#19212F">Turso board DB</text>
+            <text x="359" y="157" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="#5F6879">sessions・events・logs</text>
+            <rect x="478" y="118" width="214" height="56" rx="10" fill="#FFFFFF" stroke="#DBDFEA"/>
+            <text x="585" y="140" text-anchor="middle" font-family="var(--sans)" font-size="12.5" font-weight="600" fill="#19212F">Turso inbox DB</text>
+            <text x="585" y="157" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="#5F6879">goals（目標宣言）</text>
+            <line x1="460" y1="188" x2="437" y2="234" stroke="#5F6879" stroke-width="1.5" marker-end="url(#ar)"/>
+            <text x="470" y="216" text-anchor="start" font-family="var(--sans)" font-size="10.5" fill="#5F6879">③ 読んで表示</text>
+            <rect x="250" y="240" width="360" height="58" rx="10" fill="#E3F1EA" stroke="#2E7D5B"/>
+            <text x="430" y="262" text-anchor="middle" font-family="var(--sans)" font-size="12.5" font-weight="600" fill="#1E5A40">focusmap sessions画面（＝雛形）</text>
+            <text x="430" y="280" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="#1E5A40">Cloud Run本番・サマリ・放置アラート・日付ナビ</text>
+            <rect x="16" y="248" width="190" height="46" rx="10" fill="#F7F8FB" stroke="#DBDFEA"/>
+            <text x="111" y="276" text-anchor="middle" font-family="var(--sans)" font-size="12" fill="#19212F">スマホ・PC</text>
+            <line x1="206" y1="271" x2="244" y2="271" stroke="#5F6879" stroke-width="1.5" marker-end="url(#ar)"/>
+            <line x1="585" y1="240" x2="585" y2="194" stroke="#2E7D5B" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+            <text x="596" y="222" text-anchor="start" font-family="var(--sans)" font-size="10" fill="#1E5A40">目標追加フォーム</text>
+            <text x="596" y="236" text-anchor="start" font-family="var(--sans)" font-size="10" fill="#1E5A40">（web書込・既存）</text>
+          </svg>
+          <figcaption>実線＝毎回動く経路（①md確定が先・②DBは後追いミラー）。破線＝focusmap画面からinbox DBへの目標追加（web書込は既に実在）。</figcaption>
+        </figure>
+      </details>
+      <div style="height:10px"></div>
+      <details class="disc">
+        <summary>v1の要点: あるもの・足りないもの・正本の線引き</summary>
+        <div class="dbody">
+          <p class="dbody"><b>あるもの（稼働中）</b>: board.pyのCLI書込＋spool再送／Turso 2DB（board=sessions・events・logs、inbox=goals）／集計SQL3本（日次合計・セッション別時間・放置検知）／focusmap既存画面 <code>/dashboard/workspace/sessions</code>（本番Cloud Run）。</p>
+          <p class="dbody" style="margin-top:8px"><b>足りないもの</b>: やること管理（〜2週間）／正本の反転（今はmd正本・DBはベストエフォート）／仕事情報の集約／目標の方向修正ビュー／リアルタイム更新の設計（Tursoにpushが無い→ポーリング/再検証）。</p>
+          <p class="dbody" style="margin-top:8px"><b>正本の線引き（合意前提で維持）</b>: 機械が高頻度に書く運用データ（状態・イベント・ログ・目標・やること・仕事当日タスク）＝DB正本、入力はCLI/API/フォーム。人間が書く文章（plan.md・的の文面・知識・振り返り）＝md正本のまま、DBには計画名・slugの参照だけ。反転後のデイリーmd2節（動いているエージェント/終わったこと）を表示物として残すか廃止するかはPhase 4の判断。</p>
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>更新履歴</h2>
+      <ul class="source">
+        <li><b>v6（今回）</b> — 指摘反映: B-2格子を月カレンダー表示へ変更。起票導線を「一覧右下の＋（FAB）→ 起票画面へ遷移」に統一し、リスト内インライン追加を廃止。モックA/B-1/B-2の画像を再生成（Cは遷移先画面として既に成立のため流用）。</li>
+        <li><b>v5</b> — 追加要望反映: AI実行後の人間確認ゲート「確認待ち」を状態チェーンへ追加（モックA・箱ai_status・決定事項を更新）。Codex image_gen による写真モック4枚の生成を開始。</li>
+        <li><b>v4</b> — 回答反映: 2週間ビューは両方採用（B-1既定＋B-2切替タブ）、起票はC-3で確定。「区分」を実行repo選択（repo-registry準拠・私用は「なし」）へ変更し、箱のspaceをrepoへ置換・reposマスタを追記。未決事項ゼロ — 計画起案のOK待ち。</li>
+        <li><b>v3</b> — 指摘反映: モックAへ「起票→AI検知→立案中→完了」の状態バッジと当日急遽分を追加（やること最上段は確定・箱に ai_status 追加）。2週間ビュー（B-1/B-2）と起票フォーム（C-1/C-2/C-3）を実物の見た目で並べ、見比べて選ぶ形に変更。</li>
+        <li><b>v2</b> — 回答反映: UIファースト決定・仕事タスクは「やること」箱へ同居・DB置き先は箱確定後。スマホモック3枚＋箱の設計＋進め方5段階を追加し、v1の現状整理は折りたたみへ。</li>
+        <li><b>v1</b> — 現状マップ（board.py→md→Tursoミラー→focusmap）と論点3つ（DB置き先・第1弾スコープ・仕事情報の現在地）を提示。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>根拠・出典</h2>
+      <ul class="source">
+        <li><b>session-board</b> — <code>hooks-registry/shared/session-board/</code>: board.py・turso/store.py（2DBのURL・sessions/events/logs/goalsのSQL）・queries/3本・spool</li>
+        <li><b>focusmap 既存画面</b> — <code>src/app/dashboard/workspace/sessions/page.tsx</code> と <code>actions.ts</code>（inbox goals へのweb書込）</li>
+        <li><b>focusmap 基盤</b> — <code>AGENTS.md</code>（Next.js/Supabase/Cloud Run）・<code>db/turso/migrations/</code>（codex監視等のTurso実績）</li>
+        <li><b>デイリーmd</b> — <code>my-brain/ゴール/デイリー/2026/07/2026-07-17.md</code>（モックの実データ例の出所）</li>
+      </ul>
+    </section>
+
+  </div>
+</div>

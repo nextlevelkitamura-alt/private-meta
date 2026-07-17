@@ -93,6 +93,8 @@ launchdがあるrepoでは、repo内に `scripts/launchd/install.sh` と `script
 
 `/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/repo-registry/` のルールに従い、必要なprofileと移動ログだけを更新する。
 
+移動ログと同一作業単位で、`repo-registry/repo概要.md` の対象エントリ（`場所:`・`入口:` 行）を新pathへ更新する。掲載が無いrepoを移動した場合は定型4行で追記する。更新後に `repo-create` の `scripts/repoctl-check.sh` を実行し、全緑を確認する。
+
 profileに書く最小項目:
 
 1. Path
@@ -121,7 +123,7 @@ profileに書く最小項目:
 2. Gitが新pathで正常に見える。
 3. 旧path互換symlinkを作っていない。
 4. launchdがあるrepoでは、登録状態と反応結果が説明できる。
-5. repo-registry更新先または更新不要理由が説明できる。
+5. repo-registry更新先または更新不要理由が説明でき、`repo概要.md` の対象エントリが新pathを指している（repoctl-check.sh全緑）。
 6. runtime symlinkや設定ファイルが新pathを参照している。
 7. 旧path参照の残存有無と、残す場合の理由が説明できる。
 8. rollback不要、またはrollback済みであることが明確になっている。

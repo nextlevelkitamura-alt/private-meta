@@ -16,8 +16,11 @@
    - 必要な場合だけ `plans/`、`docs/`、`scripts/`
 6. `AGENTS.md` は `references/agents-md-criteria.md` の型に合わせる。
 7. Git初期化、remote追加、GitHub Repository作成が必要か確認する。既存remoteは勝手に張り替えない。
-8. 北村環境の管理対象repoなら、`repo-registry/logs/` の登録ログ更新要否を確認する。
-9. 作成後に `git status --short` を確認する。
+8. 北村環境の管理対象repoなら、同一作業単位で次の2つを**実行する**（要否確認で終わらせない）。
+   - `repo-registry/logs/repositories/registered/YYYY-MM/MM-DD-<repo-id>.md` に登録ログを作成する（書式は `logs/AGENTS.md`）。
+   - `repo-registry/repo概要.md` へ定型4行（役割/場所/入口/登録）でエントリを追記する。
+9. `scripts/repoctl-check.sh` を実行し、全緑（実体・掲載・登録ログの3点一致）を確認する。
+10. 作成後に `git status --short` を確認する。
 
 ## 出力
 
@@ -26,7 +29,7 @@
 3. 作成したファイル。
 4. `AGENTS.md` / `CLAUDE.md` の状態。
 5. GitHub接続の状態。
-6. repo-registry更新の有無。
+6. repo-registry更新の内容（registeredログpath・repo概要.md追記・repoctl-check.sh結果）。
 7. 残タスク。
 
 ## 禁止

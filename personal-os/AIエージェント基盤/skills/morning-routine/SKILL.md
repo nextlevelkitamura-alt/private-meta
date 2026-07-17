@@ -19,7 +19,7 @@ description: 朝会と夜会の定型手順。朝会=usage確認→前日/当日
 
 1. Claude Code の `/usage`、Codex の `/status` を必要に応じて人間に確認してもらい、結果をモデル一覧と照合する。残量は記録の正本にしない。
 2. 前日デイリーの「今日のダイジェスト」「今日終わったこと」「明日へ」と、当日デイリーを読む。session-boardの動作中行とずれがあれば、担当AIが board update/log で直す。
-3. active計画、`repo-registry/repo概要.md`、`projects/active/` の実体を突き合わせ、人間と「繰越・今日やること・動かさないもの」を決める。新しい玉は `kickoff` で依頼インボックスへ1行起票する。
+3. active計画、`repo-registry/repo概要.md`、`projects/active/` の実体を突き合わせ（突き合わせは `repo-create` の `scripts/repoctl-check.sh` で機械確認する）、人間と「繰越・今日やること・動かさないもの」を決める。新しい玉は `kickoff` で依頼インボックスへ1行起票する。
 4. レーン数・担当・起動形・モデルを決める。規模と人間ゲートは `plan-triage` と `GLOBAL_AGENTS.md` §7 に従い、当日の決定はデイリーとsession-boardにだけ残す。
 5. 指揮官が必要なら `references/commander-prompt.md` の可変部を当日の担当に合わせて埋め、チャット出力として渡す。
 6. 朝会結論を当日のTODOへ追記する。既存行の削除・書換は人間のみ、`auto:*` 区画には触らない。

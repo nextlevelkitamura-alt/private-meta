@@ -12,7 +12,7 @@ repoを作る、または既存repoをAIが作業しやすい状態へ整えるS
 1. 新しいrepoを作る時の初期構成を整える。
 2. 既存repoを見て、分かりづらい構成や古い `AGENTS.md` を直す。
 3. `AGENTS.md` / `CLAUDE.md`、最小フォルダ、`.gitignore`、Git状態、remote/upstreamを確認する。
-4. 北村環境の管理対象repoなら、`repo-registry` の更新要否を確認する。
+4. 北村環境の管理対象repoなら、`repo-registry`（logs登録ログと `repo概要.md`）を同一作業単位で更新し、`scripts/repoctl-check.sh` で整合を機械確認する。
 5. 人間が読んで分かりづらい構成を増やさない。
 
 ## 2. Workflow
@@ -55,5 +55,5 @@ referenceは3つだけ。増やす前に、この3つへ統合できないか確
 3. 見つけた問題。
 4. 変更した内容、または提案した最小修正。
 5. `AGENTS.md` / `CLAUDE.md` の状態。
-6. repo-registry更新の有無。
+6. repo-registry更新の内容（logs・repo概要.md・repoctl-check.sh結果）。
 7. Git状態と残タスク。

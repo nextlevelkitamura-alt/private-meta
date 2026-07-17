@@ -1,4 +1,5 @@
 分類: 横断 ／ 種別: 既存改善
+大幅更新日: 2026-07-17
 規模: ライト
 形態判定: 単発 ／ 理由: 変更対象がrepo-registryと関連skill手順に閉じ、1コミット単位でrollbackできるため
 並列: 不可 ／ レビュー: 都度
@@ -35,7 +36,7 @@ repoの作成・移動・退避が `repo-registry/repo概要.md` と `logs/` に
   2. この計画
   3. `skills/repo-create/`・`skills/repo-relocation/` の対象workflow
 - 依存成果: なし（2026-07-17同期評価の所見はこの計画の「現状」に転記済み）
-- 変更可能範囲: `AIエージェント基盤/repo-registry/`（AGENTS.md・repo概要.md・logs/追記）、`AIエージェント基盤/skills/repo-create/`、`AIエージェント基盤/skills/repo-relocation/workflows/move-repo.md`、`AIエージェント基盤/skills/morning-routine/SKILL.md` の突き合わせ手順1行
+- 変更可能範囲: `personal-os/AIエージェント基盤/repo-registry/`（AGENTS.md・repo概要.md・logs/追記）、`personal-os/AIエージェント基盤/skills/repo-create/`、`personal-os/AIエージェント基盤/skills/repo-relocation/workflows/move-repo.md`、`personal-os/AIエージェント基盤/skills/morning-routine/SKILL.md` の突き合わせ手順1行
 - 変更禁止範囲: `projects/` 実体、`hooks-registry/`、他Global Skill本文、既存logsファイルの書換（追記・新規のみ）
 - ファイル担当マップ: 不要
 - worktree方針: 不要
@@ -56,17 +57,19 @@ hookは使わない（「repo作成」を確実に捉える単一イベントが
 
 ## 完了条件（レビュー項目）
 
-- [ ] `skills/repo-create/workflows/create-repo.md`: 管理対象repo作成時にregisteredログ作成とrepo概要.md追記が「要否確認」でなく実行手順として書かれ、出力節にrepo概要.md更新有無の項目がある
-- [ ] `skills/repo-relocation/workflows/move-repo.md`: repo移動時にrepo概要.mdの `場所:` 行を同一作業単位で更新する手順がある
-- [ ] `repo-registry/AGENTS.md`: §1にrepo概要.mdの役割と更新責務（登録・移動・archiveと同一作業単位）が宣言され、paused外付け退避時の実体配置の但し書きがある
-- [ ] `skills/repo-create/scripts/repoctl-check.sh`: 実行すると実体repo・repo概要.md掲載・registeredログの3点突合結果を出力し、意図的に1件ズラすと検知される（bash -n も通る）
-- [ ] `repo-registry/repo概要.md`: 掲載全repoが定型リスト（役割/場所/入口/登録）で統一され、詳細な現在状態の複製が無い
-- [ ] `repo-registry/logs/repositories/`: 「仕事」のregisteredログ、07-05統合と07-10 SSD退避のmovedログが存在し、logs/AGENTS.mdの書式（日付時刻JST・月フォルダ配下のMM-DD-repo-id.md命名）に合致する
-- [ ] `skills/morning-routine/SKILL.md`: 手順3の突き合わせがrepoctl-check.shの実行を参照している
-- [ ] 追い付き完了後に repoctl-check.sh が全緑で終了する
-- [ ] 変更・新設ファイルにsecretが無く、`CLAUDE.md -> AGENTS.md` symlinkが全対象フォルダで維持されている
+- [x] `skills/repo-create/workflows/create-repo.md`: 管理対象repo作成時にregisteredログ作成とrepo概要.md追記が「要否確認」でなく実行手順として書かれ、出力節にrepo概要.md更新有無の項目がある
+- [x] `skills/repo-relocation/workflows/move-repo.md`: repo移動時にrepo概要.mdの `場所:` 行を同一作業単位で更新する手順がある
+- [x] `repo-registry/AGENTS.md`: §1にrepo概要.mdの役割と更新責務（登録・移動・archiveと同一作業単位）が宣言され、paused外付け退避時の実体配置の但し書きがある
+- [x] `skills/repo-create/scripts/repoctl-check.sh`: 実行すると実体repo・repo概要.md掲載・registeredログの3点突合結果を出力し、意図的に1件ズラすと検知される（bash -n も通る）
+- [x] `repo-registry/repo概要.md`: 掲載全repoが定型リスト（役割/場所/入口/登録）で統一され、詳細な現在状態の複製が無い
+- [x] `repo-registry/logs/repositories/`: 「仕事」のregisteredログ、07-05統合と07-10 SSD退避のmovedログが存在し、logs/AGENTS.mdの書式（日付時刻JST・月フォルダ配下のMM-DD-repo-id.md命名）に合致する
+- [x] `skills/morning-routine/SKILL.md`: 手順3の突き合わせがrepoctl-check.shの実行を参照している
+- [x] 追い付き完了後に repoctl-check.sh が全緑で終了する
+- [x] 変更・新設ファイルにsecretが無く、`CLAUDE.md -> AGENTS.md` symlinkが全対象フォルダで維持されている
 
 ## 実装結果
+- result: 284dbf1 ／ 評価: 評価01.md
+
 
 実装後にplanctlが追記・更新する。実行前は記入しない。
 

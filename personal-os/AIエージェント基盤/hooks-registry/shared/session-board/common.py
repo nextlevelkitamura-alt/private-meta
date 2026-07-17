@@ -34,7 +34,7 @@ def plan_create_review_guide_candidate():
         "または不明なら plan-create-review。既存計画を確認し、なければ対象repo最寄りAGENTS.mdが宣言する"
         "計画箱へ起案する。hookはrepo・計画箱・レビュー合否・バケット遷移を決めない。\n"
         "状態は planning→active→done→archive。指揮官がactive化し、最終評価全PASSでdone、"
-        "archiveは人間の明示確認だけで行う。容量は active=3／paused=3／done=8（planning・archiveは無制限）で、"
+        "archiveは人間の明示確認だけで行う。容量は active=4／paused=3／done=8（planning・archiveは無制限）で、"
         "事実確認は bucketctl check。満杯でも自動退避しない。\n"
         "子のレビュー宣言を確認: 一括は束ねて実施し、後続が成果を直接使う子だけ都度レビュー。"
         "finishはsession-boardの記録を閉じるだけで、archiveの承認・実行ではない。"

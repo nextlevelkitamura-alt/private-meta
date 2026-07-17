@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 BUCKETS = ("planning", "active", "paused", "done", "archive")
-LIMITS = {"planning": None, "active": 3, "paused": 3, "done": 8, "archive": None}
+LIMITS = {"planning": None, "active": 4, "paused": 3, "done": 8, "archive": None}
 ALLOWED = {
     "planning": {"active", "archive"}, "active": {"paused", "done", "archive"},
     "paused": {"planning", "active", "archive"}, "done": {"active", "archive"},

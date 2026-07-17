@@ -30,8 +30,7 @@ scripts/check-section.sh <file> <section-heading> <grep-pattern>
 scripts/bucketctl.sh promote <plans/planning/計画フォルダ> --to active
 ```
 
-- 既定は表示だけ。activeは原則3件で、上限なら現在一覧を出して拒否する。
-- 2026-07-14に人間承認された例外として、`ai運用/plans` の `2026-07-14-計画運用ハーネス検証` がactiveにある間だけ同areaは4件まで。対象programがactiveを離れれば自動で3件に戻る。
+- 既定は表示だけ。activeは原則4件で（2026-07-17人間承認で3→4。旧2026-07-14の一時例外は吸収済み）、上限なら現在一覧を出して拒否する。
 - 何をactiveにするか、何をpaused/archiveへ移すかは指揮官と人間の判断。完了・評価済みでない計画をarchiveへ逃がさない。
 
 承認済みの移動だけ、dry-runの同じsource/targetを確認して適用する。

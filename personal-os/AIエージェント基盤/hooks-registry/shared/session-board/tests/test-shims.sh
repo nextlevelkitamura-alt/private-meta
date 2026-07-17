@@ -45,7 +45,8 @@ OUT=$(echo "$J_UP" | claude_prompt)
 echo "$OUT" | grep -q "目標:ボード再設計 | 今:common改修 | 種別:実装 | 計画:ボード再設計/03"; ok "ミラー1行目(計画含む)" test $? -eq 0
 echo "$OUT" | grep -q "ズレていたら"; ok "催促行" test $? -eq 0
 echo "$OUT" | grep -qv "最初の依頼"; ok "フルガイドは出ない" test $? -eq 0
-[ "$(echo "$OUT" | wc -l | tr -d ' ')" = "2" ]; ok "ミラーは2行" test $? -eq 0
+echo "$OUT" | grep -q "レビュー宣言を確認"; ok "レビュー宣言行(計画実値・2026-07-16有効化)" test $? -eq 0
+[ "$(echo "$OUT" | wc -l | tr -d ' ')" = "3" ]; ok "ミラーは3行(レビュー宣言含む)" test $? -eq 0
 
 echo "=== 4. Pythonは今を上書きしない（AI記入が残る） ==="
 grep -qF "今:common改修" "$DAILY"; ok "AI記入のnowが維持される" test $? -eq 0
@@ -54,7 +55,7 @@ echo "=== 5. 計画種別のミラーは3判定行が付く(3行) ==="
 "$BOARD" update --key beefcafe --type 計画
 OUT=$(echo "$J_UP" | claude_prompt)
 echo "$OUT" | grep -q "計画3判定: ①サクッと"; ok "計画3判定スニペット" test $? -eq 0
-[ "$(echo "$OUT" | wc -l | tr -d ' ')" = "3" ]; ok "計画時は3行" test $? -eq 0
+[ "$(echo "$OUT" | wc -l | tr -d ' ')" = "4" ]; ok "計画時は4行(3判定+レビュー宣言)" test $? -eq 0
 "$BOARD" update --key beefcafe --type 実装
 
 echo "=== 6. Stop: run→⏸、次のUPSで🟢復帰 ==="
@@ -113,7 +114,7 @@ echo "$OUT" | grep -Eq "(計画:\? → 拠り所|実装で計画:\? →)"; ok "D
 "$BOARD" update --key d1a10001 --plan "計画実行フロー統一/03"
 OUT=$(echo "$J4_UP" | claude_prompt)
 ! echo "$OUT" | grep -q "計画:? → 拠り所"; ok "D9 記入後は催促が消える" test $? -eq 0
-[ "$(echo "$OUT" | wc -l | tr -d ' ')" = "2" ]; ok "D9 記入後は2行" test $? -eq 0
+[ "$(echo "$OUT" | wc -l | tr -d ' ')" = "3" ]; ok "D9 記入後は3行(催促→レビュー宣言に置換)" test $? -eq 0
 # D10: 種別=計画 → 3判定行が出る・?催促とは重複しない
 "$BOARD" update --key d1a10001 --type 計画 --plan "?"
 OUT=$(echo "$J4_UP" | claude_prompt)

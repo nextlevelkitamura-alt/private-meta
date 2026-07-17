@@ -10,7 +10,7 @@
 
 1. `plan-registry/AGENTS.md` と、起点に応じた最寄り `AGENTS.md` を読む。サクッと3条件が全YESなら計画を作らず自己確認・事後報告へ戻す。
 2. `plan-triage` を実行し、書込みなしで既存plan・計画箱・handoff要否を解決する。routeのcriteria、JSON、pathをここで再実装しない。
-3. `join_existing` は、そのplanを正本として目的・次の一手・レビュー項目を更新する。`create_new` は指揮官または人間が起案を決めた時だけ、解決済み絶対pathを `plan-ops` の `new-plan.sh` へ渡す。`stop` は書込み0件で人間へ戻す。
+3. `join_existing` は、そのplanを正本として目的・次の一手・レビュー項目を更新する。`create_new` は指揮官または人間が起案を決めた時だけ、解決済み絶対pathを `plan-ops` の `new-plan.sh` へ渡す。program生成では `実装/共通.md`・`レビュー/共通.md`・`評価/` が同時に生まれる。共通.mdには役割固有の規約だけを書き、program.mdの流れを複製しない。`stop` は書込み0件で人間へ戻す。
 4. 生成したplanには目的、現状、方針、検証可能な完了条件（レビュー項目）と規模を記入する。対象repoへ書くPrivate起点では、routeのhandoff完了後の対象repo sessionだけが書く。
 5. programが必要かはregistryの基準で判断する。独立に卒業する子が2本未満なら、単発planのままこのworkflowを完了する。
 

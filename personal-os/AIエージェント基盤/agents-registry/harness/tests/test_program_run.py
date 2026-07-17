@@ -354,9 +354,12 @@ print(json.dumps({'result': body}, ensure_ascii=False))
     def test_real_codex_reviewer_writes_evaluation_body(self) -> None:
         program = self.write_program([{"nn": "01"}])
         result = program_run.ProgramRunner(program, self.repo, self.repo / ".planops-state", operations=program_run.Operations("codex"), run_id="codex-review").run()
-        evaluation = program.parent / "plans" / "評価01.md"
+        evaluation = program.parent / "評価" / "01-子-評価01.md"
         self.assertEqual(result["status"], "completed")
         self.assertIn("全PASS", evaluation.read_text(encoding="utf-8"))
+        self.assertFalse((program.parent / "plans" / "評価01.md").exists())
+        data = json.loads((self.repo / ".planops-state" / "codex-review-01-manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["program_path"], str(program.resolve()))
 
     def test_real_subprocess_resume_after_fail_then_pass(self) -> None:
         program = self.write_program([{"nn": "01"}])
@@ -381,6 +384,8 @@ print(json.dumps({'result': body}, ensure_ascii=False))
         self.assertEqual(ops.apply_calls, 1)
         self.assertIn("resume: 01:1", result["events"])
         self.assertLess(result["events"].index("review: 01:FAIL"), result["events"].index("integrated: 01"))
+        self.assertTrue((program.parent / "評価" / "01-子-評価01.md").is_file())
+        self.assertTrue((program.parent / "評価" / "01-子-評価02.md").is_file())
         command = log.read_text(encoding="utf-8")
         self.assertIn("exec resume fake-thread-resume-pass-01", command)
         self.assertNotIn("--last", command)

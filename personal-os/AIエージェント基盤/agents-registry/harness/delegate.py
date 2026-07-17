@@ -74,6 +74,28 @@ def _section(plan: Path, name: str, fallback: str) -> str:
     return " ".join(parts[:4]) or fallback
 
 
+def _reading_steps(data: dict[str, object], role: str) -> list[str]:
+    """役割別の読み順。親programと役割別共通ファイルが実在する時だけ分岐する。"""
+    default = [
+        "対象repoから対象ファイルまでの最寄り `AGENTS.md`",
+        "親program（ある場合）",
+        "対象計画",
+        "計画の「実行契約」で指定されたreferences",
+        "必要な実装ファイル",
+    ]
+    program = data.get("program_path")
+    if not program or role == "explorer":
+        return default
+    folder = {"implementer": "実装", "reviewer": "レビュー"}[role]
+    common = Path(str(program)).parent / folder / "共通.md"
+    if not common.is_file():
+        return default
+    head = ["対象repoから対象ファイルまでの最寄り `AGENTS.md`", "親program"]
+    if role == "implementer":
+        return head + [f"実装の共通コンテキスト `{common}`", "対象計画", "計画の「実行契約」で指定されたreferences", "必要な実装ファイル"]
+    return head + [f"レビューの共通コンテキスト `{common}`", "対象計画の「完了条件（レビュー項目）」", "実装diff（目的のdiff範囲）"]
+
+
 def render_task_packet(data: dict[str, object], purpose: str, writable: bool) -> str:
     program = data["program_path"] or "なし"
     work = data["worktree_path"] or "なし（read-only task）"
@@ -84,6 +106,7 @@ def render_task_packet(data: dict[str, object], purpose: str, writable: bool) ->
         "reviewer": "read-onlyで完了条件とdiffを照合し、自己申告でPASSにせず、各項目をPASS / FAIL / 対象外と根拠付きで返す。",
         "explorer": "read-onlyで実行経路、正本、影響path、依存、リスク、不明点を根拠付きで返す。",
     }[role]
+    steps = "\n".join(f"{number}. {step}" for number, step in enumerate(_reading_steps(data, role), 1))
     return f"""# 実行指示（Task Packet）
 
 あなたは {role} 担当です。
@@ -103,11 +126,7 @@ def render_task_packet(data: dict[str, object], purpose: str, writable: bool) ->
 
 最初に読む順番:
 
-1. 対象repoから対象ファイルまでの最寄り `AGENTS.md`
-2. 親program（ある場合）
-3. 対象計画
-4. 計画の「実行契約」で指定されたreferences
-5. 必要な実装ファイル
+{steps}
 
 対象範囲:
 
@@ -178,6 +197,10 @@ def delegate(args: argparse.Namespace, runner: Runner = _run, claude_help: str |
         raise worktree.HarnessConflict("write taskは明示base SHAが必要")
     if args.role == "implementer" and not args.allowed_path:
         raise worktree.HarnessConflict("write taskは変更可能範囲を少なくとも1つ指定してください")
+    program_path = Path(args.program_path).resolve() if args.program_path else None
+    if program_path is None and plan.parent.name == "plans" and (plan.parent.parent / "program.md").is_file():
+        # 引数省略時だけ、<program>/plans/ 配下の子から親programを自動推定する（2026-07-17）。
+        program_path = (plan.parent.parent / "program.md").resolve()
 
     state_dir = Path(args.state_dir).resolve() if args.state_dir else repo_root / ".planops-state"
     _ignored_state_dir(repo_root, state_dir)
@@ -195,7 +218,7 @@ def delegate(args: argparse.Namespace, runner: Runner = _run, claude_help: str |
     manifest_path = state_dir / f"{args.task_id}-manifest.json"
     packet_path = state_dir / f"{args.task_id}-実行指示.md"
     final_path = state_dir / f"{args.task_id}-final.md"
-    data: dict[str, object] = {"version": 1, "task_id": args.task_id, "role": args.role, "runtime": args.runtime, "repo_root": str(repo_root), "plan_path": str(plan), "program_path": str(Path(args.program_path).resolve()) if args.program_path else None, "child_id": args.child_id, "base_commit": base_commit, "worktree_path": str(task_path) if task_path else None, "branch": branch, "result_path": str(result_path), "evaluation_path": None, "phase": "running", "allowed_paths": args.allowed_path}
+    data: dict[str, object] = {"version": 1, "task_id": args.task_id, "role": args.role, "runtime": args.runtime, "repo_root": str(repo_root), "plan_path": str(plan), "program_path": str(program_path) if program_path else None, "child_id": args.child_id, "base_commit": base_commit, "worktree_path": str(task_path) if task_path else None, "branch": branch, "result_path": str(result_path), "evaluation_path": None, "phase": "running", "allowed_paths": args.allowed_path}
     manifest.validate_manifest(data)
     manifest.write_json(manifest_path, data)
     purpose = args.purpose or _section(plan, "目的", "計画の完了条件を満たす")

@@ -59,4 +59,39 @@ assert_eq "(e) 引数なしはexit 2" "$?" "2"
 "$SCRIPTS/program-lint.sh" "/no/such/program.md" >/dev/null 2>&1
 assert_eq "(e) 存在しないファイルはexit 2" "$?" "2"
 
+# ============================================================
+# (f) 役割別コンテキスト（2026-07-17）: フォルダがあるのに共通.mdが無い時だけ違反。
+#     フォルダ自体が無い旧programは対象外（(a)のclean fixtureが引き続きexit 0で担保）。
+# ============================================================
+ROLE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/planops-role-ctx.XXXXXX")"
+trap 'rm -rf "$ROLE_DIR"; rm -f "$empty_map"' EXIT
+mkdir -p "$ROLE_DIR/plans" "$ROLE_DIR/実装"
+cat > "$ROLE_DIR/plans/01-子.md" <<'EOF'
+親計画: ../program.md ／ 分類: 横断 ／ 種別: 新規作成
+
+# 子
+
+## 完了条件
+
+- [x] fixture
+EOF
+cat > "$ROLE_DIR/program.md" <<'EOF'
+# 合成program
+
+## 子計画マップ
+
+- [x] 01  子 … 完了
+    場所: plans/01
+EOF
+role_out="$("$SCRIPTS/program-lint.sh" "$ROLE_DIR/program.md")"
+role_rc=$?
+assert_eq "(f) 実装/だけあり共通.md無しはexit 1" "$role_rc" "1"
+assert_contains "(f) 共通.md欠落を指摘" "$role_out" "実装/共通.md が無い"
+printf '# 実装共通\n' > "$ROLE_DIR/実装/共通.md"
+mkdir -p "$ROLE_DIR/レビュー"
+printf '# レビュー共通\n' > "$ROLE_DIR/レビュー/共通.md"
+role_ok_out="$("$SCRIPTS/program-lint.sh" "$ROLE_DIR/program.md")"
+assert_eq "(f) 共通.mdが揃えばexit 0" "$?" "0"
+assert_contains "(f) 違反なしになる" "$role_ok_out" "違反なし"
+
 report

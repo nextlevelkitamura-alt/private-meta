@@ -167,4 +167,36 @@ assert_eq "(h) 既存超過のcheckは非0" "$overcheck_rc" "1"
 "$SCRIPTS/bucketctl.sh" move "$TRANS/plans/paused/over-1" --to planning --apply >/dev/null
 assert_eq "(h) 超過バケットからの退出を許可" "$(test -d "$TRANS/plans/planning/over-1"; echo $?)" "0"
 
+# (i) 評価/ 新配置（2026-07-17）: completedのarchiveを通し、子評価のFAILと混同しない。
+make_plan "$TRANS/plans/done/completed-eval-folder" x
+make_record "$TRANS/plans/done/completed-eval-folder" completed
+mkdir -p "$TRANS/plans/done/completed-eval-folder/評価"
+cat > "$TRANS/plans/done/completed-eval-folder/評価/評価01.md" <<'EOF'
+## 項目別採点
+- [PASS] 確認
+## 総合判定
+全PASS
+EOF
+cat > "$TRANS/plans/done/completed-eval-folder/評価/01-子-評価01.md" <<'EOF'
+## 項目別採点
+- [FAIL] 子の項目
+## 総合判定
+FAILあり
+EOF
+git -C "$TRANS" add plans/done/completed-eval-folder && git -C "$TRANS" commit -qm eval-folder
+"$SCRIPTS/bucketctl.sh" move "$TRANS/plans/done/completed-eval-folder" --to archive --apply >/dev/null
+assert_eq "(i) 評価/配置のcompleted archiveを許可（子評価FAILと混同しない）" "$(test -d "$TRANS/plans/archive/completed-eval-folder"; echo $?)" "0"
+make_plan "$TRANS/plans/done/completed-eval-folder-fail" x
+make_record "$TRANS/plans/done/completed-eval-folder-fail" completed
+mkdir -p "$TRANS/plans/done/completed-eval-folder-fail/評価"
+cat > "$TRANS/plans/done/completed-eval-folder-fail/評価/評価01.md" <<'EOF'
+## 項目別採点
+- [FAIL] 確認
+## 総合判定
+FAILあり
+EOF
+folder_fail_out="$($SCRIPTS/bucketctl.sh move "$TRANS/plans/done/completed-eval-folder-fail" --to archive 2>&1)"; folder_fail_rc=$?
+assert_eq "(i) 評価/配置のFAILはarchive拒否" "$folder_fail_rc" "1"
+assert_contains "(i) FAIL理由を返す" "$folder_fail_out" "最終評価"
+
 report

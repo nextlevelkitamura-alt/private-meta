@@ -161,6 +161,45 @@ class HarnessTest(unittest.TestCase):
         self.assertEqual(answer["status"], "blocked")
         self.assertIn("範囲外", str(answer["reason"]))
 
+    def _program_fixture(self) -> Path:
+        prog = self.repo / "prog"
+        (prog / "plans").mkdir(parents=True)
+        (prog / "実装").mkdir()
+        (prog / "レビュー").mkdir()
+        (prog / "program.md").write_text("# program\n", encoding="utf-8")
+        (prog / "実装" / "共通.md").write_text("# 実装共通\n", encoding="utf-8")
+        (prog / "レビュー" / "共通.md").write_text("# レビュー共通\n", encoding="utf-8")
+        child = prog / "plans" / "01-子.md"
+        child.write_text("# 子\n\n## 目的\n\nテスト\n", encoding="utf-8")
+        self.git("add", "prog")
+        self.git("commit", "-m", "program fixture")
+        self.base = self.git("rev-parse", "HEAD").strip()
+        return child
+
+    def test_reading_order_branches_by_role_and_program_presence(self) -> None:
+        child = self._program_fixture()
+        impl = delegate.delegate(self.args(task_id="ctx-impl", plan=str(child), base_commit=self.base, dry_run=True), runner=self.fake_done)
+        packet = Path(str(impl["task_packet"])).read_text(encoding="utf-8")
+        self.assertIn("実装/共通.md", packet)
+        self.assertNotIn("レビュー/共通.md", packet)
+        anchor = packet.index("最初に読む順番")
+        order = [packet.index(token, anchor) for token in ("AGENTS.md", "親program", "実装/共通.md", "対象計画")]
+        self.assertEqual(order, sorted(order))
+        data = manifest.read_json(Path(str(impl["manifest"])))
+        self.assertEqual(data["program_path"], str((self.repo / "prog" / "program.md").resolve()))
+        review = delegate.delegate(self.args(task_id="ctx-rev", plan=str(child), role="reviewer", base_commit=None, allowed_path=[], dry_run=True), runner=self.fake_done)
+        packet = Path(str(review["task_packet"])).read_text(encoding="utf-8")
+        self.assertIn("レビュー/共通.md", packet)
+        self.assertIn("完了条件（レビュー項目）", packet)
+        self.assertNotIn("実装/共通.md", packet)
+        explorer = delegate.delegate(self.args(task_id="ctx-exp", plan=str(child), role="explorer", base_commit=None, allowed_path=[], dry_run=True), runner=self.fake_done)
+        packet = Path(str(explorer["task_packet"])).read_text(encoding="utf-8")
+        self.assertNotIn("共通.md", packet)
+        single = delegate.delegate(self.args(task_id="ctx-single", allowed_path=["src/b.py"], dry_run=True), runner=self.fake_done)
+        packet = Path(str(single["task_packet"])).read_text(encoding="utf-8")
+        self.assertNotIn("共通.md", packet)
+        self.assertIn("親program（ある場合）", packet)
+
     def test_read_only_task_omits_worktree(self) -> None:
         observed: dict[str, object] = {}
         def fake_readonly(command: list[str], cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:

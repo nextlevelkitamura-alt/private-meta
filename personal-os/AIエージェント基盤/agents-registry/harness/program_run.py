@@ -80,6 +80,32 @@ def parse_evaluation(path: Path) -> Review:
     return Review(True, path)
 
 
+def evaluation_dir(child_plan: Path) -> Path:
+    """programの評価置き場（2026-07-17に plans/ 隣接から分離）。旧配置の読み取り互換は呼び出し側が持つ。"""
+    return child_plan.parent.parent / "評価"
+
+
+def next_evaluation_path(child_plan: Path) -> Path:
+    """規約準拠 `NN-〈子名〉-評価RR.md` の次ラウンドpath。RRは新旧両配置の既存ラウンド数+1。"""
+    stem = child_plan.stem
+    folder = evaluation_dir(child_plan)
+    rounds = len(list(folder.glob(f"{stem}-評価*.md"))) if folder.is_dir() else 0
+    rounds += len(list(child_plan.parent.glob(f"{stem}-評価*.md")))
+    return folder / f"{stem}-評価{rounds + 1:02d}.md"
+
+
+def child_evaluations(child_plan: Path) -> list[Path]:
+    """この子の実在する評価md（新配置・旧配置・旧命名 評価NN.md の順）。"""
+    stem = child_plan.stem
+    folder = evaluation_dir(child_plan)
+    paths = sorted(folder.glob(f"{stem}-評価*.md")) if folder.is_dir() else []
+    paths += sorted(child_plan.parent.glob(f"{stem}-評価*.md"))
+    legacy = child_plan.parent / f"評価{stem[:2]}.md"
+    if legacy.is_file():
+        paths.append(legacy)
+    return paths
+
+
 @dataclass
 class RunState:
     run_id: str
@@ -245,7 +271,8 @@ class Operations:
             raise ProgramRunBlocked("planctl prepareに失敗しました")
 
     def implement(self, task: Task, repo_root: Path, state_dir: Path, worktree_root: Path) -> Task:
-        args = argparse.Namespace(runtime="codex", role="implementer", plan=str(task.child.plan), repo_root=str(repo_root), task_id=task.task_id, base_commit=task.base_commit, program_path=None, child_id=task.child.nn, state_dir=str(state_dir), worktree_root=str(worktree_root), allowed_path=list(task.child.allowed_paths), purpose=None, dry_run=False)
+        program = task.child.plan.parent.parent / "program.md"
+        args = argparse.Namespace(runtime="codex", role="implementer", plan=str(task.child.plan), repo_root=str(repo_root), task_id=task.task_id, base_commit=task.base_commit, program_path=str(program) if program.is_file() else None, child_id=task.child.nn, state_dir=str(state_dir), worktree_root=str(worktree_root), allowed_path=list(task.child.allowed_paths), purpose=None, dry_run=False)
         answer = delegate.delegate(args)
         task.worktree_path = Path(answer["worktree_path"]).resolve() if answer.get("worktree_path") else None
         if task.worktree_path:
@@ -258,14 +285,16 @@ class Operations:
 
     def review(self, task: Task, repo_root: Path, state_dir: Path) -> Review:
         review_id = f"{task.task_id}-review"
-        args = argparse.Namespace(runtime=self.reviewer_runtime, role="reviewer", plan=str(task.child.plan), repo_root=str(repo_root), task_id=review_id, base_commit=None, program_path=None, child_id=task.child.nn, state_dir=str(state_dir), worktree_root=None, allowed_path=[], purpose=f"diff範囲: {task.result.get('result_commit', '') if task.result else ''}。評価テンプレの本文を最終出力へ返す。", dry_run=False)
+        program = task.child.plan.parent.parent / "program.md"
+        args = argparse.Namespace(runtime=self.reviewer_runtime, role="reviewer", plan=str(task.child.plan), repo_root=str(repo_root), task_id=review_id, base_commit=None, program_path=str(program) if program.is_file() else None, child_id=task.child.nn, state_dir=str(state_dir), worktree_root=None, allowed_path=[], purpose=f"diff範囲: {task.result.get('result_commit', '') if task.result else ''}。評価テンプレの本文を最終出力へ返す。", dry_run=False)
         answer = delegate.delegate(args)
         if answer.get("status") != "done":
             return Review(False, reason="reviewerがblockedです")
         final = state_dir / f"{review_id}-final.md"
         if not final.is_file():
             return Review(False, reason="reviewerの評価本文がありません")
-        evaluation = task.child.plan.parent / f"評価{task.child.nn}.md"
+        evaluation = next_evaluation_path(task.child.plan)
+        evaluation.parent.mkdir(parents=True, exist_ok=True)
         evaluation.write_text(final.read_text(encoding="utf-8"), encoding="utf-8")
         return parse_evaluation(evaluation)
 
@@ -294,8 +323,7 @@ class Operations:
         program = task.child.plan.parent.parent / "program.md"
         if program.is_file():
             paths.append(str(program.relative_to(repo_root)))
-        evaluation = task.child.plan.parent / f"評価{task.child.nn}.md"
-        if evaluation.is_file():
+        for evaluation in child_evaluations(task.child.plan):
             paths.append(str(evaluation.relative_to(repo_root)))
         add = subprocess.run(["git", "-C", str(repo_root), "add", "--", *paths], capture_output=True, text=True)
         if add.returncode or subprocess.run(["git", "-C", str(repo_root), "commit", "-m", f"plan: 子{task.child.nn}の評価を同期", "--", *paths], capture_output=True).returncode:

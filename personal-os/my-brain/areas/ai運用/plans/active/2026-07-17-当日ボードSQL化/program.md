@@ -44,12 +44,12 @@
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
 
-- [ ] 01 やること箱と今日ボード … 計画レビュー待ち
+- [ ] 01 やること箱と今日ボード … 実装中
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 不可 ／ レビュー: 都度
     人間ゲート: Turso migration適用・origin/main push・本番反映
-    次: explain/program.html で計画レビュー→人間OK後に program を active 昇格し着手
+    次: 実装ペインの完了報告（CHILD01_DONE）待ち→都度レビュー
     場所: plans/01 ／ 依存: ―
     参照: ―
 - [ ] 02 月カレンダーとAI起票キュー … 計画

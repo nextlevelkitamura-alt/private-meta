@@ -103,7 +103,7 @@
 - [ ] 07 計画スマホ表示 … 計画
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
-    並列: 06完了後（データ依存）・02/05と切替ピル等の共有ファイル調整 ／ レビュー: 都度
+    並列: 06完了後（データ依存）・02/05と切替ピル等の共有ファイル調整 ／ レビュー: 一括（07・08で束ね。末端子で後続利用なし）
     人間ゲート: 依存追加（react-markdown・remark-gfm）承認・origin/main push・本番反映
     次: 06完了後に着手
     場所: plans/07 ／ 依存: 06
@@ -111,7 +111,7 @@
 - [ ] 08 サブエージェント入れ子可視化 … 計画
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤 hooks-registry subagentイベント・board.py）
-    並列: 05完了後（UI部品依存）・03とはhook/board.py交差のため直列調整 ／ レビュー: 都度
+    並列: 05完了後（UI部品依存）・03とはhook/board.py交差のため直列調整 ／ レビュー: 一括（07・08で束ね。末端子で後続利用なし）
     人間ゲート: board DBへのmigration適用（session_subagents）・origin/main push・本番反映
     次: 05完了後に着手（最初にSubagentStart payloadの実物確認）
     場所: plans/08 ／ 依存: 05（03とはhook調整）

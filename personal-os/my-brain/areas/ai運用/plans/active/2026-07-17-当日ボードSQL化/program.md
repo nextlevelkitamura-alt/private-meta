@@ -81,7 +81,7 @@
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤 hooks-registry/shared/session-board のboard.pyコマンド追加）
     並列: 02と可（画面領域が非交差）・03とはboard.py交差のため直列調整 ／ レビュー: 都度
     人間ゲート: Turso migration適用（todo_steps・session_logs.todo_id・todos質問カラム）・origin/main push・本番反映・skill/loop正本への board_route 宣言追記
-    次: 人間ゲート（inbox/board migration2本→ローカル3001確認→push・本番反映→board_route追記判断）→保留再検証
+    次: 人間ゲート実行済み（2026-07-19 GO: migration2本適用・push・本番反映・board_route=sns-post追記）→保留再検証と375px目視（親最終一括）
     場所: plans/05 ／ 依存: 01（03とはboard.py調整）
     参照: explain/ボード入れ子と進捗率の提案.html（設計正本）／評価/05-…-評価02.md ／ 実装 focusmap@b8bbf058
 - [ ] 04 方向修正ビューとミラー廃止 … 計画
@@ -97,7 +97,7 @@
     対象repo: /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤（plan-ops・session-board turso）＋~/Private git hook
     並列: 05と可（対象repoが異なる）・03とはspool交差のため直列調整 ／ レビュー: 都度
     人間ゲート: inbox migration適用（plan_docs・plan_progress）・post-commit hook登録・初回一括投入GO
-    次: 人間ゲート3点（migration適用→フック登録→初回投入GO）→評価01の保留4項目を再検証
+    次: 人間ゲート実行済み（2026-07-19 GO: inbox migration適用・post-commitフック登録・初回投入64文書）→評価01保留4項目の再検証
     場所: plans/06 ／ 依存: ―（03/05とファイル調整）
     参照: 評価/06-計画ミラー同期-評価01.md ／ 実装 Private@a2c730d9
 - [ ] 07 計画スマホ表示 … 計画

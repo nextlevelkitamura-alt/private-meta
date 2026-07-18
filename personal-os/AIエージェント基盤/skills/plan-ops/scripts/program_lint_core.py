@@ -92,10 +92,10 @@ def lint(program_path):
     lines = read_lines(program_path)
     out = []
 
+    # programは役割別コンテキスト（実装/共通.md・レビュー/共通.md）を無条件で必須とする（2026-07-18格上げ）
     for role_folder in ("実装", "レビュー"):
-        folder = os.path.join(base_dir, role_folder)
-        if os.path.isdir(folder) and not os.path.isfile(os.path.join(folder, "共通.md")):
-            out.append(f"{program_path}:1: 役割別コンテキスト {role_folder}/共通.md が無い（{role_folder}/ は存在する）")
+        if not os.path.isfile(os.path.join(base_dir, role_folder, "共通.md")):
+            out.append(f"{program_path}:1: 役割別コンテキスト {role_folder}/共通.md が無い（programでは必須）")
 
     section = find_section(lines, MAP_HEADING)
     if section is None:

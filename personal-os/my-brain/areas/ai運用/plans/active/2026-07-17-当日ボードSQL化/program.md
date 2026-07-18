@@ -76,14 +76,14 @@
     次: 01完了後に着手
     場所: plans/03 ／ 依存: 01
     参照: ―
-- [ ] 05 タスク入れ子と2層チェック … 修正（評価01=FAIL1・PASS5・保留1／修正01対応中）
+- [ ] 05 タスク入れ子と2層チェック … 人間確認（評価02=FAIL0・保留は人間ゲート後に再検証）
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤 hooks-registry/shared/session-board のboard.pyコマンド追加）
     並列: 02と可（画面領域が非交差）・03とはboard.py交差のため直列調整 ／ レビュー: 都度
     人間ゲート: Turso migration適用（todo_steps・session_logs.todo_id・todos質問カラム）・origin/main push・本番反映・skill/loop正本への board_route 宣言追記
-    次: 修正01（fix付け替えUIのDoneTodoRow結線）→評価02→人間ゲート（migration2本・push・board_route追記）
+    次: 人間ゲート（inbox/board migration2本→ローカル3001確認→push・本番反映→board_route追記判断）→保留再検証
     場所: plans/05 ／ 依存: 01（03とはboard.py調整）
-    参照: explain/ボード入れ子と進捗率の提案.html（設計正本）／評価/05-…-評価01.md ／ 実装 focusmap@194e3b6e
+    参照: explain/ボード入れ子と進捗率の提案.html（設計正本）／評価/05-…-評価02.md ／ 実装 focusmap@b8bbf058
 - [ ] 04 方向修正ビューとミラー廃止 … 計画
     役割: 統合
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤のミラー廃止）

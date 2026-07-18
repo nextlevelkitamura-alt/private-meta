@@ -1,0 +1,193 @@
+<title>今日ボード最終設計 — 2層チェックと3経路</title>
+<style>
+  :root {
+    --ink: #1a202c;
+    --sub: #5a6472;
+    --line: #e2e8f0;
+    --bg-soft: #f7f9fb;
+    --blue: #2563eb;
+    --blue-soft: #eff6ff;
+    --green: #059669;
+    --green-soft: #ecfdf5;
+    --amber: #b45309;
+    --amber-soft: #fffbeb;
+    --red: #b91c1c;
+    --red-soft: #fef2f2;
+    --violet: #6d28d9;
+    --violet-soft: #f5f3ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--ink); font-family: "Hiragino Sans", "Noto Sans JP", sans-serif; line-height: 1.7; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-size: 1.3rem; margin: 8px 0 4px; }
+  .lead { color: var(--sub); font-size: .88rem; margin: 0 0 20px; }
+  h2 { font-size: 1.05rem; margin: 40px 0 12px; padding-left: 10px; border-left: 4px solid var(--blue); }
+  h3 { font-size: .92rem; margin: 18px 0 8px; }
+  p { margin: 8px 0; font-size: .9rem; }
+  li { font-size: .88rem; margin: 4px 0; }
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; vertical-align: middle; }
+  .tag.human { background: var(--blue-soft); color: var(--blue); }
+  .tag.script { background: var(--green-soft); color: var(--green); }
+  .tag.ai { background: var(--violet-soft); color: var(--violet); }
+
+  .agree { border: 1px solid var(--green); background: var(--green-soft); border-radius: 12px; padding: 12px 16px; margin: 12px 0; }
+  .agree ul { margin: 4px 0 0; padding-left: 20px; }
+  .rule { border-left: 3px solid var(--amber); background: var(--amber-soft); border-radius: 0 8px 8px 0; padding: 8px 12px; margin: 8px 0; font-size: .84rem; }
+
+  /* phone mock */
+  .screen { border: 1px solid var(--line); border-radius: 16px; padding: 14px 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.06); max-width: 400px; margin: 12px auto; }
+  .sec-title { font-size: .8rem; font-weight: 700; margin: 12px 0 6px; display: flex; align-items: center; gap: 6px; }
+  .sec-title:first-child { margin-top: 0; }
+  .badge-n { background: var(--amber); color: #fff; border-radius: 999px; font-size: .62rem; padding: 0 6px; }
+  .task { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+  .task.attn { border-color: #f0d9a8; background: var(--amber-soft); }
+  .task-head { display: flex; align-items: center; gap: 7px; font-size: .82rem; font-weight: 600; }
+  .pct { margin-left: auto; font-size: .72rem; font-weight: 700; color: var(--blue); white-space: nowrap; }
+  .pct.na { color: var(--sub); font-weight: 400; }
+  .bar { height: 4px; border-radius: 2px; background: #e9edf2; margin: 6px 0 4px; overflow: hidden; }
+  .bar > div { height: 100%; border-radius: 2px; background: var(--blue); }
+  .q { font-size: .76rem; color: var(--amber); margin: 4px 0 6px; }
+  .stlab { margin-left: auto; font-size: .64rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .stlab.run { background: var(--blue-soft); color: var(--blue); }
+  .stlab.wait { background: var(--amber-soft); color: var(--amber); }
+  .stlab + .pct { margin-left: 6px; }
+  .choices .free { flex-basis: 100%; border-style: dashed; color: var(--sub); font-weight: 400; }
+  .choices { display: flex; flex-wrap: wrap; gap: 6px; }
+  .choices span { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 10px; font-size: .74rem; font-weight: 600; }
+  .choices .go { color: var(--sub); border-style: dashed; }
+  .donebtn { display: block; text-align: center; border: 1px solid var(--green); color: var(--green); background: #fff; border-radius: 8px; padding: 7px; font-size: .78rem; font-weight: 700; margin-top: 6px; }
+  .steps { margin: 4px 0 0; padding: 0; list-style: none; }
+  .steps li { font-size: .74rem; color: var(--sub); margin: 2px 0; display: flex; gap: 6px; align-items: baseline; }
+  .steps .ok { color: var(--green); font-weight: 700; }
+  .steps .doing { color: var(--blue); font-weight: 700; }
+  .steps .todo-mark { color: #cbd5e1; font-weight: 700; }
+  .steps .t { color: #94a3b8; font-size: .68rem; margin-left: auto; white-space: nowrap; }
+  .meta { font-size: .68rem; color: #94a3b8; margin-top: 3px; }
+  .muted-note { font-size: .74rem; color: var(--sub); }
+  .done-line { display: flex; gap: 7px; align-items: baseline; font-size: .76rem; color: var(--sub); padding: 3px 0; }
+  .done-line .ic { flex-shrink: 0; }
+  .done-line .t { color: #94a3b8; font-size: .68rem; }
+  .cnt { background: #e9edf2; border-radius: 999px; padding: 0 6px; font-size: .66rem; }
+  .fixdot { color: var(--amber); }
+
+  /* route cards */
+  .route { border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
+  .route h3 { margin: 0 0 4px; display: flex; gap: 8px; align-items: center; }
+  .route .cond { font-size: .78rem; color: var(--sub); }
+
+  /* timeline */
+  .tl { list-style: none; margin: 12px 0; padding: 0; }
+  .tl li { position: relative; padding: 0 0 14px 26px; }
+  .tl li::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: -2px; width: 2px; background: var(--line); }
+  .tl li:last-child::before { display: none; }
+  .tl li::after { content: ""; position: absolute; left: 2px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--blue); }
+  .tl b { font-size: .88rem; }
+  .tl .who { margin-left: 6px; }
+  .tl p { margin: 2px 0 0; font-size: .8rem; color: var(--sub); }
+
+  code { background: var(--bg-soft); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; font-size: .78rem; }
+  .verdict { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; font-size: .84rem; }
+  .verdict b.q { color: var(--ink); font-size: .84rem; }
+  .phase { display: flex; gap: 10px; align-items: baseline; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; }
+  .phase b.n { color: var(--blue); font-size: 1rem; flex-shrink: 0; }
+  .phase span { font-size: .84rem; }
+  .phase .back { margin-left: auto; font-size: .7rem; color: var(--green); white-space: nowrap; flex-shrink: 0; }
+</style>
+
+<div class="wrap">
+  <h1>今日ボード最終設計 — 2層チェックと3経路</h1>
+  <p class="lead">3体のOpus（状態機械・UI・線引きレンズ）が独立設計→相互ディスカッションで衝突5点を裁定→指揮官が統合した最終案</p>
+
+  <h2>0. 確定した大原則（2層チェック）</h2>
+  <div class="agree">
+    <ul>
+      <li><b>ステップ（入れ子）のチェック＝AIが自動</b>で付ける。計画を立てたら実装もレビューもAIが最後まで自走</li>
+      <li><b>見出し（タスク行）のチェック＝人間のレビュー</b>だけが付けられる。チェックすると入れ子ごと「終わったこと」へ移動</li>
+      <li>途中で人間に聞くことが出たら「確認待ち（質問）」、全ステップ完了で「確認待ち（レビュー）」。<b>確認待ちは最上部セクション</b>に集約</li>
+      <li>定型ワークフロー/スキルは人間チェック不要で「終わったこと」へ自動流入</li>
+      <li>手直しは当日タスクの入れ子へ追記（完了済みでも追記できる・完了は勝手に取り消さない）</li>
+    </ul>
+  </div>
+
+  <h2>1. 完成形の画面イメージ</h2>
+  <div class="screen">
+    <div class="sec-title">🔔 確認待ち <span class="badge-n">2</span></div>
+    <div class="task attn">
+      <div class="task-head">❓ 経理処理を進める <span class="stlab wait">確認待ち</span><span class="pct">50%</span></div>
+      <div class="q">AIの質問: 4月分の按分方式はどうしますか？</div>
+      <div class="choices"><span>A 前年と同様</span><span>B 50:50で分割</span><span class="free">✏️ 自由入力で答える…</span><span class="go">セッションで詳しく →</span></div>
+    </div>
+    <div class="task attn">
+      <div class="task-head">★ 評価02を作る <span class="stlab wait">レビュー待ち</span><span class="pct" style="color:var(--green)">100%</span></div>
+      <div class="bar"><div style="width:100%;background:var(--green)"></div></div>
+      <div class="q" style="color:var(--green)">全ステップ完了 — あなたのレビュー待ち</div>
+      <div class="donebtn">✓ レビューして完了にする</div>
+    </div>
+    <div class="sec-title">今日のやること</div>
+    <div class="task">
+      <div class="task-head">○ 子02の計画更新 <span class="stlab run">実行中</span><span class="pct">40%</span></div>
+      <div class="bar"><div style="width:40%"></div></div>
+      <ul class="steps">
+        <li><span class="ok">✔</span>現状の整理<span class="t">10:02</span></li>
+        <li><span class="ok">✔</span>2レーン案の記述<span class="t">10:31</span></li>
+        <li><span class="doing">▶</span>レビュー観点の追記（実行中）</li>
+        <li><span class="todo-mark">○</span>自己レビュー</li>
+        <li><span class="todo-mark">○</span>修正反映</li>
+      </ul>
+      <div class="meta">繰越・2日目</div>
+    </div>
+    <div class="sec-title">動いているエージェント 2体</div>
+    <div class="sec-title">終わったこと <span class="cnt">▸12件・畳み</span></div>
+    <div class="done-line"><span class="ic">✓</span>スマホ幅の目視3点 <span class="fixdot">●手直し中</span><span class="t">09:40</span></div>
+    <div class="done-line"><span class="ic">⚙</span>定型: 経理の日次取込み <span class="cnt">×3</span><span class="t">09:12</span></div>
+    <div class="done-line"><span class="ic">·</span>単発: repo同期メモ<span class="t">08:55</span></div>
+    <p class="muted-note">見出しは%の左に状態ラベル1個（実行中/確認待ち/レビュー待ち/計画待ち）を常時表示。複数エージェントが動いていても「実行中」に集約。確認待ちが0件ならセクションごと消える。繰越・滞留は色を使わず小さなメタ行。✓=人間承認済（入れ子保持）／⚙=定型自動／·=単発。</p>
+  </div>
+
+  <h2>2. 仕事の3経路＋手直し（振り分けは機械条件）</h2>
+  <div class="route">
+    <h3>📋 計画型 <span class="tag human">見出し=人間チェック</span></h3>
+    <p class="cond">条件: ステップ3個以上・またはゴール紐付き・または危険操作を含む。<b>迷ったら常にこちら</b>（安全側）。programなしの小さい計画もここ＝必ず人間が見出しで確認できる</p>
+    <p style="font-size:.84rem">AIが計画ステップを登録→実装・レビュー・修正まで自走→全✔で「レビュー待ち」→人間チェックで終わったことへ</p>
+  </div>
+  <div class="route">
+    <h3>⚙ 定型 <span class="tag script">自動で終わったことへ</span></h3>
+    <p class="cond">条件: skill/loopの正本ファイルに「定型」宣言（<code>board_route: routine</code> 1行）があるものだけ。第2の台帳は作らない</p>
+    <p style="font-size:.84rem">経理処理などの定期実行。実行中→完了→終わったことへ直行（⚙アイコン・人間チェック不要）。失敗や停滞だけ確認待ちに上がってくる</p>
+  </div>
+  <div class="route">
+    <h3>· 単発 <span class="tag script">終わったことへ直行</span></h3>
+    <p class="cond">条件: 変更1〜2ファイル・容易に戻せる・危険操作なし（＝サクッと判定）</p>
+    <p style="font-size:.84rem">見出しを作らずログだけ残して終わったことへ。リストを汚さない</p>
+  </div>
+  <div class="route">
+    <h3>🔧 手直し <span class="tag ai">当日タスクへ自動紐付け</span></h3>
+    <p class="cond">本日やったタスクに関する修正 → そのタスクの入れ子へfix行として追記（終わったこと移動済みでも追記）</p>
+    <p style="font-size:.84rem">AIが候補を採点して最有力へ自動紐付け＋ボード上で1タップで付け替え可能。5分以内の連続手直しは同じタスクへ自動追従。候補が無い時だけ質問になる</p>
+  </div>
+
+  <h2>3. 見出しの状態と「誰が動かすか」</h2>
+  <ul class="tl">
+    <li><b>起票</b><span class="tag human who">人間</span><p>対話で「今日すること」へ。状態は「計画待ち」</p></li>
+    <li><b>計画登録</b><span class="tag ai who">AI</span><p>着手時にステップ3〜9個を入れ子登録→0%表示開始</p></li>
+    <li><b>自走</b><span class="tag ai who">AI</span><span class="tag script who">script</span><p>実装→自己レビュー→修正まで止まらず実行。ステップ✔はAIがコマンドで報告し、時刻と%はスクリプトが機械記録</p></li>
+    <li><b>確認待ち（質問）</b><span class="tag ai who">AI</span><span class="tag human who">人間</span><p>人間判断が必要な時だけAIが質問＋選択肢（最大3個）＋自由入力欄をDBへ。あなたはスマホでタップか文章入力で回答→次にセッションが動く時に回答が自動で渡る。<b>危険操作（削除・push・本番反映など）の承認だけはボードから不可</b>＝セッションでの明示承認に誘導</p></li>
+    <li><b>確認待ち（レビュー）</b><span class="tag script who">script</span><p>全ステップ✔になると自動でこの表示に（SQL導出・保存しない・AIは操作できない）</p></li>
+    <li><b>完了</b><span class="tag human who">人間</span><p>入れ子を開いて「✓完了にする」ボタン（誤タップ防止の2アクション制・5秒取り消し可）→入れ子ごと終わったことへ移動</p></li>
+    <li><b>手直し発生</b><span class="tag ai who">AI</span><p>終わったことの該当行に「●手直し中」＋入れ子にfix追記。<b>完了は勝手に取り消さない</b>。人間の再確認が要る時だけ確認待ちに「再確認しますか」カードが出て、あなたのタップでのみ戻る</p></li>
+  </ul>
+
+  <h2>4. ディスカッションで決まった主な裁定</h2>
+  <div class="verdict"><b class="q">Q. 確認待ちをどうデータで持つ？</b><br>「レビュー待ち」は保存せず<b>全ステップ✔からSQL導出</b>（AIが偽装できない）。「質問」だけ小カラムで保存（質問文＋選択肢）。既存の状態語彙は削除せず書込みを止めるだけ→<b>重いDB migrationゼロ</b>（現行コードの承認処理への依存も実測で確認済み）</div>
+  <div class="verdict"><b class="q">Q. 定型の判定は何を正本に？</b><br>skill/loop正本ファイルの<b>宣言1行</b>に一本化。環境変数の自己申告や別台帳は却下（検証不能・二重管理）。停滞検知は既存の巡回機構に統合し、新しい無人loopは作らない</div>
+  <div class="verdict"><b class="q">Q. 完了済みタスクに手直しが来たら戻す？</b><br><b>自動では戻さない</b>。人間のレビュー結論をAIが機械的に覆すのは2層チェックの精神に反する（3体一致で自動reopen案は撤回）。追記＋「●手直し中」表示、復帰は人間タップのみ</div>
+  <div class="verdict"><b class="q">Q. スマホから質問に即答したい</b><br>選択肢タップ＋<b>自由入力欄</b>でボード内完結（Claudeセッションの質問UIと同型。当初案の「自由入力なし」は人間の指定で自由入力ありに変更）。回答は「次にセッションが動く瞬間」に既存hookの注入機構で渡す＝新デーモン不要。「回答済・未消費」もボードで見える。危険操作の承認だけは対象外</div>
+  <div class="verdict"><b class="q">Q. 手直しの紐付けが曖昧な時は？</b><br>毎回質問すると自走が止まる→<b>最有力へ自動紐付け＋1タップ付け替え</b>方式に。人間不在でも作業は先行し、紐付けだけ後から確定できる</div>
+
+  <h2>5. 段階導入（どの段も単独で戻せる）</h2>
+  <div class="phase"><b class="n">1</b><span><b>入れ子＋タスク別%＋即時反映</b> — todo_stepsテーブル・%バー・画面復帰時の再取得</span><span class="back">戻し=非表示</span></div>
+  <div class="phase"><b class="n">2</b><span><b>2層チェック</b> — AIの計画登録/ステップ報告コマンド・人間の「✓完了にする」→終わったこと移動</span><span class="back">戻し=コマンド停止</span></div>
+  <div class="phase"><b class="n">3</b><span><b>終了時整理と手直し</b> — ログ紐付け・サマリ・fix自動紐付け＋1タップ付け替え</span><span class="back">戻し=紐付けOFF</span></div>
+  <div class="phase"><b class="n">4</b><span><b>質問回答（タップ＋自由入力）</b> — 質問・選択肢・自由回答の保存・ボードUI・回答の注入</span><span class="back">戻し=UI非表示</span></div>
+  <div class="phase"><b class="n">5</b><span><b>定型自動流入</b> — 宣言1行の照合・自動完了・失敗の引き上げ</span><span class="back">戻し=宣言削除</span></div>
+</div>

@@ -37,6 +37,7 @@
 ```text
 01 やること箱と今日ボード（focusmap・新規追加のみ）
   ├→ 02 月カレンダーとAI起票キュー（focusmap＋検知導線）
+  ├→ 05 タスク入れ子と2層チェック（focusmap＋board.py拡張）  ※02と並列可・03とはboard.py交差のため直列調整
   └→ 03 セッション状態ログの正本反転（session-board）   ※02と並列可
         ↓（02・03の両方完了後）
 04 方向修正ビューとミラー廃止（focusmap＋session-board・統合）
@@ -68,6 +69,14 @@
     次: 01完了後に着手
     場所: plans/03 ／ 依存: 01
     参照: ―
+- [ ] 05 タスク入れ子と2層チェック … 計画
+    役割: 実装
+    対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤 hooks-registry/shared/session-board のboard.pyコマンド追加）
+    並列: 02と可（画面領域が非交差）・03とはboard.py交差のため直列調整 ／ レビュー: 都度
+    人間ゲート: Turso migration適用（todo_steps・session_logs.todo_id・todos質問カラム）・origin/main push・本番反映・skill/loop正本への board_route 宣言追記
+    次: 段階1（todo_steps・入れ子+%表示・状態ラベル・即時反映）から着手
+    場所: plans/05 ／ 依存: 01（03とはboard.py調整）
+    参照: explain/ボード入れ子と進捗率の提案.html（設計正本・3体Opus討議の統合）
 - [ ] 04 方向修正ビューとミラー廃止 … 計画
     役割: 統合
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤のミラー廃止）
@@ -85,7 +94,8 @@
   - loop/launchd登録（AI起票キューの検知機構）＝子02
   - session-board hookの挙動変更と、デイリーmd「動いているエージェント」「終わったこと」2節の生成化/廃止＝子03
   - md→DBミラー送信の廃止（不可逆）＝子04
-  - origin/main への push・Cloud Run本番反映＝子01・02・04
+  - Tursoへのmigration適用（todo_steps・session_logs.todo_id・todos質問カラム）と skill/loop正本への board_route 宣言追記＝子05
+  - origin/main への push・Cloud Run本番反映＝子01・02・04・05
 - planning→active昇格は、explain/program.html の提示と人間の実行OKを得てから bucketctl で行う（active上限3の確認込み）
 
 ## 完了条件（レビュー項目）
@@ -95,6 +105,7 @@
 - [ ] 2週間リスト⇄月カレンダーの切替が同じ「やること」箱のデータで動き、repoフィルタと〆切の赤表示が機能する（対象: 2週間/月ビュー）
 - [ ] board.pyの記録がDB先書きになり、デイリーmdの該当2節が生成表示または廃止されて二重正本が存在しない（対象: session-board・デイリーテンプレ）
 - [ ] md→DBミラー送信コードとspoolが廃止され、計画・的の文面の本文コピーがDBに存在しない（対象: session-board turso/・DBスキーマ）
+- [ ] 各タスクにステップ入れ子・タスク別%・状態ラベルが表示され、ステップ✔=AI自動・見出し完了=人間タップの2層チェックで「終わったこと」へ移動し、AIの質問に選択肢＋自由入力でスマホ回答できる（対象: 子05・board画面）
 - [ ] 統合評価 `評価/評価01.md` が全PASS（対象: 評価/）
 
 ## 関連

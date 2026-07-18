@@ -49,7 +49,7 @@
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 不可 ／ レビュー: 都度
     人間ゲート: Turso migration適用・origin/main push・本番反映
-    次: 本番反映済み（push・env・デプロイ完了）。残=本番inbox migration 1コマンド（人間実行待ち）
+    次: デプロイ1完了（push・env・本番migration適用済み）。本番URLで全機能開通
     場所: plans/01 ／ 依存: ―
     参照: focusmap@be8e13f8
 - [ ] 02 月カレンダーとAI起票キュー … 計画

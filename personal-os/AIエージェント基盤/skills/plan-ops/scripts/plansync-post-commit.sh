@@ -22,10 +22,11 @@ REPO="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 [ -n "$REPO" ] || exit 0
 
 # 直近コミットの変更ファイル（削除・改名も名前として拾う）。初回コミットは親が無いので全追跡扱い。
+# core.quotepath=false: 日本語パスがoctalエスケープ+引用符で出て正規表現に落ちるのを防ぐ（2026-07-19実測修正）
 if git -C "$REPO" rev-parse --verify -q HEAD~1 >/dev/null 2>&1; then
-  CHANGED="$(git -C "$REPO" diff --name-only HEAD~1 HEAD 2>/dev/null)"
+  CHANGED="$(git -C "$REPO" -c core.quotepath=false diff --name-only HEAD~1 HEAD 2>/dev/null)"
 else
-  CHANGED="$(git -C "$REPO" show --name-only --format= HEAD 2>/dev/null)"
+  CHANGED="$(git -C "$REPO" -c core.quotepath=false show --name-only --format= HEAD 2>/dev/null)"
 fi
 
 # active計画md だけへ絞る（areas/<area>/plans/active/<slug>/....md）

@@ -14,7 +14,7 @@
 ## 非対象
 
 - focusmap既存のSupabase系機能（カレンダー・タスク・習慣・ノート等）の改修
-- 3年/年間/月間の的の文面・計画書のDB化（md正本のまま。DBは参照のみ）
+- 3年/年間/月間の的の文面・知識のDB化（md正本のまま。DBは参照のみ）。計画書は2026-07-18の人間指示により例外化し、読み取り専用の表示キャッシュとしてのDBミラーだけを子06で行う（正本境界の項を参照）
 - Notionインボックスなど他の起票入口の廃止判断
 - kimi-webbridge等ブラウザ操作基盤の改修
 
@@ -22,7 +22,8 @@
 
 - 仕様の正本: この program.md と plans/ の子計画。合意図解は `explain/program.html`、画面モックは `references/`
 - 運用データ（sessions・events・logs・goals・新設やること）: 反転完了（子03）後は Turso が正本。それまでの正本はデイリーmd
-- 計画書・的の文面・知識: md（git）が正本のまま。DBには参照（slug・計画名）だけ置く
+- 的の文面・知識: md（git）が正本のまま。DBには参照（slug・計画名）だけ置く
+- 計画書: md（git）が正本。DBはactive計画の読み取り専用表示キャッシュのみ許可（一方向同期・編集はmd側だけ・ボードから本文編集UIは作らない。2026-07-18人間指示で改定・実装は子06/07）
 - repo選択肢の正本: `AIエージェント基盤/repo-registry/repo概要.md`（DBのreposマスタは参照コピー）
 - session-board実装の正本: `AIエージェント基盤/hooks-registry/shared/session-board/`
 - focusmap実装の正本: `~/Private/projects/active/focusmap/`
@@ -42,6 +43,9 @@
   └→ 03 セッション状態ログの正本反転（session-board）   ※02と並列可
         ↓（02・03の両方完了後）
 04 方向修正ビューとミラー廃止（focusmap＋session-board・統合）
+
+06 計画ミラー同期（AIエージェント基盤）   ※01〜05と独立・03/05とファイル調整
+  └→ 07 計画スマホ表示（focusmap）
 ```
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
@@ -86,6 +90,22 @@
     次: 02・03完了後に着手
     場所: plans/04 ／ 依存: 02・03
     参照: ―
+- [ ] 06 計画ミラー同期 … 計画
+    役割: 実装
+    対象repo: /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤（plan-ops・session-board turso）＋~/Private git hook
+    並列: 05と可（対象repoが異なる）・03とはspool交差のため直列調整 ／ レビュー: 都度
+    人間ゲート: inbox migration適用（plan_docs・plan_progress）・post-commit hook登録・初回一括投入GO
+    次: plansync新設とmigration作成（dry-runまで）から着手
+    場所: plans/06 ／ 依存: ―（03/05とファイル調整）
+    参照: リサーチ統合設計（2026-07-18・3レンズ）
+- [ ] 07 計画スマホ表示 … 計画
+    役割: 実装
+    対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
+    並列: 06完了後（データ依存）・02/05と切替ピル等の共有ファイル調整 ／ レビュー: 都度
+    人間ゲート: 依存追加（react-markdown・remark-gfm）承認・origin/main push・本番反映
+    次: 06完了後に着手
+    場所: plans/07 ／ 依存: 06
+    参照: ―
 
 ## 人間ゲート
 
@@ -96,7 +116,9 @@
   - session-board hookの挙動変更と、デイリーmd「動いているエージェント」「終わったこと」2節の生成化/廃止＝子03
   - md→DBミラー送信の廃止（不可逆）＝子04
   - Tursoへのmigration適用（todo_steps・session_logs.todo_id・todos質問カラム）と skill/loop正本への board_route 宣言追記＝子05
-  - origin/main への push・Cloud Run本番反映＝子01・02・04・05
+  - inbox migration適用（plan_docs・plan_progress）・~/Private post-commit hook登録・初回一括投入＝子06
+  - 依存パッケージ追加（react-markdown・remark-gfm）＝子07
+  - origin/main への push・Cloud Run本番反映＝子01・02・04・05・07
 - planning→active昇格は、explain/program.html の提示と人間の実行OKを得てから bucketctl で行う（active上限3の確認込み）
 
 ## 完了条件（レビュー項目）
@@ -107,6 +129,7 @@
 - [ ] board.pyの記録がDB先書きになり、デイリーmdの該当2節が生成表示または廃止されて二重正本が存在しない（対象: session-board・デイリーテンプレ）
 - [ ] md→DBミラー送信コードとspoolが廃止され、計画・的の文面の本文コピーがDBに存在しない（対象: session-board turso/・DBスキーマ）
 - [ ] 各タスクにステップ入れ子・タスク別%・状態ラベルが表示され、ステップ✔=AI自動・見出し完了=人間タップの2層チェックで「終わったこと」へ移動し、AIの質問に選択肢＋自由入力でスマホ回答できる（対象: 子05・board画面）
+- [ ] スマホの「計画」タブでactive計画の一覧・進捗（子N/M・完了条件x/y）・md本文が読み取り専用で確認でき、md正本を書き換える経路がDB側に存在しない（対象: 子06・07）
 - [ ] 統合評価 `評価/評価01.md` が全PASS（対象: 評価/）
 
 ## 関連

@@ -14,7 +14,10 @@
 #   （既存 post-commit がある場合は追記方式にするか、chain スクリプトから呼び出す）
 set -u
 
-SELF="$(cd "$(dirname "$0")" && pwd)"
+# symlink経由（.git/hooks/post-commit）で呼ばれても実体の場所を解決する
+HOOK_SRC="$0"
+[ -L "$HOOK_SRC" ] && HOOK_SRC="$(readlink -f "$HOOK_SRC" 2>/dev/null || echo "$HOOK_SRC")"
+SELF="$(cd "$(dirname "$HOOK_SRC")" && pwd)"
 REPO="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 [ -n "$REPO" ] || exit 0
 

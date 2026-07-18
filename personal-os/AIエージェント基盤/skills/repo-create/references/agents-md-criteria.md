@@ -34,6 +34,14 @@ Personal OS、docs、registry、automation、計画管理のrepo。
 4. 外部送信、削除、secret、定期実行、本番データ変更は人間承認にする。
 5. 実行済み事実はlogs、これからやる判断はplansへ分ける。
 
+## AI runtime構成（Codex / Claude を使うrepo）
+
+Codexやそのランタイムをrepo内で使う場合、`AGENTS.md` に次の境界を書く。
+
+1. repo-local skillは `.agents/skills/<name>/SKILL.md` を正本にし、Claude互換として `.claude/skills` を `.agents/skills` へのsymlinkにする（Codexは `.agents/skills` を読む）。同名skillを複数窓へ重複配置しない（1 skill 1窓）。
+2. Codex固有の hooks・rules・custom agents・config（`.codex/config.toml`・`.codex/hooks.json` 等）は `.codex/` に限定し、skill本体は置かない。
+3. 詳細は `personal-os/AIエージェント基盤/global-skill-registry/AGENTS.md`。
+
 ## coding repo
 
 アプリ、ライブラリ、CLI、実装作業のrepo。

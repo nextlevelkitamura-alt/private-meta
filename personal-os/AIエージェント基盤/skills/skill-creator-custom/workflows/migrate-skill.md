@@ -54,6 +54,8 @@ Skill移行、改名、runtime露出を行う時の最小ワークフロー。
 3. 各runtimeから新正本へのdirect symlinkになっているか `readlink` で確認する。
 4. runtime経由で `SKILL.md` を読めるか確認する。
 5. 一部runtimeだけ露出する段階露出にする場合は、残りを作成/移行ログの `未露出バックログ:` 行へ列挙する（書式・追跡は `global-skill-registry/logs/AGENTS.md` §2/§6。`grep -r '未露出バックログ' global-skill-registry/logs/created/ global-skill-registry/logs/migrated/` で未完了露出を機械追跡）。承認で残りへ露出したら該当runtimeを `露出:` 側へ移す。
+6. 既定露出は4窓（`~/.agents/skills`=Codex＋共通・`~/.claude/skills`・`~/.gemini/config/skills`・`~/.gemini/antigravity-cli/skills`）。`~/.codex/skills` は露出先にしない（Codexは `.agents/skills` を読む）。claude限定など恒久的に既定4窓と違う露出にするskillは `global-skill-registry/scripts/exposure-manifest.tsv` に例外登録し、`link-global-skill.sh` がそれに従う。
+7. 露出後 `global-skill-registry/scripts/check-exposure.sh` でdrift（`~/.codex/skills` への二重登録・露出欠落・broken link）が無いか確認する。
 
 ### Step 6: 検証とログを書く
 

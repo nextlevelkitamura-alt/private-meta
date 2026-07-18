@@ -28,7 +28,7 @@ Skillを横断スキャンし、重複・矛盾・統合候補・導線のずれ
 ### Step 3: 軽量indexを作る
 
 1. Globalは各 `SKILL.md` のfrontmatter `name`・`description` を見る。repo-localはrepo名・repo path・Skill名・正本path・概要・用途を抜く。
-2. この段階で全workflow・references・assets・scriptsを全読みしない。runtime露出先（`~/.codex/skills` 等）は正本でないため本文確認に使わない。
+2. この段階で全workflow・references・assets・scriptsを全読みしない。runtime露出先（`~/.agents/skills` 等）は正本でないため本文確認に使わない。
 3. Skillごとに発火条件・主な責務・対象scope・出力・副作用・近接Skillを短く整理する。repo-local本文をこのrepoへコピーしない。
 
 ### Step 4: 重複・矛盾候補を探す

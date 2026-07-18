@@ -200,10 +200,9 @@ scripts/init_skill.py my-skill --path "${CODEX_HOME:-$HOME/.codex}/skills" --res
 scripts/init_skill.py my-skill --path ~/work/skills --resources scripts --examples
 ```
 
-作成先が指定されていない場合は、ユーザーに確認する。確認できないが合理的に進める必要がある場合は、`$CODEX_HOME/skills`、未設定なら `~/.codex/skills` を既定にする。
+作成先が指定されていない場合は、ユーザーに確認する。`~/.codex/skills`（=`$CODEX_HOME/skills`）はCodexが自動で読む一時置き場（scratch）で、Codex単体で使い捨てる試作だけここに置く。
 
-北村環境でGlobal Skillとして長期運用する場合は、各runtime入口を正本にしない。
-正本は `/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/skills/<skill-name>/` に置き、runtimeにはdirect symlinkで露出する。
+北村環境でGlobal Skillとして長期運用する場合は、`~/.codex/skills` に残さない。正本は `/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/skills/<skill-name>/` に置き、`global-skill-registry/scripts/link-global-skill.sh` で `~/.agents/skills`（Codexはここを読む）・`~/.claude/skills`・`~/.gemini/...` の4窓へdirect symlink露出する。`~/.codex/skills` は露出先にしない。runtime入口を正本にしない。
 
 ### 4. 編集する
 

@@ -1,5 +1,6 @@
 ---
 name: sns-post
+board_route: routine
 description: >-
   SNS（Threads / 将来的にX・Instagram等）の投稿運用を「ループ・単発・予約管理・アカウント整備・競合/トレンド調査」の5機能で統合管理するグローバルスキル。
   本業（kurashi_to_hataraku / nextlevel__career）と副業（hiro_ai_dx / yuu_workstyle）で

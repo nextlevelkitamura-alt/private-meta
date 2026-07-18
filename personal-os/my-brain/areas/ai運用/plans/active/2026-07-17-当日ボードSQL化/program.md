@@ -46,6 +46,8 @@
 
 06 計画ミラー同期（AIエージェント基盤）   ※01〜05と独立・03/05とファイル調整
   └→ 07 計画スマホ表示（focusmap）
+
+05 ─→ 08 サブエージェント入れ子可視化（focusmap＋hook）  ※05のUI部品依存・03とはhook交差のため直列調整
 ```
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
@@ -106,6 +108,14 @@
     次: 06完了後に着手
     場所: plans/07 ／ 依存: 06
     参照: ―
+- [ ] 08 サブエージェント入れ子可視化 … 計画
+    役割: 実装
+    対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤 hooks-registry subagentイベント・board.py）
+    並列: 05完了後（UI部品依存）・03とはhook/board.py交差のため直列調整 ／ レビュー: 都度
+    人間ゲート: board DBへのmigration適用（session_subagents）・origin/main push・本番反映
+    次: 05完了後に着手（最初にSubagentStart payloadの実物確認）
+    場所: plans/08 ／ 依存: 05（03とはhook調整）
+    参照: 2026-07-18人間採用（IMG_4307の議論・機械=hook/意味=AI分担）
 
 ## 人間ゲート
 
@@ -118,7 +128,8 @@
   - Tursoへのmigration適用（todo_steps・session_logs.todo_id・todos質問カラム）と skill/loop正本への board_route 宣言追記＝子05
   - inbox migration適用（plan_docs・plan_progress）・~/Private post-commit hook登録・初回一括投入＝子06
   - 依存パッケージ追加（react-markdown・remark-gfm）＝子07
-  - origin/main への push・Cloud Run本番反映＝子01・02・04・05・07
+  - board DBへのmigration適用（session_subagents）＝子08
+  - origin/main への push・Cloud Run本番反映＝子01・02・04・05・07・08
 - planning→active昇格は、explain/program.html の提示と人間の実行OKを得てから bucketctl で行う（active上限3の確認込み）
 
 ## 完了条件（レビュー項目）

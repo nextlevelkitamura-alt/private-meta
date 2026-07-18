@@ -44,14 +44,14 @@
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
 
-- [ ] 01 やること箱と今日ボード … 人間確認
+- [x] 01 やること箱と今日ボード … 完了
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 不可 ／ レビュー: 都度
     人間ゲート: Turso migration適用・origin/main push・本番反映
-    次: ローカル3001で3点目視（起票→表示／承認タップ／スマホ幅）→評価02で全PASS確定
+    次: デプロイ1回目（Turso本番migration適用→origin/main push→Cloud Run env設定）＝人間承認3点待ち
     場所: plans/01 ／ 依存: ―
-    参照: focusmap@5c93d6ac
+    参照: focusmap@be8e13f8
 - [ ] 02 月カレンダーとAI起票キュー … 計画
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap

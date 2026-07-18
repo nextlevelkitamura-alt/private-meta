@@ -12,6 +12,8 @@
 | `scripts/check-section.sh` | 指定節だけを表示・pattern照合 | 一致の意味とレビュー合否 | 読み取り専用 |
 | `scripts/bucketctl.sh` | 許可遷移、容量、終了記録を検証したdry-run / `git mv` / 定型commit、`check --json` | 優先順位、終了理由、人間確認の判断 | 既定dry-run。`--apply` / `--commit`は明示時だけ |
 | `scripts/planctl.py` | manifest/Task Packet生成、子進捗、評価同期、終了記録、整合検査、日付rename | 対象計画の推測、評価の意味判断、人間のクローズ判断 | 明示pathのみ。manifestはgitignore配下 |
+| `scripts/plansync.py` | active計画mdをinbox DB(plan_docs/plan_progress)へ一方向ミラー。抽出・kind分類・子N/M・完了条件x/y・secret拒否・孤児DELETE | md本文の編集（正本はmd）、migration適用可否、初回投入GO | 既定dry-run（`scan`/`sync`）。`--apply`で書込（人間ゲート後）。パーサは`_planops_map`流用・送信は session-board `turso/store.py`流用 |
+| `scripts/plansync-post-commit.sh` | ~/Private commit時の差分計画mdを差分ミラー（多重ロック・失敗spool退避） | .git/hooksへの登録（人間ゲート） | `--apply`実書込。登録は人間 |
 
 ## 同じ場所に残すもの
 

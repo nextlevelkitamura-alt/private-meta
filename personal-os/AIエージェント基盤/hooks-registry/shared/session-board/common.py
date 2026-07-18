@@ -144,7 +144,24 @@ def start_register(d, runtime):
     board_reconcile()
     return (f"[session-board] ボードキー s:{key}（{repo or '?'}・現在 {_now()}）。"
             "行は最初のプロンプト時に登録される。依頼を理解したら "
-            "update で目標・種別・今・モデルを正す（手順もその時に注入）。")
+            "update で目標・種別・今・モデルを正す（手順もその時に注入）。"
+            + _plansync_freshness_note(repo))
+
+
+def _plansync_freshness_note(repo):
+    """SessionStartの注入文に相乗りする計画ミラー鮮度メモ（注入文のみ・状態遷移は変えない）。
+    ~/Private repoでのみ、未同期HEAD差分や secret拒否通知があれば掃除を促す。副作用なし。"""
+    if repo != "Private":
+        return ""
+    note = "\n[plansync] 計画ミラー鮮度: active計画mdを編集したなら plan-ops/scripts/plansync.py sync --all で掃除できる（表示キャッシュ・md正本）。"
+    try:
+        state_dir = os.environ.get("SESSION_BOARD_STATE_DIR") or os.path.join(os.path.dirname(__file__), "..", "..", "shared", "session-board", "state")
+        notices = os.path.join(os.path.normpath(state_dir), "plansync-notices.log")
+        if os.path.exists(notices) and os.path.getsize(notices) > 0:
+            note += " secret拒否等の通知あり→ state/plansync-notices.log を確認。"
+    except Exception:
+        pass
+    return note
 
 
 def _now():

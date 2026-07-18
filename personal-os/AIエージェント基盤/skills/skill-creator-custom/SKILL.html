@@ -137,13 +137,13 @@
 
       <div class="wf">
         <p class="wf-h"><code>migrate-skill.md</code> — 移す・改名・runtime露出変更（不可逆操作を含む）</p>
-        <p class="wf-d">対象と危険操作を確認し、正本ルールを読んでから正本へ移し、runtime露出を direct symlink で整え、検証とログを書く。承認ゲートが独立しているため他workflowに吸収しない。</p>
+        <p class="wf-d">対象と危険操作を確認し、正本ルールを読んでから正本へ移し、runtime露出を direct symlink で整え、検証とログを書く。承認ゲートが独立しているため他workflowに吸収しない。露出は既定4窓（<code>~/.agents/skills</code>=Codex＋共通・<code>~/.claude/skills</code>・<code>~/.gemini/config/skills</code>・<code>~/.gemini/antigravity-cli/skills</code>）を基準にし、<code>~/.codex/skills</code>は露出先にしない。恒久的にこの4窓と違う露出（claude限定等）は <code>exposure-manifest.tsv</code> に例外登録し、露出後は <code>check-exposure.sh</code> でdrift（.codex二重登録・欠落・broken）を確認する。</p>
         <div class="steps">
           <span class="step gate">1 対象と危険操作確認（人間承認）</span><span class="arr">→</span>
           <span class="step">2 正本ルールを読む</span><span class="arr">→</span>
           <span class="step">3 旧実体確認</span><span class="arr">→</span>
           <span class="step">4 正本へ移す</span><span class="arr">→</span>
-          <span class="step">5 runtime露出</span><span class="arr">→</span>
+          <span class="step">5 runtime露出（4窓・manifest例外・drift確認）</span><span class="arr">→</span>
           <span class="step">6 検証とログ＋SKILL.html再生成</span><span class="arr">→</span>
           <span class="step">7 報告</span>
         </div>
@@ -198,7 +198,7 @@
       </div>
     </section>
 
-    <p class="foot">更新日: 2026-07-03 ／ 正本: <code>SKILL.md</code>（この説明書はSKILL.mdから生成した人間向け表示。編集はmd側で行う）</p>
+    <p class="foot">更新日: 2026-07-18 ／ 正本: <code>SKILL.md</code>（この説明書はSKILL.mdから生成した人間向け表示。編集はmd側で行う）</p>
 
   </div>
 </body>

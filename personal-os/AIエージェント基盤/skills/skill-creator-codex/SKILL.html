@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skill-creator-codex — Skill説明書</title>
+<style>
+  :root{
+    --ground:#ECEEF3; --surface:#FFFFFF; --surface-2:#F5F6FA;
+    --ink:#19212F; --muted:#5F6879; --line:#DBDFEA;
+    --accent:#2C3A8C; --accent-ink:#202C6E; --accent-soft:#E9ECFA;
+    --go:#2E7D5B; --go-ink:#1E5A40; --go-soft:#E3F1EA;
+    --warn:#B4472B; --warn-ink:#8C3620; --warn-soft:#F7E8E2;
+    --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP","Segoe UI",sans-serif;
+    --mono:"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased;padding:40px 20px 72px}
+  .wrap{max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 10px}
+  h1{font-size:29px;font-weight:600;letter-spacing:-.01em;margin:0;line-height:1.2}
+  .lede{margin:12px 0 0;font-size:15.5px;color:var(--muted);max-width:64ch}
+  h2{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 14px}
+  section{display:flex;flex-direction:column}
+  p{margin:0 0 10px;font-size:14px}
+  ul{margin:0;padding-left:20px;font-size:14px}
+  li{margin-bottom:7px}
+  figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px;overflow-x:auto}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);padding:1px 6px;border-radius:6px}
+  .rule{border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:0 10px 10px 0;padding:12px 16px;font-size:13.5px}
+  .rule ol{margin:0;padding-left:20px}
+  .rule li{margin-bottom:8px}
+  .wf,.ref{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 18px;margin-bottom:12px}
+  .wf-h{margin:0 0 6px;font-size:14px;font-weight:600}
+  .wf-d{margin:0 0 10px;font-size:13.5px;color:var(--muted)}
+  .wf-c{margin:10px 0 0;font-size:13px;color:var(--muted)}
+  .ref ul{margin:0;padding-left:18px;font-size:13px}
+  .ref li{margin-bottom:4px}
+  .note{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
+  .foot{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- ① 何をするSkillか -->
+    <header>
+      <p class="eyebrow">Skill説明書 · meta · AIエージェント基盤</p>
+      <h1>skill-creator-codex</h1>
+      <p class="lede">OpenAI/Codex公式の <code>skill-creator</code> を日本語運用向けに改編し、Codex向けSkillの新規作成・既存Skill更新・<code>agents/openai.yaml</code> 生成・<code>quick_validate</code> 検証を支援する。Skillライフサイクルの窓口 <code>skill-creator-custom</code> から委譲されたCodex固有作業を担う。</p>
+    </header>
+
+    <!-- ② いつ発火するか -->
+    <section>
+      <h2>いつ使うか（発火する発話例）</h2>
+      <ul>
+        <li>「Codexで使うSkillを作りたい」</li>
+        <li>「SKILL.mdを更新したい」</li>
+        <li>「scripts / references / assets を整理したい」</li>
+        <li>「Skillの発火条件やメタデータ（<code>agents/openai.yaml</code>）を改善したい」</li>
+      </ul>
+      <p class="note">Skillライフサイクル判断（作る/直すの境界、Global/repo-local、削除・移行）はここではなく <code>skill-creator-custom</code> が担う。迷ったらそちらへ戻す。</p>
+    </section>
+
+    <!-- ③ 構造図 -->
+    <section>
+      <h2>構造</h2>
+      <figure>
+<pre style="margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.9">skill-creator-codex/
+├── SKILL.md                    本文（原則・構造・書き方・作成/検証ワークフローを1本で持つ。workflows/なし）
+├── SKILL.html                  この人間向け説明書（SKILL.mdから生成）
+├── LICENSE.txt
+├── agents/
+│   └── openai.yaml             Codex UI向けメタデータ（display_name/short_description/default_prompt）
+├── references/
+│   └── openai_yaml.md          agents/openai.yaml のフィールド仕様（唯一の正）
+└── scripts/
+    ├── init_skill.py           新規Skill雛形の生成
+    ├── generate_openai_yaml.py agents/openai.yaml の生成・更新
+    └── quick_validate.py       frontmatter・description・整合の検証</pre>
+      </figure>
+    </section>
+
+    <!-- ④ 各workflowの中身: workflows/ が存在しないため省略（create-rules.md §9） -->
+
+    <!-- ⑤ referencesの中身 -->
+    <section>
+      <h2>referencesの中身（何が書いてあるか）</h2>
+
+      <div class="ref">
+        <p class="wf-h"><code>openai_yaml.md</code> — <code>agents/openai.yaml</code> のフィールド仕様</p>
+        <ul>
+          <li><b>Full example</b>: <code>interface</code>（display_name / short_description / icon_small / icon_large / brand_color / default_prompt）と <code>dependencies.tools</code>（mcp依存の記法）の全体像</li>
+          <li><b>Field descriptions and constraints</b>: 各フィールドの意味と制約（文字列は必ずquote、<code>short_description</code>は25-64文字、<code>default_prompt</code>は<code>$skill-name</code>形式で対象Skillを明示 等）</li>
+        </ul>
+        <p class="wf-c"><b>いつ読む:</b> <code>agents/openai.yaml</code> を生成・更新する前に必ず読む（<code>scripts/generate_openai_yaml.py</code> 実行前後の突合含む）。</p>
+      </div>
+    </section>
+
+    <!-- ⑥ 絶対ルール・安全方針＋更新日 -->
+    <section>
+      <h2>絶対ルール・安全方針</h2>
+      <div class="rule">
+        <ol>
+          <li><b>Skill初期化先の区別（2026-07-18更新）</b>: <code>~/.codex/skills</code>（=<code>$CODEX_HOME/skills</code>）はCodexが自動で読む<b>一時置き場（scratch）</b>。Codex単体で使い捨てる試作だけをここに置く。</li>
+          <li>北村環境でGlobal Skillとして<b>長期運用</b>する場合は <code>~/.codex/skills</code> に残さない。正本は <code>AIエージェント基盤/skills/&lt;skill-name&gt;/</code> に置き、<code>global-skill-registry/scripts/link-global-skill.sh</code> で <code>~/.agents/skills</code>（Codexが読む）・<code>~/.claude/skills</code>・<code>~/.gemini/...</code> の4窓へdirect symlink露出する。<code>~/.codex/skills</code> は露出先にしない。runtime入口を正本にしない。</li>
+          <li>フォルダは <code>SKILL.md</code> ＋ <code>agents/ scripts/ references/ assets/</code> 以外を作らない（<code>SKILL.html</code>は唯一の人間向け例外ファイル）。README・INSTALLATION_GUIDE・CHANGELOGなどSkill実行に直接必要ない補助文書は原則作らない。</li>
+          <li>削除・正本移動・symlink張り替え・外部送信・破壊的操作は人間の明示承認が必須。repo-local Skillを無理にGlobal化しない。</li>
+          <li>scriptを追加・変更したら代表ケースで実行確認する。placeholderや不要なexampleは残さない。</li>
+          <li>作成・更新後は <code>scripts/quick_validate.py</code> を実行し、frontmatter有効性・<code>name</code>とフォルダ名一致・<code>description</code>の発火十分性・<code>agents/openai.yaml</code>との整合・<code>SKILL.md</code>の肥大化なしを確認する。</li>
+          <li>Skill編集の完了条件は <code>SKILL.html</code> の再生成まで（このSkill自身にも適用）。</li>
+        </ol>
+      </div>
+    </section>
+
+    <p class="foot">更新日: 2026-07-18 ／ 正本: <code>SKILL.md</code>（この説明書はSKILL.mdから生成した人間向け表示。編集はmd側で行う）</p>
+
+  </div>
+</body>
+</html>

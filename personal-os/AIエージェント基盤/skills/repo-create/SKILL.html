@@ -37,11 +37,13 @@
 │   ├── create-repo.md               # 新規repoの最小構成
 │   └── improve-repo.md              # 既存repoの最小改善
 ├── references/
-│   ├── agents-md-criteria.md        # repo種別と入口品質
+│   ├── agents-md-criteria.md        # repo種別・入口品質・AI runtime構成
 │   ├── repo-safety.md               # Git・secret・承認境界
 │   └── migration-contract.md        # 横断移植の監査契約
-└── scripts/fixtures/
-    └── migration-cases.json         # 値なし合成fixture 15件</pre></figure>
+├── agents/openai.yaml               # Codex向けagent定義
+└── scripts/
+    ├── repoctl-check.sh             # repo-registry整合の機械確認
+    └── fixtures/migration-cases.json # 値なし合成fixture 15件</pre></figure>
   </section>
 
   <section>
@@ -64,7 +66,7 @@
 
   <section>
     <h2>referencesの中身</h2>
-    <article class="ref"><h3><code>agents-md-criteria.md</code> — repo入口の評価基準</h3><ul><li><b>共通構成:</b> 目的、禁止、フォルダ、開始・更新・確認方法</li><li><b>repo種別:</b> 業務運用repoとcoding repoで必要な説明を分ける</li><li><b>評価:</b> 初見の分かりやすさと危険操作の停止可否</li></ul></article>
+    <article class="ref"><h3><code>agents-md-criteria.md</code> — repo入口の評価基準</h3><ul><li><b>共通構成:</b> 目的、禁止、フォルダ、開始・更新・確認方法</li><li><b>repo種別:</b> 業務運用repoとcoding repoで必要な説明を分ける</li><li><b>AI runtime構成:</b> Codex/Claudeを使うrepoの境界。repo-local skillは<code>.agents/skills/&lt;name&gt;/SKILL.md</code>を正本にし<code>.claude/skills</code>はそこへのsymlink（1 skill 1窓）。Codex固有hooks/rules/custom agents/configは<code>.codex/</code>に限定しskill本体を置かない（詳細は<code>global-skill-registry/AGENTS.md</code>）</li><li><b>評価:</b> 初見の分かりやすさと危険操作の停止可否</li></ul></article>
     <article class="ref"><h3><code>repo-safety.md</code> — 副作用と人間承認</h3><ul><li><b>Git:</b> 未コミット差分を保護し、remote・main・force操作を承認制にする</li><li><b>Secret:</b> 値を表示・記録・commitしない</li><li><b>配置:</b> repo本体をPrivate直下へ増やさず、物理移動はrepo-relocationへ渡す</li></ul></article>
     <article class="ref"><h3><code>migration-contract.md</code> — 横断移植の決定的監査契約 <span class="pill">K01</span></h3><ul><li><b>Identity:</b> registry、Git common dir、worktree/container、未mountを区別してdedupe</li><li><b>計画箱:</b> repo AGENTSを正本にし、未宣言・曖昧ならexit 3でfail-closed</li><li><b>出力:</b> 同じJSON envelope、固定sort、exit 0/2/3/4、secret値出力0</li><li><b>Fixture:</b> 仕事・focusmap・symlink・計画箱・未mountなど15件の合成ケース</li></ul></article>
   </section>
@@ -74,6 +76,6 @@
     <div class="rule"><b>既存ファイルを勝手に上書きしません。</b> 削除・移動・改名・commit・push・hook/launchd登録は契約だけでは許可されません。<code>CLAUDE.md</code> は同階層の <code>AGENTS.md</code> への相対symlinkを基本とし、固有内容がある時は先に損失なく統合します。secretは存在と件数だけを扱い、値は出力しません。</div>
   </section>
 
-  <p class="foot">更新日: 2026-07-13 ／ 正本: <code>SKILL.md</code>（このHTMLは人間向け表示。実行導線はmdと参照ファイルを使う）</p>
+  <p class="foot">更新日: 2026-07-18 ／ 正本: <code>SKILL.md</code>（このHTMLは人間向け表示。実行導線はmdと参照ファイルを使う）</p>
 </main></body>
 </html>

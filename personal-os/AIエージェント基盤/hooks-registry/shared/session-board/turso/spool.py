@@ -1,4 +1,5 @@
-"""session_events/session_logsだけを保持する失敗スプール。"""
+"""追記式で再送してよい文（session_events/logs＝board・plan_docs/plan_progress＝inbox）の失敗スプール。
+spool名でファイルを分け、inbox宛は plansync が専用spool＋inbox宛senderで隔離する。"""
 import fcntl
 import json
 import os
@@ -7,21 +8,34 @@ import tempfile
 LIMIT = 50
 
 
-def paths():
+def paths(name="turso-spool"):
     state_dir = os.environ.get("SESSION_BOARD_STATE_DIR") or os.path.join(os.path.dirname(os.path.dirname(__file__)), "state")
-    return os.path.join(state_dir, "turso-spool.jsonl"), os.path.join(state_dir, ".turso-spool.lock")
+    return os.path.join(state_dir, f"{name}.jsonl"), os.path.join(state_dir, f".{name}.lock")
+
+
+# 追記式で再送してよい文の許可リスト。board DB=session_events/session_logs（既存）。
+# inbox DB=plan_docs/plan_progress（2026-07-18 子06で拡張）。DELETEも冪等に再送可。
+# 注意: この許可リストは「どのDBへ送るか」を判定しない。inbox宛の再送は plansync が
+#       専用spool名＋inbox宛senderで隔離して回す（board既定senderへ混ぜない）。
+_SPOOLABLE_PREFIXES = (
+    "insert into session_events",
+    "insert into session_logs",
+    "insert into plan_docs",
+    "insert into plan_progress",
+    "delete from plan_docs",
+    "delete from plan_progress",
+)
 
 
 def spoolable(statements):
     return [(sql, args) for sql, args in statements
-            if "insert into session_events" in " ".join(sql.lower().split())
-            or "insert into session_logs" in " ".join(sql.lower().split())]
+            if any(" ".join(sql.lower().split()).startswith(pfx) for pfx in _SPOOLABLE_PREFIXES)]
 
 
-def append_unchecked(statements):
+def append_unchecked(statements, name="turso-spool"):
     statements = spoolable(statements)
     if not statements or os.environ.get("SESSION_BOARD_NO_TURSO"): return 0
-    path, lock_path = paths(); os.makedirs(os.path.dirname(path), exist_ok=True)
+    path, lock_path = paths(name); os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(lock_path, "a+", encoding="utf-8") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         try:
@@ -32,14 +46,14 @@ def append_unchecked(statements):
     return 1
 
 
-def append(statements):
-    try: return append_unchecked(statements)
+def append(statements, name="turso-spool"):
+    try: return append_unchecked(statements, name)
     except Exception: return 0
 
 
-def replay_unchecked(sender, skip_tail_lines=0, limit=LIMIT):
+def replay_unchecked(sender, skip_tail_lines=0, limit=LIMIT, name="turso-spool"):
     if os.environ.get("SESSION_BOARD_NO_TURSO") or limit <= 0: return 0
-    path, lock_path = paths()
+    path, lock_path = paths(name)
     if not os.path.exists(path): return 0
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(lock_path, "a+", encoding="utf-8") as lock:
@@ -78,6 +92,6 @@ def replay_unchecked(sender, skip_tail_lines=0, limit=LIMIT):
         finally: fcntl.flock(lock, fcntl.LOCK_UN)
 
 
-def replay(sender, skip_tail_lines=0, limit=LIMIT):
-    try: return replay_unchecked(sender, skip_tail_lines, limit)
+def replay(sender, skip_tail_lines=0, limit=LIMIT, name="turso-spool"):
+    try: return replay_unchecked(sender, skip_tail_lines, limit, name)
     except Exception: return 0

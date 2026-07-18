@@ -131,5 +131,34 @@ outcomes[:] = ["fail"]
 board._turso_sync([event])
 ok("新規失敗分は同一実行で即再送しない", len(calls) == 1 and len(statements_in_spool()) == 1)
 
+# ---- 子06: plan_docs/plan_progress の許可リスト拡張と専用spool名の隔離 ----
+from turso import spool as _spool  # noqa: E402
+
+pdoc = ("INSERT INTO plan_docs (path) VALUES (?)", [board._ta("p1")])
+pprog = ("INSERT INTO plan_progress (program_slug) VALUES (?)", [board._ta("s1")])
+pdel = ("DELETE FROM plan_docs WHERE path = ?", [board._ta("p1")])
+goal_ns = ("INSERT INTO goals (name) VALUES (?)", [board._ta("g1")])
+
+sp = _spool.spoolable([pdoc, pprog, pdel, goal_ns, session])
+ok("plan_docs/plan_progress/DELETEは許可・goals/sessionsは非許可",
+   len(sp) == 3 and all("plan_" in s.lower() for s, _ in sp))
+
+# 専用spool名に退避しても既定spool(turso-spool)は汚れない。
+n = _spool.append([pdoc, pprog], name="plansync-spool")
+default_path, _ = _spool.paths()
+plansync_path, _ = _spool.paths("plansync-spool")
+ok("plansync-spoolへ1行退避", n == 1 and os.path.exists(plansync_path))
+ok("既定spool名と別ファイル", os.path.realpath(default_path) != os.path.realpath(plansync_path))
+
+# 専用spoolはinbox宛senderで再送・成功時に消費（board既定replayとは混ざらない）。
+inbox_calls = []
+def _inbox_sender(statements, db_url=None, service=None):
+    inbox_calls.append(len(statements)); return True
+replayed = _spool.replay(_inbox_sender, name="plansync-spool")
+def _plansync_left():
+    if not os.path.exists(plansync_path): return []
+    return [x for line in open(plansync_path, encoding="utf-8") for x in json.loads(line)["statements"]] if os.path.getsize(plansync_path) else []
+ok("専用spoolをinbox宛で再送・消費", replayed == 2 and _plansync_left() == [] and inbox_calls == [2])
+
 print(f"\n== 結果: PASS={PASS} FAIL={FAIL} ==")
 sys.exit(1 if FAIL else 0)

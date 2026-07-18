@@ -210,9 +210,9 @@ def main():
         _, row = find_line(lines, key); statement = _stmt_session_upsert(row)
         _turso_sync(([statement] if statement else []) + _stmts_events(pending_events, date_s))
     elif cmd == "log":
-        _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s))
+        _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s, session_key=f"s:{key}"))
     elif cmd == "finish":
-        _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s)
+        _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s, session_key=f"s:{key}")
                     + [_stmt_session_delete(key)] + _stmts_events(pending_events, date_s))
     elif cmd == "reconcile":
         _turso_sync(_stmts_reconcile(pending_events, date_s))

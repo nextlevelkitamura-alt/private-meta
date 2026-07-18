@@ -55,10 +55,10 @@ def stmt_session_upsert(row):
 def stmt_session_delete(key): return "DELETE FROM sessions WHERE session_key = ?", [text_arg(f"s:{key}")]
 
 
-def stmts_logs(repo, parent, entries, date_s):
-    sql = "INSERT INTO session_logs (repo, parent, entry, session_date, created_at) VALUES (?, ?, ?, ?, ?)"
+def stmts_logs(repo, parent, entries, date_s, session_key=None):
+    sql = "INSERT INTO session_logs (repo, parent, entry, session_date, created_at, session_key) VALUES (?, ?, ?, ?, ?, ?)"
     created = datetime.datetime.now().isoformat(timespec="seconds")
-    return [(sql, [text_arg(repo), text_arg(parent), text_arg(entry), text_arg(date_s), text_arg(created)]) for entry in entries]
+    return [(sql, [text_arg(repo), text_arg(parent), text_arg(entry), text_arg(date_s), text_arg(created), text_arg(session_key)]) for entry in entries]
 
 
 def stmts_events(events, date_s):

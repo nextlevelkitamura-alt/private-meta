@@ -110,4 +110,24 @@ EOUT="$("$SCRIPTS/plansync.py" sync --paths "$CHG" --root "$AREAS" --repo-root "
 # 差分モードは送信対象を変更slugだけに絞る: doc1(単発plan) + progress1(単発slug) = 2文
 assert_contains "(e) 送信対象は変更slugのみ=2文" "$EOUT" "想定送信文数(upsert+progress+delete): 2"
 
+# ============================================================
+# (f) filter_unchanged: content_hash一致docは送信スキップ・不一致/新規は送信・照会失敗は全送信
+# ============================================================
+FOUT="$(python3 - "$SCRIPTS" <<'PY'
+import sys, importlib.util
+spec = importlib.util.spec_from_file_location("plansync", sys.argv[1] + "/plansync.py")
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+class D:
+    def __init__(self, path, h): self.path = path; self.content_hash = h
+docs = [D("p1", "h1"), D("p2", "h2NEW"), D("p3", "h3")]
+existing = {"p1": "h1", "p2": "h2OLD"}   # p1一致/skip, p2変更/送信, p3新規/送信
+keep, skipped = m.filter_unchanged(docs, existing)
+print("skip", skipped, "keep", ",".join(sorted(d.path for d in keep)))
+keep2, skip2 = m.filter_unchanged(docs, None)   # 照会失敗=全送信
+print("nofetch", skip2, len(keep2))
+PY
+)"
+assert_contains "(f) 一致1件skip・p2/p3送信" "$FOUT" "skip 1 keep p2,p3"
+assert_contains "(f) DB照会失敗時は全送信(skip0)" "$FOUT" "nofetch 0 3"
+
 report

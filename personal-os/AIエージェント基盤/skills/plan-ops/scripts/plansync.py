@@ -468,13 +468,31 @@ def build_plan(areas_root, repo_root, only_paths=None):
 
 # ---- DB実行（apply時のみ・fullはreconcile削除込み） ----
 
+def filter_unchanged(sync_docs, existing_hashes):
+    """DB既存 {path: content_hash} と突合し、content_hash一致のdocを送信スキップする（冪等・純関数）。
+    existing_hashes が None（DB照会失敗）なら全送信（安全側フォールバック）。戻り: (送信docs, skip件数)。"""
+    if existing_hashes is None:
+        return list(sync_docs), 0
+    keep, skipped = [], 0
+    for d in sync_docs:
+        if existing_hashes.get(d.path) == d.content_hash:
+            skipped += 1
+        else:
+            keep.append(d)
+    return keep, skipped
+
+
 def apply_sync(plan, full=False):
     """plan(build_planの戻り)をinbox DBへ適用。失敗はplansync専用spoolへ。戻り: 送信文数の目安。"""
     if os.environ.get("SESSION_BOARD_NO_TURSO"):
         return 0  # 送信・DB照会・spoolを完全停止（テスト/明示停止時は無害化）
     store, spool = _load_turso()
+    existing = _fetch_doc_hashes(store)
+    docs_to_send, skipped = filter_unchanged(plan["sync_docs"], existing)
+    if skipped:
+        print(f"content_hash一致で {skipped} 文書をスキップ", file=sys.stderr)
     statements = []
-    for d in plan["sync_docs"]:
+    for d in docs_to_send:
         statements.append(stmt_doc_upsert(store, d))
     for pr in plan["progress"]:
         statements.append(stmt_progress_upsert(store, pr))
@@ -553,6 +571,36 @@ def _fetch_db_keys(store):
         return paths, slugs
     except Exception:
         return set(), set()
+
+
+def _fetch_doc_hashes(store):
+    """inbox DBの {path: content_hash} を取得（冪等スキップ用）。失敗時は None（＝全送信フォールバック）。"""
+    try:
+        secret = store.token(store.INBOX_KEYCHAIN_SERVICE)
+        if not secret:
+            return None
+        import urllib.request
+        requests = [
+            {"type": "execute", "stmt": {"sql": "SELECT path, content_hash FROM plan_docs", "args": []}},
+            {"type": "close"},
+        ]
+        req = urllib.request.Request(
+            store.INBOX_DB_URL + "/v2/pipeline",
+            data=json.dumps({"requests": requests}).encode(), method="POST",
+            headers={"Authorization": f"Bearer {secret}", "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=store.TIMEOUT) as resp:
+            data = json.loads(resp.read().decode())
+        results = data.get("results", [])
+        if not results:
+            return {}
+        rows = (results[0].get("response", {}).get("result", {}) or {}).get("rows", [])
+        out = {}
+        for row in rows:
+            if len(row) >= 2 and isinstance(row[0], dict) and isinstance(row[1], dict):
+                out[row[0].get("value")] = row[1].get("value")
+        return out
+    except Exception:
+        return None
 
 
 # ---- CLI 出力 ----

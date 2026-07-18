@@ -90,14 +90,14 @@
     次: 02・03完了後に着手
     場所: plans/04 ／ 依存: 02・03
     参照: ―
-- [ ] 06 計画ミラー同期 … 計画
+- [ ] 06 計画ミラー同期 … 人間確認（評価01=FAIL0・PASS4・保留4）
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤（plan-ops・session-board turso）＋~/Private git hook
     並列: 05と可（対象repoが異なる）・03とはspool交差のため直列調整 ／ レビュー: 都度
     人間ゲート: inbox migration適用（plan_docs・plan_progress）・post-commit hook登録・初回一括投入GO
-    次: plansync新設とmigration作成（dry-runまで）から着手
+    次: 人間ゲート3点（migration適用→フック登録→初回投入GO）→評価01の保留4項目を再検証
     場所: plans/06 ／ 依存: ―（03/05とファイル調整）
-    参照: リサーチ統合設計（2026-07-18・3レンズ）
+    参照: 評価/06-計画ミラー同期-評価01.md ／ 実装 Private@a2c730d9
 - [ ] 07 計画スマホ表示 … 計画
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap

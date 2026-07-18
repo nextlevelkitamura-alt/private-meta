@@ -1,0 +1,8 @@
+# exposure-manifest.tsv
+# 書式: <skill><TAB><窓キーのカンマ区切り>
+# 窓キー: agents / claude / gemini-config / gemini-antigravity
+# 記載は既定（4窓すべて）と違う例外skillのみ。ここに無いskillはlink-global-skill.shの既定4窓へ露出する。
+# このファイルはrouting規約であり、Skill本文の第2の正本にはしない（本文正本は skills/<skill>/SKILL.md）。
+kickoff	claude
+morning-routine	claude
+sns-post	claude

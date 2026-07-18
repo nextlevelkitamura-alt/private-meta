@@ -161,6 +161,60 @@ run("step-done", "--todo", "T1")             # seq無し
 run("ask", "--todo", "T1")                   # q無し
 ok("引数不足のsteps/step-done/askは送信しない", len(sent) == 0)
 
+# ---- 段階3: session_logs.todo_id は --todo 指定時だけ7列INSERT（未指定は従来6列=未migration安全）----
+logs6 = board._stmts_logs("R", "P", ["e"], "2099-03-01", session_key="s:x")
+ok("stmts_logs: todo_id未指定は6列（todo_id列なし）", "todo_id" not in logs6[0][0] and len(logs6[0][1]) == 6)
+logs7 = board._stmts_logs("R", "P", ["e"], "2099-03-01", session_key="s:x", todo_id="T1")
+ok("stmts_logs: --todo指定で7列（todo_id列あり）", "todo_id" in logs7[0][0] and len(logs7[0][1]) == 7 and vals(logs7[0])[6] == "T1")
+
+# ---- 段階4: collect_answers（回答注入） 未消費回答を整形し消費済みに落とす ----
+_orig_read = board._turso_read_inbox
+board._turso_read_inbox = lambda stmt: [
+    {"id": "T2", "title": "評価02を作る", "question": "按分方式は？", "answer": "A 前年同様", "answered_at": "2099-03-01T10:00:00"},
+]
+clear()
+text = board.collect_answers("abcd1234")
+ok("collect_answers: 注入文に質問と回答", "未消費の回答" in text and "按分方式は？" in text and "A 前年同様" in text)
+ok("collect_answers: 渡し切り後に消費UPDATEを送る", len(sent) == 1 and "answer_consumed_at" in sent[-1][0][0])
+
+board._turso_read_inbox = lambda stmt: []
+clear()
+ok("collect_answers: 未消費なしは空文字・送信なし", board.collect_answers("abcd1234") == "" and len(sent) == 0)
+
+board._turso_read_inbox = lambda stmt: None
+clear()
+ok("collect_answers: 読み取り失敗は空文字（best-effort）", board.collect_answers("abcd1234") == "" and len(sent) == 0)
+ok("collect_answers: key空は空文字", board.collect_answers("") == "")
+board._turso_read_inbox = _orig_read
+
+# ---- store.read: pipelineレスポンスのrows/nullをdictへパースできる ----
+import turso.store as _store  # noqa: E402
+_fake_payload = {"results": [{"response": {"result": {
+    "cols": [{"name": "id"}, {"name": "answer"}],
+    "rows": [[{"type": "text", "value": "T"}, {"type": "null"}]],
+}}}]}
+
+
+class _FakeResp:
+    def __init__(self, payload):
+        self._b = _json.dumps(payload).encode()
+
+    def read(self):
+        return self._b
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+_orig_urlopen = _store.urllib.request.urlopen
+_store.urllib.request.urlopen = lambda *a, **k: _FakeResp(_fake_payload)
+rows = _store.read(("SELECT id, answer FROM todos", []), token_getter=lambda s: "tok")
+ok("store.read: cols/rowsをdict化しnullはNone", rows == [{"id": "T", "answer": None}])
+_store.urllib.request.urlopen = _orig_urlopen
+
 # ---- 本物 _turso_send_inbox: NO_TURSO/空リストで即return（ネットワーク・keychainに触れない）----
 os.environ["SESSION_BOARD_NO_TURSO"] = "1"
 try:

@@ -42,6 +42,9 @@ _turso_token = turso_store.token
 # 子05 タスク入れ子・2層チェック（inbox DB書込みのSQL builder）。
 _stmts_todo_steps, _stmt_step_status = turso_store.stmts_todo_steps, turso_store.stmt_step_status
 _stmt_ask, _stmt_flow_done = turso_store.stmt_ask, turso_store.stmt_flow_done
+_stmt_unconsumed_answers = turso_store.stmt_unconsumed_answers
+_stmt_mark_answers_consumed = turso_store.stmt_mark_answers_consumed
+_turso_read = turso_store.read
 
 # board.py自身の実体ディレクトリ（route宣言スキャンの既定ルート算出に使う）。
 _SB_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -90,6 +93,36 @@ def _turso_send_inbox(statements):
     if not statements or os.environ.get("SESSION_BOARD_NO_TURSO"):
         return True
     return _turso_send(statements, db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)
+
+
+def _turso_read_inbox(statement):
+    """inbox DBのbest-effort読み取り（回答注入用）。失敗・NO_TURSOは None。"""
+    return _turso_read(statement, db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE, token_getter=_turso_token)
+
+
+def collect_answers(key):
+    """当該セッション(s:key)の未消費回答を注入文へ整形し、消費済みに落とす。
+    回答が無い/読めない時は空文字（best-effort・hookをブロックしない）。"""
+    session_key = f"s:{key.removeprefix('s:')}" if key else ""
+    if not session_key:
+        return ""
+    rows = _turso_read_inbox(_stmt_unconsumed_answers(session_key))
+    if not rows:
+        return ""
+    lines = ["[session-board] スマホから届いた未消費の回答（この依頼へ反映して続行）:"]
+    for row in rows:
+        question = (row.get("question") or "").strip()
+        answer = (row.get("answer") or "").strip()
+        title = (row.get("title") or "").strip()
+        if not answer:
+            continue
+        head = f"「{title}」" if title else ""
+        lines.append(f"  {head} Q: {question} → A: {answer}")
+    if len(lines) == 1:
+        return ""
+    # 渡し切ったら消費済みに落とす（次回以降は再注入しない）。
+    _turso_send_inbox([_stmt_mark_answers_consumed(session_key)])
+    return "\n".join(lines)
 
 
 def scan_board_routes(roots=None):
@@ -154,6 +187,14 @@ def _run_inbox_command(cmd, args, entries):
             return True
         _turso_send_inbox([_stmt_flow_done(todo)])
         print("flow-done")
+        return True
+    if cmd == "answers":
+        key = args.get("key", "")
+        if not key:
+            sys.exit("usage: board.py answers --key <session-key>")
+        text = collect_answers(key)
+        if text:
+            print(text)
         return True
     return False
 
@@ -278,7 +319,7 @@ def _mutate(cmd, args, entries, key, lines, pending_events):
 def main():
     if len(sys.argv) < 2:
         sys.exit("usage: board.py <add|update|flip|sub-start|sub-end|finish|log|check|show|goals|reconcile|goal-add"
-                 "|steps|step-done|step-doing|step-skip|ask|flow-done> ...")
+                 "|steps|step-done|step-doing|step-skip|ask|flow-done|answers> ...")
     cmd, args, entries = parse_args(sys.argv[1:])
     if cmd == "goal-add":
         statement = _stmt_goal_insert(args.get("name"), args.get("date"), args.get("source", "chat"))
@@ -302,9 +343,9 @@ def main():
         _, row = find_line(lines, key); statement = _stmt_session_upsert(row)
         _turso_sync(([statement] if statement else []) + _stmts_events(pending_events, date_s))
     elif cmd == "log":
-        _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s, session_key=f"s:{key}"))
+        _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s, session_key=f"s:{key}", todo_id=args.get("todo")))
     elif cmd == "finish":
-        _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s, session_key=f"s:{key}")
+        _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s, session_key=f"s:{key}", todo_id=args.get("todo"))
                     + [_stmt_session_delete(key)] + _stmts_events(pending_events, date_s))
     elif cmd == "reconcile":
         _turso_sync(_stmts_reconcile(pending_events, date_s))

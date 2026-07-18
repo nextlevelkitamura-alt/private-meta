@@ -43,6 +43,46 @@ def execute(statements, sender, spool_append, db_url=DB_URL, service=KEYCHAIN_SE
     return 0 if sender(statements, db_url=db_url, service=service) else spool_append(statements)
 
 
+def read(statement, db_url=DB_URL, service=KEYCHAIN_SERVICE, token_getter=token):
+    """1件のSELECTを実行し、行を [{col: value}, ...] で返す。失敗・NO_TURSOは None（best-effort読み取り）。"""
+    if not statement or os.environ.get("SESSION_BOARD_NO_TURSO"): return None
+    try:
+        secret = token_getter(service)
+        if not secret: return None
+        sql, args = statement
+        body = {"requests": [{"type": "execute", "stmt": {"sql": sql, "args": args}}, {"type": "close"}]}
+        request = urllib.request.Request(db_url + "/v2/pipeline", data=json.dumps(body).encode(), method="POST",
+                                         headers={"Authorization": f"Bearer {secret}", "Content-Type": "application/json"})
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            payload = json.loads(response.read().decode())
+        result = payload["results"][0]["response"]["result"]
+        cols = [c.get("name") for c in result.get("cols", [])]
+        rows = []
+        for raw in result.get("rows", []):
+            rows.append({cols[i]: (None if cell.get("type") == "null" else cell.get("value")) for i, cell in enumerate(raw)})
+        return rows
+    except Exception:
+        return None
+
+
+def stmt_unconsumed_answers(session_key):
+    """当該セッションに紐づく todos のうち、回答済み・未消費の質問回答を取得するSELECT。"""
+    if not session_key: return None
+    sql = ("SELECT id, title, question, answer, answered_at FROM todos "
+           "WHERE session_key = ? AND answer IS NOT NULL AND answer != '' AND answer_consumed_at IS NULL "
+           "ORDER BY answered_at")
+    return sql, [text_arg(session_key)]
+
+
+def stmt_mark_answers_consumed(session_key, consumed_at=None):
+    """当該セッションの未消費回答を消費済みに落とすUPDATE（注入して渡した後に呼ぶ）。"""
+    if not session_key: return None
+    now = consumed_at or datetime.datetime.now().isoformat(timespec="seconds")
+    sql = ("UPDATE todos SET answer_consumed_at = ?, updated_at = ? "
+           "WHERE session_key = ? AND answer IS NOT NULL AND answer != '' AND answer_consumed_at IS NULL")
+    return sql, [text_arg(now), text_arg(now), text_arg(session_key)]
+
+
 def stmt_session_upsert(row):
     if not row or not row.get("key"): return None
     sql = ("INSERT INTO sessions (session_key, goal, now, type, repo, model, plan, state, sub_n, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
@@ -57,9 +97,14 @@ def stmt_session_upsert(row):
 def stmt_session_delete(key): return "DELETE FROM sessions WHERE session_key = ?", [text_arg(f"s:{key}")]
 
 
-def stmts_logs(repo, parent, entries, date_s, session_key=None):
-    sql = "INSERT INTO session_logs (repo, parent, entry, session_date, created_at, session_key) VALUES (?, ?, ?, ?, ?, ?)"
+def stmts_logs(repo, parent, entries, date_s, session_key=None, todo_id=None):
+    # todo_id 未指定は従来の6列INSERT（session_logs.todo_id 未適用DBでも安全）。
+    # 子05: --todo 指定時だけ todo_id 列を含む7列INSERT（migration適用後にAIが渡す）。
     created = datetime.datetime.now().isoformat(timespec="seconds")
+    if todo_id:
+        sql = "INSERT INTO session_logs (repo, parent, entry, session_date, created_at, session_key, todo_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        return [(sql, [text_arg(repo), text_arg(parent), text_arg(entry), text_arg(date_s), text_arg(created), text_arg(session_key), text_arg(todo_id)]) for entry in entries]
+    sql = "INSERT INTO session_logs (repo, parent, entry, session_date, created_at, session_key) VALUES (?, ?, ?, ?, ?, ?)"
     return [(sql, [text_arg(repo), text_arg(parent), text_arg(entry), text_arg(date_s), text_arg(created), text_arg(session_key)]) for entry in entries]
 
 

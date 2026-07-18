@@ -131,6 +131,17 @@ def board_reconcile():
     subprocess.run([BOARD, "reconcile"], capture_output=True)
 
 
+def board_answers(key):
+    """子05: 当該セッションに紐づく未消費の質問回答を注入文で受け取る（board.py answers）。
+    セッション再開（⏸→🟢）の瞬間だけ呼ぶ＝設計の「次にセッションが動く瞬間に既存hookで渡す」。
+    best-effort・失敗/空は空文字。hookをブロックしない。"""
+    try:
+        out = subprocess.run([BOARD, "answers", "--key", key], capture_output=True, text=True, timeout=5).stdout
+        return out.strip()
+    except Exception:
+        return ""
+
+
 # ---- hook 本体 ----
 
 def start_register(d, runtime):
@@ -262,14 +273,18 @@ def register_prompt(d, runtime):
         row = board_show(key) or {"state": "run", "goal": PLACEHOLDER, "now": PLACEHOLDER,
                                   "type": "その他", "repo": repo or "?",
                                   "who": f"{runtime}/{PLACEHOLDER}", "plan": PLACEHOLDER}
-    if row["state"] == "wait":
+    resuming = row["state"] == "wait"   # ⏸→🟢＝「次にセッションが動く瞬間」。ここでだけ回答を注入する。
+    if resuming:
         board_flip(key, "run")
     if row["now"] == PLACEHOLDER:      # 初回だけの仮置き（枠を空にしない）。意味づけはAIの update --now
         board_update(key, now=_summarize(p))
         row["now"] = _summarize(p)
-    if row["goal"] == PLACEHOLDER:
-        return _first_guide(key, row.get("repo") or repo, runtime)
-    return _mirror(key, row)
+    base = _first_guide(key, row.get("repo") or repo, runtime) if row["goal"] == PLACEHOLDER else _mirror(key, row)
+    if resuming:      # 再開時だけ inbox を引く（毎プロンプトの読取を避ける・子05段階4）
+        answers = board_answers(key)
+        if answers:
+            return f"{base}\n{answers}"
+    return base
 
 
 def stop_flip(d):

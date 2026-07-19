@@ -13,7 +13,7 @@ usage() {
 usage: new-plan.sh --out <生成する.mdの絶対パス> [--program] [--class <分類>] [--kind <種別>]
   --out      生成先の絶対パス（必須。親ディレクトリが無ければ作成。既存ファイルは上書きしない）
   --program  単発plan.mdでなくprogram.mdテンプレ（子計画マップ雛形付き）を生成する。
-             同じフォルダに 実装/共通.md・レビュー/共通.md・評価/(.gitkeep) も生成する（2026-07-17）
+             同じフォルダに 実装/共通.md・評価/(.gitkeep) も生成する。
   --class    分類（skill/repo/loop/横断 等）。省略時はプレースホルダのまま
   --kind     種別（新規作成/既存改善/統合整理）。省略時はプレースホルダのまま
 
@@ -62,7 +62,7 @@ PYEOF
 
 if [ "$is_program" = 1 ]; then
   outdir="$(dirname "$out")"
-  for role in 実装 レビュー; do
+  for role in 実装; do
     tpl_role="$TEMPLATES/program-${role}共通.md"
     [ -f "$tpl_role" ] || { echo "テンプレが見つからない: $tpl_role" >&2; exit 1; }
     mkdir -p "$outdir/$role"

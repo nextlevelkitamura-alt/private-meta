@@ -12,8 +12,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-PHASES = {"running", "implemented", "review_passed", "synced", "closed", "blocked"}
-ROLES = {"explorer", "implementer", "reviewer"}
+PHASES = {"running", "implemented", "evaluated", "synced", "closed", "blocked"}
+ROLES = {"explorer", "implementer", "evaluator"}
 RUNTIMES = {"codex", "claude"}
 TASK_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 MANIFEST_REQUIRED = {
@@ -130,10 +130,10 @@ def start_decision(payload: dict[str, Any], manifest: dict[str, Any] | None) -> 
 def stop_decision(payload: dict[str, Any], manifest: dict[str, Any] | None) -> Decision:
     if not manifest:
         return Decision()
-    if manifest["phase"] == "review_passed":
+    if manifest["phase"] == "evaluated":
         if _truthy(payload.get("stop_hook_active")):
-            return Decision(notice="plan-closeout: review_passed未同期だが、同一Stopでの再blockはしない。planctl sync-checkを実行する。")
-        return Decision(block=True, reason="plan-closeout: review_passedだが未同期。planctl apply-evaluation または planctl sync-check を実行してから終了する。")
+            return Decision(notice="plan-closeout: evaluated未同期だが、同一Stopでの再blockはしない。planctl sync-checkを実行する。")
+        return Decision(block=True, reason="plan-closeout: evaluatedだが未同期。planctl apply-evaluation または planctl sync-check を実行してから終了する。")
     if manifest["phase"] == "blocked":
         return Decision(notice="plan-closeout: manifestはblocked。blockerをresult packetへ残し、hookは解消・再blockしない。")
     return rename_notice(manifest)
@@ -146,9 +146,9 @@ def subagent_stop_decision(payload: dict[str, Any], manifest: dict[str, Any] | N
     if manifest["role"] == "implementer":
         missing = not _valid_result(manifest["result_path"], manifest["task_id"], manifest["base_commit"])
         reason = "plan-closeout: implementerのresult packetが無いかschema不正。result packetを作成してから終了する。"
-    elif manifest["role"] == "reviewer":
+    elif manifest["role"] == "evaluator":
         missing = not _valid_evaluation(manifest.get("evaluation_path"), manifest["plan_path"])
-        reason = "plan-closeout: reviewerの必須評価項目が無い。対象計画・項目別採点・総合判定を評価MDへ記録してから終了する。"
+        reason = "plan-closeout: evaluatorの必須評価項目が無い。対象計画・項目別採点・総合判定を評価MDへ記録してから終了する。"
     else:
         return Decision()
     if missing and not _truthy(payload.get("stop_hook_active")):

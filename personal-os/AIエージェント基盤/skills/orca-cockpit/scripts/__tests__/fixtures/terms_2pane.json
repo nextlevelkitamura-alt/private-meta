@@ -4,7 +4,7 @@
   "result": {
     "terminals": [
       {"handle": "term_impl_1", "worktreePath": "/synthetic/lane-a", "tabId": "tab-impl", "leafId": "leaf-impl", "title": "実装", "preview": ""},
-      {"handle": "term_rev_1", "worktreePath": "/synthetic/lane-a", "tabId": "tab-rev", "leafId": "leaf-rev", "title": "レビュー", "preview": ""}
+      {"handle": "term_rev_1", "worktreePath": "/synthetic/lane-a", "tabId": "tab-rev", "leafId": "leaf-rev", "title": "評価", "preview": ""}
     ]
   }
 }

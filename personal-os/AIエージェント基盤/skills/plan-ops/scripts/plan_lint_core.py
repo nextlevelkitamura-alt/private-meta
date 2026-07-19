@@ -16,8 +16,9 @@ CONTRACT_FIELDS = [
     "停止・エスカレーション条件:", "完了時に返す情報:",
 ]
 PROGRAM_SECTIONS = ["目的", "非対象", "正本境界", "全体像・実行Wave", "子計画マップ", "人間ゲート", "完了条件", "終了記録"]
-MAP_FIELDS = ["役割:", "対象repo:", "並列:", "レビュー:", "人間ゲート:", "次:", "場所:", "依存:", "参照:"]
+MAP_FIELDS = ["役割:", "対象repo:", "並列:", "人間ゲート:", "次:", "場所:", "依存:", "参照:"]
 PLACEHOLDER_RE = re.compile(r"<[^>]+>")
+REVIEW_FIELD_RE = re.compile(r"(?:^|[／\s])レビュー\s*:")
 
 
 def field_value(lines, section, label):
@@ -45,6 +46,9 @@ def parse_top_field(lines, label):
 
 
 def lint_plan(path, lines, allow_placeholders, out):
+    for idx, line in enumerate(lines, 1):
+        if REVIEW_FIELD_RE.search(line):
+            report(path, idx, "旧「レビュー:」フィールドは使えない。実装・評価に分ける", out)
     for heading in PLAN_SECTIONS:
         if find_section(lines, heading) is None:
             report(path, 1, f"必須セクションが無い: ## {heading}", out)
@@ -92,6 +96,22 @@ def map_value(lines, block, label):
 
 
 def lint_program(path, lines, allow_placeholders, out):
+    base_dir = Path(path).parent
+    if not any("形態: program" in line for line in lines[:4]):
+        report(path, 1, "programは先頭メタデータに「形態: program」が必要", out)
+    sibling_plan = base_dir / "plan.md"
+    if sibling_plan.is_file():
+        report(str(sibling_plan), 1, "programの親はprogram.mdだけ。併存plan.mdは置けない", out)
+    if not (base_dir / "実装" / "共通.md").is_file():
+        report(path, 1, "実装/共通.md が無い", out)
+    if not (base_dir / "評価").is_dir():
+        report(path, 1, "評価/ フォルダが無い", out)
+    review_dir = base_dir / "レビュー"
+    if review_dir.exists():
+        report(str(review_dir), 1, "レビュー/ フォルダは使えない。評価/へ統一する", out)
+    for idx, line in enumerate(lines, 1):
+        if REVIEW_FIELD_RE.search(line):
+            report(path, idx, "旧「レビュー:」フィールドは使えない。実装・評価に分ける", out)
     for heading in PROGRAM_SECTIONS:
         if find_section(lines, heading) is None:
             report(path, 1, f"必須セクションが無い: ## {heading}", out)
@@ -137,7 +157,10 @@ def lint_child_mapping(program, program_lines, block, child, child_lines, out):
     target = raw if os.path.isabs(raw) else os.path.normpath(os.path.join(os.path.dirname(child), raw))
     if os.path.realpath(target) != os.path.realpath(program):
         report(child, 1, "親計画backlinkが対象program.mdと不一致", out)
-    for label in ("並列:", "レビュー:", "人間ゲート:"):
+    for idx, line in enumerate(child_lines, 1):
+        if REVIEW_FIELD_RE.search(line):
+            report(child, idx, "旧「レビュー:」フィールドは使えない。実装・評価に分ける", out)
+    for label in ("並列:", "人間ゲート:"):
         parent = map_value(program_lines, block, label)
         child_value = parse_top_field(child_lines, label)
         if parent is not None and child_value is not None and parent[0].split("／", 1)[0].strip() != child_value[0]:

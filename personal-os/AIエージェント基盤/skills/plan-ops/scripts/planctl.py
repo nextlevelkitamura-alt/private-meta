@@ -18,7 +18,7 @@ sys.path.insert(0, str(HERE))
 from _planops_map import find_blocks, find_section, read_lines
 import bucketctl_core
 
-PHASES = {"running", "implemented", "review_passed", "synced", "closed", "blocked"}
+PHASES = {"running", "implemented", "evaluated", "synced", "closed", "blocked"}
 STATUSES = {"done", "blocked", "partial", "failed"}
 REQUIRED_RESULT = {"version", "task_id", "status", "base_commit", "result_commit", "changed_paths", "tests", "assumptions", "blockers", "remaining_risks", "out_of_scope_findings"}
 MANIFEST_TYPES = {
@@ -28,8 +28,8 @@ MANIFEST_TYPES = {
     "evaluation_path": (str, type(None)), "phase": str,
 }
 PHASE_TRANSITIONS = {
-    "running": {"implemented", "blocked"}, "implemented": {"review_passed", "blocked"},
-    "review_passed": {"synced", "blocked"}, "synced": {"closed", "blocked"},
+    "running": {"implemented", "blocked"}, "implemented": {"evaluated", "blocked"},
+    "evaluated": {"synced", "blocked"}, "synced": {"closed", "blocked"},
     "blocked": set(), "closed": set(),
 }
 
@@ -350,7 +350,7 @@ def cmd_close(args):
     record = directory / "終了記録.md"
     if not record.is_file() and args.apply:
         now = datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M %Z")
-        record.write_text(f"# 終了記録\n\n- 終了区分: {args.disposition}\n- 終了日時: {now}\n- 人間確認: {args.human_confirmation}\n- 理由: {args.reason}\n- 後継・統合先: {args.successor}\n- 実装済み範囲: {args.implemented_scope}\n- 未完了事項: {args.remaining}\n- レビュー・判断根拠: {args.evidence}\n- 関連commit/評価: {args.references}\n", encoding="utf-8")
+        record.write_text(f"# 終了記録\n\n- 終了区分: {args.disposition}\n- 終了日時: {now}\n- 人間確認: {args.human_confirmation}\n- 理由: {args.reason}\n- 後継・統合先: {args.successor}\n- 実装済み範囲: {args.implemented_scope}\n- 未完了事項: {args.remaining}\n- 評価・判断根拠: {args.evidence}\n- 関連commit/評価: {args.references}\n", encoding="utf-8")
     if args.apply:
         if args.manifest:
             data = manifest(args.manifest)
@@ -433,7 +433,7 @@ def cmd_rename(args):
 
 def main():
     ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest="command", required=True)
-    p = sub.add_parser("prepare"); p.add_argument("--plan", required=True); p.add_argument("--plans-root", required=True); p.add_argument("--program"); p.add_argument("--task-id", required=True); p.add_argument("--role", required=True, choices=["explorer","implementer","reviewer"]); p.add_argument("--runtime", required=True); p.add_argument("--repo-root", required=True); p.add_argument("--base-commit", required=True); p.add_argument("--worktree-path", required=True); p.add_argument("--branch", required=True); p.add_argument("--state-dir")
+    p = sub.add_parser("prepare"); p.add_argument("--plan", required=True); p.add_argument("--plans-root", required=True); p.add_argument("--program"); p.add_argument("--task-id", required=True); p.add_argument("--role", required=True, choices=["explorer","implementer","evaluator"]); p.add_argument("--runtime", required=True); p.add_argument("--repo-root", required=True); p.add_argument("--base-commit", required=True); p.add_argument("--worktree-path", required=True); p.add_argument("--branch", required=True); p.add_argument("--state-dir")
     p = sub.add_parser("progress"); p.add_argument("--program", required=True); p.add_argument("--plans-root", required=True); p.add_argument("--repo-root", required=True); p.add_argument("--nn", required=True); p.add_argument("--state"); p.add_argument("--next"); p.add_argument("--ref"); p.add_argument("--apply", action="store_true")
     p = sub.add_parser("apply-evaluation"); p.add_argument("--plan", required=True); p.add_argument("--plans-root", required=True); p.add_argument("--program"); p.add_argument("--evaluation", required=True); p.add_argument("--result", required=True); p.add_argument("--repo-root", required=True); p.add_argument("--manifest")
     p = sub.add_parser("close"); p.add_argument("--plan", required=True); p.add_argument("--plans-root", required=True); p.add_argument("--program"); p.add_argument("--repo-root", required=True); p.add_argument("--manifest"); p.add_argument("--disposition", required=True, choices=sorted(bucketctl_core.DISPOSITIONS)); p.add_argument("--human-confirmation", required=True); p.add_argument("--reason", required=True); p.add_argument("--successor", default="該当なし"); p.add_argument("--implemented-scope", default="該当なし"); p.add_argument("--remaining", default="なし"); p.add_argument("--evidence", default="該当なし"); p.add_argument("--references", default="該当なし"); p.add_argument("--apply", action="store_true")

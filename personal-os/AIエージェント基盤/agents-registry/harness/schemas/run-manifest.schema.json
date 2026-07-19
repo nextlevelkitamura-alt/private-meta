@@ -7,7 +7,7 @@
   "properties": {
     "version": {"const": 1},
     "task_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"},
-    "role": {"enum": ["explorer", "implementer", "reviewer"]},
+    "role": {"enum": ["explorer", "implementer", "evaluator"]},
     "runtime": {"enum": ["codex", "claude"]},
     "repo_root": {"type": "string", "minLength": 1},
     "plan_path": {"type": "string", "minLength": 1},
@@ -18,7 +18,7 @@
     "branch": {"type": ["string", "null"]},
     "result_path": {"type": "string", "minLength": 1},
     "evaluation_path": {"type": ["string", "null"]},
-    "phase": {"enum": ["running", "implemented", "review_passed", "synced", "closed", "blocked"]},
+    "phase": {"enum": ["running", "implemented", "evaluated", "synced", "closed", "blocked"]},
     "allowed_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
   }
 }

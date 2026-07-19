@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Program を Wave 順に実行する、runtime 非依存の小さなオーケストレータ。
 
-実行状態は ``--state-dir``（gitignore 配下）だけに保存する。worker / reviewer
+実行状態は ``--state-dir``（gitignore 配下）だけに保存する。implementer / evaluator
 の実際の起動は :class:`Operations` 境界の向こうに置き、合成テストは CLI を
 起動しない fake を渡して、順序と停止条件を検証できるようにしている。
 """
@@ -37,10 +37,8 @@ class Child:
     nn: str
     plan: Path
     execution: str
-    review: str
     allowed_paths: tuple[str, ...]
     dependencies: tuple[str, ...]
-    bulk_due_wave: int | None
     human_gate: str
 
 
@@ -58,26 +56,26 @@ class Task:
 
 
 @dataclass
-class Review:
+class Evaluation:
     passed: bool
     evaluation_path: Path | None = None
     reason: str = ""
 
 
-def parse_evaluation(path: Path) -> Review:
+def parse_evaluation(path: Path) -> Evaluation:
     """評価本文の総合判定を読む。曖昧な本文をPASSへ倒さない。"""
     text = path.read_text(encoding="utf-8")
     section = re.search(r"^##\s*総合判定\s*$\n(?P<body>.*?)(?=^##\s|\Z)", text, re.M | re.S)
     if section is None:
-        return Review(False, reason="評価MDに総合判定がありません")
+        return Evaluation(False, reason="評価MDに総合判定がありません")
     body = section.group("body")
     if re.search(r"^\s*- \[FAIL\]", text, re.M):
-        return Review(False, reason="評価MDにFAIL項目があります")
+        return Evaluation(False, reason="評価MDにFAIL項目があります")
     if "FAILあり" in body:
-        return Review(False, reason="評価MDの総合判定がFAILです")
+        return Evaluation(False, reason="評価MDの総合判定がFAILです")
     if "全PASS" not in body:
-        return Review(False, reason="評価MDの総合判定を判定できません")
-    return Review(True, path)
+        return Evaluation(False, reason="評価MDの総合判定を判定できません")
+    return Evaluation(True, path)
 
 
 def evaluation_dir(child_plan: Path) -> Path:
@@ -112,7 +110,6 @@ class RunState:
     program: str
     status: str = "running"
     completed: list[str] = field(default_factory=list)
-    review_queue: list[str] = field(default_factory=list)
     held_worktrees: dict[str, str] = field(default_factory=dict)
     approvals: list[str] = field(default_factory=list)
     integration_evaluation: dict[str, dict[str, str]] = field(default_factory=dict)
@@ -123,7 +120,7 @@ class RunState:
         return {
             "version": 1, "run_id": self.run_id, "program": self.program,
             "status": self.status, "completed": self.completed,
-            "review_queue": self.review_queue, "held_worktrees": self.held_worktrees,
+            "held_worktrees": self.held_worktrees,
             "approvals": self.approvals, "integration_evaluation": self.integration_evaluation,
             "events": self.events, "reason": self.reason,
         }
@@ -188,16 +185,14 @@ def _contract(child: Path, nn: str, map_block: list[str]) -> Child:
     match = re.match(r"[a-z-]+", raw_execution)
     execution = match.group(0) if match else raw_execution
     top = lines[:6]
-    review = _field(top, "レビュー:") or _field(map_block[1:], "レビュー:") or "都度"
     scope = _field(contract, "変更可能範囲:")
     backticked = re.findall(r"`([^`]+)`", scope)
     paths = tuple(dict.fromkeys(backticked)) if backticked else tuple(
         dict.fromkeys(item.strip().rstrip("/") for item in re.split(r"[,、]", scope) if item.strip() and item.strip() not in {"なし", "該当なし"})
     )
     dependencies = tuple(re.findall(r"\b(\d{2})\b", _field(map_block[1:], "依存:")))
-    due = re.search(r"Wave\s*(\d+)", review)
     gate = _field(top, "人間ゲート:") or _field(map_block[1:], "人間ゲート:")
-    return Child(nn, child, execution, review, paths, dependencies, int(due.group(1)) if due else None, gate)
+    return Child(nn, child, execution, paths, dependencies, gate)
 
 
 def read_program(program: Path) -> list[Child]:
@@ -234,10 +229,10 @@ def waves(children: list[Child]) -> list[list[Child]]:
 class Operations:
     """副作用の境界。テストではこのメソッドだけを fake に差し替える。"""
 
-    def __init__(self, reviewer_runtime: str = "claude") -> None:
-        if reviewer_runtime not in manifest.RUNTIMES:
-            raise ValueError("reviewer_runtimeはcodexまたはclaude")
-        self.reviewer_runtime = reviewer_runtime
+    def __init__(self, evaluator_runtime: str = "claude") -> None:
+        if evaluator_runtime not in manifest.RUNTIMES:
+            raise ValueError("evaluator_runtimeはcodexまたはclaude")
+        self.evaluator_runtime = evaluator_runtime
 
     def lint(self, path: Path, *, program: bool = False) -> None:
         script = PLANOPS / ("program-lint.sh" if program else "plan-lint.sh")
@@ -283,16 +278,16 @@ class Operations:
         task.result = manifest.validate_result(manifest.read_json(task.result_path)) if task.result_path.is_file() else None
         return task
 
-    def review(self, task: Task, repo_root: Path, state_dir: Path) -> Review:
-        review_id = f"{task.task_id}-review"
+    def evaluate(self, task: Task, repo_root: Path, state_dir: Path) -> Evaluation:
+        evaluation_id = f"{task.task_id}-evaluation"
         program = task.child.plan.parent.parent / "program.md"
-        args = argparse.Namespace(runtime=self.reviewer_runtime, role="reviewer", plan=str(task.child.plan), repo_root=str(repo_root), task_id=review_id, base_commit=None, program_path=str(program) if program.is_file() else None, child_id=task.child.nn, state_dir=str(state_dir), worktree_root=None, allowed_path=[], purpose=f"diff範囲: {task.result.get('result_commit', '') if task.result else ''}。評価テンプレの本文を最終出力へ返す。", dry_run=False)
+        args = argparse.Namespace(runtime=self.evaluator_runtime, role="evaluator", plan=str(task.child.plan), repo_root=str(repo_root), task_id=evaluation_id, base_commit=task.base_commit, program_path=str(program) if program.is_file() else None, child_id=task.child.nn, state_dir=str(state_dir), worktree_root=None, allowed_path=[], purpose=f"対象diff: {task.base_commit}..{task.result.get('result_commit', '') if task.result else ''}。完了条件を根拠付きで評価し、評価テンプレに沿う本文を最終出力へ返す。", dry_run=False)
         answer = delegate.delegate(args)
         if answer.get("status") != "done":
-            return Review(False, reason="reviewerがblockedです")
-        final = state_dir / f"{review_id}-final.md"
+            return Evaluation(False, reason="evaluatorがblockedです")
+        final = Path(str(answer.get("evaluation_path") or state_dir / f"{evaluation_id}-final.md"))
         if not final.is_file():
-            return Review(False, reason="reviewerの評価本文がありません")
+            return Evaluation(False, reason="evaluatorの評価本文がありません")
         evaluation = next_evaluation_path(task.child.plan)
         evaluation.parent.mkdir(parents=True, exist_ok=True)
         evaluation.write_text(final.read_text(encoding="utf-8"), encoding="utf-8")
@@ -307,10 +302,10 @@ class Operations:
         task.thread_id = answer.get("thread_id") if isinstance(answer.get("thread_id"), str) else task.thread_id
         return task
 
-    def apply(self, task: Task, review: Review, repo_root: Path) -> None:
-        if not review.evaluation_path or not task.result:
+    def apply(self, task: Task, evaluation: Evaluation, repo_root: Path) -> None:
+        if not evaluation.evaluation_path or not task.result:
             raise ProgramRunBlocked("評価またはresult packetがありません")
-        command = [sys.executable, str(PLANOPS / "planctl.py"), "apply-evaluation", "--plan", str(task.child.plan), "--plans-root", str(repo_root / "plans"), "--evaluation", str(review.evaluation_path), "--result", str(task.result_path), "--repo-root", str(repo_root), "--manifest", str(task.manifest_path)]
+        command = [sys.executable, str(PLANOPS / "planctl.py"), "apply-evaluation", "--plan", str(task.child.plan), "--plans-root", str(repo_root / "plans"), "--evaluation", str(evaluation.evaluation_path), "--result", str(task.result_path), "--repo-root", str(repo_root), "--manifest", str(task.manifest_path)]
         done = subprocess.run(command, capture_output=True, text=True)
         if done.returncode:
             raise ProgramRunBlocked("planctl apply-evaluationに失敗しました")
@@ -428,13 +423,13 @@ class ProgramRunner:
                     if task.result.get("status") != "done":
                         raise ProgramRunBlocked(f"子{task.child.nn}のresult packetがblockedです")
 
-    def _review_and_integrate(self, child: Child) -> None:
+    def _evaluate_and_integrate(self, child: Child) -> None:
         task = self.tasks[child.nn]
-        for attempt in range(3):  # 初回 + フル差し戻し2回
-            review = self.ops.review(task, self.repo_root, self.state_dir)
-            self.state.events.append(f"review: {child.nn}:{'PASS' if review.passed else 'FAIL'}")
-            if review.passed:
-                self.ops.apply(task, review, self.repo_root)
+        for attempt in range(3):  # 初回 + 修正2回
+            evaluation = self.ops.evaluate(task, self.repo_root, self.state_dir)
+            self.state.events.append(f"evaluation: {child.nn}:{'PASS' if evaluation.passed else 'FAIL'}")
+            if evaluation.passed:
+                self.ops.apply(task, evaluation, self.repo_root)
                 self.ops.commit_sync(task, self.repo_root)
                 self.ops.merge(task, self.repo_root)
                 self.ops.smoke(task, self.repo_root, self.smoke_commands)
@@ -442,14 +437,14 @@ class ProgramRunner:
                 self.state.held_worktrees.pop(child.nn, None)
                 self.state.completed.append(child.nn)
                 self.state.integration_evaluation[child.nn] = {
-                    "status": "PASS", "evaluation": str(review.evaluation_path) if review.evaluation_path else "",
+                    "status": "PASS", "evaluation": str(evaluation.evaluation_path) if evaluation.evaluation_path else "",
                     "result_commit": str(task.result.get("result_commit", "")) if task.result else "",
                 }
                 self.state.events.append(f"integrated: {child.nn}")
                 return
             if attempt == 2:
-                raise ProgramRunBlocked(f"子{child.nn}は差し戻し上限（フル=2）を超過しました")
-            task = self.ops.resume(task, review.reason)
+                raise ProgramRunBlocked(f"子{child.nn}は修正上限（2回）を超過しました")
+            task = self.ops.resume(task, evaluation.reason)
             self.tasks[child.nn] = task
             self.state.events.append(f"resume: {child.nn}:{attempt + 1}")
 
@@ -465,17 +460,7 @@ class ProgramRunner:
                 self._implement_wave(wave)
                 for child in wave:
                     self._approval(child)
-                    if "一括" in child.review:
-                        self.state.review_queue.append(child.nn)
-                    else:
-                        self._review_and_integrate(child)
-                due = [nn for nn in self.state.review_queue if self.tasks[nn].child.bulk_due_wave is not None and number >= self.tasks[nn].child.bulk_due_wave]
-                for nn in due:
-                    self._review_and_integrate(self.tasks[nn].child)
-                    self.state.review_queue.remove(nn)
-            for nn in list(self.state.review_queue):
-                self._review_and_integrate(self.tasks[nn].child)
-                self.state.review_queue.remove(nn)
+                    self._evaluate_and_integrate(child)
             self.state.status = "completed"
             self.state.events.append("completed")
             self._save()
@@ -491,11 +476,11 @@ def main() -> None:
     parser.add_argument("--state-dir")
     parser.add_argument("--run-id")
     parser.add_argument("--smoke-command", action="append", default=[])
-    parser.add_argument("--review-runtime", choices=sorted(manifest.RUNTIMES), default="claude")
+    parser.add_argument("--evaluation-runtime", choices=sorted(manifest.RUNTIMES), default="claude")
     args = parser.parse_args()
     repo = Path(args.repo_root)
     state = Path(args.state_dir) if args.state_dir else repo / ".planops-state"
-    result = ProgramRunner(Path(args.program), repo, state, operations=Operations(args.review_runtime), run_id=args.run_id, smoke_commands=tuple(args.smoke_command)).run()
+    result = ProgramRunner(Path(args.program), repo, state, operations=Operations(args.evaluation_runtime), run_id=args.run_id, smoke_commands=tuple(args.smoke_command)).run()
     print(json.dumps(result, ensure_ascii=False))
     raise SystemExit(0 if result["status"] == "completed" else 1)
 

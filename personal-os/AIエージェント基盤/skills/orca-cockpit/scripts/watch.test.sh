@@ -91,30 +91,30 @@ fi
 out=$(WATCH_PS_CMD="cat $FIX/done_marker.json" WATCH_POLL=0 WATCH_MAX=5 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
 assert_eq "(j) done-marker exit code" "$code" "0"
-assert_contains "(j) done-marker message" "$out" "WAKE[lane-a]: 完了/レビューマーカー検知(_DONE/REVIEW_RESULT:最終行)"
+assert_contains "(j) done-marker message" "$out" "WAKE[lane-a]: 完了/評価マーカー検知(_DONE/EVALUATION_RESULT:最終行)"
 
 # (k) WATCH_SEENで処理済みマーカーを除外→停滞検知(全ペインidle)へ格下げ
 out=$(WATCH_PS_CMD="cat $FIX/done_marker.json" WATCH_POLL=0 WATCH_STALL_N=4 WATCH_MAX=5 WATCH_SEEN="CHILD07_DONE" "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
 assert_eq "(k) seen-suppress exit code" "$code" "0"
 assert_contains "(k) seen-suppress: 停滞検知へ格下げ" "$out" "WAKE[lane-a]: 全ペインidleが約4分継続(完了マーカー無し or 停滞)"
-if printf '%s' "$out" | grep -qF "完了/レビューマーカー検知"; then
+if printf '%s' "$out" | grep -qF "完了/評価マーカー検知"; then
   fail=$((fail+1)); printf '[FAIL] (k) seen-suppress: 処理済みマーカーで誤WAKEした\n'
 else
   pass=$((pass+1)); printf '[PASS] (k) seen-suppress: 処理済みマーカーの誤WAKEなし\n'
 fi
 
-# (l) REVIEW_RESULT: PASS 最終行で即exit
+# (l) EVALUATION_RESULT: PASS 最終行で即exit
 out=$(WATCH_PS_CMD="cat $FIX/review_marker.json" WATCH_POLL=0 WATCH_MAX=5 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
-assert_eq "(l) review-marker exit code" "$code" "0"
-assert_contains "(l) review-marker message" "$out" "完了/レビューマーカー検知"
+assert_eq "(l) evaluation-marker exit code" "$code" "0"
+assert_contains "(l) evaluation-marker message" "$out" "完了/評価マーカー検知"
 
 # (m) 終端アンカー負例: _DONEが本文中(最終行でない)ならマーカーWAKEしない
 out=$(WATCH_PS_CMD="cat $FIX/false_positive_done.json" WATCH_POLL=0 WATCH_MAX=1 WATCH_BUSY_N=999999 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
 assert_eq "(m) fp-done exit code" "$code" "0"
-if printf '%s' "$out" | grep -qF "完了/レビューマーカー検知"; then
+if printf '%s' "$out" | grep -qF "完了/評価マーカー検知"; then
   fail=$((fail+1)); printf '[FAIL] (m) fp-done: 本文中マーカーで誤WAKEした: %s\n' "$out"
 else
   pass=$((pass+1)); printf '[PASS] (m) fp-done: 本文中マーカーの誤検知なし\n'
@@ -146,23 +146,23 @@ else
   pass=$((pass+1)); printf '[PASS] (p) sig-gate: 閾値未満では画面を見ない\n'
 fi
 
-# (q) 自動レビュー配布v1: 実装_DONE+2ペイン → レビューペインへ自動send・マーカーWAKEせず監視継続
+# (q) 自動評価配布: 実装_DONE+2ペイン → 評価ペインへ自動send・マーカーWAKEせず監視継続
 SLOG=$(mktemp)
 out=$(WATCH_PS_CMD="cat $FIX/done_marker_2pane.json" WATCH_TERMS_CMD="cat $FIX/terms_2pane.json" \
   WATCH_SEND_CMD="$HERE/__tests__/send_stub.sh" SEND_STUB_LOG="$SLOG" \
   WATCH_POLL=0 WATCH_MAX=1 WATCH_BUSY_N=999999 WATCH_SIG_N=999999 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
-assert_eq "(q) auto-review exit code" "$code" "0"
-assert_contains "(q) auto-review: マーカーWAKEせずタイムアウトへ抜ける" "$out" "WAKE: 3時間タイムアウト(進捗未達・要点検)"
-if printf '%s' "$out" | grep -qF "完了/レビューマーカー検知"; then
-  fail=$((fail+1)); printf '[FAIL] (q) auto-review: 自動配布のはずがマーカーWAKEした: %s\n' "$out"
+assert_eq "(q) auto-evaluation exit code" "$code" "0"
+assert_contains "(q) auto-evaluation: マーカーWAKEせずタイムアウトへ抜ける" "$out" "WAKE: 3時間タイムアウト(進捗未達・要点検)"
+if printf '%s' "$out" | grep -qF "完了/評価マーカー検知"; then
+  fail=$((fail+1)); printf '[FAIL] (q) auto-evaluation: 自動配布のはずがマーカーWAKEした: %s\n' "$out"
 else
-  pass=$((pass+1)); printf '[PASS] (q) auto-review: マーカーWAKEなし\n'
+  pass=$((pass+1)); printf '[PASS] (q) auto-evaluation: マーカーWAKEなし\n'
 fi
-assert_eq "(q) auto-review: sendは1回だけ(再検知抑止)" "$(grep -c '^send ' "$SLOG")" "1"
-assert_contains "(q) auto-review: レビューペインhandleへ送信" "$(cat "$SLOG")" "--terminal term_rev_1"
-assert_contains "(q) auto-review: 検知マーカーがプロンプトに入る" "$(cat "$SLOG")" "CHILD07_DONE"
-assert_contains "(q) auto-review: stage=レビューを宣言" "$(cat "$SLOG")" "--stage レビュー"
+assert_eq "(q) auto-evaluation: sendは1回だけ(再検知抑止)" "$(grep -c '^send ' "$SLOG")" "1"
+assert_contains "(q) auto-evaluation: 評価ペインhandleへ送信" "$(cat "$SLOG")" "--terminal term_rev_1"
+assert_contains "(q) auto-evaluation: 検知マーカーがプロンプトに入る" "$(cat "$SLOG")" "CHILD07_DONE"
+assert_contains "(q) auto-evaluation: stage=評価を宣言" "$(cat "$SLOG")" "--stage 評価"
 rm -f "$SLOG"
 
 # (r) WATCH_AUTO_REVIEW=0: 従来どおり即WAKE・sendは呼ばれない
@@ -172,7 +172,7 @@ out=$(WATCH_PS_CMD="cat $FIX/done_marker_2pane.json" WATCH_TERMS_CMD="cat $FIX/t
   WATCH_POLL=0 WATCH_MAX=5 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
 assert_eq "(r) opt-out exit code" "$code" "0"
-assert_contains "(r) opt-out: 従来どおり即WAKE" "$out" "完了/レビューマーカー検知"
+assert_contains "(r) opt-out: 従来どおり即WAKE" "$out" "完了/評価マーカー検知"
 assert_eq "(r) opt-out: sendは呼ばれない" "$(grep -c '^send ' "$SLOG")" "0"
 rm -f "$SLOG"
 
@@ -183,7 +183,7 @@ out=$(WATCH_PS_CMD="cat $FIX/done_marker_2pane.json" WATCH_TERMS_CMD="cat $FIX/t
   WATCH_POLL=0 WATCH_MAX=5 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
 assert_eq "(s) resolve失敗 exit code" "$code" "0"
-assert_contains "(s) resolve失敗: 従来WAKEへフォールバック" "$out" "完了/レビューマーカー検知"
+assert_contains "(s) resolve失敗: 従来WAKEへフォールバック" "$out" "完了/評価マーカー検知"
 assert_eq "(s) resolve失敗: sendは呼ばれない" "$(grep -c '^send ' "$SLOG")" "0"
 rm -f "$SLOG"
 
@@ -194,7 +194,7 @@ out=$(WATCH_PS_CMD="cat $FIX/done_marker_2pane.json" WATCH_TERMS_CMD="cat $FIX/t
   WATCH_POLL=0 WATCH_MAX=5 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
 assert_eq "(t) send失敗 exit code" "$code" "0"
-assert_contains "(t) send失敗: 従来WAKEへフォールバック" "$out" "完了/レビューマーカー検知"
+assert_contains "(t) send失敗: 従来WAKEへフォールバック" "$out" "完了/評価マーカー検知"
 assert_eq "(t) send失敗: 試行は1回記録される" "$(grep -c '^send ' "$SLOG")" "1"
 rm -f "$SLOG"
 
@@ -202,19 +202,18 @@ rm -f "$SLOG"
 out=$(WATCH_PS_CMD="cat $FIX/done_marker.json" WATCH_POLL=0 WATCH_MAX=5 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
 assert_eq "(u) 1ペイン exit code" "$code" "0"
-assert_contains "(u) 1ペイン: 自動配布せず従来WAKE" "$out" "完了/レビューマーカー検知"
+assert_contains "(u) 1ペイン: 自動配布せず従来WAKE" "$out" "完了/評価マーカー検知"
 
-# (v) 差し戻し1所見2: 未処理REVIEW_RESULTが実装_DONEと併存(watch再起動後・実装pane先頭の並び)なら
-# 自動配布せずREVIEW_RESULTを優先して即WAKE
+# (v) 未処理EVALUATION_RESULTが実装_DONEと併存するなら、自動配布せず評価結果を優先して即WAKE
 SLOG=$(mktemp)
 out=$(WATCH_PS_CMD="cat $FIX/done_and_review_2pane.json" WATCH_TERMS_CMD="cat $FIX/terms_2pane.json" \
   WATCH_SEND_CMD="$HERE/__tests__/send_stub.sh" SEND_STUB_LOG="$SLOG" \
   WATCH_POLL=0 WATCH_MAX=5 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
-assert_eq "(v) REVIEW_RESULT優先 exit code" "$code" "0"
-assert_contains "(v) REVIEW_RESULT優先: 自動配布せず即WAKE" "$out" "完了/レビューマーカー検知"
-assert_contains "(v) REVIEW_RESULT優先: 検知行はREVIEW_RESULT側" "$out" "REVIEW_RESULT: PASS"
-assert_eq "(v) REVIEW_RESULT優先: sendは呼ばれない" "$(grep -c '^send ' "$SLOG")" "0"
+assert_eq "(v) EVALUATION_RESULT優先 exit code" "$code" "0"
+assert_contains "(v) EVALUATION_RESULT優先: 自動配布せず即WAKE" "$out" "完了/評価マーカー検知"
+assert_contains "(v) EVALUATION_RESULT優先: 検知行はEVALUATION_RESULT側" "$out" "EVALUATION_RESULT: PASS"
+assert_eq "(v) EVALUATION_RESULT優先: sendは呼ばれない" "$(grep -c '^send ' "$SLOG")" "0"
 rm -f "$SLOG"
 
 # (w) 差し戻し1所見1: paneKey×terminal突合が複数一致なら曖昧=中止して従来WAKE(誤送信防止)
@@ -224,7 +223,7 @@ out=$(WATCH_PS_CMD="cat $FIX/done_marker_2pane.json" WATCH_TERMS_CMD="cat $FIX/t
   WATCH_POLL=0 WATCH_MAX=5 "$WATCH" "$LANE_PATH" 2>/dev/null)
 code=$?
 assert_eq "(w) 突合複数一致 exit code" "$code" "0"
-assert_contains "(w) 突合複数一致: 中止して従来WAKE" "$out" "完了/レビューマーカー検知"
+assert_contains "(w) 突合複数一致: 中止して従来WAKE" "$out" "完了/評価マーカー検知"
 assert_eq "(w) 突合複数一致: sendは呼ばれない" "$(grep -c '^send ' "$SLOG")" "0"
 rm -f "$SLOG"
 

@@ -71,7 +71,7 @@ def reject_active_scope_overlap(state_dir: Path, allowed_paths: list[str], task_
             item = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        if item.get("task_id") == task_id or item.get("phase") not in {"running", "implemented", "review_passed"}:
+        if item.get("task_id") == task_id or item.get("phase") not in {"running", "implemented", "evaluated"}:
             continue
         if scopes_overlap(allowed_paths, item.get("allowed_paths", [])):
             raise HarnessConflict("実行中taskと変更可能範囲が重なるため停止しました")

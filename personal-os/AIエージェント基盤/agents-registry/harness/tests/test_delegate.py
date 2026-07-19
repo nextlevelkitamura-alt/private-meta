@@ -126,14 +126,35 @@ class HarnessTest(unittest.TestCase):
         disabled = delegate.delegate(self.args(task_id="claude-disabled", runtime="claude", allowed_path=["src/c.py"]), runner=fake_claude, claude_help="Usage: claude")
         self.assertEqual(disabled["status"], "feature-disabled")
 
-    def test_claude_json_result_is_saved_as_reviewer_final_text(self) -> None:
+    def test_claude_json_result_is_saved_as_evaluator_final_text(self) -> None:
         def fake_claude(_command: list[str], _cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:
             packet = manifest.read_json(Path(env["PLAN_RUN_MANIFEST"]))
             manifest.write_json(Path(packet["result_path"]), {"version": 1, "task_id": packet["task_id"], "status": "done", "base_commit": packet["base_commit"], "result_commit": packet["base_commit"], "changed_paths": [], "tests": [], "assumptions": [], "blockers": [], "remaining_risks": [], "out_of_scope_findings": []})
             return delegate.ProcessResult(0, json.dumps({"result": "# 評価\n\n全PASS"}), "")
-        answer = delegate.delegate(self.args(task_id="claude-final", runtime="claude", role="reviewer", base_commit=None, allowed_path=[]), runner=fake_claude, claude_help="--print --output-format")
+        answer = delegate.delegate(self.args(task_id="claude-final", runtime="claude", role="evaluator", base_commit=self.base, allowed_path=[]), runner=fake_claude, claude_help="--print --output-format")
         final = Path(str(answer["manifest"])).with_name("claude-final-final.md")
         self.assertEqual(final.read_text(encoding="utf-8"), "# 評価\n\n全PASS")
+        self.assertEqual(answer["evaluation_path"], str(final))
+
+    def test_evaluator_completes_with_evaluation_md_without_result_packet(self) -> None:
+        """評価はread-onlyなので、実装者用result packetを要求しない。"""
+        def fake_evaluator(_command: list[str], _cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:
+            packet = manifest.read_json(Path(env["PLAN_RUN_MANIFEST"]))
+            Path(str(packet["evaluation_path"])).write_text(
+                "# 評価\n\n- 対象計画: plan.md\n\n## 項目別採点\n\n- [PASS] 完了条件: diffとテスト結果を確認\n\n## 総合判定\n\n全PASS\n",
+                encoding="utf-8",
+            )
+            return delegate.ProcessResult(0)
+
+        answer = delegate.delegate(
+            self.args(task_id="evaluation-final-only", role="evaluator", base_commit=self.base, allowed_path=[]),
+            runner=fake_evaluator,
+        )
+        self.assertEqual(answer["status"], "done")
+        self.assertTrue(Path(str(answer["evaluation_path"])).is_file())
+        self.assertFalse(Path(str(answer["result_path"])).exists())
+        data = manifest.read_json(Path(str(answer["manifest"])))
+        self.assertEqual(data["phase"], "evaluated")
 
     def test_codex_resume_uses_recorded_thread_without_last(self) -> None:
         def first(_command: list[str], _cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:
@@ -165,10 +186,8 @@ class HarnessTest(unittest.TestCase):
         prog = self.repo / "prog"
         (prog / "plans").mkdir(parents=True)
         (prog / "実装").mkdir()
-        (prog / "レビュー").mkdir()
         (prog / "program.md").write_text("# program\n", encoding="utf-8")
         (prog / "実装" / "共通.md").write_text("# 実装共通\n", encoding="utf-8")
-        (prog / "レビュー" / "共通.md").write_text("# レビュー共通\n", encoding="utf-8")
         child = prog / "plans" / "01-子.md"
         child.write_text("# 子\n\n## 目的\n\nテスト\n", encoding="utf-8")
         self.git("add", "prog")
@@ -181,16 +200,16 @@ class HarnessTest(unittest.TestCase):
         impl = delegate.delegate(self.args(task_id="ctx-impl", plan=str(child), base_commit=self.base, dry_run=True), runner=self.fake_done)
         packet = Path(str(impl["task_packet"])).read_text(encoding="utf-8")
         self.assertIn("実装/共通.md", packet)
-        self.assertNotIn("レビュー/共通.md", packet)
+        self.assertNotIn("評価テンプレ", packet)
         anchor = packet.index("最初に読む順番")
         order = [packet.index(token, anchor) for token in ("AGENTS.md", "親program", "実装/共通.md", "対象計画")]
         self.assertEqual(order, sorted(order))
         data = manifest.read_json(Path(str(impl["manifest"])))
         self.assertEqual(data["program_path"], str((self.repo / "prog" / "program.md").resolve()))
-        review = delegate.delegate(self.args(task_id="ctx-rev", plan=str(child), role="reviewer", base_commit=None, allowed_path=[], dry_run=True), runner=self.fake_done)
-        packet = Path(str(review["task_packet"])).read_text(encoding="utf-8")
-        self.assertIn("レビュー/共通.md", packet)
-        self.assertIn("完了条件（レビュー項目）", packet)
+        evaluation = delegate.delegate(self.args(task_id="ctx-eval", plan=str(child), role="evaluator", base_commit=self.base, allowed_path=[], dry_run=True), runner=self.fake_done)
+        packet = Path(str(evaluation["task_packet"])).read_text(encoding="utf-8")
+        self.assertIn("計画の「完了条件」", packet)
+        self.assertIn("## evaluatorの最終出力形式", packet)
         self.assertNotIn("実装/共通.md", packet)
         explorer = delegate.delegate(self.args(task_id="ctx-exp", plan=str(child), role="explorer", base_commit=None, allowed_path=[], dry_run=True), runner=self.fake_done)
         packet = Path(str(explorer["task_packet"])).read_text(encoding="utf-8")
@@ -205,9 +224,9 @@ class HarnessTest(unittest.TestCase):
         def fake_readonly(command: list[str], cwd: Path, env: dict[str, str]) -> delegate.ProcessResult:
             packet = manifest.read_json(Path(env["PLAN_RUN_MANIFEST"]))
             observed["cwd"] = cwd; observed["command"] = command
-            manifest.write_json(Path(packet["result_path"]), {"version": 1, "task_id": packet["task_id"], "status": "done", "base_commit": packet["base_commit"], "result_commit": packet["base_commit"], "changed_paths": [], "tests": [], "assumptions": [], "blockers": [], "remaining_risks": [], "out_of_scope_findings": []})
+            Path(str(packet["evaluation_path"])).write_text("# 評価\n\n## 項目別採点\n\n- [PASS] 完了条件: 確認済み\n\n## 総合判定\n\n全PASS\n", encoding="utf-8")
             return delegate.ProcessResult(0)
-        answer = delegate.delegate(self.args(task_id="review-only", role="reviewer", base_commit=None, allowed_path=[]), runner=fake_readonly)
+        answer = delegate.delegate(self.args(task_id="evaluation-only", role="evaluator", base_commit=self.base, allowed_path=[]), runner=fake_readonly)
         self.assertIsNone(answer["worktree_path"])
         self.assertEqual(Path(observed["cwd"]).resolve(), self.repo.resolve())
         self.assertIn("read-only", observed["command"])

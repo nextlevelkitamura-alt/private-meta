@@ -1,6 +1,6 @@
 # hooks-registry — グローバル hook の唯一の正本
 
-Claude Code と Codex がグローバルに実行する hook を、ここで一元管理する。実行本体は runtime ごとに複製せず、`events/` に1組だけ置く。現在稼働する機構は session-board だけである。
+Claude Code と Codex がグローバルに実行する hook を、ここで一元管理する。実行本体は runtime ごとに複製せず、`events/` に1組だけ置く。現在は session-board と、`PLAN_RUN_MANIFEST`がある実行だけを検査するplan-closeout guardが稼働する。
 
 ## まず見る場所
 
@@ -27,8 +27,8 @@ hooks-registry/
 | --- | --- | --- |
 | `SessionStart` | `events/session-start/reconcile-and-notify.py` | 生存照合とキー通知 |
 | `UserPromptSubmit` | `events/prompt-register/register-and-guide.py` | ボード登録と開始ガイド |
-| `Stop` | `events/session-end/mark-wait.py` | 🟢を⏸へ更新 |
-| `SubagentStart/Stop` | `events/subagent/sync-subagent-status.py` | 🔵と体数を同期 |
+| `Stop` | `events/session-end/mark-wait.py` + `guard-plan-closeout.py` | 🟢を⏸へ更新 + `evaluated`未同期の一回だけ継続要求 |
+| `SubagentStart/Stop` | `events/subagent/sync-subagent-status.py` + `verify-plan-worker.py` | 🔵と体数を同期 + manifest割当・result/evaluationを検査 |
 
 状態の正本は `shared/session-board/`。🟢動作中 / ⏸停止・確認待ち / 🔵サブ稼働中の3値だけを使う。
 

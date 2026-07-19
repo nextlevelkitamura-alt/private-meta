@@ -34,7 +34,7 @@ cat > "$PLAN_DIR/plan.md" <<'EOF'
 - 完了時に返す情報: result packet
 ## 方針
 同期する。
-## 完了条件（レビュー項目）
+## 完了条件
 - [ ] `a.py` が存在する
 EOF
 git -C "$REPO" init -q
@@ -64,8 +64,8 @@ assert_contains "(a) prepareはmanifestを生成" "$prepare_out" "manifest"
 [ -f "$REPO/.planops-state/prepare-manifest.json" ] && assert_eq "(a) manifestはgitignore配下" "yes" "yes" || assert_eq "(a) manifestはgitignore配下" "no" "yes"
 MANIFEST="$REPO/.planops-state/prepare-manifest.json"
 python3 "$SCRIPTS/planctl.py" phase --manifest "$MANIFEST" --to implemented >/dev/null
-python3 "$SCRIPTS/planctl.py" phase --manifest "$MANIFEST" --to review_passed >/dev/null
-assert_contains "(a) phaseはreview_passedへ進む" "$(cat "$MANIFEST")" '"phase": "review_passed"'
+python3 "$SCRIPTS/planctl.py" phase --manifest "$MANIFEST" --to evaluated >/dev/null
+assert_contains "(a) phaseはevaluatedへ進む" "$(cat "$MANIFEST")" '"phase": "evaluated"'
 
 apply_out="$(python3 "$SCRIPTS/planctl.py" apply-evaluation --plan "$PLAN_DIR/plan.md" --plans-root "$REPO/plans" --evaluation "$PLAN_DIR/評価01.md" --result "$PLAN_DIR/実行結果.json" --repo-root "$REPO" --manifest "$MANIFEST")"
 assert_contains "(b) 全PASSだけ同期" "$apply_out" "synced"

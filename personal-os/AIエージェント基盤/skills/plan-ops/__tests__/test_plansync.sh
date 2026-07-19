@@ -16,7 +16,7 @@ ACT="$AREAS/testarea/plans/active"
 
 # --- fixture: program計画 ---
 PDIR="$ACT/2026-01-01-プログラム例"
-mkdir -p "$PDIR/plans" "$PDIR/実装" "$PDIR/レビュー" "$PDIR/評価"
+mkdir -p "$PDIR/plans" "$PDIR/実装" "$PDIR/評価"
 cat > "$PDIR/program.md" <<'EOF'
 形態: program
 
@@ -29,7 +29,7 @@ cat > "$PDIR/program.md" <<'EOF'
 - [ ] 02 子に … 実装
     場所: plans/02 ／ 依存: 01
 
-## 完了条件（レビュー項目）
+## 完了条件
 
 - [x] 条件A
 - [ ] 条件B
@@ -39,7 +39,6 @@ printf '親計画: ../program.md\n\n# 子いち\n' > "$PDIR/plans/01-子いち.m
 printf '親計画: ../program.md\n\n# 子に\n' > "$PDIR/plans/02-子に.md"
 printf '# 子いち評価01\n' > "$PDIR/plans/01-子いち-評価01.md"
 printf '# 実装共通\n' > "$PDIR/実装/共通.md"
-printf '# レビュー共通\n' > "$PDIR/レビュー/共通.md"
 printf '# 統合評価01\n' > "$PDIR/評価/評価01.md"
 
 # --- fixture: 単発計画 ---
@@ -50,7 +49,7 @@ cat > "$SDIR/plan.md" <<'EOF'
 
 # 単発例
 
-## 完了条件（レビュー項目）
+## 完了条件
 
 - [ ] 単発条件1
 - [ ] 単発条件2
@@ -69,7 +68,7 @@ OUT="$("$SCRIPTS/plansync.py" scan --root "$AREAS" --repo-root "$TMP" 2>/dev/nul
 assert_contains "(a) programを1件抽出" "$OUT" "program=1"
 assert_contains "(a) single 2件（単発例＋秘密混入）" "$OUT" "single=2"
 assert_contains "(a) child 2件" "$OUT" "child=2"
-assert_contains "(a) role 2件" "$OUT" "role=2"
+assert_contains "(a) role 1件（実装共通のみ）" "$OUT" "role=1"
 assert_contains "(a) eval 3件" "$OUT" "eval=3"
 
 # ============================================================
@@ -92,7 +91,7 @@ assert_eq "(c) 通知ログが作られる" "$( [ -f "$NOTICES" ] && echo yes ||
 assert_not_contains "(c) 通知ログにsecret値を書かない" "$(cat "$NOTICES")" "AKIAABCDEFGHIJKLMNOP"
 
 # 同期対象は 全10件 - 拒否1件 = 9件
-assert_contains "(c) 同期対象9件" "$OUT" "同期対象(secret通過): 9 件"
+assert_contains "(c) 同期対象8件" "$OUT" "同期対象(secret通過): 8 件"
 
 # ============================================================
 # (d) 差分sync(dry-run): activeから消えたpathはDELETE候補になる

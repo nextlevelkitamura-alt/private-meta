@@ -6,9 +6,9 @@ import re
 from pathlib import Path
 from typing import Any
 
-ROLES = {"explorer", "implementer", "reviewer"}
+ROLES = {"explorer", "implementer", "evaluator"}
 RUNTIMES = {"codex", "claude"}
-PHASES = {"running", "implemented", "review_passed", "synced", "closed", "blocked"}
+PHASES = {"running", "implemented", "evaluated", "synced", "closed", "blocked"}
 STATUSES = {"done", "blocked", "partial", "failed"}
 TASK_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 

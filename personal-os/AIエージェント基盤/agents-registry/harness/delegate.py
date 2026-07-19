@@ -86,14 +86,22 @@ def _reading_steps(data: dict[str, object], role: str) -> list[str]:
     program = data.get("program_path")
     if not program or role == "explorer":
         return default
-    folder = {"implementer": "実装", "reviewer": "レビュー"}[role]
+    if role == "evaluator":
+        return [
+            "対象repoから対象ファイルまでの最寄り `AGENTS.md`",
+            "親program（ある場合）",
+            "対象計画の「完了条件」",
+            "実装diff（目的のdiff範囲）",
+            "評価テンプレ",
+        ]
+    folder = {"implementer": "実装"}[role]
     common = Path(str(program)).parent / folder / "共通.md"
     if not common.is_file():
         return default
     head = ["対象repoから対象ファイルまでの最寄り `AGENTS.md`", "親program"]
     if role == "implementer":
         return head + [f"実装の共通コンテキスト `{common}`", "対象計画", "計画の「実行契約」で指定されたreferences", "必要な実装ファイル"]
-    return head + [f"レビューの共通コンテキスト `{common}`", "対象計画の「完了条件（レビュー項目）」", "実装diff（目的のdiff範囲）"]
+    return default
 
 
 def render_task_packet(data: dict[str, object], purpose: str, writable: bool) -> str:
@@ -103,7 +111,7 @@ def render_task_packet(data: dict[str, object], purpose: str, writable: bool) ->
     role = str(data["role"])
     extra = {
         "implementer": "一つのTask Packetだけを最小・安全に実装し、検証、対象path限定commit、result packetまでを担当する。",
-        "reviewer": "read-onlyで完了条件とdiffを照合し、自己申告でPASSにせず、各項目をPASS / FAIL / 対象外と根拠付きで返す。",
+        "evaluator": "read-onlyで完了条件とdiffを照合し、自己申告でPASSにせず、各項目をPASS / FAIL / 対象外と根拠付きで評価MDへ記録する。",
         "explorer": "read-onlyで実行経路、正本、影響path、依存、リスク、不明点を根拠付きで返す。",
     }[role]
     steps = "\n".join(f"{number}. {step}" for number, step in enumerate(_reading_steps(data, role), 1))
@@ -143,9 +151,32 @@ def render_task_packet(data: dict[str, object], purpose: str, writable: bool) ->
 
 停止条件: planの「停止・エスカレーション条件」に従う。
 
-完了時: `{data['result_path']}` に result-packet schema のJSONを返し、最終メッセージにも要点を短く出す。
+完了時: {"評価MD本文を最終出力へ返す" if role == "evaluator" else f"`{data['result_path']}` に result-packet schema のJSONを返し、最終メッセージにも要点を短く出す。"}
 
 役割別追加指示: {extra}
+"""
+
+
+def render_evaluation_output_contract(data: dict[str, object]) -> str:
+    """evaluatorの最終出力を、hookとplanctlが検証できる評価MDの形に固定する。"""
+    return f"""
+
+## evaluatorの最終出力形式
+
+最終出力は次の見出しを含む評価MD本文だけにする。各完了条件を実物のdiff・テスト結果で判定し、PASS / FAIL / 対象外と根拠を記す。自己申告だけでPASSにしない。
+
+# 評価
+
+- 対象計画: {Path(str(data['plan_path'])).name}
+- 対象diff: {data['base_commit']}..（result packetで示されたcommit）
+
+## 項目別採点
+
+- [PASS / FAIL / 対象外] 完了条件: 根拠
+
+## 総合判定
+
+全PASS または FAILあり
 """
 
 
@@ -218,11 +249,14 @@ def delegate(args: argparse.Namespace, runner: Runner = _run, claude_help: str |
     manifest_path = state_dir / f"{args.task_id}-manifest.json"
     packet_path = state_dir / f"{args.task_id}-実行指示.md"
     final_path = state_dir / f"{args.task_id}-final.md"
-    data: dict[str, object] = {"version": 1, "task_id": args.task_id, "role": args.role, "runtime": args.runtime, "repo_root": str(repo_root), "plan_path": str(plan), "program_path": str(program_path) if program_path else None, "child_id": args.child_id, "base_commit": base_commit, "worktree_path": str(task_path) if task_path else None, "branch": branch, "result_path": str(result_path), "evaluation_path": None, "phase": "running", "allowed_paths": args.allowed_path}
+    data: dict[str, object] = {"version": 1, "task_id": args.task_id, "role": args.role, "runtime": args.runtime, "repo_root": str(repo_root), "plan_path": str(plan), "program_path": str(program_path) if program_path else None, "child_id": args.child_id, "base_commit": base_commit, "worktree_path": str(task_path) if task_path else None, "branch": branch, "result_path": str(result_path), "evaluation_path": str(final_path) if args.role == "evaluator" else None, "phase": "running", "allowed_paths": args.allowed_path}
     manifest.validate_manifest(data)
     manifest.write_json(manifest_path, data)
     purpose = args.purpose or _section(plan, "目的", "計画の完了条件を満たす")
-    packet_path.write_text(render_task_packet(data, purpose, writable), encoding="utf-8")
+    packet = render_task_packet(data, purpose, writable)
+    if args.role == "evaluator":
+        packet += render_evaluation_output_contract(data)
+    packet_path.write_text(packet, encoding="utf-8")
 
     if args.dry_run:
         return {"status": "prepared", "manifest": str(manifest_path), "task_packet": str(packet_path), "result_path": str(result_path), "worktree_path": data["worktree_path"]}
@@ -249,6 +283,13 @@ def delegate(args: argparse.Namespace, runner: Runner = _run, claude_help: str |
     if result.returncode:
         data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
         return {"status": "blocked", "manifest": str(manifest_path), "result_path": str(result_path)}
+    if args.role == "evaluator":
+        if not final_path.is_file():
+            data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
+            return {"status": "blocked", "manifest": str(manifest_path), "result_path": str(result_path), "evaluation_path": data["evaluation_path"], "reason": "evaluatorの評価本文が無い"}
+        data["phase"] = "evaluated"
+        manifest.write_json(manifest_path, data)
+        return {"status": "done", "manifest": str(manifest_path), "result_path": str(result_path), "evaluation_path": data["evaluation_path"], "worktree_path": data["worktree_path"], "thread_id": thread_id}
     if not result_path.is_file():
         data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
         return {"status": "blocked", "manifest": str(manifest_path), "result_path": str(result_path), "reason": "result packetが無い"}
@@ -266,9 +307,9 @@ def delegate(args: argparse.Namespace, runner: Runner = _run, claude_help: str |
     if writable and any(not worktree.scopes_overlap([changed], args.allowed_path) for changed in packet["changed_paths"]):
         data["phase"] = "blocked"; manifest.write_json(manifest_path, data)
         return {"status": "blocked", "manifest": str(manifest_path), "result_path": str(result_path), "reason": "result packetのchanged_pathsが変更可能範囲外です"}
-    data["phase"] = "implemented" if packet["status"] == "done" else "blocked"
+    data["phase"] = ("evaluated" if args.role == "evaluator" else "implemented") if packet["status"] == "done" else "blocked"
     manifest.write_json(manifest_path, data)
-    return {"status": packet["status"], "manifest": str(manifest_path), "result_path": str(result_path), "worktree_path": data["worktree_path"], "thread_id": thread_id}
+    return {"status": packet["status"], "manifest": str(manifest_path), "result_path": str(result_path), "evaluation_path": data["evaluation_path"], "worktree_path": data["worktree_path"], "thread_id": thread_id}
 
 
 def resume(manifest_path: Path, reason: str, runner: Runner = _run) -> dict[str, object]:

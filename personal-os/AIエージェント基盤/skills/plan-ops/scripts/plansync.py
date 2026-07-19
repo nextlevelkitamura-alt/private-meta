@@ -152,7 +152,7 @@ def state_base(state_text):
 
 
 def count_completion(lines):
-    """(done, total) を「## 完了条件（レビュー項目）」セクションから数える。無ければ None。"""
+    """(done, total) を「## 完了条件」セクションから数える。旧見出しも読み取り互換で受ける。"""
     section = find_section(lines, COMPLETION_HEADING)
     if section is None:
         return None
@@ -257,7 +257,7 @@ def extract_plan_dir(plan_dir, repo_root):
         docs.append(_mk_doc(plan_md, repo_root, slug, KIND_SINGLE, ""))
 
     # 役割別コンテキスト
-    for role in ("実装", "レビュー"):
+    for role in ("実装",):
         rp = os.path.join(plan_dir, role, "共通.md")
         if os.path.isfile(rp):
             docs.append(_mk_doc(rp, repo_root, slug, KIND_ROLE, ""))

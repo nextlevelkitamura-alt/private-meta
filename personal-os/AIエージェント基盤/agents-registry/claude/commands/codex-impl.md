@@ -10,7 +10,7 @@ description: Codexに実装を委任する（共通delegate経由・計画→実
 
 ## 手順
 
-1. 規模を判定する。構造3条件（変更1〜2ファイル／容易に戻せる／人間ゲートなし）が全YESなら、通常の直接実装・diff確認・報告で終える。1つでもNOなら対象計画の「完了条件（レビュー項目）」を読む。
+1. 規模を判定する。構造3条件（変更1〜2ファイル／容易に戻せる／人間ゲートなし）が全YESなら、通常の直接実装・diff確認・報告で終える。1つでもNOなら対象計画の「完了条件」を読む。
 2. `PLAN_PATH` を対象計画の絶対path、`REPO_ROOT` を対象repoの絶対path、`BASE_SHA` を明示した基準commitとして確定する。さらに task ID と、少なくとも1つの変更可能pathを決める。write taskはこれらなしで起動しない。Task Packetとrun manifestのworktree方針に従い、worker自身に作業場所・branchを選ばせない。
 3. 共通delegateを次の契約で起動する。`delegate.py` のCLI定義が正本であり、runtime、role、plan path、write taskのbase SHAを省略しない。
 
@@ -26,14 +26,14 @@ description: Codexに実装を委任する（共通delegate経由・計画→実
    ```
 
 4. result packetをschema検証し、result commitとchanged pathsを実物で確認する。禁止範囲違反、base不一致、blockedはその場で停止する。
-5. ライト以上は既存の `impl-reviewer` を起動し、計画・diff範囲・規模を渡す。評価本文は計画と同じ場所の `評価NN.md` とし、PASS/FAIL/対象外を完了条件と同順で照合する。
+5. ライト以上は `impl-evaluator` を起動し、計画・diff範囲・規模を渡す。評価本文は計画と同じ場所の `評価NN.md` とし、PASS/FAIL/対象外を完了条件と同順で照合する。
 6. FAILは `修正NN.md` を作成し、同じdelegateの実装threadへresumeする。上限はライト=1回、フル=2回。全PASSだけ `planctl apply-evaluation` と `planctl sync-check` へ進む。
 
 ## 維持する制約
 
 - Task Packet、run manifest、result packetを正本とし、親会話の要約で置き換えない。
 - push、mainへのmerge、deploy、worktree削除、runtime設定・symlink変更は行わない。
-- `impl-reviewer` の既存名・入力（計画path／diff範囲／規模）・read-only評価を維持する。
+- `impl-evaluator` の入力（計画path／diff範囲／規模）とread-only評価を維持する。
 - delegateの実行時引数・adapter wire formatはこのラッパーに複製しない。変更はharnessの契約として行う。
 
 タスク: $ARGUMENTS

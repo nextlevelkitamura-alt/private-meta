@@ -25,6 +25,16 @@ child_clean_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/program/plans/01-子.md")"
 assert_eq "(b) 子単体でも親マップと整合する" "$?" "0"
 assert_contains "(b) 子単体は違反なし" "$child_clean_out" "違反なし"
 
+cp -R "$FIX/clean-program" "$WORKDIR/legacy-layout"
+printf '# 旧親plan\n' > "$WORKDIR/legacy-layout/plan.md"
+mkdir -p "$WORKDIR/legacy-layout/レビュー"
+printf '\n    レビュー: 都度\n' >> "$WORKDIR/legacy-layout/program.md"
+legacy_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/legacy-layout/program.md" 2>&1)"
+assert_eq "(b) 旧親plan・レビュー構造はexit 1" "$?" "1"
+assert_contains "(b) sibling plan.mdを指摘" "$legacy_out" "併存plan.mdは置けない"
+assert_contains "(b) レビュー/を指摘" "$legacy_out" "レビュー/ フォルダは使えない"
+assert_contains "(b) レビューfieldを指摘" "$legacy_out" "旧「レビュー:」フィールドは使えない"
+
 sed -i '' '/## 非対象/,/## 現状/d' "$WORKDIR/plan.md"
 missing_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/plan.md" 2>&1)"
 assert_eq "(c) 必須節欠落はexit 1" "$?" "1"
@@ -55,7 +65,7 @@ assert_eq "(g) マップ必須行欠落はexit 1" "$?" "1"
 assert_contains "(g) 参照欠落を検出" "$map_out" "マップ必須行が無い: 参照:"
 
 cp -R "$FIX/clean-program" "$WORKDIR/mismatch"
-perl -0pi -e 's/並列: 不可 ／ レビュー: 都度/並列: 可 ／ レビュー: 都度/' "$WORKDIR/mismatch/plans/01-子.md"
+perl -0pi -e 's/並列: 不可/並列: 可/' "$WORKDIR/mismatch/plans/01-子.md"
 mismatch_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/mismatch/program.md" 2>&1)"
 assert_eq "(h) 子frontmatter矛盾はexit 1" "$?" "1"
 assert_contains "(h) 並列矛盾を検出" "$mismatch_out" "Programマップと子frontmatterが不一致: 並列:"
@@ -72,10 +82,18 @@ generated_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/generated/plan.md" --allow-pl
 assert_eq "(j) 雛形はplaceholder以外で通る" "$?" "0"
 assert_contains "(j) 雛形lintの成功を表示" "$generated_out" "違反なし"
 
-"$SCRIPTS/new-plan.sh" --out "$WORKDIR/generated/program.md" --program --class 横断 --kind 統合整理 >/dev/null
-"$SCRIPTS/new-child.sh" --out "$WORKDIR/generated/plans/01-子.md" --program "$WORKDIR/generated/program.md" --class 横断 --kind 統合整理 >/dev/null
-child_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/generated/plans/01-子.md" --allow-placeholders)"
-assert_eq "(k) repo-local想定の子雛形はplaceholder以外で通る" "$?" "0"
-assert_contains "(k) 子雛形lintの成功を表示" "$child_out" "違反なし"
+"$SCRIPTS/new-plan.sh" --out "$WORKDIR/generated-program/program.md" --program --class 横断 --kind 統合整理 >/dev/null
+"$SCRIPTS/new-child.sh" --out "$WORKDIR/generated-program/plans/01-子.md" --program "$WORKDIR/generated-program/program.md" --class 横断 --kind 統合整理 >/dev/null
+[ -f "$WORKDIR/generated-program/実装/共通.md" ]
+assert_eq "(k) program雛形は実装/共通.mdを作る" "$?" "0"
+[ -d "$WORKDIR/generated-program/評価" ]
+assert_eq "(k) program雛形は評価/を作る" "$?" "0"
+[ ! -e "$WORKDIR/generated-program/plan.md" ]
+assert_eq "(k) program雛形は親plan.mdを作らない" "$?" "0"
+[ ! -e "$WORKDIR/generated-program/レビュー" ]
+assert_eq "(k) program雛形はレビュー/を作らない" "$?" "0"
+child_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/generated-program/plans/01-子.md" --allow-placeholders)"
+assert_eq "(l) repo-local想定の子雛形はplaceholder以外で通る" "$?" "0"
+assert_contains "(l) 子雛形lintの成功を表示" "$child_out" "違反なし"
 
 report

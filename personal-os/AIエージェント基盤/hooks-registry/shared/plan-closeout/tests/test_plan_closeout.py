@@ -59,9 +59,9 @@ with tempfile.TemporaryDirectory() as td:
     check("manifest不在はfail-open", common.stop_decision({}, None) == common.Decision())
     check("runningは通す", not common.stop_decision({}, loaded).block)
     data["phase"] = "implemented"; path.write_text(json.dumps(data), encoding="utf-8")
-    check("implemented（一括待ち）は通す", not common.stop_decision({}, common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})).block)
-    data["phase"] = "review_passed"; path.write_text(json.dumps(data), encoding="utf-8")
-    check("review_passed未同期だけblock", common.stop_decision({}, common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})).block)
+    check("implementedは通す", not common.stop_decision({}, common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})).block)
+    data["phase"] = "evaluated"; path.write_text(json.dumps(data), encoding="utf-8")
+    check("evaluated未同期だけblock", common.stop_decision({}, common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})).block)
     check("stop_hook_activeは再blockしない", not common.stop_decision({"stop_hook_active": True}, common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})).block)
     data["phase"] = "synced"; path.write_text(json.dumps(data), encoding="utf-8")
     check("syncedは通す", not common.stop_decision({}, common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})).block)
@@ -74,14 +74,14 @@ with tempfile.TemporaryDirectory() as td:
     loaded = common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})
     check("implementer result欠落はblock", common.subagent_stop_decision({}, loaded).block)
     check("implementerの連続blockを防止", not common.subagent_stop_decision({"stop_hook_active": "true"}, loaded).block)
-    path, data = manifest(root, role="reviewer", evaluation=False)
+    path, data = manifest(root, role="evaluator", evaluation=False)
     loaded = common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})
-    check("reviewer評価欠落はblock", common.subagent_stop_decision({}, loaded).block)
+    check("evaluator評価欠落はblock", common.subagent_stop_decision({}, loaded).block)
     path, data = manifest(root, role="explorer")
     check("explorerは内容評価せず通す", not common.subagent_stop_decision({}, common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})).block)
 
 with tempfile.TemporaryDirectory() as td:
-    root = Path(td); path, data = manifest(root, phase="review_passed")
+    root = Path(td); path, data = manifest(root, phase="evaluated")
     env = os.environ.copy(); env["PLAN_RUN_MANIFEST"] = str(path)
     for runtime in ("claude", "codex"):
         rc, out = invoke(EVENTS / "session-end" / "guard-plan-closeout.py", {"hook_event_name": "Stop", "stop_hook_active": False, "runtime": runtime}, env)
@@ -115,11 +115,11 @@ with tempfile.TemporaryDirectory() as td:
     check("既存mark-waitとcloseout guardは共存", rc_wait == 0 and rc_guard == 0 and state == "wait" and json.loads(out_guard)["decision"] == "block")
 
 with tempfile.TemporaryDirectory() as td:
-    root = Path(td); path, data = manifest(root, role="reviewer", evaluation=True)
+    root = Path(td); path, data = manifest(root, role="evaluator", evaluation=True)
     check("read-only roleはStartのworktree照合を省略", common.start_decision({"cwd": str(root / "elsewhere")}, common.load_manifest({"PLAN_RUN_MANIFEST": str(path)})) == common.Decision())
 
 with tempfile.TemporaryDirectory() as td:
-    root = Path(td); path, data = manifest(root, phase="review_passed")
+    root = Path(td); path, data = manifest(root, phase="evaluated")
     invalids = {
         "task_id pattern": ("task_id", "bad task id"),
         "program_path type": ("program_path", 1),

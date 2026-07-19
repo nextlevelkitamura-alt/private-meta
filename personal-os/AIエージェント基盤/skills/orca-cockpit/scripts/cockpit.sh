@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # orca-cockpit / cockpit.sh
-# Orca上に「実装(右上) / レビュー(右下)」を既定2ペインとするコックピットを最速で構築・駆動する。
+# Orca上に「実装(右上) / 評価(右下)」を既定2ペインとするコックピットを最速で構築・駆動する。
 # 左(計画+監督)は計画未成熟・現場判断が多い場合のみの任意枠（方針10・2026-07-02裁定）。
 # 決定的処理のみ（判断・指示内容はSKILL.md/AI/人が持つ）。
 # サブコマンド: up | spawn | plan | perm | new | split | agent | send | title | status | down | help
@@ -29,9 +29,9 @@ DEF_MODEL_CODEX="gpt-5.5"
 DEF_EFFORT_CODEX="xhigh"
 DEF_MODEL_CLAUDE="claude-sonnet-5"
 # 既定コックピット(3枠中2枠使用): 左=空slot(任意・計画未成熟時のみ計画+監督claudeを追加) /
-# 右上=実装(claude sonnet5) / 右下=レビュー(codex xhigh)。実行体制の標準(program 2026-07-02裁定)に一致させる。
+# 右上=実装(claude sonnet5) / 右下=評価(codex xhigh)。実行体制の標準に一致させる。
 # 左を使う場合は --pane で3つ明示指定する。
-DEFAULT_PANES=("" "実装:claude:${DEF_MODEL_CLAUDE}" "レビュー:codex:${DEF_MODEL_CODEX}:${DEF_EFFORT_CODEX}")
+DEFAULT_PANES=("" "実装:claude:${DEF_MODEL_CLAUDE}" "評価:codex:${DEF_MODEL_CODEX}:${DEF_EFFORT_CODEX}")
 
 log(){ printf '[cockpit] %s\n' "$*" >&2; }
 die(){ printf '[cockpit] ERROR: %s\n' "$*" >&2; exit 1; }
@@ -517,7 +517,7 @@ cmd_plan(){ # --repo --branch [--title] [--panes 3|4] [--pane "役割:kind[:mode
     case "$role" in
       *実装*|*impl*|*implementer*) perm="acceptEdits" ;;
       *計画*|*監督*|*supervisor*) perm="read-allowlist" ;;
-      *レビュー*|*review*|*reviewer*) perm="read-allowlist" ;;
+      *評価*|*evaluator*|*レビュー*|*review*|*reviewer*) perm="read-allowlist" ;;
       *) perm="read-allowlist" ;;
     esac
     label="$kind"; [ -n "$model" ] && label="$label $model"; [ -n "$effort" ] && label="$label $effort"
@@ -671,9 +671,9 @@ print(h if isinstance(h,str) else '')" 2>/dev/null)"
 }
 
 usage(){ cat >&2 <<'U'
-cockpit.sh — Orca分割コックピット構築・駆動（既定2ペイン: 右上=実装 / 右下=レビュー。
+cockpit.sh — Orca分割コックピット構築・駆動（既定2ペイン: 右上=実装 / 右下=評価。
              左=計画+監督は計画未成熟時のみ --pane で3つ明示指定する任意枠。方針10・2026-07-02裁定）
-既定エージェント: 実装=claude(claude-sonnet-5) / レビュー=codex(gpt-5.5,xhigh)
+既定エージェント: 実装=claude(claude-sonnet-5) / 評価=codex(gpt-5.5,xhigh)
 
   plan    --repo <name> --branch <english> [--title <計画名>] [--panes 3|4] [--scope <text>] [--base <ref>]
           [--pane "役割:kind[:model[:effort]]"]...

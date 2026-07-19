@@ -9,7 +9,7 @@ fail() {
   exit 1
 }
 
-for role in explorer implementer reviewer; do
+for role in explorer implementer evaluator; do
   role_file="$ROOT/$role.md"
   claude_file="$REGISTRY/claude/agents/$role.md"
   codex_file="$REGISTRY/codex/agents/$role.toml"
@@ -28,7 +28,7 @@ done
 
 grep -Eq '^sandbox_mode = "read-only"$' "$REGISTRY/codex/agents/explorer.toml" || fail "explorerはread-onlyではない"
 grep -Eq '^sandbox_mode = "workspace-write"$' "$REGISTRY/codex/agents/implementer.toml" || fail "implementerはworkspace-writeではない"
-grep -Eq '^sandbox_mode = "read-only"$' "$REGISTRY/codex/agents/reviewer.toml" || fail "reviewerはread-onlyではない"
+grep -Eq '^sandbox_mode = "read-only"$' "$REGISTRY/codex/agents/evaluator.toml" || fail "evaluatorはread-onlyではない"
 
 if rg -n -i --glob '*.md' \
   '(固定(worktree|branch)|固定モデル|model[_ -]?id|gpt-[0-9]|claude-[0-9]|program固有|task[_ -]?id:|worktree_path:|branch:)' \

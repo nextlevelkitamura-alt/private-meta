@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # orca-cockpit / watch.sh
-# 複数worktreeを1本で監視する「見張り番」。節目(error/人間確認待ち/完了・レビューマーカー/対話ダイアログ疑い/停滞/長時間稼働/タイムアウト)で
+# 複数worktreeを1本で監視する「見張り番」。節目(error/人間確認待ち/完了・評価マーカー/対話ダイアログ疑い/停滞/長時間稼働/タイムアウト)で
 # 検知理由1行を出してexitし、指揮官チャットの自動再開を促す。判断はしない（grepと時計だけ）。
 # 起動I/F: [WATCH_SEEN="<処理済み最終行>,<…>"] watch.sh <worktree-path> [<worktree-path> ...]
-#   WATCH_SEEN: 指揮官が処理済みの完了/レビューマーカー最終行を完全一致で除外（再ウェイクループ防止）
-#   WATCH_AUTO_REVIEW=1(既定): 実装_DONE最終行の検知時、同一worktreeの「_DONEを出していない側」の
-#     ペイン(codex優先・特定できない/曖昧なら中止)へ定型レビュー指示を自動sendし、exitせず監視を継続する
-#     （受け渡し自動化v1=レビュー配布の手動待ち排除・2026-07-03起票）。特定失敗/send失敗/1ペイン/
-#     REVIEW_RESULT最終行は従来どおり即WAKE。同一worktreeに未処理のREVIEW_RESULTが併存する場合も
+#   WATCH_SEEN: 指揮官が処理済みの完了/評価マーカー最終行を完全一致で除外（再ウェイクループ防止）
+#   WATCH_AUTO_EVALUATION=1(既定): 実装_DONE最終行の検知時、同一worktreeの「_DONEを出していない側」の
+#     ペイン(codex優先・特定できない/曖昧なら中止)へ定型評価指示を自動sendし、exitせず監視を継続する。
+#     旧環境向けには WATCH_AUTO_REVIEW も読み取り、REVIEW_RESULT も検知だけは互換で受ける。
+#     EVALUATION_RESULT最終行は即WAKE。同一worktreeに未処理のEVALUATION_RESULTが併存する場合も
 #     そちらを優先して即WAKE（_DONE側の自動配布はしない=watch再起動後の順序に依存しない）。0で無効（従来動作）。
 #   WATCH_SEND_CMD(既定: 同dirのcockpit.sh): 自動配布の送信コマンド。sendサブコマンド互換I/Fが必要
-#     （--terminal/--prompt/--stage/--worktree。イベント記録stage=レビューはcockpit.sh send側が担う）。
-#   WATCH_REVIEW_PROMPT: 自動配布する定型レビュー指示の本文（上書き可）。
+#     （--terminal/--prompt/--stage/--worktree。イベント記録stage=評価はcockpit.sh send側が担う）。
+#   WATCH_EVALUATION_PROMPT: 自動配布する定型評価指示の本文（上書き可）。
 # 依存: orca CLI, python3 / macOS bash 3.2互換（連想配列不使用・indexed arrayのみ）
 set -uo pipefail
 
@@ -23,10 +23,10 @@ WATCH_BUSY_N="${WATCH_BUSY_N:-25}"
 WATCH_SIG_N="${WATCH_SIG_N:-5}"
 WATCH_PS_CMD="${WATCH_PS_CMD:-orca worktree ps --json}"
 WATCH_TERMS_CMD="${WATCH_TERMS_CMD:-orca terminal list --json}"
-WATCH_AUTO_REVIEW="${WATCH_AUTO_REVIEW:-1}"
+WATCH_AUTO_EVALUATION="${WATCH_AUTO_EVALUATION:-${WATCH_AUTO_REVIEW:-1}}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WATCH_SEND_CMD="${WATCH_SEND_CMD:-$SCRIPT_DIR/cockpit.sh}"
-WATCH_REVIEW_PROMPT="${WATCH_REVIEW_PROMPT:-実装ペインの完了マーカーを検知しました。このworktreeのブランチ差分と未コミット変更を担当玉の完了条件と照合してレビューしてください。指摘は具体行で示し、最終行に REVIEW_RESULT: PASS または REVIEW_RESULT: FAIL を単独で出力してください。}"
+WATCH_EVALUATION_PROMPT="${WATCH_EVALUATION_PROMPT:-${WATCH_REVIEW_PROMPT:-実装ペインの完了マーカーを検知しました。このworktreeのブランチ差分と未コミット変更を担当計画の完了条件と照合して評価してください。指摘は具体行で示し、最終行に EVALUATION_RESULT: PASS または EVALUATION_RESULT: FAIL を単独で出力してください。}}"
 
 log(){ printf '[watch] %s\n' "$*" >&2; }
 die(){ printf '[watch] ERROR: %s\n' "$*" >&2; exit 1; }
@@ -51,7 +51,7 @@ done
 
 # ==== 状態判定（stdin=`orca worktree ps --json`相当の出力、引数=登録path順）====
 # 1行/レーン: "<idx> <mark> <err> <alldone> <waiting> <busy> <donemark> <status> <b_title> <b_agent> <b_line> <nagents>"
-# nagents=そのworktreeのagent数。自動レビュー配布のゲート（2以上=実装+レビューの複数ペイン構成の時だけ試す）。
+# nagents=そのworktreeのagent数。自動評価配布のゲート（2以上=実装+評価の複数ペイン構成の時だけ試す）。
 # 末尾3列はWAKE通知の診断情報（2026-07-02夜の診断ロス対策）: b_title=pane識別(cockpitの--title/displayName・
 # 無ければlane名)、b_agent=際立つagentのagentType、b_line=検知した行(マーカー/エラーの最終行)。空白・改行・記号の
 # 衝突を避けるためbase64で運ぶ（keeper.shと同方式）。値が無い列は"-"のbase64（空文字だと列がずれるため）。
@@ -70,7 +70,7 @@ def is_gate(msg):
     l = last_line(msg)
     return l.startswith("段階:") and "人間確認待ち" in l and len(l) <= 30
 
-DONE_RE = re.compile(r'[A-Z][A-Z0-9_]*_DONE|REVIEW_RESULT: (?:PASS|FAIL)')
+DONE_RE = re.compile(r'[A-Z][A-Z0-9_]*_DONE|(?:EVALUATION_RESULT|REVIEW_RESULT): (?:PASS|FAIL)')
 SEEN = [s for s in os.environ.get('WATCH_SEEN', '').split(',') if s]
 
 def is_done(msg):
@@ -121,10 +121,10 @@ for i, p in enumerate(paths):
                 sal_line = last_line(a.get('lastAssistantMessage'))
                 break
     if not sal_agent:
-        # 未処理のREVIEW_RESULTは実装_DONEより優先して選ぶ（自動配布ではなく即WAKEすべきレビュー結果を
+        # 未処理の評価結果は実装_DONEより優先して選ぶ（自動配布ではなく即WAKEすべき評価結果を
         # 先に評価する=watch再起動でSEEN_EXTRAが消えた後のagent並び順に依存させない・差し戻し1所見2）
         for a in agents:
-            if is_done(a.get('lastAssistantMessage')) and last_line(a.get('lastAssistantMessage')).startswith('REVIEW_RESULT:'):
+            if is_done(a.get('lastAssistantMessage')) and re.match(r'(?:EVALUATION_RESULT|REVIEW_RESULT):', last_line(a.get('lastAssistantMessage'))):
                 sal_agent = a.get('agentType') or ''
                 sal_line = last_line(a.get('lastAssistantMessage'))
                 break
@@ -182,8 +182,8 @@ _wake_detail(){ # <mode: mark|state> <b_title> <b_agent> <b_line>
   printf '%s' "$s"
 }
 
-# ==== 自動レビュー配布v1のペイン特定（argv=path, done行, psのJSONファイル, terminal listのJSONファイル）====
-# レビューペイン=同一worktreeで「_DONE行を出していないagent」(codex優先)。1つに絞れなければ "-" を返し
+# ==== 自動評価配布のペイン特定（argv=path, done行, psのJSONファイル, terminal listのJSONファイル）====
+# 評価ペイン=同一worktreeで「_DONE行を出していないagent」(codex優先)。1つに絞れなければ "-" を返し
 # 呼び出し側が従来WAKEへフォールバックする（判断はしない: 候補が曖昧なまま送らない）。
 # agent.paneKey("<tabId>:<leafId>")とterminalの(tabId,leafId)を突合してsend用handleへ解決する。
 PY_RESOLVE=$(cat <<'PYEOF'
@@ -237,7 +237,7 @@ else:
 PYEOF
 )
 
-_resolve_review_handle(){ # <worktree-path> <done行> → 標準出力にhandle（特定不可は "-"）
+_resolve_evaluator_handle(){ # <worktree-path> <done行> → 標準出力にhandle（特定不可は "-"）
   local ps_f terms_f h
   ps_f=$(mktemp 2>/dev/null) || { printf '%s' "-"; return 0; }
   terms_f=$(mktemp 2>/dev/null) || { rm -f "$ps_f"; printf '%s' "-"; return 0; }
@@ -254,7 +254,7 @@ DEADLINE=$((START_TS + WATCH_MAX))
 # 自動配布済みマーカーの実行時seen。起動時WATCH_SEENへ連結して判定側へ渡し、配布後の再検知を抑止する
 SEEN_EXTRA=""
 
-log "見張り開始: ${LANE_COUNT}レーン poll=${WATCH_POLL}s max=${WATCH_MAX}s auto_review=${WATCH_AUTO_REVIEW} (${LANES[*]})"
+log "見張り開始: ${LANE_COUNT}レーン poll=${WATCH_POLL}s max=${WATCH_MAX}s auto_evaluation=${WATCH_AUTO_EVALUATION} (${LANES[*]})"
 
 while true; do
   NOW=$(date +%s)
@@ -286,31 +286,31 @@ while true; do
       echo "WAKE[$lane]: 人間確認待ちマーカー検知(段階:…最終行)$(_wake_detail mark "${b_title:-}" "${b_agent:-}" "${b_line:-}")"
       exit 0
     fi
-    # 優先度2.5: 完了/レビューマーカーの単独最終行（正規表現grepのみ・判断はしない。
+    # 優先度2.5: 完了/評価マーカーの単独最終行（正規表現grepのみ・判断はしない。
     # 指揮官が処理済みのマーカーは WATCH_SEEN の完全一致で除外＝停滞検知(優先度4)へ格下げ）。
-    # 実装_DONEはWATCH_AUTO_REVIEW=1かつ複数ペイン構成なら自動レビュー配布して監視継続（受け渡し自動化v1）。
-    # REVIEW_RESULT最終行・配布不可(特定失敗/send失敗/1ペイン)は従来どおり即WAKE=指揮官対応。
+    # 実装_DONEはWATCH_AUTO_EVALUATION=1かつ複数ペイン構成なら自動評価配布して監視継続。
+    # EVALUATION_RESULT最終行・配布不可(特定失敗/send失敗/1ペイン)は即WAKE=指揮官対応。
     if [ "${donemark:-0}" = "1" ]; then
       d_line="$(_b64d "${b_line:-}")"
-      if [ "$WATCH_AUTO_REVIEW" = "1" ] && [ "${nag:-0}" -ge 2 ]; then
+      if [ "$WATCH_AUTO_EVALUATION" = "1" ] && [ "${nag:-0}" -ge 2 ]; then
         case "$d_line" in
-          REVIEW_RESULT:*) : ;;
+          EVALUATION_RESULT:*|REVIEW_RESULT:*) : ;;
           *)
-            h="$(_resolve_review_handle "${PATHS[$idx]}" "$d_line")"
+            h="$(_resolve_evaluator_handle "${PATHS[$idx]}" "$d_line")"
             if [ -n "$h" ] && [ "$h" != "-" ]; then
-              if $WATCH_SEND_CMD send --terminal "$h" --prompt "${WATCH_REVIEW_PROMPT}（検知マーカー: ${d_line}・自動配布=watch.sh）" --stage "レビュー" --worktree "${PATHS[$idx]}" >/dev/null 2>&1; then
-                log "AUTO_REVIEW[$lane]: ${d_line} → レビューペインへ自動配布(handle=${h})・監視継続"
+              if $WATCH_SEND_CMD send --terminal "$h" --prompt "${WATCH_EVALUATION_PROMPT}（検知マーカー: ${d_line}・自動配布=watch.sh）" --stage "評価" --worktree "${PATHS[$idx]}" >/dev/null 2>&1; then
+                log "AUTO_EVALUATION[$lane]: ${d_line} → 評価ペインへ自動配布(handle=${h})・監視継続"
                 SEEN_EXTRA="${SEEN_EXTRA},${d_line}"
                 continue
               fi
-              log "AUTO_REVIEW[$lane]: send失敗→従来WAKEへフォールバック"
+              log "AUTO_EVALUATION[$lane]: send失敗→従来WAKEへフォールバック"
             else
-              log "AUTO_REVIEW[$lane]: レビューペイン特定不可→従来WAKEへフォールバック"
+              log "AUTO_EVALUATION[$lane]: 評価ペイン特定不可→従来WAKEへフォールバック"
             fi
             ;;
         esac
       fi
-      echo "WAKE[$lane]: 完了/レビューマーカー検知(_DONE/REVIEW_RESULT:最終行)$(_wake_detail mark "${b_title:-}" "${b_agent:-}" "${b_line:-}")"
+      echo "WAKE[$lane]: 完了/評価マーカー検知(_DONE/EVALUATION_RESULT:最終行)$(_wake_detail mark "${b_title:-}" "${b_agent:-}" "${b_line:-}")"
       exit 0
     fi
 

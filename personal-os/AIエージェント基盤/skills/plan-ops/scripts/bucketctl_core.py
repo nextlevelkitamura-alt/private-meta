@@ -89,10 +89,10 @@ def closure(directory):
         return None, ["終了記録.md が無い"]
     values = {}
     for line in path.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"\s*-\s*(終了区分|終了日時|人間確認|理由|後継・統合先|実装済み範囲|未完了事項|レビュー・判断根拠|関連commit/評価):\s*(.*)$", line)
+        m = re.match(r"\s*-\s*(終了区分|終了日時|人間確認|理由|後継・統合先|実装済み範囲|未完了事項|評価・判断根拠|関連commit/評価):\s*(.*)$", line)
         if m:
             values[m.group(1)] = m.group(2).strip()
-    required = ["終了区分", "終了日時", "人間確認", "理由", "実装済み範囲", "未完了事項", "レビュー・判断根拠", "関連commit/評価"]
+    required = ["終了区分", "終了日時", "人間確認", "理由", "実装済み範囲", "未完了事項", "評価・判断根拠", "関連commit/評価"]
     errors = [f"終了記録の必須項目が空: {key}" for key in required if not values.get(key) or "<" in values.get(key, "")]
     if values.get("終了区分") not in DISPOSITIONS:
         errors.append("終了区分が不正")

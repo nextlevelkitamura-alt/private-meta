@@ -1,6 +1,6 @@
 # 検証とplanningからactiveへの昇格
 
-静的検査と、planningからactiveへの一方向の昇格を扱う。レビューの合否、archiveへの移動、削除、卒業先の選択は自動化しない。
+静的検査と、planningからactiveへの一方向の昇格を扱う。評価の合否、archiveへの移動、削除、卒業先の選択は自動化しない。
 
 ## 1. program構造を静的検査する
 
@@ -10,9 +10,9 @@ scripts/program-lint.sh <program.mdの絶対パス>
 
 - 子計画マップと `plans/NN-*.md` の対応、子のbacklink、状態語彙、完了なのに未チェックの完了条件を検査する。
 - 違反なしはexit 0、違反ありは `<file>:<行>: <メッセージ>` とexit 1。
-- lintが通っても、計画内容・レビュー証跡・人間承認の妥当性は判定しない。該当レビュー手順で別途確認する。
+- lintが通っても、計画内容・評価証跡・人間承認の妥当性は判定しない。評価MDで別途確認する。
 
-## 2. レビュー項目を節単位で見る
+## 2. 完了条件を節単位で見る
 
 ```bash
 scripts/check-section.sh <file> <section-heading>
@@ -20,7 +20,7 @@ scripts/check-section.sh <file> <section-heading> <grep-pattern>
 ```
 
 - headingは `#` を付けない前方一致。patternなしは節本文の目視用表示、ありは節内だけの `grep -E` で、exit 0が一致、1が不一致。
-- 一致だけでレビュー合格とはしない。対象ファイル・節・期待する内容を評価書に明示し、人または独立したレビュー担当が意味を確認する。
+- 一致だけで評価PASSとはしない。対象ファイル・節・期待する内容を評価MDに明示し、独立した評価者が意味を確認する。
 
 ## 3. planningからactiveへ昇格する
 

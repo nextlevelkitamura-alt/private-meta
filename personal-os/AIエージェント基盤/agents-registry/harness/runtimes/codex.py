@@ -6,7 +6,7 @@ from pathlib import Path
 
 def command(*, role: str, cwd: Path, final_path: Path, prompt: str) -> list[str]:
     args = ["codex", "exec", "--json", "-C", str(cwd)]
-    if role in {"explorer", "reviewer"}:
+    if role in {"explorer", "evaluator"}:
         args += ["-s", "read-only"]
     return args + ["-o", str(final_path), prompt]
 

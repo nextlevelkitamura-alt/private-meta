@@ -123,9 +123,9 @@
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 05完了後・02/03/08と表示surface交差のため直列調整・04と的slug集計を共有 ／ レビュー: 都度
     人間ゲート: inbox migration適用（themes〔purpose・done_criteria込み〕・todos.theme_id/carried_from/awaiting_since・todo_steps.started_at）・board migration適用（sessions.todo_id/theme_id）・_first_guide宣言行の追加・origin/main push・本番反映
-    次: モックv2の人間確認→着手（案A確定・繰越しは移動のみ仮裁定・目的/完了条件と事前紐付けは設計統合済み）
+    次: モックv5の人間確認→実装着手（案A確定・繰越しは移動のみ仮裁定・目的/完了条件・事前紐付け・時間表示は設計統合済み）
     場所: plans/09 ／ 依存: 05（02/03/08と交差調整）
-    参照: references/ボード大課題階層モック-2026-07-19.html（UI正本）・R1/R2調査統合（2026-07-19）
+    参照: references/ボード大課題階層モックv5-2026-07-19.html（UI正本）・R1/R2調査統合（2026-07-19）
 
 ## 人間ゲート
 

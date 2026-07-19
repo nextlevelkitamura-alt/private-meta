@@ -90,8 +90,8 @@
     .task { padding: 11px 1px 0; }
     .task + .task { margin-top: 11px; border-top: 1px solid var(--line-soft); }
     .task-top { display: flex; align-items: flex-start; gap: 9px; }
-    .task-checkbox { position: relative; display: inline-grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; margin: -6px 0 0 -6px; border: 0; border-radius: 50%; background: transparent; color: #ffffff; cursor: pointer; }
-    .task-checkbox::before { content: ""; position: absolute; width: 24px; height: 24px; border: 2px solid #b7c2d3; border-radius: 50%; background: #ffffff; }
+    .task-checkbox { position: relative; display: inline-grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; margin: -6px 0 0 -6px; border: 0; border-radius: 12px; background: transparent; color: #ffffff; cursor: pointer; }
+    .task-checkbox::before { content: ""; position: absolute; width: 24px; height: 24px; border: 2px solid #b7c2d3; border-radius: 8px; background: #ffffff; }
     .task-checkbox .icon { position: relative; z-index: 1; }
     .task-main { min-width: 0; flex: 1; }
     .task-title { margin: 0; font-size: 14px; font-weight: 700; line-height: 1.4; }
@@ -112,10 +112,10 @@
     .steps { position: relative; display: grid; margin: 8px 0 0 46px; padding: 0; list-style: none; }
     .steps li { position: relative; display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; color: #8a94a3; font-size: 11px; line-height: 1.45; }
     .steps li:not(:last-child)::before { content: ""; position: absolute; left: 6px; top: 19px; bottom: -4px; width: 2px; background: #e4e9f0; }
-    .step-node { position: relative; z-index: 1; display: inline-grid; width: 14px; height: 14px; flex: 0 0 14px; place-items: center; margin-top: 1.5px; border-radius: 50%; color: #ffffff; font-size: 8.5px; font-weight: 850; line-height: 1; }
+    .step-node { position: relative; z-index: 1; display: inline-grid; width: 14px; height: 14px; flex: 0 0 14px; place-items: center; margin-top: 1.5px; border-radius: 4.5px; color: #ffffff; font-size: 8.5px; font-weight: 850; line-height: 1; }
     .step-node.done { background: var(--green); }
     .step-node.doing { background: var(--blue); }
-    .step-node.todo { background: #ffffff; border: 2px solid #c3cbd8; }
+    .step-node.todo { background: #ffffff; border: 2px solid #c3cbd8; border-radius: 4.5px; }
     .step-label { min-width: 0; flex: 1; }
     .step-time { flex: 0 0 auto; margin-left: 6px; color: #a8b1bf; font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .step-time.doing { color: var(--blue-ink); font-weight: 750; }

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIボード 大課題階層化モック（案A確定・v3）</title>
+  <style>
+    :root {
+      --canvas: #ffffff;
+      --surface: #ffffff;
+      --surface-subtle: #f8fafc;
+      --line: #dbe3ef;
+      --line-strong: #c6d4e5;
+      --ink: #172033;
+      --muted: #64748b;
+      --blue: #2563eb;
+      --blue-ink: #1d4ed8;
+      --blue-soft: #eff6ff;
+      --green: #15803d;
+      --green-soft: #ecfdf3;
+      --amber: #a16207;
+      --amber-soft: #fffbeb;
+      --gray-soft: #f1f5f9;
+      --radius: 14px;
+      --shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 8px 20px rgba(37, 99, 235, .04);
+      --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "YuGothic", "Noto Sans JP", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { background: var(--canvas); }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--font);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, textarea { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+    .page { width: min(100%, 920px); margin: 0 auto; padding: 34px 20px 72px; }
+    .eyebrow { margin: 0 0 8px; color: var(--blue-ink); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+    h1 { margin: 0; font-size: clamp(25px, 5vw, 34px); letter-spacing: -.025em; line-height: 1.25; }
+    .lede { max-width: 58ch; margin: 12px 0 0; color: var(--muted); font-size: 15px; }
+    .decision-note {
+      max-width: 700px;
+      margin: 22px 0 30px;
+      padding: 13px 15px;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius);
+      background: var(--blue-soft);
+      color: #475569;
+      font-size: 13px;
+    }
+    .decision-note strong { color: var(--blue-ink); }
+
+    .mock-head { width: min(100%, 375px); margin: 0 auto 16px; }
+    .mock-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 19px; letter-spacing: -.015em; }
+    .mock-mark { display: inline-grid; width: 27px; height: 27px; place-items: center; border-radius: 8px; background: var(--blue-soft); color: var(--blue-ink); font-size: 13px; font-weight: 800; }
+    .mock-desc { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+
+    .phone {
+      position: relative;
+      width: min(100%, 375px);
+      height: 812px;
+      margin: 0 auto;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border: 1px solid var(--line-strong);
+      border-radius: 28px;
+      background: var(--canvas);
+      box-shadow: var(--shadow);
+      scrollbar-width: thin;
+    }
+    .board { min-height: 100%; padding: 14px 12px 98px; }
+    .datebar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 6px; margin-bottom: 16px; }
+    .icon-button {
+      display: inline-grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .icon-button:active, .carry-button:active, .theme-edit:active, .agent-finish:active, .fab:active { transform: scale(.97); }
+    .date-label { text-align: center; font-size: 15px; font-weight: 750; }
+    .section { margin-top: 24px; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 2px 9px; }
+    .section-title { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 17px; letter-spacing: -.01em; }
+    .count { color: var(--muted); font-size: 12px; font-weight: 600; }
+    .hint { margin: 0 2px 9px; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
+
+    .theme-group { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: 0 1px 1px rgba(15, 23, 42, .025); }
+    .theme-group + .theme-group { margin-top: 10px; }
+    .theme-band { padding: 12px; border-bottom: 1px solid #dbeafe; background: var(--blue-soft); }
+    .theme-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .theme-name { min-width: 0; margin: 0; font-size: 14px; font-weight: 800; line-height: 1.35; }
+    .theme-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 2px; margin: -4px -4px 0 0; }
+    .theme-percent { color: var(--blue-ink); font-size: 12px; font-weight: 850; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .theme-edit { display: inline-grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 11px; background: transparent; color: var(--blue-ink); cursor: pointer; }
+    .theme-edit.is-open { border: 1px solid #bfdbfe; background: #ffffff; }
+    .theme-purpose { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .theme-details { margin-top: 4px; }
+    .theme-details summary { display: flex; min-height: 44px; align-items: center; cursor: pointer; color: var(--blue-ink); font-size: 11px; font-weight: 750; list-style: none; }
+    .theme-details summary::-webkit-details-marker { display: none; }
+    .theme-details summary::after { content: "▸"; margin-left: 4px; font-size: 13px; transition: transform .18s ease; }
+    .theme-details[open] summary::after { transform: rotate(90deg); }
+    .condition-copy { margin: -2px 0 4px; color: #475569; font-size: 10.5px; line-height: 1.45; }
+
+    .theme-editor { margin-top: 8px; padding-top: 10px; border-top: 1px solid #bfdbfe; }
+    .editor-label { display: block; margin: 0 0 4px; color: var(--blue-ink); font-size: 10px; font-weight: 800; }
+    .editor-field { width: 100%; min-height: 44px; padding: 9px 10px; border: 1px solid #bfdbfe; border-radius: 9px; background: #ffffff; color: var(--ink); font-size: 12px; }
+    textarea.editor-field { display: block; resize: vertical; line-height: 1.45; }
+    .editor-field + .editor-label { margin-top: 9px; }
+    .editor-note { margin: 8px 0 0; color: var(--muted); font-size: 10px; line-height: 1.4; }
+
+    .task-list { padding: 3px 10px 10px; }
+    .task { padding: 10px 1px 0; }
+    .task + .task { margin-top: 10px; border-top: 1px solid #e7edf5; }
+    .task-top { display: flex; align-items: flex-start; gap: 8px; }
+    .task-checkbox { position: relative; display: inline-grid; width: 44px; height: 44px; flex: 0 0 auto; place-items: center; margin: -8px 0 0; border: 0; border-radius: 50%; background: transparent; color: #ffffff; cursor: pointer; }
+    .task-checkbox::before { content: ""; position: absolute; width: 28px; height: 28px; border: 2px solid #9fb0c5; border-radius: 50%; background: #ffffff; }
+    .task-checkbox .icon { position: relative; z-index: 1; }
+    .task-main { min-width: 0; flex: 1; }
+    .task-title { margin: 0; font-size: 14px; font-weight: 700; line-height: 1.4; }
+    .task-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 6px; }
+    .status { display: inline-flex; width: fit-content; align-items: center; min-height: 23px; padding: 0 8px; border: 1px solid; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1; white-space: nowrap; }
+    .status.run { border-color: #bfdbfe; background: var(--blue-soft); color: var(--blue-ink); }
+    .status.plan { border-color: #d5dde8; background: var(--gray-soft); color: #475569; }
+    .status.review { border-color: #fde68a; background: var(--amber-soft); color: var(--amber); }
+    .percent { color: var(--blue-ink); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .yesterday { color: var(--muted); font-size: 11px; }
+    .progress { height: 4px; margin: 8px 0 0 52px; overflow: hidden; border-radius: 999px; background: #e8edf4; }
+    .progress span { display: block; height: 100%; border-radius: inherit; background: var(--blue); }
+    .steps { display: grid; gap: 3px; margin: 7px 0 0 52px; padding: 0; list-style: none; }
+    .steps li { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+    .step-icon { display: inline-block; width: 12px; flex: 0 0 12px; text-align: center; font-weight: 800; }
+    .step-icon.done { color: var(--green); }
+    .step-icon.doing { color: var(--blue); }
+    .step-icon.todo { color: #94a3b8; }
+    .task-action { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 9px 0 0 52px; }
+    .carry-button { min-height: 44px; padding: 0 11px; border: 1px solid var(--line-strong); border-radius: 10px; background: #ffffff; color: #475569; font-size: 12px; font-weight: 750; cursor: pointer; }
+    .tap-note { color: var(--muted); font-size: 10px; line-height: 1.35; }
+
+    .agent-card, .finished-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: 0 1px 1px rgba(15, 23, 42, .02); }
+    .agent-row { display: flex; align-items: flex-start; gap: 8px; min-height: 72px; padding: 12px 12px 10px; }
+    .agent-row + .agent-row { border-top: 1px solid #e7edf5; }
+    .agent-row .task-checkbox { margin: -8px 0 0 -8px; }
+    .agent-session { min-width: 0; flex: 1; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+    .agent-name-line { display: flex; min-width: 0; align-items: center; gap: 7px; }
+    .live-dot { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px #dcfce7; }
+    .live-dot.wait { background: #f59e0b; box-shadow: 0 0 0 3px #fef3c7; }
+    .live-dot.idle { background: #94a3b8; box-shadow: 0 0 0 3px #e2e8f0; }
+    .agent-name { min-width: 0; margin: 0; font-size: 13px; font-weight: 750; }
+    .breadcrumb { margin: 4px 0 0; color: var(--muted); font-size: 10.5px; line-height: 1.35; }
+    .agent-state { display: block; margin-top: 4px; color: var(--green); font-size: 10.5px; font-weight: 750; }
+    .agent-state.wait { color: var(--amber); }
+    .agent-state.idle { color: #64748b; }
+    .agent-check-label { margin: 0 2px 9px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+
+    .finished-card { padding: 10px 12px; }
+    .finished-card + .finished-card { margin-top: 9px; }
+    .finished-theme { display: flex; align-items: center; gap: 6px; color: var(--blue-ink); font-size: 12px; font-weight: 800; }
+    .finished-item { display: flex; align-items: baseline; gap: 7px; margin-top: 8px; color: #475569; font-size: 12px; }
+    .finished-item .check { color: var(--green); font-weight: 900; }
+    .finished-steps { color: var(--muted); font-size: 10.5px; }
+    .new-heading { color: #64748b; font-size: 10.5px; font-weight: 700; }
+
+    .fab { position: sticky; bottom: 14px; display: flex; width: 54px; height: 54px; align-items: center; justify-content: center; margin: 18px 0 0 auto; border: 0; border-radius: 50%; background: var(--blue); color: #ffffff; box-shadow: 0 8px 18px rgba(37, 99, 235, .28); cursor: pointer; }
+    .fab-note { margin: 8px 0 0; color: var(--muted); font-size: 10px; text-align: right; }
+    .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon.small { width: 15px; height: 15px; }
+    .icon.tiny { width: 13px; height: 13px; }
+    .phone-summary { margin: 12px 2px 0; color: var(--muted); font-size: 11px; text-align: center; }
+
+    @media (max-width: 430px) {
+      .page { width: 100%; padding: 22px 12px 48px; }
+      .phone { height: min(812px, 92dvh); border-radius: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="12" rx="3"/><path d="M12 3v4M8 12h.01M16 12h.01M8 16h8"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+  </svg>
+
+  <main class="page">
+    <header>
+      <p class="eyebrow">案A確定・v3　/　FOCUSMAP AI BOARD · 2026-07-19</p>
+      <h1>AIボード：テーマから今日の仕事を見渡す</h1>
+      <p class="lede">大きい課題テーマを帯として先に置き、目的・完了条件・今日のタスク・動いているエージェント・終わったことを同じまとまりで読めるモックです。</p>
+    </header>
+
+    <aside class="decision-note" aria-label="v3で反映した内容">
+      <strong>人間フィードバック3点を反映。</strong> エージェント完了チェックを左側のタスク型へ統一し、テーマ帯を目的・短い完了条件・完了%へ簡素化しました。
+    </aside>
+
+    <section aria-labelledby="mock-title">
+      <div class="mock-head">
+        <h2 class="mock-title" id="mock-title"><span class="mock-mark">A</span>テーマ帯でセクション分け</h2>
+        <p class="mock-desc">375px幅・縦スクロール。テーマの境界が、今日の作業と完了のまとまりです。</p>
+      </div>
+
+      <div class="phone" aria-label="案A確定版の375px幅スマホボードモック">
+        <div class="board">
+          <header class="datebar">
+            <button class="icon-button" type="button" aria-label="前の日へ。7月18日のボードを開く"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+            <div class="date-label">7/19（日） 今日</div>
+            <button class="icon-button" type="button" aria-label="次の日へ。7月20日のボードを開く"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+          </header>
+
+          <section class="section" aria-labelledby="todos">
+            <div class="section-head">
+              <h3 class="section-title" id="todos"><svg class="icon small" aria-hidden="true"><use href="#i-list"/></svg>今日のやること</h3>
+              <span class="count">3件</span>
+            </div>
+            <p class="hint">鉛筆とテーマの内容は人間が編集。タスクの左側の丸いチェックは、人間の完了タップです。完了条件はタップで開きます。</p>
+
+            <article class="theme-group" aria-labelledby="theme-ai">
+              <div class="theme-band">
+                <div class="theme-top">
+                  <h4 class="theme-name" id="theme-ai">AI実行ダッシュボード作成・改善</h4>
+                  <div class="theme-actions">
+                    <span class="theme-percent" aria-label="配下タスクの完了割合（SQL集計想定）40パーセント">40%</span>
+                    <button class="theme-edit is-open" type="button" aria-label="テーマ編集を開いた状態" title="人間がテーマを編集"><svg class="icon small"><use href="#i-pencil"/></svg></button>
+                  </div>
+                </div>
+                <p class="theme-purpose">AIが動いている仕事と、今日の完了を一画面で迷わず把握できるようにする。</p>
+                <details class="theme-details">
+                  <summary>完了条件</summary>
+                  <p class="condition-copy">テーマ・タスク・エージェントの紐付きが追え、人間の完了操作が正しく終わったことへ格納される。</p>
+                </details>
+
+                <div class="theme-editor" aria-label="テーマ編集を開いた状態">
+                  <label class="editor-label" for="theme-name-input">テーマ名</label>
+                  <input class="editor-field" id="theme-name-input" value="AI実行ダッシュボード作成・改善">
+                  <label class="editor-label" for="theme-purpose-input">目的</label>
+                  <input class="editor-field" id="theme-purpose-input" value="AIが動いている仕事と、今日の完了を一画面で把握する">
+                  <label class="editor-label" for="theme-condition-input">完了条件</label>
+                  <textarea class="editor-field" id="theme-condition-input" rows="2">テーマ・タスク・エージェントの紐付きが追え、人間の完了操作が正しく終わったことへ格納される。</textarea>
+                  <p class="editor-note">AIが起票時に自動で書き、人間が直せる。鉛筆をタップすると、この3欄の編集フィールドを開く。</p>
+                </div>
+              </div>
+              <div class="task-list">
+                <div class="task">
+                  <div class="task-top">
+                    <button class="task-checkbox" type="button" aria-label="当日ボードSQL化のUI整理を完了にする"><svg class="icon small"><use href="#i-check"/></svg></button>
+                    <div class="task-main">
+                      <p class="task-title">当日ボードSQL化のUI整理</p>
+                      <div class="task-meta"><span class="status run">実行中</span><span class="percent">62%</span></div>
+                    </div>
+                  </div>
+                  <div class="progress" aria-label="進捗62パーセント"><span style="width:62%"></span></div>
+                  <ul class="steps" aria-label="入れ子ステップ">
+                    <li><span class="step-icon done">✓</span>テーマとタスクの紐付けを設計</li>
+                    <li><span class="step-icon doing">▶</span>375px画面の表示密度を調整</li>
+                    <li><span class="step-icon todo">○</span>実機でボード全体を確認</li>
+                  </ul>
+                  <div class="task-action"><button class="carry-button" type="button" aria-label="当日ボードSQL化のUI整理を明日へ引き継ぐ">明日へ引き継ぐ</button><span class="tap-note">タップ: 未完のまま明日へ</span></div>
+                </div>
+
+                <div class="task">
+                  <div class="task-top">
+                    <button class="task-checkbox" type="button" aria-label="計画スマホ表示の入口を決めるを完了にする"><svg class="icon small"><use href="#i-check"/></svg></button>
+                    <div class="task-main">
+                      <p class="task-title">計画スマホ表示の入口を決める</p>
+                      <div class="task-meta"><span class="status review">確認待ち</span><span class="percent">100%</span><span class="yesterday">昨日から</span></div>
+                    </div>
+                  </div>
+                  <div class="progress" aria-label="進捗100パーセント"><span style="width:100%;background:#15803d"></span></div>
+                  <ul class="steps" aria-label="入れ子ステップ">
+                    <li><span class="step-icon done">✓</span>active計画の読取仕様を整理</li>
+                    <li><span class="step-icon done">✓</span>人間確認用の選択肢を用意</li>
+                  </ul>
+                  <div class="task-action"><button class="carry-button" type="button" aria-label="計画スマホ表示の入口を明日へ引き継ぐ">明日へ引き継ぐ</button><span class="tap-note">タップ: 日付だけ翌日へ</span></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="theme-group" aria-labelledby="theme-work">
+              <div class="theme-band">
+                <div class="theme-top">
+                  <h4 class="theme-name" id="theme-work">仕事の求人整備</h4>
+                  <div class="theme-actions">
+                    <span class="theme-percent" aria-label="配下タスクの完了割合（SQL集計想定）25パーセント">25%</span>
+                    <button class="theme-edit" type="button" aria-label="テーマ「仕事の求人整備」を編集" title="人間がテーマを編集"><svg class="icon small"><use href="#i-pencil"/></svg></button>
+                  </div>
+                </div>
+                <p class="theme-purpose">候補者が必要な情報を迷わず判断できる求人票を整える。</p>
+                <details class="theme-details">
+                  <summary>完了条件</summary>
+                  <p class="condition-copy">求人票の必須項目と表現ルールが決まり、対象求人の下書きを担当者が確認できる。</p>
+                </details>
+              </div>
+              <div class="task-list">
+                <div class="task">
+                  <div class="task-top">
+                    <button class="task-checkbox" type="button" aria-label="求人票の下書きを作るを完了にする"><svg class="icon small"><use href="#i-check"/></svg></button>
+                    <div class="task-main">
+                      <p class="task-title">求人票の下書きを作る</p>
+                      <div class="task-meta"><span class="status plan">立案中</span><span class="percent">25%</span></div>
+                    </div>
+                  </div>
+                  <div class="progress" aria-label="進捗25パーセント"><span style="width:25%"></span></div>
+                  <ul class="steps" aria-label="入れ子ステップ">
+                    <li><span class="step-icon done">✓</span>既存求人の不足項目を抽出</li>
+                    <li><span class="step-icon doing">▶</span>原稿の構成を作成</li>
+                    <li><span class="step-icon todo">○</span>担当者へ確認依頼</li>
+                  </ul>
+                  <div class="task-action"><button class="carry-button" type="button" aria-label="求人票の下書きを作るを明日へ引き継ぐ">明日へ引き継ぐ</button><span class="tap-note">タップ: 未完のまま明日へ</span></div>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section class="section" aria-labelledby="agents">
+            <div class="section-head">
+              <h3 class="section-title" id="agents"><svg class="icon small" aria-hidden="true"><use href="#i-bot"/></svg>動いているエージェント</h3>
+              <span class="count">3体</span>
+            </div>
+            <p class="hint">行の本文をタップすると該当セッションへ。パンくずは「テーマ › タスク」を示し、左側の丸いチェックは人間の完了タップです。</p>
+            <p class="agent-check-label">チェックをタップすると、事前に紐付いた先（終わったことの該当タスク入れ子）へ格納。紐付きが無いセッションは新見出しとして格納。</p>
+            <div class="agent-card">
+              <div class="agent-row">
+                <button class="task-checkbox agent-finish" type="button" aria-label="ボードUI実装を人間が完了にする" title="人間が完了にする"><svg class="icon small"><use href="#i-check"/></svg></button>
+                <button class="agent-session" type="button" aria-label="ボードUI実装エージェントのセッションを開く">
+                  <span class="agent-name-line"><span class="live-dot" aria-hidden="true"></span><span class="agent-name">ボードUI実装</span></span>
+                  <span class="breadcrumb">AI実行ダッシュボード作成・改善 › 当日ボードSQL化のUI整理</span><span class="agent-state">稼働中</span>
+                </button>
+              </div>
+              <div class="agent-row">
+                <button class="task-checkbox agent-finish" type="button" aria-label="求人リサーチを人間が完了にする" title="人間が完了にする"><svg class="icon small"><use href="#i-check"/></svg></button>
+                <button class="agent-session" type="button" aria-label="求人リサーチエージェントのセッションを開く">
+                  <span class="agent-name-line"><span class="live-dot wait" aria-hidden="true"></span><span class="agent-name">求人リサーチ</span></span>
+                  <span class="breadcrumb">仕事の求人整備 › 求人票の下書きを作る</span><span class="agent-state wait">待機 8分</span>
+                </button>
+              </div>
+              <div class="agent-row">
+                <button class="task-checkbox agent-finish" type="button" aria-label="調査メモ整理を人間が完了にする" title="人間が完了にする"><svg class="icon small"><use href="#i-check"/></svg></button>
+                <button class="agent-session" type="button" aria-label="調査メモ整理エージェントのセッションを開く">
+                  <span class="agent-name-line"><span class="live-dot idle" aria-hidden="true"></span><span class="agent-name">調査メモ整理</span></span>
+                  <span class="breadcrumb">未紐付け→新見出しへ</span><span class="agent-state idle">終了待ち</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" aria-labelledby="finished">
+            <div class="section-head"><h3 class="section-title" id="finished"><svg class="icon small" aria-hidden="true"><use href="#i-check"/></svg>終わったこと</h3></div>
+            <p class="hint">紐付きの完了は該当テーマ・タスクの入れ子へ。未紐付けのセッションは、新しい見出しを作って格納します。</p>
+            <div class="finished-card">
+              <div class="finished-theme"><svg class="icon tiny" aria-hidden="true"><use href="#i-folder"/></svg>AI実行ダッシュボード作成・改善</div>
+              <div class="finished-item"><span class="check">✓</span><span>テーマの命名規則を整理 <span class="finished-steps">（✓ 3ステップ完了）</span></span></div>
+            </div>
+            <div class="finished-card">
+              <div class="finished-theme"><svg class="icon tiny" aria-hidden="true"><use href="#i-folder"/></svg>仕事の求人整備</div>
+              <div class="finished-item"><span class="check">✓</span><span>既存求人8件を分類 <span class="finished-steps">（✓ 2ステップ完了）</span></span></div>
+            </div>
+            <div class="finished-card">
+              <div class="finished-theme"><svg class="icon tiny" aria-hidden="true"><use href="#i-folder"/></svg><span class="new-heading">新見出し（未紐付けセッション）</span></div>
+              <div class="finished-item"><span class="check">✓</span><span>調査メモ整理</span></div>
+            </div>
+          </section>
+
+          <button class="fab" type="button" aria-label="やることを追加。テーマを選びタスクを起票する"><svg class="icon"><use href="#i-plus"/></svg></button>
+          <p class="fab-note">＋をタップ: テーマを選んでやることを追加</p>
+        </div>
+      </div>
+      <p class="phone-summary">375px × 812px。テーマ帯は目的・完了条件・完了%だけを常時見渡せる密度にしています。</p>
+    </section>
+  </main>
+</body>
+</html>

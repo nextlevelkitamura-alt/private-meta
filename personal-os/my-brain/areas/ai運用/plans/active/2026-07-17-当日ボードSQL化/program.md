@@ -122,8 +122,8 @@
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 05完了後・02/03/08と表示surface交差のため直列調整・04と的slug集計を共有 ／ レビュー: 都度
-    人間ゲート: inbox migration適用（themes・todos.theme_id・carried_from）・origin/main push・本番反映
-    次: 人間裁定2点（モック案A/B・繰越し痕跡の要否）→着手
+    人間ゲート: inbox migration適用（themes〔purpose・done_criteria込み〕・todos.theme_id・carried_from）・board migration適用（sessions.todo_id/theme_id）・_first_guide宣言行の追加・origin/main push・本番反映
+    次: モックv2の人間確認→着手（案A確定・繰越しは移動のみ仮裁定・目的/完了条件と事前紐付けは設計統合済み）
     場所: plans/09 ／ 依存: 05（02/03/08と交差調整）
     参照: references/ボード大課題階層モック-2026-07-19.html（UI正本）・R1/R2調査統合（2026-07-19）
 
@@ -139,7 +139,7 @@
   - inbox migration適用（plan_docs・plan_progress）・~/Private post-commit hook登録・初回一括投入＝子06
   - 依存パッケージ追加（react-markdown・remark-gfm）＝子07
   - board DBへのmigration適用（session_subagents）＝子08
-  - inbox migration適用（themes・todos.theme_id・carried_from）＝子09
+  - inbox migration適用（themes〔purpose・done_criteria込み〕・todos.theme_id・carried_from）と board migration適用（sessions.todo_id/theme_id）・_first_guide宣言行の追加＝子09
   - origin/main への push・Cloud Run本番反映＝子01・02・04・05・07・08・09
 - planning→active昇格は、explain/program.html の提示と人間の実行OKを得てから bucketctl で行う（active上限3の確認込み）
 

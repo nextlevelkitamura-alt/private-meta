@@ -102,28 +102,28 @@
     次: 親の最終一括確認待ち（保留再検証済み=評価02。フックバグ2件を発見・修正し自動同期E2E実測PASS）
     場所: plans/06 ／ 依存: ―（03/05とファイル調整）
     参照: 評価/06-計画ミラー同期-評価01.md ／ 実装 Private@a2c730d9
-- [ ] 07 計画スマホ表示 … 計画
+- [ ] 07 計画スマホ表示 … 人間確認（一括評価01=FAIL0）
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 06完了後（データ依存）・02/05と切替ピル等の共有ファイル調整 ／ レビュー: 一括（07・08・09で束ね。末端子で後続利用なし）
     人間ゲート: 依存追加（react-markdown・remark-gfm）承認・origin/main push・本番反映
-    次: 06完了後に着手
+    次: 人間ゲート（push・本番反映）→375px目視は親最終一括
     場所: plans/07 ／ 依存: 06
-    参照: ―
-- [ ] 08 サブエージェント入れ子可視化 … 計画
+    参照: 評価/07-計画スマホ表示-評価01.md ／ 実装 focusmap@4c37d8e9
+- [ ] 08 サブエージェント入れ子可視化 … 人間確認（一括評価01=FAIL0）
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤 hooks-registry subagentイベント・board.py）
     並列: 05完了後（UI部品依存）・03とはhook/board.py交差のため直列調整 ／ レビュー: 一括（07・08・09で束ね。末端子で後続利用なし）
     人間ゲート: board DBへのmigration適用（session_subagents）・origin/main push・本番反映
-    次: 05完了後に着手（最初にSubagentStart payloadの実物確認）
+    次: 人間ゲート（session_subagents migration・push・本番反映）→実挙動確認
     場所: plans/08 ／ 依存: 05（03とはhook調整）
     参照: 2026-07-18人間採用（IMG_4307の議論・機械=hook/意味=AI分担）
-- [ ] 09 大課題テーマ階層と横断表示 … 計画
+- [ ] 09 大課題テーマ階層と横断表示 … 人間確認（一括評価01=FAIL0・指摘1修正済み）
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 05完了後・02/03/08と表示surface交差のため直列調整・04と的slug集計を共有 ／ レビュー: 一括（07・08・09で束ね。2026-07-19人間指示=重要子のみ都度）
     人間ゲート: inbox migration適用（themes〔purpose・done_criteria込み〕・todos.theme_id/carried_from/awaiting_since・todo_steps.started_at）・board migration適用（sessions.todo_id/theme_id）・_first_guide宣言行の追加・origin/main push・本番反映
-    次: モックv5の人間確認→実装着手（案A確定・繰越しは移動のみ仮裁定・目的/完了条件・事前紐付け・時間表示は設計統合済み）
+    次: 人間ゲート（inbox/board migration・push・本番反映）→実挙動確認と375px目視（親最終一括）
     場所: plans/09 ／ 依存: 05（02/03/08と交差調整）
     参照: references/ボード大課題階層モックv5-2026-07-19.html（UI正本）・R1/R2調査統合（2026-07-19）
 

@@ -83,6 +83,11 @@ def upserts():
     return [(sql, args) for sql, args in captured if "INTO sessions" in sql]
 
 
+def subagents(needle="session_subagents"):
+    """子08: captured から session_subagents 文（INSERT/UPDATE）を抽出。"""
+    return [(sql, args) for sql, args in captured if needle in sql]
+
+
 def hhmm_ago(mins):
     return (datetime.datetime.now() - datetime.timedelta(minutes=mins)).strftime("%H:%M")
 
@@ -129,28 +134,35 @@ clear()
 run("flip", "--key", "evnt0001", "--state", "run")
 ok("flip復帰(wait→run)=イベント1本", len(events()) == 1 and events()[0]["state"] == "run")
 
-# ---- sub-start / sub-end: 状態変化時だけevent、体数変化は毎回upsert ----
+# ---- sub-start / sub-end: 状態変化時だけevent、体数変化は毎回upsert、子08=個体行も積む ----
 clear()
 run("sub-start", "--key", "evnt0001")
 ok("sub-start: run→subイベント", len(events()) == 1
    and events()[0]["state"] == "sub" and events()[0]["trig"] == "sub-start")
-ok("sub-start: upsert+eventを1バッチ", len(calls) == 1 and len(calls[0]) == 2 and len(upserts()) == 1)
+ok("sub-start(run→sub): upsert+event+subagent行を1バッチ",
+   len(calls) == 1 and len(calls[0]) == 3 and len(upserts()) == 1)
+ok("子08 sub-start: session_subagents INSERT 1本", len(subagents("INTO session_subagents")) == 1)
 clear()
 run("sub-start", "--key", "evnt0001")
-ok("サブ1→2体: イベント無し・sessions upsertあり", len(events()) == 0 and len(upserts()) == 1)
+ok("サブ1→2体: 状態遷移event無し・upsertあり（体数±1不変）", len(events()) == 0 and len(upserts()) == 1)
+ok("子08 サブ1→2体: 遷移event無しでも個体行は積む", len(subagents("INTO session_subagents")) == 1)
 clear()
 run("sub-end", "--key", "evnt0001")
-ok("サブ2→1体: イベント無し・sessions upsertあり", len(events()) == 0 and len(upserts()) == 1)
+ok("サブ2→1体: 状態遷移event無し・upsertあり", len(events()) == 0 and len(upserts()) == 1)
+ok("子08 サブ2→1体: 個体行を1本close(UPDATE)", len(subagents("UPDATE session_subagents")) == 1)
 clear()
 run("sub-end", "--key", "evnt0001")
 ok("最後のsub-end: sub→runイベント", len(events()) == 1
    and events()[0]["state"] == "run" and events()[0]["trig"] == "sub-end")
-ok("最後のsub-end: upsert+eventを1バッチ", len(calls) == 1 and len(calls[0]) == 2 and len(upserts()) == 1)
+ok("最後のsub-end(sub→run): upsert+event+subagent closeを1バッチ",
+   len(calls) == 1 and len(calls[0]) == 3 and len(upserts()) == 1)
+ok("子08 最後のsub-end: session_subagents UPDATE(close) 1本", len(subagents("UPDATE session_subagents")) == 1)
 run("flip", "--key", "evnt0001", "--state", "wait")
 clear()
 run("sub-start", "--key", "evnt0001")
 ok("sub-start: wait→subもイベント", len(events()) == 1
    and events()[0]["state"] == "sub" and events()[0]["trig"] == "sub-start")
+ok("子08 wait→sub でも個体行を積む", len(subagents("INTO session_subagents")) == 1)
 run("sub-end", "--key", "evnt0001")
 
 # ---- log: イベント0本 ----

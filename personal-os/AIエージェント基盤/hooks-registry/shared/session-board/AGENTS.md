@@ -23,6 +23,8 @@
 
 `update` は任意で `--todo <id>` / `--theme <id>` を取り、そのセッションの所属先を `sessions.todo_id/theme_id`（board DB・migration `turso/migrations/*_sessions_todo_theme.sql` 適用後のみ）へ宣言する（子09）。MDには載せない board DB 限定列で、focusmap 側のエージェント行「テーマ›タスク」表示と「終わったこと」格納先判定に使う。宣言なしのupdateはこのUPDATEを送らない（毎回の無駄書きを避ける）。宣言文の注入は `_first_guide`（初回のみ）にあり、`_mirror`（毎ターン）には入れない＝コスト規律。
 
+`sub-start` / `sub-end` は体数±1・🔵⇄🟢 の既存遷移（MD/sessions）に加えて、`session_subagents`（board DB・migration `turso/migrations/20260719_session_subagents.sql` 適用後のみ）へサブ個体行を積む/閉じる（開始=running行を1本INSERT・終了=最古のrunning1本をclose・FIFO近似。同一バッチ=HTTP往復1回）。ラベル（何をやっているか1行）は `sub-label --key <s:xxxx> --label "<1行>" [--seq <n>]` で**AIだけ**が書く（意味づけはboard.py経由のみ・hookは文面を創作しない・`--seq` 未指定=直前に起動したrunning行）。「稼働中N体」は `status='running'` の集計でSQL導出し、主観値・第2の状態台帳を保存しない（子08）。migration未適用でも `SESSION_BOARD_NO_TURSO` と同様に best-effort 送信がドロップするだけで体数±1のMD挙動は不変。
+
 ## board.py 子05コマンド（inbox DB＝todos/todo_steps系・MDには触れない）
 
 focusmap 今日ボードの「タスク入れ子と2層チェック」を駆動する。inbox DBへ直接best-effort送信し、board既定spoolへは載せない（cross-DB replay汚染を避ける）。migration適用後にだけ実挙動する（`db/turso/migrations/*` は focusmap 側・inbox宛）。

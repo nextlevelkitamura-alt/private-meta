@@ -38,6 +38,9 @@ _stmt_session_delete = turso_store.stmt_session_delete
 # 子09: セッション所属先の宣言（sessions.todo_id/theme_id）と大課題テーマの作成（inbox themes）。
 _stmt_session_affiliation = turso_store.stmt_session_affiliation
 _stmt_theme_insert = turso_store.stmt_theme_insert
+# 子08: サブエージェント入れ子可視化（board DB: session_subagents の開始/終了/ラベル）。
+_stmt_subagent_start, _stmt_subagent_end = turso_store.stmt_subagent_start, turso_store.stmt_subagent_end
+_stmt_subagent_label = turso_store.stmt_subagent_label
 _stmts_logs, _stmts_events = turso_store.stmts_logs, turso_store.stmts_events
 _stmts_reconcile, _stmt_goal_insert = turso_store.stmts_reconcile, turso_store.stmt_goal_insert
 _spool_paths, _spoolable_statements = turso_spool.paths, turso_spool.spoolable
@@ -326,7 +329,7 @@ def _mutate(cmd, args, entries, key, lines, pending_events):
 
 def main():
     if len(sys.argv) < 2:
-        sys.exit("usage: board.py <add|update|flip|sub-start|sub-end|finish|log|check|show|goals|reconcile|goal-add"
+        sys.exit("usage: board.py <add|update|flip|sub-start|sub-end|sub-label|finish|log|check|show|goals|reconcile|goal-add"
                  "|theme-add|steps|step-done|step-doing|step-skip|ask|flow-done|answers> ...")
     cmd, args, entries = parse_args(sys.argv[1:])
     if cmd == "goal-add":
@@ -351,6 +354,21 @@ def main():
         _turso_sync([statement], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)
         print(theme_id)   # 呼び出し元（AI）が update --theme <id> や起票の紐付けに使う
         return
+    if cmd == "sub-label":
+        # 子08: サブ個体行へ1行ラベルを付ける（意味づけ＝AI・board DBのsession_subagentsだけを書く）。
+        # 委任直後に指揮官が叩く（--nowと同型）。hookは文面を創作せず、ラベルはここ経由のみが正。
+        # --seq 未指定=直前に起動した running 行／指定=その連番。MD・体数・状態機械には触れない。
+        label_key = args.get("key", "").removeprefix("s:")
+        label = args.get("label")
+        if not label_key or not (label or "").strip():
+            sys.exit('usage: board.py sub-label --key <s:xxxx> --label "<何をやっているか1行>" [--seq <n>]')
+        _, date_s = daily_path()
+        seq = args.get("seq")
+        seq = int(seq) if seq and str(seq).isdigit() else None
+        statement = _stmt_subagent_label(f"s:{label_key}", date_s, label, seq)
+        if statement:
+            _turso_sync([statement])
+        return
     # 子05: タスク入れ子・2層チェック（inbox DBのtodos/todo_stepsだけを書く。daily/keyには触れない）。
     if _run_inbox_command(cmd, args, entries):
         return
@@ -374,6 +392,17 @@ def main():
             affiliation = _stmt_session_affiliation(key, args.get("todo"), args.get("theme"))
             if affiliation:
                 stmts.append(affiliation)
+        # 子08: サブ体数±1に合わせて session_subagents へ個体行を積む/閉じる（同一バッチ=HTTP往復1回）。
+        # 親行が在る時だけ（row is not None＝存在しないkeyのsub-startは無害・行を作らない）。
+        # 体数±1・🔵⇄🟢 の遷移（upsert/events）はそのまま。ここは「中身の見える化」を足すだけ。
+        if row and cmd == "sub-start":
+            sub_stmt = _stmt_subagent_start(f"s:{key}", date_s)
+            if sub_stmt:
+                stmts.append(sub_stmt)
+        elif row and cmd == "sub-end":
+            sub_stmt = _stmt_subagent_end(f"s:{key}", date_s)
+            if sub_stmt:
+                stmts.append(sub_stmt)
         _turso_sync(stmts)
     elif cmd == "log":
         _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s, session_key=f"s:{key}", todo_id=args.get("todo")))

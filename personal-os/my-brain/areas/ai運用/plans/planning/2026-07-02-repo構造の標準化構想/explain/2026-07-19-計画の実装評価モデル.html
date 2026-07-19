@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>計画の実装・評価モデル — 2026-07-19</title>
+<style>
+  :root{--ink:#1c2433;--muted:#5f6b7b;--line:#d8dee8;--base:#fff;--soft:#f6f8fb;--blue:#2d4f9a;--bluebg:#eaf0ff;--green:#1b704c;--greenbg:#e6f4ec;--orange:#9a4c22;--orangebg:#fff0e8;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SFMono-Regular",Consolas,monospace}
+  *{box-sizing:border-box} body{margin:0;background:#fff;color:var(--ink);font-family:var(--sans);line-height:1.7}.page{max-width:1030px;margin:auto;padding:44px 24px 80px}.eyebrow{margin:0 0 8px;color:var(--muted);font-size:12px;letter-spacing:.12em}.title{margin:0;font-size:34px;line-height:1.25}.lede{max-width:720px;margin:14px 0 0;color:var(--muted);font-size:16px}.lede b{color:var(--ink)}.nav{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 38px}.nav a,.pill{border-radius:999px;padding:4px 11px;font-size:12px;text-decoration:none}.nav a{border:1px solid var(--line);color:var(--blue);background:var(--base)}.pill{display:inline-block}.ok{background:var(--greenbg);color:var(--green)}.info{background:var(--bluebg);color:var(--blue)}.warn{background:var(--orangebg);color:var(--orange)}h2{margin:0 0 8px;font-size:18px}section{margin-top:44px}.lead{margin:0 0 17px;color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card,.box,details{border:1px solid var(--line);border-radius:14px;background:var(--base);padding:17px}.card h3{font-size:14px;margin:0 0 7px}.card p{margin:0;font-size:13.5px;color:var(--muted)}figure{margin:0;border:1px solid var(--line);border-radius:14px;padding:18px;background:#fff;overflow:auto}svg{min-width:700px;width:100%;height:auto;display:block}figcaption{font-size:12px;color:var(--muted);margin-top:9px}.flow{display:grid;grid-template-columns:1fr 38px 1fr 38px 1fr;align-items:center;gap:7px}.node{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:13px}.node b{display:block;font-size:14px;margin-bottom:4px}.arrow{text-align:center;color:var(--muted);font-size:22px}.def{display:grid;grid-template-columns:190px 1fr;border:1px solid var(--line);border-radius:14px;overflow:hidden}.def>div{padding:12px 15px;border-bottom:1px solid var(--line);font-size:13.5px}.def>div:nth-last-child(-n+2){border-bottom:0}.k{background:var(--soft);color:var(--muted);font-weight:600}.v{color:var(--ink)}code{font-family:var(--mono);font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 5px}.steps{display:grid;gap:10px}.step{display:grid;grid-template-columns:32px 1fr;gap:11px}.no{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:var(--bluebg);color:var(--blue);font-size:12px;font-weight:700}.step p{margin:0;font-size:13.5px}.callout{border:1px solid #d8956e;background:var(--orangebg);border-radius:14px;padding:15px 17px}.callout b{color:#7d3918}.source{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}@media(max-width:720px){.page{padding:28px 16px 60px}.title{font-size:27px}.cards{grid-template-columns:1fr}.flow{grid-template-columns:1fr;gap:8px}.arrow{transform:rotate(90deg)}.def{grid-template-columns:1fr}.def>div{border-bottom:0}.k{padding-bottom:2px}.v{padding-top:2px;border-bottom:1px solid var(--line)!important}.def>div:last-child{border-bottom:0!important}}
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <p class="eyebrow">AI運用 / 計画標準化 / 2026-07-19</p>
+    <h1 class="title">計画は「実装」と「評価」だけで閉じる</h1>
+    <p class="lede"><b>結論:</b> programでは<code>program.md</code>だけを親の正本にし、子計画は「実装 → 評価 → 必要なら修正 → 再評価」で進めます。レビュー専用のフォルダ・役割・待ちキューは新規経路に置きません。</p>
+  </header>
+
+  <nav class="nav"><a href="#model">新しい全体像</a><a href="#hook">hookの境界</a><a href="#structure">フォルダ構成</a><a href="#operation">運用手順</a><a href="#changed">今回の変更</a></nav>
+
+  <section>
+    <h2>固定する3つのルール</h2>
+    <div class="cards">
+      <article class="card"><h3><span class="pill ok">正本</span> 親は1つだけ</h3><p>programでは<code>program.md</code>だけを使います。同階層の<code>plan.md</code>は置かず、判断が二重化しません。</p></article>
+      <article class="card"><h3><span class="pill ok">判定</span> 完了条件と評価を分ける</h3><p>計画の<code>完了条件</code>は事前の受入条件。評価MDは実装後の根拠・PASS/FAILを残す証跡です。</p></article>
+      <article class="card"><h3><span class="pill ok">成果物</span> 計画にひも付ける</h3><p>一時的・個別の成果は対象planの中に置きます。長期に必要な指標・基準だけを<code>references</code>へ昇格します。</p></article>
+    </div>
+  </section>
+
+  <section id="model">
+    <h2>新しい実行モデル</h2>
+    <p class="lead">実装と評価を一対一で結び、一括待ちの判定キューを持たないため、子計画ごとの状態が追いやすくなります。</p>
+    <figure>
+      <svg viewBox="0 0 940 280" role="img" aria-label="計画から実装、評価、必要なら修正、同期へ進む図">
+        <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#5f6b7b" stroke-width="1.5"/></marker></defs>
+        <rect x="24" y="94" width="170" height="92" rx="12" fill="#eaf0ff" stroke="#2d4f9a"/><text x="109" y="126" text-anchor="middle" font-size="15" fill="#1c2433" font-weight="700">plan / program</text><text x="109" y="151" text-anchor="middle" font-size="12" fill="#5f6b7b">目的・実行契約・完了条件</text>
+        <line x1="194" y1="140" x2="258" y2="140" stroke="#5f6b7b" stroke-width="1.5" marker-end="url(#a)"/>
+        <rect x="260" y="94" width="170" height="92" rx="12" fill="#f6f8fb" stroke="#d8dee8"/><text x="345" y="126" text-anchor="middle" font-size="15" fill="#1c2433" font-weight="700">implementer</text><text x="345" y="151" text-anchor="middle" font-size="12" fill="#5f6b7b">実装・検証・result packet</text>
+        <line x1="430" y1="140" x2="494" y2="140" stroke="#5f6b7b" stroke-width="1.5" marker-end="url(#a)"/>
+        <rect x="496" y="94" width="170" height="92" rx="12" fill="#f6f8fb" stroke="#d8dee8"/><text x="581" y="126" text-anchor="middle" font-size="15" fill="#1c2433" font-weight="700">evaluator</text><text x="581" y="151" text-anchor="middle" font-size="12" fill="#5f6b7b">完了条件とdiffを評価</text>
+        <line x1="666" y1="140" x2="730" y2="140" stroke="#5f6b7b" stroke-width="1.5" marker-end="url(#a)"/>
+        <rect x="732" y="94" width="184" height="92" rx="12" fill="#e6f4ec" stroke="#1b704c"/><text x="824" y="126" text-anchor="middle" font-size="15" fill="#1c2433" font-weight="700">評価MDを同期</text><text x="824" y="151" text-anchor="middle" font-size="12" fill="#5f6b7b">全PASSなら planctl が反映</text>
+        <path d="M581 186 C581 244 345 244 345 186" fill="none" stroke="#9a4c22" stroke-width="1.5" marker-end="url(#a)"/><text x="464" y="257" text-anchor="middle" font-size="12" fill="#9a4c22">FAILなら修正して再評価（最大2回）</text>
+      </svg>
+      <figcaption>完了条件は評価前に固定する。評価者は実装を直さず、根拠と修正方向を返す。</figcaption>
+    </figure>
+  </section>
+
+  <section id="hook">
+    <h2>hookは計画本文を読んで判断しない</h2>
+    <p class="lead">hookが読むのは実行時の<code>PLAN_RUN_MANIFEST</code>です。計画の内容・バケット・repoの選択をhookへ委譲しないので、責務が混ざりません。</p>
+    <div class="flow">
+      <div class="node"><b>plan / program</b>人が読める正本。目的・完了条件・人間ゲートを持つ。</div><div class="arrow">→</div>
+      <div class="node"><b>run manifest</b>短命の実行情報。role、phase、result、evaluation pathだけを持つ。</div><div class="arrow">→</div>
+      <div class="node"><b>hook</b><code>evaluated</code>未同期、result欠落、評価MD欠落だけを一回検査する。</div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="callout"><b>重要:</b> hookは計画を作らず、完了条件の合否も決めません。合否はevaluatorの評価MD、正本の更新は<code>planctl apply-evaluation</code>が担当します。</div>
+  </section>
+
+  <section id="structure">
+    <h2>新規programのフォルダ構成</h2>
+    <p class="lead">実装担当の共通規約と評価証跡だけを分けます。日付フォルダは評価の下に増やさず、評価ファイル名へ日付・用途を入れます。</p>
+    <figure>
+      <svg viewBox="0 0 940 295" role="img" aria-label="programフォルダ構成の図">
+        <rect x="22" y="22" width="896" height="250" rx="14" fill="#f6f8fb" stroke="#d8dee8"/>
+        <text x="48" y="57" font-size="16" font-weight="700" fill="#1c2433">YYYY-MM-DD-計画名/</text>
+        <path d="M62 75v162M62 102h34M62 140h34M62 178h34M62 216h34" stroke="#a7b1c1" stroke-width="1.4" fill="none"/>
+        <rect x="97" y="82" width="320" height="38" rx="8" fill="#eaf0ff" stroke="#2d4f9a"/><text x="113" y="106" font-size="13" fill="#1c2433">program.md　親の正本・子計画マップ</text>
+        <rect x="97" y="120" width="320" height="38" rx="8" fill="#fff" stroke="#d8dee8"/><text x="113" y="144" font-size="13" fill="#1c2433">plans/NN-子計画.md　子ごとの契約</text>
+        <rect x="97" y="158" width="320" height="38" rx="8" fill="#fff" stroke="#d8dee8"/><text x="113" y="182" font-size="13" fill="#1c2433">実装/共通.md　implementer共通規約</text>
+        <rect x="97" y="196" width="320" height="38" rx="8" fill="#e6f4ec" stroke="#1b704c"/><text x="113" y="220" font-size="13" fill="#1c2433">評価/NN-子名-評価01.md　判定の証跡</text>
+        <line x1="470" y1="101" x2="510" y2="101" stroke="#5f6b7b" marker-end="url(#arr)"/><line x1="470" y1="215" x2="510" y2="215" stroke="#5f6b7b" marker-end="url(#arr)"/>
+        <defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#5f6b7b" stroke-width="1.5"/></marker></defs>
+        <text x="530" y="104" font-size="13" fill="#5f6b7b">置かない: 同階層の plan.md</text><text x="530" y="219" font-size="13" fill="#5f6b7b">置かない: レビュー専用フォルダ・日付だけの下位フォルダ</text>
+      </svg>
+      <figcaption>恒久的に再利用する基準・KPIだけはareaの<code>references/</code>へ。個別の実装成果はplanに残す。</figcaption>
+    </figure>
+  </section>
+
+  <section id="operation">
+    <h2>新しい計画を作る時の手順</h2>
+    <p class="lead">programが必要かどうかだけを先に決め、作った後は同じ工程を繰り返します。</p>
+    <div class="steps">
+      <div class="step"><div class="no">1</div><p><b>単発かprogramかを決める。</b> ひとつのrollback単位なら単独<code>plan.md</code>。複数の子を統合する時だけ<code>program.md</code>を親にする。</p></div>
+      <div class="step"><div class="no">2</div><p><b>完了条件を先に書く。</b> 「何がどうなれば正しいか」を対象付きで記す。評価結果や手順をここへ混ぜない。</p></div>
+      <div class="step"><div class="no">3</div><p><b>実装後に評価MDを1つ作る。</b> ファイル名は<code>NN-子名-評価01.md</code>。FAILなら<code>修正01.md</code>を同じ<code>評価/</code>へ置く。</p></div>
+      <div class="step"><div class="no">4</div><p><b>全PASSだけを同期する。</b> <code>planctl apply-evaluation</code>が完了条件・programマップ・manifestを整合させる。危険操作は別の人間ゲートのまま残る。</p></div>
+    </div>
+  </section>
+
+  <section id="changed">
+    <h2>今回、実際にそろえた範囲</h2>
+    <p class="lead">説明だけでなく、新規計画を作成・実行・検査する導線を同じモデルへ変更しました。</p>
+    <div class="def">
+      <div class="k">対象program</div><div class="v">冗長な<code>plan.md</code>と判定用フォルダを削除。<code>program.md</code>のみに統一。</div>
+      <div class="k">plan-ops</div><div class="v">雛形・lint・終了記録・同期スクリプトを「完了条件／評価」語彙へ変更。</div>
+      <div class="k">harness / role</div><div class="v"><code>evaluator</code>役、<code>evaluated</code>段階、評価MD出力契約へ変更。一括待ちキューを削除。</div>
+      <div class="k">hooks</div><div class="v">登録済みのguard説明を実態に修正。manifestだけを検査する境界を明記。</div>
+      <div class="k">cockpit</div><div class="v">既定2ペインを「実装／評価」、マーカーを<code>EVALUATION_RESULT</code>へ変更。</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>検証根拠</h2>
+    <ul class="source">
+      <li><b>plan-ops:</b> scaffold、lint、planctl、plansync、bucketctl、progctlのテストを実行。</li>
+      <li><b>harness:</b> delegateとprogram-runのユニットテストを実行。</li>
+      <li><b>hook / cockpit:</b> plan-closeout、role定義、watch、events、spawnのテストを実行。</li>
+      <li><b>正本:</b> <code>program.md</code>は<code>plan-lint.sh</code>で「違反なし」を確認。</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

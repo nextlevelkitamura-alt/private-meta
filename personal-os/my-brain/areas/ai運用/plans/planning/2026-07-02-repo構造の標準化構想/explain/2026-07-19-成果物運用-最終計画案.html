@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>成果物運用・最終計画案 — 2026-07-19</title>
+  <style>
+    :root{--ground:#fff;--surface:#fff;--surface2:#f7f8fb;--ink:#19212f;--muted:#5f6879;--line:#dbdfea;--accent:#2c3a8c;--accentInk:#202c6e;--accentSoft:#e9ecfa;--go:#2e7d5b;--goInk:#1e5a40;--goSoft:#e3f1ea;--warn:#b4472b;--warnInk:#8c3620;--warnSoft:#f7e8e2;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP","Segoe UI",sans-serif;--mono:"SF Mono","SFMono-Regular",Menlo,Consolas,monospace}*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.72;-webkit-font-smoothing:antialiased}.page{min-height:100vh;padding:42px 20px 72px}.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:42px}.eyebrow{margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}h1{margin:0;font-size:32px;font-weight:650;letter-spacing:-.025em;line-height:1.24}h2{margin:0 0 7px;font-size:13px;font-weight:650;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}.lede{margin:14px 0 0;max-width:65ch;font-size:16px;color:var(--muted)}.lede b,.slede b{color:var(--ink)}.slede{margin:0 0 17px;max-width:68ch;font-size:14.5px}section{display:flex;flex-direction:column}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{display:inline-block;padding:5px 12px;border:1px solid transparent;border-radius:999px;background:var(--accentSoft);color:var(--accentInk);font-size:12px;text-decoration:none}.chip:hover{border-color:var(--accent)}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card,.ditem,.col,details{border:1px solid var(--line);border-radius:13px;background:var(--surface)}.card{padding:17px}.card .head,.col .head{margin:0 0 8px;font-size:14px;font-weight:650}.card p:last-child,.col p:last-child{margin:0;color:var(--muted);font-size:13.5px}.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:650;vertical-align:1px}.go{background:var(--goSoft);color:var(--goInk)}.warn{background:var(--warnSoft);color:var(--warnInk)}.acc{background:var(--accentSoft);color:var(--accentInk)}.code{padding:1px 6px;border:1px solid var(--line);border-radius:7px;background:var(--surface2);font-family:var(--mono);font-size:12px}figure{margin:0;padding:18px;overflow-x:auto;border:1px solid var(--line);border-radius:13px;background:var(--surface)}figure svg{display:block;width:100%;height:auto;min-width:600px}figcaption{margin-top:10px;color:var(--muted);font-size:12px}.deflist{display:flex;flex-direction:column;gap:10px}.ditem{padding:15px 17px}.dhead{margin:0 0 6px;font-size:14px;font-weight:650}.dbody{margin:0;color:var(--muted);font-size:13.5px}.dbody b{color:var(--ink)}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.col{padding:17px}.steps{margin:0;padding:0;list-style:none}.steps li{display:flex;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line)}.steps li:last-child{border-bottom:0}.num{display:grid;flex:none;width:24px;height:24px;margin-top:2px;border-radius:50%;place-items:center;background:var(--accentSoft);color:var(--accentInk);font-size:12px;font-weight:700}.steps .head{margin:0;font-size:13.5px;font-weight:650}.steps p:last-child{margin:0;color:var(--muted);font-size:13px}.callout{padding:15px 17px;border:1px solid var(--warn);border-radius:13px;background:var(--warnSoft)}.callout .title{margin:0 0 4px;color:var(--warnInk);font-size:12px;font-weight:700;letter-spacing:.04em}.callout p:last-child{margin:0;font-size:13.5px}details{padding:12px 17px}summary{cursor:pointer;color:var(--accentInk);font-size:13.5px;font-weight:600}details p,details ul{color:var(--muted);font-size:13px}.source{display:flex;flex-direction:column;gap:7px;margin:0;padding:0;list-style:none;color:var(--muted);font-size:12.5px}.source b{color:var(--ink)}@media(max-width:720px){.page{padding:28px 16px 56px}.cards,.compare{grid-template-columns:1fr}h1{font-size:27px}}
+  </style>
+</head>
+<body>
+  <main class="page"><div class="wrap">
+    <header>
+      <p class="eyebrow">Final plan · program created · 2026-07-19</p>
+      <h1>成果物はplanが所有し、<br>areaは再利用referenceだけを持つ</h1>
+      <p class="lede"><b>計画専用の成果物フォルダは作りません。</b> 人間向けの説明・診断は<code class="code">explain/</code>、評価と修正指示は<code class="code">評価/</code>、複数計画で使い続ける定義・指標の導線・判断基準は<code class="code">references/</code>へ置きます。<code class="code">archive/</code>は計画の終了状態だけです。</p>
+    </header>
+
+    <nav class="chips" aria-label="ページ内目次">
+      <a class="chip" href="#target">最終構造</a><a class="chip" href="#routing">格納の判断</a><a class="chip" href="#changes">変更対象</a><a class="chip" href="#program">実行program案</a><a class="chip" href="#gates">人間ゲート</a><a class="chip" href="#approval">承認後に作るもの</a>
+    </nav>
+
+    <section>
+      <h2>今回固定する3つの原則</h2>
+      <div class="cards">
+        <div class="card"><p class="head"><span class="pill go">採用</span> planが成果物を所有</p><p><b>出所を失わない。</b> その成果物を生んだ計画の中へ置き、後から目的・判断・評価まで辿れるようにする。</p></div>
+        <div class="card"><p class="head"><span class="pill go">採用</span> areaはreferenceだけ</p><p><b>長期・横断で再利用するものだけ。</b> 一時資料や個別の納品物をareaへ置かない。</p></div>
+        <div class="card"><p class="head"><span class="pill warn">禁止</span> archiveを保管庫にしない</p><p><b>archiveは閉じた計画の状態。</b> 成果物の整理場所や、古い出力の逃がし先として使わない。</p></div>
+      </div>
+    </section>
+
+    <section id="target">
+      <h2>Level 2 repoの最終構造</h2>
+      <p class="slede">rootは入口、areaは判断軸とreference、planは作業と成果物を持ちます。<b>同じ内容を別の階層へコピーしない</b>ことが、運用を崩さない条件です。</p>
+      <figure>
+        <svg viewBox="0 0 850 440" role="img" aria-label="area、reference、planの最終フォルダ構造図">
+          <rect x="16" y="16" width="818" height="408" rx="12" fill="#f7f8fb" stroke="#dbdfea"/>
+          <text x="39" y="47" font-family="var(--sans)" font-size="15" font-weight="700" fill="#19212f">repo/</text>
+          <rect x="39" y="66" width="225" height="59" rx="9" fill="#e9ecfa" stroke="#2c3a8c"/><text x="57" y="91" font-family="var(--sans)" font-size="13" font-weight="700" fill="#202c6e">AGENTS.md</text><text x="57" y="111" font-family="var(--sans)" font-size="11" fill="#5f6879">目的・安全・areaの入口</text>
+          <rect x="290" y="66" width="225" height="59" rx="9" fill="#fff" stroke="#dbdfea" stroke-dasharray="5 4"/><text x="308" y="91" font-family="var(--sans)" font-size="13" font-weight="700" fill="#19212f">CLAUDE.md → AGENTS.md</text><text x="308" y="111" font-family="var(--sans)" font-size="11" fill="#5f6879">互換導線のみ</text>
+          <rect x="39" y="154" width="756" height="240" rx="11" fill="#e3f1ea" stroke="#2e7d5b"/><text x="59" y="183" font-family="var(--sans)" font-size="14" font-weight="700" fill="#1e5a40">areas/</text><text x="59" y="204" font-family="var(--sans)" font-size="11" fill="#5f6879">AGENTS.md — area共通の選び方</text>
+          <rect x="72" y="224" width="213" height="142" rx="9" fill="#fff" stroke="#2e7d5b"/><text x="91" y="252" font-family="var(--sans)" font-size="13" font-weight="700" fill="#1e5a40">&lt;area&gt;/</text><text x="91" y="273" font-family="var(--sans)" font-size="11" fill="#5f6879">AGENTS.md — 判断軸・主要reference</text><text x="91" y="294" font-family="var(--sans)" font-size="11" fill="#5f6879">CLAUDE.md → AGENTS.md</text><text x="91" y="326" font-family="var(--sans)" font-size="12" font-weight="700" fill="#19212f">references/　必要時だけ作成</text><text x="91" y="347" font-family="var(--sans)" font-size="11" fill="#5f6879">長期基準・指標定義・参照導線</text>
+          <rect x="316" y="224" width="445" height="142" rx="9" fill="#fff" stroke="#2e7d5b"/><text x="338" y="252" font-family="var(--sans)" font-size="13" font-weight="700" fill="#1e5a40">plans/</text><text x="338" y="273" font-family="var(--sans)" font-size="11" fill="#5f6879">AGENTS.md — バケット・planの型</text>
+          <rect x="340" y="290" width="178" height="54" rx="7" fill="#e9ecfa" stroke="#2c3a8c"/><text x="429" y="313" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#202c6e">&lt;plan&gt;/references/</text><text x="429" y="331" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">計画だけの入力・調査</text>
+          <rect x="536" y="290" width="211" height="54" rx="7" fill="#e9ecfa" stroke="#2c3a8c"/><text x="641" y="313" text-anchor="middle" font-family="var(--sans)" font-size="11" font-weight="700" fill="#202c6e">&lt;plan&gt;/explain/・評価/</text><text x="641" y="331" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">説明HTML・評価と修正指示</text>
+        </svg>
+        <figcaption>塗り＝正本の責務。<b>計画専用の成果物フォルダは置かない。</b> `references/`も空の定型として作らず、入れるべき恒久referenceが最初に生まれた時だけ作成します。</figcaption>
+      </figure>
+    </section>
+
+    <section id="routing">
+      <h2>格納先は「何に再利用されるか」で決める</h2>
+      <p class="slede">成果物の内容ではなく、<b>作った理由と今後の利用範囲</b>で場所を選びます。これにより「とりあえずareaへ置く」を防ぎます。</p>
+      <figure>
+        <svg viewBox="0 0 850 260" role="img" aria-label="成果物の性質に応じた格納先の判断フロー">
+          <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#5f6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <rect x="18" y="102" width="140" height="57" rx="9" fill="#e9ecfa" stroke="#2c3a8c"/><text x="88" y="126" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="700" fill="#202c6e">ファイルが生まれる</text><text x="88" y="145" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">最初に利用範囲を判定</text>
+          <line x1="158" y1="130" x2="235" y2="54" stroke="#5f6879" stroke-width="1.4" marker-end="url(#a)"/><line x1="158" y1="130" x2="235" y2="130" stroke="#5f6879" stroke-width="1.4" marker-end="url(#a)"/><line x1="158" y1="130" x2="235" y2="206" stroke="#5f6879" stroke-width="1.4" marker-end="url(#a)"/>
+          <text x="192" y="80" font-family="var(--sans)" font-size="10" fill="#5f6879">この計画だけの入力</text><text x="192" y="122" font-family="var(--sans)" font-size="10" fill="#5f6879">この計画が作った成果</text><text x="192" y="184" font-family="var(--sans)" font-size="10" fill="#5f6879">複数計画で長期再利用</text>
+          <rect x="244" y="25" width="258" height="58" rx="9" fill="#fff" stroke="#dbdfea"/><text x="373" y="49" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#19212f">plan/references/</text><text x="373" y="68" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">調査・入力資料・計画限定の根拠</text>
+          <rect x="244" y="101" width="258" height="58" rx="9" fill="#e3f1ea" stroke="#2e7d5b"/><text x="373" y="125" text-anchor="middle" font-family="var(--sans)" font-size="11" font-weight="700" fill="#1e5a40">plan/explain/・評価/</text><text x="373" y="144" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">説明HTML・評価・修正指示</text>
+          <rect x="244" y="177" width="258" height="58" rx="9" fill="#e9ecfa" stroke="#2c3a8c"/><text x="373" y="201" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#202c6e">area/references/</text><text x="373" y="220" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">定義・判断基準・参照導線だけ</text>
+          <rect x="579" y="73" width="245" height="114" rx="10" fill="#f7e8e2" stroke="#b4472b"/><text x="701" y="103" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="700" fill="#8c3620">現在値を複写しない</text><text x="701" y="127" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">KPI・データの正本は</text><text x="701" y="146" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">スプレッドシート／DB等に置く</text><text x="701" y="166" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">referenceは定義・参照先・更新規則</text>
+          <line x1="502" y1="206" x2="574" y2="145" stroke="#5f6879" stroke-width="1.4" marker-end="url(#a)"/>
+        </svg>
+        <figcaption>恒久referenceへの昇格は、説明HTMLや評価記録をそのままコピーする操作ではありません。人間が再利用価値を判断し、必要なら移動してplan側に移動先を記録します。</figcaption>
+      </figure>
+    </section>
+
+    <section id="changes">
+      <h2>正本・Skill・雛形をこの順で変更する</h2>
+      <p class="slede">フォルダだけ先に作ると、AIの導線が古いまま残ります。まず規約、次にscaffold、最後に既存repoの適用候補という順番に固定します。</p>
+      <div class="deflist">
+        <div class="ditem"><p class="dhead"><span class="pill warn">変更A</span> 現在の構造計画を正す</p><p class="dbody"><b>outputs案を削除し、explain・評価・referencesへ置換</b>する。既存の図解HTMLも同じ内容へ更新する。これは今回の計画正本に最初に反映する。</p></div>
+        <div class="ditem"><p class="dhead"><span class="pill warn">変更B</span> area標準を定義する</p><p class="dbody"><b>areas/AGENTS.md</b>に、area referenceの入場条件、KPIの正本参照、area AGENTSへの主要reference記載を追加する。既存の<code class="code">知識/</code>は即時移動せず、個別分類後に扱う。</p></div>
+        <div class="ditem"><p class="dhead"><span class="pill warn">変更C</span> plan雛形を整える</p><p class="dbody"><b>plan-opsのtemplateと説明</b>に、計画限定reference、explain、評価の使い分けを反映する。空フォルダを量産しない。</p></div>
+        <div class="ditem"><p class="dhead"><span class="pill warn">変更D</span> repo-createをLevel 2対応にする</p><p class="dbody"><b>Level選択とareasの入口のdry-run</b>を追加する。既存ファイルを上書きせず、適用前に差分を見せる。</p></div>
+        <div class="ditem"><p class="dhead"><span class="pill warn">変更E</span> 既存repoをread-only診断する</p><p class="dbody"><b>仕事とfocusmapは一括移行しない。</b> 現在のplans、出力、legacy、KPI正本を確認し、repoごとの適用案だけを出す。</p></div>
+      </div>
+    </section>
+
+    <section id="program">
+      <h2>承認後に作るprogramは5つの子計画に分ける</h2>
+      <p class="slede">規約、雛形、実repo診断を一つの作業に混ぜません。独立した検証単位へ分け、危険な移動は最後まで実行対象にしません。</p>
+      <figure>
+        <svg viewBox="0 0 850 230" role="img" aria-label="成果物運用標準化programの子計画関係図">
+          <defs><marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#5f6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <rect x="291" y="16" width="268" height="55" rx="9" fill="#e9ecfa" stroke="#2c3a8c"/><text x="425" y="39" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="700" fill="#202c6e">親: 成果物運用標準化</text><text x="425" y="58" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">最終一括の人間確認</text>
+          <line x1="425" y1="71" x2="425" y2="99" stroke="#5f6879" stroke-width="1.4" marker-end="url(#a2)"/>
+          <rect x="20" y="112" width="145" height="74" rx="9" fill="#e3f1ea" stroke="#2e7d5b"/><text x="92" y="138" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#1e5a40">01 規約統一</text><text x="92" y="157" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">正本・AGENTS</text><text x="92" y="174" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">出力分類</text>
+          <rect x="185" y="112" width="145" height="74" rx="9" fill="#fff" stroke="#dbdfea"/><text x="257" y="138" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#19212f">02 plan雛形</text><text x="257" y="157" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">templates・lint</text><text x="257" y="174" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">生成契約</text>
+          <rect x="350" y="112" width="145" height="74" rx="9" fill="#fff" stroke="#dbdfea"/><text x="422" y="138" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#19212f">03 repo-create</text><text x="422" y="157" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">Level 2 dry-run</text><text x="422" y="174" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">fixture・検証</text>
+          <rect x="515" y="112" width="145" height="74" rx="9" fill="#fff" stroke="#dbdfea"/><text x="587" y="138" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#19212f">04 既存repo診断</text><text x="587" y="157" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">仕事・focusmap</text><text x="587" y="174" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">read-only</text>
+          <rect x="680" y="112" width="145" height="74" rx="9" fill="#f7e8e2" stroke="#b4472b"/><text x="752" y="138" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#8c3620">05 適用提案</text><text x="752" y="157" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">移動は実行しない</text><text x="752" y="174" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">人間承認を要求</text>
+        </svg>
+        <figcaption>01→02→03が標準を作る主線。04はread-onlyで並行可能。05は「適用してよい差分」を提案するだけで、移動・削除・改名は個別承認後の別作業です。</figcaption>
+      </figure>
+    </section>
+
+    <section id="gates">
+      <h2>人間ゲートを先に明文化する</h2>
+      <p class="slede">今回のprogramでは、規約やdry-runの作成は進められます。ただし、既存の内容を動かす操作は承認なしにしません。</p>
+      <div class="compare">
+        <div class="col"><p class="head"><span class="pill go">program内で実行できる</span></p><p><b>規約更新、AGENTS雛形、plan template、dry-run scaffold、read-only audit、図解・評価。</b> 既存ファイルの上書きや実体移動を含めない。</p></div>
+        <div class="col"><p class="head"><span class="pill warn">個別承認が必要</span></p><p><b>既存成果物の移動、知識からreferencesへの改名、legacy整理、repo構成変更、symlink変更、commit、push。</b> 対象と差分を出してから承認を得る。</p></div>
+      </div>
+      <details><summary>referenceへ昇格する時の扱い</summary><p>計画専用の参照をarea referenceへ移す必要が出たら、コピーではなく移動を原則にします。plan.mdには移動先と理由を短く残し、area AGENTS.mdの「主要reference」へ必要な導線だけを足します。移動は人間承認が必要です。</p></details>
+    </section>
+
+    <section id="approval">
+      <h2>作成済みのprogramと次の実行順</h2>
+      <p class="slede">親<code class="code">program.md</code>と5つの子計画Markdownをplanningバケットに作成しました。規約の統一、雛形、dry-run接続、read-only診断、repo別提案の順に進めます。正本の置き換え・フォルダ移動・scaffoldのapplyはまだ実行しません。</p>
+      <div class="callout"><p class="title">確定した3点</p><p>① 人間向けの説明・診断は<code class="code">plan/explain/</code>、評価と修正指示は<code class="code">評価/</code>へ置く、② areaには長期・横断の<code class="code">references/</code>だけを置く、③ KPIの現在値は外部正本に残し、referenceには定義と導線だけを置く。</p></div>
+    </section>
+
+    <section>
+      <h2>参照した正本</h2>
+      <ul class="source">
+        <li><b>areaの現在規約</b> — <code class="code">personal-os/my-brain/areas/AGENTS.md</code>。plans、explain、恒久知識の現行境界を確認。</li>
+        <li><b>ai運用の計画箱</b> — <code class="code">personal-os/my-brain/areas/ai運用/AGENTS.md</code>。この構想の正本とplanningバケットを確認。</li>
+        <li><b>repo-createの移植計画</b> — <code class="code">.../plans/active/2026-07-13-全repoへのAI運用標準移植/plans/08-repo-create移植キット.md</code>。dry-runとread-only auditの既存方針を参照。</li>
+        <li><b>既存の構造提案</b> — 同計画の<code class="code">explain/2026-07-19-repo構造レベル提案.html</code>。今回の案がarea outputs案を置き換えることを明示。</li>
+      </ul>
+    </section>
+  </div></main>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>repo構造レベル提案 — 2026-07-19</title>
+  <style>
+    :root{--ground:#fff;--surface:#fff;--surface-2:#f7f8fb;--ink:#19212f;--muted:#5f6879;--line:#dbdfea;--accent:#2c3a8c;--accent-ink:#202c6e;--accent-soft:#e9ecfa;--go:#2e7d5b;--go-ink:#1e5a40;--go-soft:#e3f1ea;--warn:#b4472b;--warn-ink:#8c3620;--warn-soft:#f7e8e2;--sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP","Segoe UI",sans-serif;--mono:"SF Mono","SFMono-Regular",Menlo,Consolas,monospace}
+    *{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.72;-webkit-font-smoothing:antialiased}.page{min-height:100vh;padding:42px 20px 72px}.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:42px}.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 12px}h1{font-size:32px;line-height:1.25;letter-spacing:-.025em;margin:0;font-weight:650}h2{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:650;margin:0 0 7px}.lede{font-size:16px;color:var(--muted);max-width:65ch;margin:14px 0 0}.lede b,.slede b{color:var(--ink)}.slede{font-size:14.5px;margin:0 0 17px;max-width:68ch}section{display:flex;flex-direction:column}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{font-size:12px;color:var(--accent-ink);background:var(--accent-soft);border:1px solid transparent;padding:5px 12px;border-radius:999px;text-decoration:none}.chip:hover{border-color:var(--accent)}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card,.ditem,.ccol,details{background:var(--surface);border:1px solid var(--line);border-radius:13px}.card{padding:17px}.card .h,.ccol .h{font-size:14px;font-weight:650;margin:0 0 8px}.card p:last-child,.ccol p:last-child{font-size:13.5px;color:var(--muted);margin:0}.pill{display:inline-block;font-size:11.5px;font-weight:650;padding:2px 9px;border-radius:999px;vertical-align:1px}.go{background:var(--go-soft);color:var(--go-ink)}.warn{background:var(--warn-soft);color:var(--warn-ink)}.acc{background:var(--accent-soft);color:var(--accent-ink)}.code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:1px 6px}figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px;overflow-x:auto}figure svg{display:block;width:100%;height:auto;min-width:580px}figcaption{font-size:12px;color:var(--muted);margin-top:10px}.deflist{display:flex;flex-direction:column;gap:10px}.ditem{padding:15px 17px}.dhead{font-size:14px;font-weight:650;margin:0 0 6px}.dbody{font-size:13.5px;color:var(--muted);margin:0}.dbody b{color:var(--ink)}.compare2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ccol{padding:17px}.steps{padding:0;margin:0;list-style:none}.steps li{display:flex;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line)}.steps li:last-child{border-bottom:0}.n{height:24px;width:24px;display:grid;place-items:center;flex:none;margin-top:2px;background:var(--accent-soft);color:var(--accent-ink);border-radius:50%;font-size:12px;font-weight:700}.steps .h{font-size:13.5px;font-weight:650;margin:0}.steps p:last-child{font-size:13px;color:var(--muted);margin:0}.callout{background:var(--warn-soft);border:1px solid var(--warn);border-radius:13px;padding:15px 17px}.callout .ct{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--warn-ink);margin:0 0 4px}.callout p:last-child{font-size:13.5px;margin:0}details{padding:12px 17px}summary{cursor:pointer;font-size:13.5px;color:var(--accent-ink);font-weight:600}details p{font-size:13px;color:var(--muted)}.source{padding:0;margin:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted)}.source b{color:var(--ink)}@media(max-width:720px){.page{padding:28px 16px 56px}.cards,.compare2{grid-template-columns:1fr}h1{font-size:27px}}
+  </style>
+</head>
+<body>
+  <main class="page"><div class="wrap">
+    <header>
+      <p class="eyebrow">Repo structure decision · 2026-07-19</p>
+      <h1>全repoを同じ見た目にしつつ、<br>複雑さだけを3段階で育てる</h1>
+      <p class="lede"><b>新規プロジェクトの既定は「Level 2: 領域運用repo」です。</b> Rootの入口、areaごとの入口、area内の計画を揃えます。<b>長く再利用する定義・判断基準・参照導線はareaの<code class="code">references/</code>へ置き、<code class="code">archive/</code>は計画の終了状態だけに使います。</b></p>
+    </header>
+
+    <nav class="chips" aria-label="ページ内目次">
+      <a class="chip" href="#levels">3つのレベル</a><a class="chip" href="#default">既定の見た目</a><a class="chip" href="#agents">AGENTSの置き方</a><a class="chip" href="#references">参照の帰属</a><a class="chip" href="#avoid">二重正本を避ける</a><a class="chip" href="#rollout">整理の進め方</a>
+    </nav>
+
+    <section>
+      <h2>提案の要点</h2>
+      <div class="cards">
+        <div class="card"><p class="h"><span class="pill go">採用済み</span> Level 2</p><p><b>areaごとにplansと必要時のreferencesを持つ。</b> 長く運用する業務repo・個人repoの標準。root <code class="code">plans/</code>は作らない。</p></div>
+        <div class="card"><p class="h"><span class="pill acc">軽量</span> Level 1</p><p><b>単目的ならroot plans。</b> areaを増やす前の小さなrepoや、実装だけに集中するrepo用。</p></div>
+        <div class="card"><p class="h"><span class="pill acc">参照モデル</span> Level 3</p><p><b>Private型はworkspace用。</b> personal-osとprojectsを束ねる入口であり、通常のプロジェクトrepoの雛形ではない。</p></div>
+      </div>
+    </section>
+
+    <section id="levels">
+      <h2>repoのレベルは品質ではなく、運用する範囲の違い</h2>
+      <p class="slede">どのレベルでも<code class="code">AGENTS.md</code>を入口にします。違うのは、計画をrootに置くか、areaへ分けるか、複数repoを束ねるかだけです。</p>
+      <figure>
+        <svg viewBox="0 0 830 355" role="img" aria-label="repoの3レベルを示すレイヤー図">
+          <rect x="16" y="18" width="798" height="317" rx="12" fill="#f7f8fb" stroke="#dbdfea"/>
+          <rect x="38" y="42" width="754" height="76" rx="10" fill="#fff" stroke="#dbdfea"/>
+          <text x="59" y="70" font-family="var(--sans)" font-size="14" font-weight="700" fill="#19212f">Level 1　単目的repo</text>
+          <text x="59" y="95" font-family="var(--sans)" font-size="12" fill="#5f6879">root AGENTS　→　root plans/　→　実装・docs・scripts（必要なものだけ）</text>
+          <rect x="38" y="137" width="754" height="91" rx="10" fill="#e3f1ea" stroke="#2e7d5b"/>
+          <text x="59" y="166" font-family="var(--sans)" font-size="14" font-weight="700" fill="#1e5a40">Level 2　領域運用repo　— 新規repoの既定</text>
+          <text x="59" y="190" font-family="var(--sans)" font-size="12" fill="#5f6879">root AGENTS　→　areas/AGENTS　→　areas/&lt;area&gt;/AGENTS　→　plans/</text>
+          <text x="59" y="211" font-family="var(--sans)" font-size="11" fill="#5f6879">areaごとに判断軸・計画・長期参照を閉じ、rootに同名のplans/は作らない</text>
+          <rect x="38" y="248" width="754" height="65" rx="10" fill="#e9ecfa" stroke="#2c3a8c"/>
+          <text x="59" y="276" font-family="var(--sans)" font-size="14" font-weight="700" fill="#202c6e">Level 3　メタworkspace</text>
+          <text x="59" y="299" font-family="var(--sans)" font-size="12" fill="#5f6879">Private型: personal-os（考え・基盤）と projects（独立repoの実体配置）を束ねる。個別repoには複製しない。</text>
+        </svg>
+        <figcaption>Level 1から3へ「昇格」する必要はありません。目的と継続性に合うレベルを選び、足りなくなった時だけ次の型へ移ります。</figcaption>
+      </figure>
+    </section>
+
+    <section id="default">
+      <h2>新規repoの既定は、areaの内側にplansを置く</h2>
+      <p class="slede"><b>これがPrivate metaと同じ「入口 → 領域 → 計画」の見た目です。</b> ただしPrivateの<code class="code">personal-os/</code>や<code class="code">projects/</code>は入れず、単一repoに必要な範囲へ縮めます。</p>
+      <figure>
+        <svg viewBox="0 0 830 420" role="img" aria-label="Level 2領域運用repoの推奨フォルダ構成図">
+          <rect x="16" y="16" width="798" height="388" rx="12" fill="#f7f8fb" stroke="#dbdfea"/>
+          <text x="38" y="47" font-family="var(--sans)" font-size="15" font-weight="700" fill="#19212f">repo/</text>
+          <rect x="39" y="66" width="210" height="67" rx="9" fill="#e9ecfa" stroke="#2c3a8c"/><text x="55" y="92" font-family="var(--sans)" font-size="13" font-weight="700" fill="#202c6e">AGENTS.md</text><text x="55" y="114" font-family="var(--sans)" font-size="11" fill="#5f6879">目的・安全・全体ルーティング</text>
+          <rect x="275" y="66" width="210" height="67" rx="9" fill="#fff" stroke="#dbdfea" stroke-dasharray="5 4"/><text x="291" y="92" font-family="var(--sans)" font-size="13" font-weight="700" fill="#19212f">CLAUDE.md → AGENTS.md</text><text x="291" y="114" font-family="var(--sans)" font-size="11" fill="#5f6879">本文コピーはしない</text>
+          <rect x="39" y="164" width="446" height="204" rx="10" fill="#e3f1ea" stroke="#2e7d5b"/><text x="58" y="194" font-family="var(--sans)" font-size="14" font-weight="700" fill="#1e5a40">areas/</text><text x="58" y="216" font-family="var(--sans)" font-size="11" fill="#5f6879">AGENTS.md — area共通の型と一覧</text>
+          <rect x="72" y="239" width="182" height="105" rx="8" fill="#fff" stroke="#2e7d5b"/><text x="88" y="266" font-family="var(--sans)" font-size="13" font-weight="700" fill="#1e5a40">&lt;area&gt;/</text><text x="88" y="286" font-family="var(--sans)" font-size="11" fill="#5f6879">AGENTS.md</text><text x="88" y="305" font-family="var(--sans)" font-size="11" fill="#5f6879">CLAUDE.md → AGENTS.md</text><text x="88" y="325" font-family="var(--sans)" font-size="11" fill="#5f6879">plans/ ・ references/（必要時）</text>
+          <rect x="285" y="239" width="167" height="105" rx="8" fill="#fff" stroke="#2e7d5b"/><text x="301" y="266" font-family="var(--sans)" font-size="13" font-weight="700" fill="#1e5a40">&lt;area&gt;/plans/</text><text x="301" y="287" font-family="var(--sans)" font-size="11" fill="#5f6879">AGENTS.md</text><text x="301" y="307" font-family="var(--sans)" font-size="11" fill="#5f6879">planning / active</text><text x="301" y="327" font-family="var(--sans)" font-size="11" fill="#5f6879">paused / done / archive</text>
+          <rect x="521" y="164" width="258" height="88" rx="10" fill="#fff" stroke="#dbdfea"/><text x="540" y="193" font-family="var(--sans)" font-size="13" font-weight="700" fill="#19212f">実装・業務の固有フォルダ</text><text x="540" y="216" font-family="var(--sans)" font-size="11" fill="#5f6879">src/、docs/、scripts/、data/等</text><text x="540" y="236" font-family="var(--sans)" font-size="11" fill="#5f6879">repo種別に応じて選択する</text>
+          <rect x="521" y="280" width="258" height="88" rx="10" fill="#fff" stroke="#dbdfea"/><text x="540" y="309" font-family="var(--sans)" font-size="13" font-weight="700" fill="#19212f">.agents/skills/（必要時のみ）</text><text x="540" y="332" font-family="var(--sans)" font-size="11" fill="#5f6879">repo-local Skillの正本</text><text x="540" y="352" font-family="var(--sans)" font-size="11" fill="#5f6879">.claude/skills は互換symlink</text>
+        </svg>
+        <figcaption>塗り＝運用上の正本。破線＝互換symlink。<code class="code">areas/&lt;area&gt;/plans/</code>が計画の唯一の置き場で、root <code class="code">plans/</code>を同時に作らないことが重要です。</figcaption>
+      </figure>
+    </section>
+
+    <section id="agents">
+      <h2>AGENTS.mdは「判断が切り替わる境界」へ置く</h2>
+      <p class="slede">全フォルダへ機械的に増やすのではなく、目的・安全・置き場の判断が変わる場所に置きます。これならAIは迷わず、人間も読み切れます。</p>
+      <div class="deflist">
+        <div class="ditem"><p class="dhead"><span class="pill go">必須</span> repo root <code class="code">AGENTS.md</code></p><p class="dbody"><b>repoの目的、危険操作、全体のフォルダ地図、どのareaを選ぶか</b>を持つ。rootの<code class="code">CLAUDE.md</code>は同ファイルへのsymlinkにする。</p></div>
+        <div class="ditem"><p class="dhead"><span class="pill go">Level 2で必須</span> <code class="code">areas/AGENTS.md</code> と <code class="code">areas/&lt;area&gt;/AGENTS.md</code></p><p class="dbody"><b>前者はareaの共通型、後者はそのareaの判断軸と計画ルーティング</b>を持つ。areaごとの<code class="code">CLAUDE.md</code>もsymlinkにする。</p></div>
+        <div class="ditem"><p class="dhead"><span class="pill go">plansで必須</span> <code class="code">plans/AGENTS.md</code></p><p class="dbody"><b>バケットの意味、plan.mdの型、評価・explainの置き方</b>だけを書く。個々のstateバケットや各計画フォルダに同じ規約を複写しない。</p></div>
+        <div class="ditem"><p class="dhead"><span class="pill acc">必要時だけ</span> references・skills・固有業務フォルダ</p><p class="dbody"><b>保持期間、正本、外部書込み、runtime露出</b>が変わる場合だけAGENTSを追加する。単なる画像置き場や状態バケットには不要。</p></div>
+      </div>
+    </section>
+
+    <section id="references">
+      <h2>長期再利用する判断材料はareaのreferencesへ置く</h2>
+      <p class="slede"><b>これは採用済みの方針です。</b> 計画用の成果物フォルダや<code class="code">archive/</code>を何でも入れる箱にせず、explain、評価、reference、実装、使い捨てで帰属先を分けます。</p>
+      <figure>
+        <svg viewBox="0 0 830 220" role="img" aria-label="成果物の種類別に置き場を決めるフロー図">
+          <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#5f6879" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <rect x="18" y="80" width="142" height="57" rx="9" fill="#e9ecfa" stroke="#2c3a8c"/><text x="89" y="105" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="700" fill="#202c6e">成果物が出る</text><text x="89" y="123" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">まず帰属を判定</text>
+          <line x1="160" y1="108" x2="230" y2="63" stroke="#5f6879" stroke-width="1.4" marker-end="url(#a)"/><line x1="160" y1="108" x2="230" y2="108" stroke="#5f6879" stroke-width="1.4" marker-end="url(#a)"/><line x1="160" y1="108" x2="230" y2="153" stroke="#5f6879" stroke-width="1.4" marker-end="url(#a)"/>
+          <rect x="238" y="25" width="240" height="55" rx="9" fill="#e3f1ea" stroke="#2e7d5b"/><text x="358" y="48" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#1e5a40">特定planを説明するHTML</text><text x="358" y="67" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">&lt;plan&gt;/explain/</text>
+          <rect x="238" y="84" width="240" height="55" rx="9" fill="#fff" stroke="#dbdfea"/><text x="358" y="107" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#19212f">長期再利用する定義・判断基準</text><text x="358" y="126" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">areas/&lt;area&gt;/references/</text>
+          <rect x="238" y="143" width="240" height="55" rx="9" fill="#fff" stroke="#dbdfea"/><text x="358" y="166" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="700" fill="#19212f">実装・プロダクトの成果物</text><text x="358" y="185" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">src/ docs/ public/ 等の正本領域</text>
+          <rect x="553" y="62" width="244" height="92" rx="10" fill="#f7e8e2" stroke="#b4472b"/><text x="675" y="91" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="700" fill="#8c3620">一時生成物</text><text x="675" y="114" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">tmp/ またはgitignore</text><text x="675" y="134" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#5f6879">恒久の正本にしない</text>
+          <line x1="478" y1="111" x2="548" y2="111" stroke="#5f6879" stroke-width="1.4" marker-end="url(#a)"/><text x="514" y="99" text-anchor="middle" font-family="var(--sans)" font-size="10" fill="#5f6879">不要なら</text>
+        </svg>
+        <figcaption><b>採用済み:</b> 長期・横断で再利用する定義・判断基準・参照導線は <code class="code">areas/&lt;area&gt;/references/</code>、<code class="code">archive/</code>は計画の終了状態です。</figcaption>
+      </figure>
+    </section>
+
+    <section id="avoid">
+      <h2>root plansとarea plansを併存させない</h2>
+      <p class="slede">今回の一番大事な設計判断です。計画の置き場を二つ作ると、AIも人間も「どちらが正本か」を毎回推測することになります。</p>
+      <div class="compare2">
+        <div class="ccol"><p class="h"><span class="pill go">採用</span> Level 2の単一正本</p><p><b>計画:</b> <code class="code">areas/&lt;area&gt;/plans/</code><br><br><b>横断の判断:</b> root <code class="code">AGENTS.md</code> がareaを選ぶ。計画本体はarea内へ一本化する。</p></div>
+        <div class="ccol"><p class="h"><span class="pill warn">不採用</span> 二重のplans</p><p><b>計画:</b> root <code class="code">plans/</code> と area <code class="code">plans/</code> を併存。<br><br>何をどちらへ置くかが曖昧になり、一覧・状態・移行ログも重複する。</p></div>
+      </div>
+      <details><summary>Level 1だけroot plansを使ってよい理由</summary><p>areaという分類軸がまだ不要な単目的repoでは、root <code class="code">plans/</code>が最短です。areaを導入した時点で、新規計画はarea側へ切り替え、root plansは移行中の例外として明示します。</p></details>
+    </section>
+
+    <section id="rollout">
+      <h2>既存repoの整理は、一括移動でなく型を先に固定する</h2>
+      <p class="slede">まず新規repoでLevel 2を試し、仕事・focusmapはそれぞれの現状を尊重して診断します。既存資産の移動は、構造の正解を実証してから人間承認を得て行います。</p>
+      <ol class="steps">
+        <li><span class="n">1</span><div><p class="h">repo-createに「レベル選択」を足す <span class="pill warn">人間判断</span></p><p>新規repoの目的を確認し、Level 1かLevel 2を選ぶ。Level 3はPrivateのようなworkspaceだけに限定する。</p></div></li>
+        <li><span class="n">2</span><div><p class="h">Level 2の最小scaffoldをdry-runで出す</p><p>root／areas／area／plansのAGENTS雛形、symlink、空バケット、出力の入口だけを提案する。業務固有フォルダやREADMEは別途決めた規約に従う。</p></div></li>
+        <li><span class="n">3</span><div><p class="h">新しい小さなrepoで1回通す</p><p>active配置、registry登録、計画作成、area成果物の保存までを実運用で確認する。ここで余分なフォルダを削る。</p></div></li>
+        <li><span class="n">4</span><div><p class="h">既存repoは診断してから個別に移植</p><p>仕事は<code class="code">areas/</code>をすでに持つため差分中心、focusmapは実装repoとして必要範囲のみを採用する。物理移動・削除・改名は人間承認後に限定する。</p></div></li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>この提案の根拠</h2>
+      <ul class="source">
+        <li><b>Privateの入口構造</b> — <code class="code">AGENTS.md</code>。personal-osとprojectsを分けるworkspace型を参照。</li>
+        <li><b>Area標準</b> — <code class="code">personal-os/my-brain/areas/AGENTS.md</code>。areaごとのAGENTS、symlink、plans、バケットの現行規約を採用。</li>
+        <li><b>仕事repo</b> — <code class="code">projects/active/仕事/AGENTS.md</code>。areaの新正本とlegacy構造を分ける実運用例として参照。</li>
+        <li><b>前回監査</b> — repo-createには種別別scaffoldが未実装であり、registry同期は全緑。今回の提案はその未整備部分を埋める設計案。</li>
+      </ul>
+    </section>
+  </div></main>
+</body>
+</html>

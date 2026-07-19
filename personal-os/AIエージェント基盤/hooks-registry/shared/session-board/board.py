@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import urllib.request  # 既存テスト・外部モック向け互換露出
+import uuid  # 子09 theme-add のテーマID採番
 
 from md import store as md_store
 from turso import spool as turso_spool
@@ -34,6 +35,9 @@ TURSO_TIMEOUT, TURSO_SPOOL_LIMIT = turso_store.TIMEOUT, turso_spool.LIMIT
 _ta, _ia = turso_store.text_arg, turso_store.int_arg
 _stmt_session_upsert = turso_store.stmt_session_upsert
 _stmt_session_delete = turso_store.stmt_session_delete
+# 子09: セッション所属先の宣言（sessions.todo_id/theme_id）と大課題テーマの作成（inbox themes）。
+_stmt_session_affiliation = turso_store.stmt_session_affiliation
+_stmt_theme_insert = turso_store.stmt_theme_insert
 _stmts_logs, _stmts_events = turso_store.stmts_logs, turso_store.stmts_events
 _stmts_reconcile, _stmt_goal_insert = turso_store.stmts_reconcile, turso_store.stmt_goal_insert
 _spool_paths, _spoolable_statements = turso_spool.paths, turso_spool.spoolable
@@ -200,7 +204,7 @@ def _run_inbox_command(cmd, args, entries):
 
 
 def parse_args(argv):
-    cmd, args, entries, choices = argv[0], {}, [], []
+    cmd, args, entries, choices, plans = argv[0], {}, [], [], []
     index = 1
     while index < len(argv):
         key = argv[index]
@@ -211,11 +215,15 @@ def parse_args(argv):
             entries.append(value)
         elif key == "--choice":       # 質問の選択肢は繰り返し指定を配列で受ける（最大3はbuilder側で丸める）
             choices.append(value)
+        elif key == "--plan":         # theme-add は計画slugを複数受ける。update等の単一 --plan 互換のため args["plan"] も残す
+            plans.append(value); args["plan"] = value
         else:
             args[key[2:]] = value
         index += 2
     if choices:
         args["choices"] = choices
+    if plans:
+        args["plans"] = plans
     return cmd, args, entries
 
 
@@ -319,12 +327,30 @@ def _mutate(cmd, args, entries, key, lines, pending_events):
 def main():
     if len(sys.argv) < 2:
         sys.exit("usage: board.py <add|update|flip|sub-start|sub-end|finish|log|check|show|goals|reconcile|goal-add"
-                 "|steps|step-done|step-doing|step-skip|ask|flow-done|answers> ...")
+                 "|theme-add|steps|step-done|step-doing|step-skip|ask|flow-done|answers> ...")
     cmd, args, entries = parse_args(sys.argv[1:])
     if cmd == "goal-add":
         statement = _stmt_goal_insert(args.get("name"), args.get("date"), args.get("source", "chat"))
         if statement is None: sys.exit('usage: board.py goal-add --name "<目標>" [--date YYYY-MM-DD] [--source chat]')
         _turso_sync([statement], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE); return
+    if cmd == "theme-add":
+        # 子09: 大課題テーマの作成（inbox themes）。AI起点は目的・完了条件を必須にし、
+        # 欠落は usage 停止＝機械必須化（DB制約では縛らない・人間のボード即席作成は空可）。
+        name = (args.get("name") or "").strip()
+        purpose = (args.get("purpose") or "").strip()
+        done = (args.get("done") or args.get("done-criteria") or "").strip()
+        if not name or not purpose or not done:
+            sys.exit('usage: board.py theme-add --name "<テーマ名>" --purpose "<目的>" --done "<完了条件>" '
+                     '[--goal <的slug>] [--plan <計画slug> ...]  '
+                     '（AI起点は目的・完了条件が必須。人間のボード即席作成はボードUI側で空可）')
+        plans = args.get("plans") or ([args["plan"]] if args.get("plan") else [])
+        theme_id = str(uuid.uuid4())
+        statement = _stmt_theme_insert(theme_id, name, purpose, done, args.get("goal"), plans)
+        if statement is None:
+            sys.exit('usage: board.py theme-add --name "<テーマ名>" --purpose "<目的>" --done "<完了条件>"')
+        _turso_sync([statement], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)
+        print(theme_id)   # 呼び出し元（AI）が update --theme <id> や起票の紐付けに使う
+        return
     # 子05: タスク入れ子・2層チェック（inbox DBのtodos/todo_stepsだけを書く。daily/keyには触れない）。
     if _run_inbox_command(cmd, args, entries):
         return
@@ -341,7 +367,14 @@ def main():
     # edit_daily正常終了=MD原子置換とflock解放済み。この後だけTursoへ送る。
     if cmd in ("add", "update", "flip", "sub-start", "sub-end"):
         _, row = find_line(lines, key); statement = _stmt_session_upsert(row)
-        _turso_sync(([statement] if statement else []) + _stmts_events(pending_events, date_s))
+        stmts = ([statement] if statement else []) + _stmts_events(pending_events, date_s)
+        # 子09: update --todo/--theme は所属先の宣言。sessions.todo_id/theme_id へ追記UPDATEする
+        # （upsert 後に流し、行が存在する前提。MDには載せない＝ボード表示・格納先判定だけに使う board DB 限定列）。
+        if cmd == "update" and ("todo" in args or "theme" in args):
+            affiliation = _stmt_session_affiliation(key, args.get("todo"), args.get("theme"))
+            if affiliation:
+                stmts.append(affiliation)
+        _turso_sync(stmts)
     elif cmd == "log":
         _turso_sync(_stmts_logs(context["repo"], context["parent"], entries, date_s, session_key=f"s:{key}", todo_id=args.get("todo")))
     elif cmd == "finish":

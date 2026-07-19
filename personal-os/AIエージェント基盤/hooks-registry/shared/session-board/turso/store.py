@@ -97,6 +97,48 @@ def stmt_session_upsert(row):
 def stmt_session_delete(key): return "DELETE FROM sessions WHERE session_key = ?", [text_arg(f"s:{key}")]
 
 
+def stmt_session_affiliation(key, todo_id=None, theme_id=None):
+    """子09: セッションの所属先（宣言済み todo_id / theme_id）を sessions へ書く（board DB）。
+    プロンプト登録時にAIが update --todo/--theme で宣言した参照値を保存する専用UPDATE。
+    MD行には載せない（todo_id/theme_id はボード表示・格納先判定だけに使う board DB 限定列）。
+    指定された列だけをSET（partial可）。両方Noneなら None（送らない）。行が無ければ0件で無害。"""
+    if not key:
+        return None
+    sets, params = [], []
+    if todo_id is not None:
+        sets.append("todo_id = ?"); params.append(text_arg(todo_id))
+    if theme_id is not None:
+        sets.append("theme_id = ?"); params.append(text_arg(theme_id))
+    if not sets:
+        return None
+    params.append(text_arg(f"s:{key}"))
+    return f"UPDATE sessions SET {', '.join(sets)} WHERE session_key = ?", params
+
+
+def stmt_theme_insert(theme_id, name, purpose, done_criteria, goal_ref=None, plan_refs=None):
+    """子09: 大課題テーマを inbox themes へ INSERT（board.py theme-add の実体）。
+    themes.ts insertTheme と同型: sort_order は active テーマの MAX+1。purpose/done_criteria は
+    AI起点では必須（欠落チェックは呼び出し元＝board.py の usage 停止で機械保証・DB制約では縛らない）。
+    plan_refs は slug のリスト（JSON配列文字列で保存・本文コピーはしない）。"""
+    name = (name or "").strip()
+    if not theme_id or not name:
+        return None
+    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).isoformat(timespec="seconds")
+    picked = [p for p in (plan_refs or []) if (p or "").strip()]
+    plan_refs_json = json.dumps(picked, ensure_ascii=False) if picked else None
+    sql = ("INSERT INTO themes (id, name, purpose, done_criteria, goal_ref, plan_refs, sort_order, status, created_at, updated_at) "
+           "VALUES (?, ?, ?, ?, ?, ?, "
+           "(SELECT COALESCE(MAX(sort_order), 0) + 1 FROM themes WHERE status = 'active'), "
+           "'active', ?, ?)")
+    args = [text_arg(theme_id), text_arg(name),
+            (text_arg(purpose) if (purpose or "").strip() else null_arg()),
+            (text_arg(done_criteria) if (done_criteria or "").strip() else null_arg()),
+            (text_arg(goal_ref) if (goal_ref or "").strip() else null_arg()),
+            (text_arg(plan_refs_json) if plan_refs_json else null_arg()),
+            text_arg(now), text_arg(now)]
+    return sql, args
+
+
 def stmts_logs(repo, parent, entries, date_s, session_key=None, todo_id=None):
     # todo_id 未指定は従来の6列INSERT（session_logs.todo_id 未適用DBでも安全）。
     # 子05: --todo 指定時だけ todo_id 列を含む7列INSERT（migration適用後にAIが渡す）。
@@ -182,6 +224,54 @@ def stmt_flow_done(todo_id):
            "WHERE id = ? AND status != 'done' "
            "AND NOT EXISTS (SELECT 1 FROM todo_steps s WHERE s.todo_id = todos.id AND s.status IN ('todo', 'doing'))")
     return sql, [text_arg(now), text_arg(now), text_arg(todo_id)]
+
+
+# ---- 子08 サブエージェント入れ子可視化（board DB: session_subagents）----
+# 設計契約: 体数±1・🔵⇄🟢 は sessions/MD 側そのまま。ここは個体の行を積むだけ。
+# ラベルは board.py sub-label（AI）だけが書く＝hookは文面を創作しない。
+# 「稼働中N体」は status='running' 集計でSQL導出する（主観値を保存しない）。
+
+
+def stmt_subagent_start(session_key, session_date, started_at=None):
+    """SubagentStart: 個体行を1本INSERT（sub_seq は 親セッション×日 内の MAX+1・labelはNULL）。
+    session_key は s:xxxx 形式で渡す（呼び出し元 board.py で付与済み）。"""
+    if not session_key or not session_date:
+        return None
+    now = started_at or datetime.datetime.now().isoformat(timespec="seconds")
+    sql = ("INSERT INTO session_subagents (id, session_key, sub_seq, label, status, started_at, session_date) "
+           "VALUES (?, ?, (SELECT COALESCE(MAX(sub_seq), 0) + 1 FROM session_subagents "
+           "WHERE session_key = ? AND session_date = ?), NULL, 'running', ?, ?)")
+    return sql, [text_arg(uuid.uuid4().hex), text_arg(session_key), text_arg(session_key),
+                 text_arg(session_date), text_arg(now), text_arg(session_date)]
+
+
+def stmt_subagent_end(session_key, session_date, ended_at=None):
+    """SubagentStop: running のうち最も早く開始した1行を close（FIFO・体数-1と対応）。
+    サブ個体の識別子はhookから来ないため、started_at昇順の先頭を閉じる近似（既知の限界・実装結果に記録）。"""
+    if not session_key or not session_date:
+        return None
+    now = ended_at or datetime.datetime.now().isoformat(timespec="seconds")
+    sql = ("UPDATE session_subagents SET status = 'done', ended_at = ? "
+           "WHERE id = (SELECT id FROM session_subagents "
+           "WHERE session_key = ? AND session_date = ? AND status = 'running' "
+           "ORDER BY started_at, sub_seq LIMIT 1)")
+    return sql, [text_arg(now), text_arg(session_key), text_arg(session_date)]
+
+
+def stmt_subagent_label(session_key, session_date, label, seq=None):
+    """AI（board.py sub-label）が個体行へ1行ラベルを付ける。
+    --seq 指定=その連番の行／未指定=最も新しく開始した running 行（＝直前に起動したサブ）。"""
+    if not session_key or not session_date or not (label or "").strip():
+        return None
+    now = datetime.datetime.now().isoformat(timespec="seconds")
+    if seq is not None:
+        sql = "UPDATE session_subagents SET label = ? WHERE session_key = ? AND session_date = ? AND sub_seq = ?"
+        return sql, [text_arg(label), text_arg(session_key), text_arg(session_date), int_arg(seq)]
+    sql = ("UPDATE session_subagents SET label = ? "
+           "WHERE id = (SELECT id FROM session_subagents "
+           "WHERE session_key = ? AND session_date = ? AND status = 'running' "
+           "ORDER BY started_at DESC, sub_seq DESC LIMIT 1)")
+    return sql, [text_arg(label), text_arg(session_key), text_arg(session_date)]
 
 
 def stmt_goal_insert(name, goal_date=None, source="chat", created_at=None):

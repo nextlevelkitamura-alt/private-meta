@@ -21,6 +21,8 @@
 
 `add` / `update` / `flip` / `sub-start` / `sub-end` / `log` / `finish` / `check` / `show` / `goals` / `reconcile` / `goal-add`。`log` / `finish` は任意で `--todo <id>` を取り、`session_logs.todo_id`（inboxの todos への紐付け・migration適用後のみ）を刻む。
 
+`update` は任意で `--todo <id>` / `--theme <id>` を取り、そのセッションの所属先を `sessions.todo_id/theme_id`（board DB・migration `turso/migrations/*_sessions_todo_theme.sql` 適用後のみ）へ宣言する（子09）。MDには載せない board DB 限定列で、focusmap 側のエージェント行「テーマ›タスク」表示と「終わったこと」格納先判定に使う。宣言なしのupdateはこのUPDATEを送らない（毎回の無駄書きを避ける）。宣言文の注入は `_first_guide`（初回のみ）にあり、`_mirror`（毎ターン）には入れない＝コスト規律。
+
 ## board.py 子05コマンド（inbox DB＝todos/todo_steps系・MDには触れない）
 
 focusmap 今日ボードの「タスク入れ子と2層チェック」を駆動する。inbox DBへ直接best-effort送信し、board既定spoolへは載せない（cross-DB replay汚染を避ける）。migration適用後にだけ実挙動する（`db/turso/migrations/*` は focusmap 側・inbox宛）。

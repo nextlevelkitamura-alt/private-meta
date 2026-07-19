@@ -24,6 +24,7 @@
 - 運用データ（sessions・events・logs・goals・新設やること）: 反転完了（子03）後は Turso が正本。それまでの正本はデイリーmd
 - 的の文面・知識: md（git）が正本のまま。DBには参照（slug・計画名）だけ置く
 - 計画書: md（git）が正本。DBはactive計画の読み取り専用表示キャッシュのみ許可（一方向同期・編集はmd側だけ・ボードから本文編集UIは作らない。2026-07-18人間指示で改定・実装は子06/07）
+- 大課題テーマ: inbox DBの themes が正本（todosと同格の運用データ・ボード編集可）。的・計画へは参照slugのみ持ち、本文コピー・進捗の重複描画をしない（2026-07-19人間採用・実装は子09）
 - repo選択肢の正本: `AIエージェント基盤/repo-registry/repo概要.md`（DBのreposマスタは参照コピー）
 - session-board実装の正本: `AIエージェント基盤/hooks-registry/shared/session-board/`
 - focusmap実装の正本: `~/Private/projects/active/focusmap/`
@@ -48,6 +49,7 @@
   └→ 07 計画スマホ表示（focusmap）
 
 05 ─→ 08 サブエージェント入れ子可視化（focusmap＋hook）  ※05のUI部品依存・03とはhook交差のため直列調整
+05 ─→ 09 大課題テーマ階層と横断表示（focusmap）  ※02/03/08と表示surface交差のため直列調整・04と的slug集計を共有
 ```
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
@@ -116,6 +118,14 @@
     次: 05完了後に着手（最初にSubagentStart payloadの実物確認）
     場所: plans/08 ／ 依存: 05（03とはhook調整）
     参照: 2026-07-18人間採用（IMG_4307の議論・機械=hook/意味=AI分担）
+- [ ] 09 大課題テーマ階層と横断表示 … 計画
+    役割: 実装
+    対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
+    並列: 05完了後・02/03/08と表示surface交差のため直列調整・04と的slug集計を共有 ／ レビュー: 都度
+    人間ゲート: inbox migration適用（themes・todos.theme_id・carried_from）・origin/main push・本番反映
+    次: 人間裁定2点（モック案A/B・繰越し痕跡の要否）→着手
+    場所: plans/09 ／ 依存: 05（02/03/08と交差調整）
+    参照: references/ボード大課題階層モック-2026-07-19.html（UI正本）・R1/R2調査統合（2026-07-19）
 
 ## 人間ゲート
 
@@ -129,7 +139,8 @@
   - inbox migration適用（plan_docs・plan_progress）・~/Private post-commit hook登録・初回一括投入＝子06
   - 依存パッケージ追加（react-markdown・remark-gfm）＝子07
   - board DBへのmigration適用（session_subagents）＝子08
-  - origin/main への push・Cloud Run本番反映＝子01・02・04・05・07・08
+  - inbox migration適用（themes・todos.theme_id・carried_from）＝子09
+  - origin/main への push・Cloud Run本番反映＝子01・02・04・05・07・08・09
 - planning→active昇格は、explain/program.html の提示と人間の実行OKを得てから bucketctl で行う（active上限3の確認込み）
 
 ## 完了条件（レビュー項目）
@@ -141,6 +152,7 @@
 - [ ] md→DBミラー送信コードとspoolが廃止され、計画・的の文面の本文コピーがDBに存在しない（対象: session-board turso/・DBスキーマ）
 - [ ] 各タスクにステップ入れ子・タスク別%・状態ラベルが表示され、ステップ✔=AI自動・見出し完了=人間タップの2層チェックで「終わったこと」へ移動し、AIの質問に選択肢＋自由入力でスマホ回答できる（対象: 子05・board画面）
 - [ ] スマホの「計画」タブでactive計画の一覧・進捗（子N/M・完了条件x/y）・md本文が読み取り専用で確認でき、md正本を書き換える経路がDB側に存在しない（対象: 子06・07）
+- [ ] ボードに大課題テーマの階層が表示され、テーマの編集・タスクの翌日引き継ぎ・エージェント行の「テーマ›タスク」位置表示・終わったことのテーマ別入れ子が動き、的・計画の本文コピーがDBに存在しない（対象: 子09・board画面）
 - [ ] 統合評価 `評価/評価01.md` が全PASS（対象: 評価/）
 
 ## 関連

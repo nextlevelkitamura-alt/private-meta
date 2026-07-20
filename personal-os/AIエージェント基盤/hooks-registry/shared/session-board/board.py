@@ -11,22 +11,20 @@ from md import store as md_store
 from turso import spool as turso_spool
 from turso import store as turso_store
 
-# MD公開名の互換re-export（board-sweep・既存テストがimportする）。
+# 2026-07-21 正本反転（子03・案b）: board.py は当日デイリーMDを一切読み書きしない。
+# 運用データ（sessions/events/logs/subagents）の正本は Turso（board DB）。md_store は
+# 日付解決と生存照合の純ユーティリティだけを提供する（MD描画・行parse・原子的置換は廃止）。
 RUN, WAIT, SUB = md_store.RUN, md_store.WAIT, md_store.SUB
-STATE_RANK, RANK_STATE, STATE_WORD = md_store.STATE_RANK, md_store.RANK_STATE, md_store.STATE_WORD
+STATE_WORD = md_store.STATE_WORD
 STALE_MIN, STALE_MIN_SUB = md_store.STALE_MIN, md_store.STALE_MIN_SUB
 STALE_MIN_NOFILE, NOFILE_MAX = md_store.STALE_MIN_NOFILE, md_store.NOFILE_MAX
-PLACEHOLDER, AGENTS_H, DONE_H = md_store.PLACEHOLDER, md_store.AGENTS_H, md_store.DONE_H
-GS_OPEN, GS_CLOSE = md_store.GS_OPEN, md_store.GS_CLOSE
-LINE_RE, V2_LINE_RE, OLD_LINE_RE = md_store.LINE_RE, md_store.V2_LINE_RE, md_store.OLD_LINE_RE
-OLD_STATE, CHILD_RE, PLAN_MARK = md_store.OLD_STATE, md_store.CHILD_RE, md_store.PLAN_MARK
-daily_path, template_text = md_store.daily_path, md_store.template_text
-clean, section_bounds, parse_line = md_store.clean, md_store.section_bounds, md_store.parse_line
-fmt, find_line, render_body = md_store.fmt, md_store.find_line, md_store.render_body
-strip_plan_mark = md_store.strip_plan_mark
-add_children, annotate_parent_plan = md_store.add_children, md_store.annotate_parent_plan
+PLACEHOLDER = md_store.PLACEHOLDER
+daily_path = md_store.daily_path
+clean = md_store.clean
 _tx_roots, _list_transcripts, _newest_for = md_store.tx_roots, md_store.list_transcripts, md_store.newest_for
-_minutes_between, _fmt_elapsed, _base_time_for = md_store.minutes_between, md_store.fmt_elapsed, md_store.base_time_for
+_minutes_between = md_store.minutes_between
+# 状態語彙 word→emoji（DB上の run/wait/sub を内部rowの絵文字へ戻す）。
+_WORD_STATE = {"run": RUN, "wait": WAIT, "sub": SUB}
 
 # Turso公開名の互換re-export。送信ラッパーはmonkeypatch可能性を保つ。
 TURSO_DB_URL, TURSO_KEYCHAIN_SERVICE = turso_store.DB_URL, turso_store.KEYCHAIN_SERVICE
@@ -35,6 +33,10 @@ TURSO_TIMEOUT, TURSO_SPOOL_LIMIT = turso_store.TIMEOUT, turso_spool.LIMIT
 _ta, _ia = turso_store.text_arg, turso_store.int_arg
 _stmt_session_upsert = turso_store.stmt_session_upsert
 _stmt_session_delete = turso_store.stmt_session_delete
+# 子03 正本反転: sessions のDB読み（単体/生存中全件/目標一覧）。board.py はここから状態を得る。
+_stmt_session_read = turso_store.stmt_session_read
+_stmt_sessions_alive = turso_store.stmt_sessions_alive
+_stmt_goals_distinct = turso_store.stmt_goals_distinct
 # 子09: セッション所属先の宣言（sessions.todo_id/theme_id）と大課題テーマの作成（inbox themes）。
 _stmt_session_affiliation = turso_store.stmt_session_affiliation
 _stmt_theme_insert = turso_store.stmt_theme_insert
@@ -82,9 +84,73 @@ def _turso_sync(statements, db_url=TURSO_DB_URL, service=TURSO_KEYCHAIN_SERVICE)
     _turso_replay(skip_tail_lines=spooled or 0)
 
 
-def reconcile_rows(lines, changed=None):
-    """互換ラッパー。board._list_transcriptsのモックをMD層へ注入する。"""
-    return md_store.reconcile_rows(lines, changed, transcript_loader=_list_transcripts)
+def _session_from_db(db_row):
+    """board DB の sessions 1行（word状態・model列）を内部row（絵文字状態・who列）へ写す。
+    正本反転後の唯一の状態入口。runtime接頭辞（claude/ 等）はDBに持たないため who=model となる
+    （表示・分析はfocusmap側がmodel列を読む・接頭辞は非永続＝正本反転の帰結）。"""
+    key = (db_row.get("session_key") or "").removeprefix("s:")
+    state = _WORD_STATE.get(db_row.get("state") or "run", RUN)
+    model = db_row.get("model") or ""
+    return {"state": state, "time": "", "goal": db_row.get("goal") or PLACEHOLDER,
+            "now": db_row.get("now") or PLACEHOLDER, "repo": db_row.get("repo") or "?",
+            "type": db_row.get("type") or "その他", "who": model or PLACEHOLDER,
+            "plan": db_row.get("plan") or PLACEHOLDER, "key": key,
+            "sub": int(db_row.get("sub_n") or 0)}
+
+
+def _load_row(key):
+    """key の現在セッション行を board DB から読む。無い/読めない（オフライン・NO_TURSO）は None。
+    best-effort＝読めない時は「新規/不明」として扱い本体セッションを止めない（自己修復は次回・reconcile）。"""
+    if not key:
+        return None
+    rows = _turso_read(_stmt_session_read(key))
+    return _session_from_db(rows[0]) if rows else None
+
+
+def _minutes_since_iso(iso_s, now_dt):
+    """ISO時刻から now_dt までの経過分。updated_at（最終書込）を沈黙判定の起点に使う。
+    未来時刻（逆行クロック）は負値のまま返し、上限レンジ判定で弾かせる。"""
+    if not iso_s:
+        return None
+    try:
+        return (now_dt - datetime.datetime.fromisoformat(iso_s)).total_seconds() / 60
+    except Exception:
+        return None
+
+
+def reconcile_db(now_dt=None):
+    """DB上の run/sub セッション × 実トランスクリプト生存で照合し、沈黙した行を⏸へ降格する。
+    降格対象の内部row（state=WAIT・sub=0）のリストを返す（main が upsert+event を送る）。
+    生存判定ロジックは旧MD reconcile を流用: mtime経路（transcriptあり）は最終更新からの沈黙、
+    ファイル皆無経路（transcriptなし）は updated_at からの沈黙で判定。files が皆無なら降格しない
+    （探索不能時に全行を一括⏸にしない安全弁）。"""
+    rows = _turso_read(_stmt_sessions_alive())
+    if not rows:
+        return []
+    now_dt = now_dt or datetime.datetime.now()
+    files, demoted = None, []
+    for db_row in rows:
+        row = _session_from_db(db_row)
+        if row["state"] not in (RUN, SUB):
+            continue
+        if files is None:
+            files = _list_transcripts()
+        transcript = _newest_for(row["key"], files)
+        demote = False
+        if transcript is None:
+            age = _minutes_since_iso(db_row.get("updated_at"), now_dt)
+            limit = STALE_MIN_SUB if row["state"] == SUB else STALE_MIN_NOFILE
+            demote = bool(files) and age is not None and limit < age < NOFILE_MAX
+        else:
+            limit = STALE_MIN_SUB if row["state"] == SUB else STALE_MIN
+            try:
+                demote = (now_dt.timestamp() - os.path.getmtime(transcript)) / 60 >= limit
+            except OSError:
+                pass
+        if demote:
+            row.update(state=WAIT, sub=0)
+            demoted.append(row)
+    return demoted
 
 
 def turso_append_events(events, date_s=None):
@@ -232,24 +298,18 @@ def parse_args(argv):
     return cmd, args, entries
 
 
-def _read_only(cmd, path, key):
-    if not os.path.exists(path):
-        if cmd != "goals":
-            print("missing")
-        return
-    lines = open(path, encoding="utf-8").read().split("\n")
+def _read_only(cmd, key):
+    """check / show / goals を board DB から読む（正本反転後・MDは読まない）。
+    出力フォーマットは現行互換（check=状態word1行 / show=7タブフィールド / goals=1行1目標）。
+    読めない（オフライン・NO_TURSO）は check/show=missing、goals=空（best-effort・hookを止めない）。"""
     if cmd == "goals":
-        start, end = section_bounds(lines, AGENTS_H)
-        seen = []
-        if start is not None:
-            for index in range(start + 1, end):
-                row = parse_line(lines[index])
-                if row and row["goal"] != PLACEHOLDER and row["goal"] not in seen:
-                    seen.append(row["goal"])
-        for goal in seen:
-            print(goal)
+        rows = _turso_read(_stmt_goals_distinct())
+        for db_row in rows or []:
+            goal = db_row.get("goal")
+            if goal and goal != PLACEHOLDER:
+                print(goal)
         return
-    _, row = find_line(lines, key)
+    row = _load_row(key)
     if row is None:
         print("missing")
     elif cmd == "check":
@@ -259,27 +319,28 @@ def _read_only(cmd, path, key):
                          row["type"], row["repo"], row["who"], row.get("plan") or PLACEHOLDER]))
 
 
-def _mutate(cmd, args, entries, key, lines, pending_events):
-    for header in (AGENTS_H, DONE_H):
-        if header not in lines:
-            lines += ["", header]
-    index, row = find_line(lines, key) if key else (None, None)
-    now = datetime.datetime.now().strftime("%H:%M")
+def _mutate_db(cmd, args, entries, key, row, pending_events):
+    """DB-first の状態遷移計算（MDには一切触れない）。row=board DB から読んだ現在行（無ければ None）。
+    session を書く系（add/update/flip/sub-*）は「upsert する最終row」を返す（None=書込み不要/対象なし）。
+    log/finish は session_logs 追記が主で、repo/parent の補完だけ row を使う。context に repo/parent を返す。
+    3状態（🟢⏸🔵）・体数・イベント発行の意味は正本反転前と同一。"""
+    now = datetime.datetime.now().strftime("%H:%M")   # 新規addの time 既定（DBは未使用・引数互換のため保持）
     context = {"repo": None, "parent": None}
 
     if cmd == "add":
-        if index is None:
+        if row is None:   # 新規のみ枠を作る（既存は冪等＝そのまま再upsert・event無し）
             row = {"state": RUN, "time": args.get("time") or now,
                    "goal": clean(args.get("goal") or args.get("summary")) or PLACEHOLDER,
                    "now": clean(args.get("now")) or PLACEHOLDER,
                    "repo": clean(args.get("repo")) or "?", "type": clean(args.get("type")) or "その他",
                    "who": clean(args.get("who")) or PLACEHOLDER,
-                   "plan": clean(args.get("plan")) or PLACEHOLDER, "key": key}
-            start, end = section_bounds(lines, AGENTS_H); insert = end
-            while insert > start + 1 and not lines[insert - 1].strip(): insert -= 1
-            lines.insert(insert, fmt(row)); pending_events.append((dict(row), "run", "add"))
-    elif cmd == "update":
-        if index is None: sys.exit(f"line not found for key {key}")
+                   "plan": clean(args.get("plan")) or PLACEHOLDER, "key": key, "sub": 0}
+            pending_events.append((dict(row), "run", "add"))
+        return row, context
+
+    if cmd == "update":
+        if row is None:
+            return None, context   # 対象行が無い/読めない → best-effort no-op（非ブロッキング・次回自己修復）
         if "goal" in args or "summary" in args: row["goal"] = clean(args.get("goal") or args.get("summary")) or PLACEHOLDER
         if "now" in args: row["now"] = clean(args["now"]) or PLACEHOLDER
         if "repo" in args: row["repo"] = clean(args["repo"]) or row["repo"]
@@ -289,17 +350,19 @@ def _mutate(cmd, args, entries, key, lines, pending_events):
             base, model = (row["who"].split("/")[0] if "/" in row["who"] else ""), clean(args["model"])
             row["who"] = f"{base}/{model}" if base and model else (model or row["who"])
         if "plan" in args: row["plan"] = clean(args["plan"]) or PLACEHOLDER
-        lines[index] = fmt(row)
-    elif cmd == "flip":
-        if index is None: return context
+        return row, context
+
+    if cmd == "flip":
+        if row is None: return None, context
         state = args.get("state")
-        if state not in ("run", "wait", "sub"): return context
+        if state not in ("run", "wait", "sub"): return row, context   # 不明stateは現状維持のまま再upsert
         new_state = {"run": RUN, "wait": WAIT, "sub": SUB}[state]
         if new_state != row["state"]:
             row["state"] = new_state; pending_events.append((dict(row), state, "flip"))
-        lines[index] = fmt(row)
-    elif cmd in ("sub-start", "sub-end"):
-        if index is None: return context
+        return row, context   # 同状態でも upsert（従来挙動・event は変化時のみ）
+
+    if cmd in ("sub-start", "sub-end"):
+        if row is None: return None, context
         count, old_state = int(row.get("sub") or 0), row["state"]
         if cmd == "sub-start":
             row.update(sub=count + 1, state=SUB)
@@ -308,25 +371,22 @@ def _mutate(cmd, args, entries, key, lines, pending_events):
             row["sub"] = max(0, count - 1)
             if row["sub"] == 0 and row["state"] == SUB:
                 row["state"] = RUN; pending_events.append((dict(row), "run", "sub-end"))
-        lines[index] = fmt(row)
-    elif cmd in ("log", "finish"):
+        return row, context
+
+    if cmd in ("log", "finish"):
         repo = clean(args.get("repo")) or (row["repo"] if row else "?")
         parent = clean(args.get("parent") or args.get("summary")) or (row["goal"] if row else "作業")
-        plan, time_s = (row.get("plan") if row else None) or PLACEHOLDER, args.get("time") or now
-        base = _base_time_for(lines, repo, parent, row)
-        mark = _fmt_elapsed(_minutes_between(base, time_s)) if base else ""
-        if cmd == "finish" and index is not None:
-            pending_events.append((dict(row), "done", "finish")); del lines[index]
-        children = [f"{time_s} {mark} {entry}" if offset == 0 and mark else f"{time_s} {entry}" for offset, entry in enumerate(entries)]
-        add_children(lines, repo, parent, children); annotate_parent_plan(lines, repo, parent, plan)
+        if cmd == "finish" and row is not None:
+            pending_events.append((dict(row), "done", "finish"))   # 削除前スナップショット（done event）
         context.update(repo=repo, parent=parent)
-    elif cmd == "reconcile":
-        demoted = []; reconcile_rows(lines, changed=demoted)
-        pending_events += [(row, "wait", "reconcile") for row in demoted]
-    else:
-        sys.exit(f"unknown command: {cmd}")
-    render_body(lines)
-    return context
+        return row, context
+
+    if cmd == "reconcile":
+        demoted = reconcile_db()
+        pending_events += [(dr, "wait", "reconcile") for dr in demoted]
+        return None, context
+
+    sys.exit(f"unknown command: {cmd}")
 
 
 def main():
@@ -407,17 +467,20 @@ def main():
         return
     key = args.get("key", "").removeprefix("s:")
     if not key and cmd not in ("reconcile", "goals"): sys.exit("--key required")
-    path, date_s = daily_path()
+    _, date_s = daily_path()   # date_s は session_events/logs の session_date に使う（MDは開かない）
     if cmd in ("check", "show", "goals"):
-        _read_only(cmd, path, key); return
-    if cmd == "reconcile" and not os.path.exists(path): return
+        _read_only(cmd, key); return
 
+    # 正本反転（子03・案b）: MDを介さず、board DB から現在行を読んで遷移計算 → DBへ書く（best-effort）。
+    # sessions の upsert/delete は spool しない（死んだ行の復活を防ぐ・追記系のみ再送）。読めない時は
+    # no-op で本体を止めず、次回コマンド/reconcile がDB状態と実態を突き合わせて自己修復する。
     pending_events = []
-    with md_store.edit_daily(path, date_s) as lines:
-        context = _mutate(cmd, args, entries, key, lines, pending_events)
-    # edit_daily正常終了=MD原子置換とflock解放済み。この後だけTursoへ送る。
+    need_row = cmd in ("add", "update", "flip", "sub-start", "sub-end", "log", "finish")
+    row = _load_row(key) if need_row else None
+    final_row, context = _mutate_db(cmd, args, entries, key, row, pending_events)
+
     if cmd in ("add", "update", "flip", "sub-start", "sub-end"):
-        _, row = find_line(lines, key); statement = _stmt_session_upsert(row)
+        statement = _stmt_session_upsert(final_row)   # final_row=None なら builder が None を返す＝送らない
         stmts = ([statement] if statement else []) + _stmts_events(pending_events, date_s)
         # 子09: update --todo/--theme は所属先の宣言。sessions.todo_id/theme_id へ追記UPDATEする
         # （upsert 後に流し、行が存在する前提。MDには載せない＝ボード表示・格納先判定だけに使う board DB 限定列）。
@@ -426,13 +489,13 @@ def main():
             if affiliation:
                 stmts.append(affiliation)
         # 子08: サブ体数±1に合わせて session_subagents へ個体行を積む/閉じる（同一バッチ=HTTP往復1回）。
-        # 親行が在る時だけ（row is not None＝存在しないkeyのsub-startは無害・行を作らない）。
+        # 親行が在る時だけ（final_row is not None＝存在しないkeyのsub-startは無害・行を作らない）。
         # 体数±1・🔵⇄🟢 の遷移（upsert/events）はそのまま。ここは「中身の見える化」を足すだけ。
-        if row and cmd == "sub-start":
+        if final_row and cmd == "sub-start":
             sub_stmt = _stmt_subagent_start(f"s:{key}", date_s)
             if sub_stmt:
                 stmts.append(sub_stmt)
-        elif row and cmd == "sub-end":
+        elif final_row and cmd == "sub-end":
             sub_stmt = _stmt_subagent_end(f"s:{key}", date_s)
             if sub_stmt:
                 stmts.append(sub_stmt)

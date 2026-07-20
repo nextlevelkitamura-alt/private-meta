@@ -15,18 +15,19 @@ os.environ["GOAL_BASE"] = os.path.join(SP, "goal")
 os.environ["SESSION_BOARD_DATE"] = "2099-03-01"
 os.environ["SESSION_BOARD_TX_ROOTS"] = os.path.join(SP, "tx")
 os.environ["SESSION_BOARD_STATE_DIR"] = os.path.join(SP, "state")
-os.environ.pop("SESSION_BOARD_NO_TURSO", None)   # 送信関数自体をモックするので不要
+os.environ.pop("SESSION_BOARD_NO_TURSO", None)   # fake DB を使うので NO_TURSO は必ず外す
 
 import board  # noqa: E402
+import _fakedb  # noqa: E402
 
-captured = []
+# 正本反転（子03）後は sub-start が実在セッション行を board DB から読む（_load_row）ため、
+# fake DB を差し込んで add→update→sub-start の状態を保持させる（本番Tursoへは飛ばない）。
+fake = _fakedb.install(board)
 
 
-def _mock_execute(stmts, **_kwargs):
-    captured.extend(stmts)
+def captured():
+    return fake.flat()
 
-
-board._turso_execute = _mock_execute
 
 PASS = 0
 FAIL = 0
@@ -43,7 +44,7 @@ def ok(name, cond):
 
 
 def clear():
-    captured.clear()
+    fake.clear()
 
 
 def run(*argv):
@@ -100,35 +101,35 @@ ok("label: key欠落はNone", board._stmt_subagent_label("", DATE, "x") is None)
 # ---- 4. board.main() sub-label コマンド（board DBへUPDATE 1本・MD/体数に触れない）----
 clear()
 run("sub-label", "--key", "s:bbbb0002", "--label", "リサーチ委任中")
-subs = [(s, a) for s, a in captured if "session_subagents" in s]
+subs = [(s, a) for s, a in captured() if "session_subagents" in s]
 ok("sub-label: session_subagents UPDATE 1本を送る", len(subs) == 1 and subs[0][0].startswith("UPDATE"))
 ok("sub-label: label文言が引数に乗る", vals(subs[0][1])[0] == "リサーチ委任中")
 ok("sub-label: sessions/eventsは送らない(board DB限定列のみ)",
-   not any("INTO sessions" in s or "session_events" in s for s, _ in captured))
+   not any("INTO sessions" in s or "session_events" in s for s, _ in captured()))
 clear()
 run("sub-label", "--key", "bbbb0002", "--label", "2件目", "--seq", "3")
-subs = [(s, a) for s, a in captured if "session_subagents" in s]
+subs = [(s, a) for s, a in captured() if "session_subagents" in s]
 ok("sub-label --seq: sub_seq=?で直接指定のUPDATE", len(subs) == 1 and "AND sub_seq = ?" in subs[0][0])
 clear()
 run("sub-label", "--key", "s:bbbb0002")   # label欠落=usage停止
-ok("sub-label: label欠落は送信しない(usage停止)", len([s for s, _ in captured if "session_subagents" in s]) == 0)
+ok("sub-label: label欠落は送信しない(usage停止)", len([s for s, _ in captured() if "session_subagents" in s]) == 0)
 
 # ---- 5. ガード: 存在しないkeyへの sub-start は個体行を作らない ----
 clear()
 run("sub-start", "--key", "nokey999")
 ok("存在しないkeyのsub-startはsession_subagents行を積まない",
-   len([s for s, _ in captured if "session_subagents" in s]) == 0)
+   len([s for s, _ in captured() if "session_subagents" in s]) == 0)
 
 # ---- 6. 実在セッションの sub-start→sub-end で個体行が INSERT→close される（統合）----
 run("add", "--key", "subb0009", "--repo", "RepoS", "--who", "claude/?")
 run("update", "--key", "subb0009", "--goal", "サブ可視化", "--now", "委託")
 clear()
 run("sub-start", "--key", "subb0009")
-ins = [s for s, _ in captured if "INTO session_subagents" in s]
+ins = [s for s, _ in captured() if "INTO session_subagents" in s]
 ok("実在セッションのsub-start: 個体行INSERT 1本", len(ins) == 1)
 clear()
 run("sub-end", "--key", "subb0009")
-upd = [s for s, _ in captured if "UPDATE session_subagents" in s]
+upd = [s for s, _ in captured() if "UPDATE session_subagents" in s]
 ok("実在セッションのsub-end: 個体行close(UPDATE) 1本", len(upd) == 1)
 
 print(f"\n== 結果: PASS={PASS} FAIL={FAIL} ==")

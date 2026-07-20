@@ -97,6 +97,33 @@ def stmt_session_upsert(row):
 def stmt_session_delete(key): return "DELETE FROM sessions WHERE session_key = ?", [text_arg(f"s:{key}")]
 
 
+def stmt_session_read(key):
+    """1セッションの現在値を board DB から読むSELECT（正本反転後の状態参照の入口）。
+    board.py は MD を読まず、add/flip/sub 等の遷移計算にこの読みを使う（best-effort）。
+    子09の todo_id/theme_id は選ばない（当該migration未適用の本番でもSELECTを壊さない・
+    board.py の状態計算はこれらを使わない＝所属先はfocusmapが別途読む board DB 限定列）。"""
+    if not key:
+        return None
+    sql = ("SELECT session_key, goal, now, type, repo, model, plan, state, sub_n "
+           "FROM sessions WHERE session_key = ?")
+    return sql, [text_arg(f"s:{key}")]
+
+
+def stmt_sessions_alive():
+    """reconcile 用: run/sub の生存中セッションを全件読むSELECT（updated_at 込み＝沈黙判定の起点）。"""
+    sql = ("SELECT session_key, goal, now, type, repo, model, plan, state, sub_n, updated_at "
+           "FROM sessions WHERE state IN ('run', 'sub')")
+    return sql, []
+
+
+def stmt_goals_distinct():
+    """goals コマンド用: 現在ボード上の目標を重複なしで読むSELECT（未記入 '?' は除外）。
+    表示順は最初に現れた updated_at 昇順で安定させる（旧MDの出現順に相当）。"""
+    sql = ("SELECT goal FROM sessions WHERE goal IS NOT NULL AND goal != '?' "
+           "GROUP BY goal ORDER BY MIN(updated_at)")
+    return sql, []
+
+
 def stmt_session_affiliation(key, todo_id=None, theme_id=None):
     """子09: セッションの所属先（宣言済み todo_id / theme_id）を sessions へ書く（board DB）。
     プロンプト登録時にAIが update --todo/--theme で宣言した参照値を保存する専用UPDATE。

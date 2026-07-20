@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# session_events（状態遷移イベントログ・層3・2026-07-11）のイベント構築テスト。
-# board.main() を in-process で叩き、_turso_execute をモックして送信文をキャプチャする
-# （ネットワーク非依存・本番Tursoへは一切飛ばない）。実ボードには触れない（env差し替え）。
+# session_events（状態遷移イベントログ・層3）のイベント構築テスト（正本反転・子03後）。
+# board.main() を in-process で叩き、fake DB（board._turso_send/_turso_read 差し替え）へ流す。
+# 反転後は board.py が DB から現在行を読んで遷移計算するため、状態は fake sqlite が保持する
+# （add した行を flip/sub が読む＝MDを介さない）。本番Tursoへは一切飛ばない。
 # 検証: add新規=1本/冪等=0本・flip変化=1本/同状態=0本・finish=doneスナップショット・
-#       reconcile降格=変更行分・sub状態遷移・update/log=0本・Stop経路でwaitちょうど1本・
-#       sessions/logs との同一バッチ合流（HTTP往復1回）。
+#       reconcile降格=変更行分・sub状態遷移・update/log=0本・sessions/logs との同一バッチ合流（HTTP往復1回）。
 import datetime
 import os
 import re
@@ -21,21 +21,13 @@ os.environ["GOAL_BASE"] = os.path.join(SP, "goal")
 os.environ["SESSION_BOARD_DATE"] = "2099-02-01"
 os.environ["SESSION_BOARD_TX_ROOTS"] = TX
 os.environ["SESSION_BOARD_STATE_DIR"] = os.path.join(SP, "state")
-os.environ.pop("SESSION_BOARD_NO_TURSO", None)   # 送信関数自体をモックするので不要（下）
+os.environ.pop("SESSION_BOARD_NO_TURSO", None)   # fake DB を使うので NO_TURSO は必ず外す
 
 import board  # noqa: E402
+import _fakedb  # noqa: E402
 
-_ORIG_EXECUTE = board._turso_execute   # NO_TURSOガード検証用に本物を保存
-calls = []      # _turso_execute の呼び出し履歴（1呼び出し=1バッチ=[(sql,args),...]）
-captured = []   # 全バッチをフラットにした [(sql, args), ...]
-
-
-def _mock_execute(stmts, **_kwargs):
-    calls.append(list(stmts))
-    captured.extend(stmts)
-
-
-board._turso_execute = _mock_execute
+fake = _fakedb.install(board)
+calls = fake.sent   # 1呼び出し=1バッチ=[(sql,args),...]（fake.clear()で in-place クリア）
 
 PASS = 0
 FAIL = 0
@@ -52,8 +44,7 @@ def ok(name, cond):
 
 
 def clear():
-    calls.clear()
-    captured.clear()
+    fake.clear()
 
 
 def run(*argv):
@@ -68,11 +59,11 @@ def run(*argv):
 
 
 def events():
-    """captured から session_events INSERT を dict のリストで抽出。"""
+    """全送信文から session_events INSERT を dict のリストで抽出。"""
     out = []
-    for sql, args in captured:
+    for sql, args in fake.flat():
         if "session_events" in sql:
-            v = [a["value"] for a in args]
+            v = [a.get("value") for a in args]
             out.append({"session_key": v[0], "state": v[1], "at": v[2], "trig": v[3],
                         "goal": v[4], "repo": v[5], "type": v[6], "plan": v[7],
                         "session_date": v[8]})
@@ -80,12 +71,11 @@ def events():
 
 
 def upserts():
-    return [(sql, args) for sql, args in captured if "INTO sessions" in sql]
+    return [(sql, args) for sql, args in fake.flat() if "INTO sessions" in sql]
 
 
 def subagents(needle="session_subagents"):
-    """子08: captured から session_subagents 文（INSERT/UPDATE）を抽出。"""
-    return [(sql, args) for sql, args in captured if needle in sql]
+    return [(sql, args) for sql, args in fake.flat() if needle in sql]
 
 
 def hhmm_ago(mins):
@@ -110,12 +100,15 @@ run("add", "--key", "evnt0001", "--repo", "RepoX", "--who", "codex/?")
 ok("add冪等=イベント0本", len(events()) == 0)
 ok("add冪等: sessions upsertは送る(従来挙動)", len(upserts()) == 1)
 
-# ---- update: イベント0本 ----
+# ---- update: イベント0本・upsert（読み→マージ→書き）----
 clear()
 run("update", "--key", "evnt0001", "--goal", "イベント検証", "--type", "実装",
     "--now", "テスト", "--model", "fable5", "--plan", "デイリーボード改善/03")
 ok("update=イベント0本", len(events()) == 0)
 ok("update: sessions upsertは送る", len(upserts()) == 1)
+ok("update: DBに反映（次のshowで確認できる状態）",
+   fake.query("SELECT goal, model, plan FROM sessions WHERE session_key='s:evnt0001'")[0]
+   == ("イベント検証", "fable5", "デイリーボード改善/03"))
 
 # ---- flip: 変化=1本（行スナップショット付き）・同状態=0本 ----
 clear()
@@ -169,6 +162,7 @@ run("sub-end", "--key", "evnt0001")
 clear()
 run("log", "--key", "evnt0001", "--repo", "RepoE", "--parent", "イベント検証", "--entry", "節目1")
 ok("log=イベント0本", len(events()) == 0)
+ok("log: session_logs INSERTを送る", any("session_logs" in sql for sql, _ in fake.flat()))
 
 # ---- finish: done 1本（del前スナップショット）・logs+delete+eventsの同一バッチ ----
 clear()
@@ -181,6 +175,7 @@ ok("finish: 合流=1バッチにlogs+delete+event",
    len(calls) == 1 and len(calls[0]) == 3
    and any("session_logs" in sql for sql, _ in calls[0])
    and any("DELETE FROM sessions" in sql for sql, _ in calls[0]))
+ok("finish: DBから行が消える", fake.query("SELECT COUNT(*) FROM sessions WHERE session_key='s:evnt0001'")[0][0] == 0)
 
 # ---- 行なしfinish: スナップショットできる行が無い→イベント0本（logs+deleteは送る）----
 clear()
@@ -188,10 +183,14 @@ run("finish", "--key", "nol1ne99", "--repo", "RepoE", "--parent", "行なし", "
 ok("行なしfinish=イベント0本", len(events()) == 0)
 ok("行なしfinish: logs+deleteは送る", len(calls) == 1 and len(calls[0]) == 2)
 
-# ---- reconcile: ⏸降格=変更行分（NOFILE経路: files非空・実体なし・開始15分超）----
+# ---- reconcile: ⏸降格=変更行分（NOFILE経路: files非空・実体なし・updated_at 15分超）----
 open(os.path.join(TX, "other-key.jsonl"), "w").close()   # files非空（key不一致）
 run("add", "--key", "evre0001", "--repo", "RepoR", "--who", "claude/?", "--time", hhmm_ago(30))
 run("update", "--key", "evre0001", "--goal", "降格対象", "--now", "放置")
+# updated_at を16分前へ手で戻す（実運用の「登録後に更新が止まって沈黙」を再現。fake DBを直接更新）。
+_old_iso = (datetime.datetime.now() - datetime.timedelta(minutes=16)).isoformat(timespec="seconds")
+fake.board.execute("UPDATE sessions SET updated_at=? WHERE session_key='s:evre0001'", (_old_iso,))
+fake.board.commit()
 run("add", "--key", "evre0002", "--repo", "RepoR", "--who", "claude/?", "--time", hhmm_ago(5))
 clear()
 run("reconcile")
@@ -203,6 +202,8 @@ ok("reconcile: 降格行のスナップショット", ev and ev[0]["session_key"
    and ev[0]["goal"] == "降格対象")
 ok("reconcile: 降格行のsessions upsertを同梱", len(upserts()) == 1)
 ok("reconcile: upsert+eventを1バッチ", len(calls) == 1 and len(calls[0]) == 2)
+ok("reconcile: DB上も wait に降格", fake.query(
+   "SELECT state, sub_n FROM sessions WHERE session_key='s:evre0001'")[0] == ("wait", 0))
 clear()
 run("reconcile")
 ok("再reconcile(既に⏸)=イベント0本", len(events()) == 0)
@@ -232,13 +233,13 @@ ok("turso_append_events: 空リストは送信しない", len(calls) == 0)
 # ---- _turso_execute 本物: NO_TURSO/空リストで即return（ネットワーク・keychainに触れない）----
 os.environ["SESSION_BOARD_NO_TURSO"] = "1"
 try:
-    _ORIG_EXECUTE([("INSERT INTO session_events (session_key) VALUES (?)", [board._ta("s:x")])])
+    board._turso_execute([("INSERT INTO session_events (session_key) VALUES (?)", [board._ta("s:x")])])
     ok("NO_TURSO: 本物_turso_executeが即return", True)
 except Exception:
     ok("NO_TURSO: 本物_turso_executeが即return", False)
 del os.environ["SESSION_BOARD_NO_TURSO"]
 try:
-    _ORIG_EXECUTE([])
+    board._turso_execute([])
     ok("空statements: 本物_turso_executeが即return", True)
 except Exception:
     ok("空statements: 本物_turso_executeが即return", False)

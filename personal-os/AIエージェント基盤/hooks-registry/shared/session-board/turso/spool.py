@@ -1,5 +1,11 @@
-"""追記式で再送してよい文（session_events/logs＝board・plan_docs/plan_progress＝inbox）の失敗スプール。
-spool名でファイルを分け、inbox宛は plansync が専用spool＋inbox宛senderで隔離する。"""
+"""DB書き込みの失敗再送バッファ（旧「md→DBミラー」の受け皿ではなく、正本反転後はDB先書きの耐障害部品）。
+
+2026-07-21 正本反転（子03・案b）で当日デイリーMDは廃止し、運用データの正本はTurso（board DB）に一本化した。
+mdという受け皿が消えたため、DB送信失敗時の記録喪失をここで防ぐ。ただし再送してよいのは**追記式で冪等な文**
+（session_events/session_logs＝board・plan_docs/plan_progress＝inbox）だけに限る。sessions の upsert/delete は
+ここに載せない＝オフライン中に古い状態を溜め込み、復帰時に「死んだ行」を復活させてしまうのを防ぐため。
+sessions の整合は再送でなく、次回コマンド実行時・reconcile 時にDB状態と実トランスクリプトを突き合わせて
+自己修復する（board.py reconcile_db）。spool名でファイルを分け、inbox宛は plansync が専用spool＋inbox宛senderで隔離する。"""
 import fcntl
 import json
 import os

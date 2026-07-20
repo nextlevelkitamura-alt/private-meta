@@ -21,16 +21,12 @@ os.environ.pop("SESSION_BOARD_NO_TURSO", None)
 
 import board  # noqa: E402
 import turso.store as store  # noqa: E402
+import _fakedb  # noqa: E402
 
-# board.py の全 Turso 送信は _turso_sync 経由。ここをモックして (statements, db_url) をキャプチャする。
-synced = []   # [(statements, db_url), ...]
-
-
-def _mock_sync(statements, db_url=board.TURSO_DB_URL, service=board.TURSO_KEYCHAIN_SERVICE):
-    synced.append(([s for s in statements if s], db_url))
-
-
-board._turso_sync = _mock_sync
+# 正本反転（子03）後は update が board DB から現在行を読む（_load_row）ため、fake DB を差し込む。
+# theme-add は inbox DB へ、add/update は board DB へ流れる（db_url で振り分けを検証する）。
+fake = _fakedb.install(board)
+synced = fake.sent   # 参照エイリアス（fake.clear() で in-place クリア）
 
 PASS = 0
 FAIL = 0
@@ -47,7 +43,7 @@ def ok(name, cond):
 
 
 def clear():
-    synced.clear()
+    fake.clear()
 
 
 def run(*argv):
@@ -62,7 +58,7 @@ def run(*argv):
 
 
 def last():
-    return synced[-1] if synced else ([], None)
+    return fake.last()
 
 
 def vals(stmt):
@@ -112,11 +108,8 @@ run("theme-add", "--name", "名前", "--purpose", "目的だけ")             # 
 run("theme-add", "--purpose", "p", "--done", "d")                       # name無し
 ok("theme-add: 目的・完了条件・名のいずれか欠落は送信しない", len(synced) == 0)
 
-# ---- update --todo/--theme: sessions.todo_id/theme_id への宣言（board DB・MD不変）----
-BOARD = board.BOARD if hasattr(board, "BOARD") else os.path.join(HERE, "..", "board.py")
-DAILY = os.path.join(SP, "goal", "2099", "05", "2099-05-01.md")
-
-# 先にセッション行を登録（このaddも _turso_sync に載るが、次のupdateでclearする）。
+# ---- update --todo/--theme: sessions.todo_id/theme_id への宣言（board DB・MDは廃止＝正本反転）----
+# 反転後は MD を書かない。所属先は board DB の affiliation UPDATE で宣言し、DBに反映されることを検証する。
 run("add", "--key", "bbbb0001", "--repo", "focusmap", "--who", "claude/?")
 clear()
 run("update", "--key", "bbbb0001", "--goal", "ボードUI実装", "--todo", "TODO-123", "--theme", "THEME-9")
@@ -127,10 +120,12 @@ ok("update --todo/--theme: affiliation UPDATEが1件混じる", len(aff) == 1)
 ok("update --todo/--theme: todo_id/theme_id両方SET", "todo_id = ?" in aff[0][0] and "theme_id = ?" in aff[0][0])
 ok("update --todo/--theme: 値が載る（todo, theme, session_key順）",
    vals(aff[0]) == ["TODO-123", "THEME-9", "s:bbbb0001"])
-# MDには todo_id/theme_id を書かない（daily行はゴールだけ更新）
-daily_text = open(DAILY, encoding="utf-8").read()
-ok("update --todo: MDにtodo_id/theme_idを書かない", "TODO-123" not in daily_text and "THEME-9" not in daily_text)
-ok("update --goal: ゴールはMDに反映", "ボードUI実装" in daily_text)
+# 正本反転: MDファイルは作られない。所属先と目標はDBへ反映される。
+DAILY = os.path.join(SP, "goal", "2099", "05", "2099-05-01.md")
+ok("update: デイリーMDファイルを作らない（正本反転）", not os.path.exists(DAILY))
+db_row = fake.query("SELECT goal, todo_id, theme_id FROM sessions WHERE session_key='s:bbbb0001'")[0]
+ok("update --goal: 目標はDBに反映", db_row[0] == "ボードUI実装")
+ok("update --todo/--theme: 所属先がDBに反映", db_row[1] == "TODO-123" and db_row[2] == "THEME-9")
 
 # --todo だけの部分宣言（theme_idはSETしない）
 clear()
@@ -138,6 +133,8 @@ run("update", "--key", "bbbb0001", "--todo", "TODO-only")
 aff = [s for s in last()[0] if "UPDATE sessions SET" in s[0]]
 ok("update --todo単独: todo_idだけSET", len(aff) == 1 and "todo_id = ?" in aff[0][0] and "theme_id" not in aff[0][0])
 ok("update --todo単独: 値はtodo, session_keyの2つ", vals(aff[0]) == ["TODO-only", "s:bbbb0001"])
+ok("update --todo単独: theme_idは以前の値を保つ（部分UPDATE）",
+   fake.query("SELECT todo_id, theme_id FROM sessions WHERE session_key='s:bbbb0001'")[0] == ("TODO-only", "THEME-9"))
 
 # --todo/--theme を伴わない通常のupdateは affiliation を送らない（毎回の無駄書きを避ける）
 clear()

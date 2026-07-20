@@ -97,10 +97,10 @@ Plan 09だけが共有README / AGENTS / catalog / loop overview / 旧Skill参照
     並列: 可 ／ レビュー: 一括
     次: Terra-02が業務CRUD・lane・work_closed/closed・翌日回送を実装
     場所: plans/02-業務レイヤboard拡張.md ／ 依存: Gate 0
-- [ ] 03  3儀式と起動候補 … 計画（standup骨格のみ）
-    並列: 可 ／ レビュー: 一括
-    次: Checkpoint A PASS後、Terra-03が3Skillと未ロード自動化部品を実装
-    場所: plans/03-儀式の自動実行.md ／ 依存: Checkpoint A, 01, 02, 07, 08
+- [ ] 03  3儀式と起動候補 … 実装（2026-07-20人間指示でDaily startのみ先行・完全自動10:03へ改訂。Work end/Daily endは後続）
+    並列: 可 ／ レビュー: 都度（夜間実装のため実装直後に評価）
+    次: daily-startスキル・board.py todo-add・loop(10:03)・focusmapデプロイを実装し明朝稼働（人間承認済み2026-07-20夜）
+    場所: plans/03-儀式の自動実行.md ／ 依存: なし（旧Checkpoint A依存は解除。todos/themes本番稼働済みのため）
 - [ ] 04  進捗推定エンジン … 計画
     並列: 可 ／ レビュー: 一括
     次: Checkpoint A PASS後、Terra-04が確定済みCLIを使って独立実装

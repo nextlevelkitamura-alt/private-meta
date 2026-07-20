@@ -1,0 +1,201 @@
+<title>計画×DB×ボードUI 統合計画 — 討論6体の裁定</title>
+<style>
+  :root{
+    --ink:#1B2432; --sub:#5A6577; --faint:#8B94A6;
+    --line:#E3E7EF; --panel:#F4F6FA; --accent:#2456D6; --accent-soft:#EAF0FC;
+    --live:#148A4E; --live-soft:#E8F5EE; --wait:#B96A00; --wait-soft:#FDF3E4;
+    --no:#B4232A; --no-soft:#FBEAEA;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif; color:var(--ink); background:#fff; line-height:1.8; font-size:15px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:720px; margin:0 auto; padding:28px 16px 80px;}
+  h1{font-size:21px; line-height:1.45; text-wrap:balance;}
+  .lede{color:var(--sub); font-size:13.5px; margin-top:6px;}
+  h2{font-size:16px; margin:40px 0 12px; padding-top:18px; border-top:2px solid var(--ink);}
+  h2 .no{color:var(--faint); font-weight:600; margin-right:8px;}
+  .num{font-variant-numeric:tabular-nums;}
+
+  /* 憲法 */
+  .law{display:flex; flex-direction:column; gap:8px; margin-top:4px;}
+  .law-item{display:flex; gap:12px; background:var(--panel); border-radius:10px; padding:12px 14px;}
+  .law-item .n{flex:none; width:24px; height:24px; border-radius:6px; background:var(--ink); color:#fff; font-size:12px; font-weight:700; display:grid; place-items:center; margin-top:3px;}
+  .law-item p{font-size:13.5px;}
+  .law-item b{color:var(--accent);}
+
+  /* 討論サマリ */
+  .debate{border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-top:12px;}
+  .debate .dt{padding:10px 14px; font-weight:700; font-size:14px; background:var(--panel); border-bottom:1px solid var(--line);}
+  .debate .ds{padding:4px 14px 12px;}
+  .turn{display:flex; gap:10px; padding:8px 0; font-size:13px; border-bottom:1px dashed var(--line);}
+  .turn:last-child{border-bottom:none;}
+  .turn .who{flex:none; width:46px; font-size:11px; font-weight:700; letter-spacing:.04em; margin-top:3px;}
+  .turn.p .who{color:var(--accent);}
+  .turn.c .who{color:var(--no);}
+  .turn.j .who{color:var(--live);}
+  .turn.j{background:var(--live-soft); margin:6px -14px -12px; padding:10px 14px 12px; border-bottom:none;}
+  .turn p{color:var(--sub);}
+  .turn.j p{color:var(--ink);}
+  .turn b{color:var(--ink);}
+
+  /* データフロー図 */
+  .flow{border:1px solid var(--line); border-radius:12px; padding:16px 14px; margin-top:12px; overflow-x:auto;}
+  .flow-row{display:flex; align-items:center; gap:8px; margin:6px 0; flex-wrap:wrap;}
+  .fbox{border:1.5px solid var(--ink); border-radius:8px; padding:5px 12px; font-size:12.5px; font-weight:600; background:#fff; flex:none;}
+  .fbox.src{background:var(--ink); color:#fff;}
+  .fbox.db{border-color:var(--accent); color:var(--accent); border-style:double; border-width:3.5px;}
+  .fbox.ui{border-color:var(--live); color:var(--live);}
+  .arr{color:var(--faint); font-size:12px; flex:none;}
+  .flab{font-size:11px; color:var(--faint); flex:none;}
+  .fnote{font-size:12px; color:var(--sub); margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);}
+
+  /* UIミニモック */
+  .mock{border:1px solid var(--line); border-radius:14px; margin-top:12px; overflow:hidden; box-shadow:0 1px 3px rgba(27,36,50,.06);}
+  .mock .mh{padding:10px 14px; border-bottom:1px solid var(--line); font-size:12px; color:var(--faint); font-weight:700; letter-spacing:.1em;}
+  .mock .mb{padding:12px 14px 16px;}
+  .m-todo{display:flex; gap:9px; align-items:flex-start;}
+  .m-todo .ck{flex:none; width:17px; height:17px; border:1.6px solid #C4CCDA; border-radius:50%; margin-top:5px;}
+  .m-todo .t{font-size:14px; font-weight:600;}
+  .m-todo .chip{display:inline-block; font-size:11px; color:var(--accent); background:var(--accent-soft); border-radius:5px; padding:1px 8px; margin-left:6px;}
+  .steps{margin:8px 0 0 26px; border-left:2px solid var(--line); padding-left:14px; display:flex; flex-direction:column; gap:7px;}
+  .step{display:flex; gap:9px; align-items:flex-start; font-size:13px;}
+  .step .m{flex:none; width:16px; text-align:center; margin-top:2px;}
+  .step.done .t{color:var(--faint); text-decoration:line-through;}
+  .step.done .m{color:var(--live); font-weight:700;}
+  .step.doing .t{font-weight:700;}
+  .step .kind{font-size:10.5px; color:var(--wait); background:var(--wait-soft); border-radius:4px; padding:0 6px; margin-left:6px;}
+  .step .meta{font-size:11px; color:var(--faint);}
+  .dotl{display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--live); animation:blink 2.4s ease-in-out infinite; margin-right:2px;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+  @media (prefers-reduced-motion:reduce){.dotl{animation:none;}}
+  .sess-line{margin:8px 0 0 26px; font-size:12.5px; color:var(--sub); display:flex; gap:8px; align-items:baseline; flex-wrap:wrap;}
+  .rt{font-size:10.5px; color:var(--faint); background:var(--panel); border-radius:4px; padding:1px 6px;}
+  .subdetail{margin:8px 0 0 26px; border:1px solid var(--line); border-radius:10px; padding:10px 12px; background:#FBFCFE;}
+  .subdetail .sd-h{font-size:12px; font-weight:700; margin-bottom:6px;}
+  .sd-row{display:grid; grid-template-columns:72px 1fr; gap:4px 10px; font-size:12px; padding:5px 0; border-top:1px dashed var(--line);}
+  .sd-row .k{color:var(--faint);}
+  .sd-row .v{color:var(--sub); word-break:break-all;}
+  .sd-row .v b{color:var(--ink);}
+
+  /* フェーズ表 */
+  .phases{display:flex; flex-direction:column; gap:10px; margin-top:12px;}
+  .ph{border:1px solid var(--line); border-radius:12px; padding:12px 14px;}
+  .ph .ph-t{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;}
+  .ph .ph-n{flex:none; font-size:11px; font-weight:700; color:#fff; background:var(--ink); border-radius:5px; padding:2px 9px;}
+  .ph .ph-n.gate{background:var(--no);}
+  .ph b{font-size:14px;}
+  .ph p{font-size:12.5px; color:var(--sub); margin-top:5px;}
+  .ph .cond{font-size:12px; margin-top:6px; padding:7px 10px; background:var(--live-soft); border-radius:8px; color:var(--ink);}
+  .ph .gates{font-size:12px; margin-top:6px; color:var(--no);}
+</style>
+
+<div class="wrap">
+  <h1>計画×DB×ボードUI 統合計画</h1>
+  <p class="lede">3トピック×2体（提案者→批判者）の討論を裁定して統合。2026-07-21。あなたの追加要望「サブエージェント詳細表示＋hook」も第4要素として組み込み済み。</p>
+
+  <h2><span class="no">1</span>まず憲法 — 3トピック全員が一致した土台</h2>
+  <div class="law">
+    <div class="law-item"><span class="n">一</span><p><b>計画md＋gitが唯一の正本。</b>DBの plan_docs は「commitしたら自動で写る」一方向ミラー（読み取り専用）。オンライン側から計画は編集させない。DB→md の書き戻し経路は作らない。</p></div>
+    <div class="law-item"><span class="n">二</span><p><b>「今どこ」の正本は todo_steps 一本。</b>md内のチェックボックスは文書、ライブ進行はDB台帳、と役割を分ける。矛盾したらライブ（todo_steps）が勝つ、と規約に書く。</p></div>
+    <div class="law-item"><span class="n">三</span><p><b>新テーブルはゼロ。</b>足すのは列だけ（todoに計画リンク1列・stepに開始時刻1列・サブ個体に詳細4列）。第2の状態台帳を作らない。</p></div>
+  </div>
+
+  <h2><span class="no">2</span>討論の要点と裁定（どこで殴り合い、どう決めたか）</h2>
+
+  <div class="debate">
+    <div class="dt">① 計画md ⇄ DB の同期</div>
+    <div class="ds">
+      <div class="turn p"><span class="who">提案</span><p>既に動いている post-commit 同期（plansync）を拡張するだけでよい。commitが唯一の発火点。</p></div>
+      <div class="turn c"><span class="who">批判</span><p><b>完了の瞬間に計画がUIから消えるバグを発見。</b>DBの主キーがファイルパスなので、計画をdoneへ動かす（git mv）と旧行が全部消えて作り直しになる。しかもarchiveで行を消す設計は「終わったことに溜める」という要望の逆。</p></div>
+      <div class="turn j"><span class="who">裁定</span><p>提案の土台（md正本・commit発火）は採用。ただし<b>done/archiveの行は消さず残す</b>（終わったことが消えない）。自動削除はcommit経路だけに限定し、日次の掃除は削除せず「きみの番」への差分通知にする。</p></div>
+    </div>
+  </div>
+
+  <div class="debate">
+    <div class="dt">② ワークフロー進行ビュー（ステップ時系列・チェック＋斜線）</div>
+    <div class="ds">
+      <div class="turn p"><span class="who">提案</span><p>進行の正本は todo_steps 一本。「1が済んでレビュー実行中」は seq1=done（✔斜線）＋seq2 kind=review status=doing でそのまま表せる。既存CLIで動く。</p></div>
+      <div class="turn c"><span class="who">批判</span><p><b>3つの穴。</b>(a) 計画リンクをファイルパスで張ると完了時に切れる → slugで張れ。(b) 毎朝todoが再起票されるとタイムラインが分断される → 繰越し時の継承設計が必須。(c) 未来のステップが見えないと「上から下へ全工程」にならない → 開始時に全工程を一括登録せよ。</p></div>
+      <div class="turn j"><span class="who">裁定</span><p>批判を全面採用。<b>計画リンクはslug</b>（フォルダ日付が変わっても切れない）、<b>子計画に着手した時点で全工程（実装→レビュー→評価）を一括登録</b>して未来も見せる、<b>繰越し複製時はリンクと未完ステップを自動継承</b>。</p></div>
+    </div>
+  </div>
+
+  <div class="debate">
+    <div class="dt">③ ボードUI統合と実装経路</div>
+    <div class="ds">
+      <div class="turn p"><span class="who">提案</span><p>テーマカード内のタスク行を展開式にしてステップ縦タイムラインを出す＋計画詳細画面への遷移チップ。フェーズは3子に分割、最初の子はmigrationゼロの純UI。</p></div>
+      <div class="turn c"><span class="who">批判</span><p><b>事実誤認あり: ステップに開始時刻の列が無い</b>ので「経過◯分」は今のDBでは出せない。また全ステップ完了でtodoが自動完了する既存機構が「計画が終わるまで進行表示のまま」の要望と衝突する。</p></div>
+      <div class="turn j"><span class="who">裁定</span><p>フェーズ分割は提案採用、中身は批判で修正。<b>最初の子は「ステップ縦タイムライン＋✔斜線＋点滅」だけの純UI</b>（DB変更ゼロ＝すぐ出せる）。開始時刻列と計画リンクは次の子のmigrationに同梱。<b>計画リンク付きtodoは自動完了を抑止</b>し、「今日の分が済んだ（斜線のまま）」と「計画ごと終わった（丸ごと下へ）」を分離。</p></div>
+    </div>
+  </div>
+
+  <div class="debate">
+    <div class="dt">④ サブエージェント詳細表示（あなたの今朝の追加要望）</div>
+    <div class="ds">
+      <div class="turn j"><span class="who">裁定</span><p>discussion外だが設計に組込み: session_subagents に <b>runtime（claude/codex）・種別（impl-opus等）・起動方法（Agentツール/exec/headless）・渡したプロンプト</b>の4列を追加。取得はあなたの読み通りhook拡張 — Claude側はサブ起動のツール呼び出しを PreToolUse hook で拾ってプロンプトと種別を抜く（payload実測して確定）。Codexの直接exec駆動は呼び出し規律で <code>sub-start --prompt</code> を渡す2経路。UIは「サブN体」行のタップ展開。</p></div>
+    </div>
+  </div>
+
+  <h2><span class="no">3</span>最終形のデータの流れ（1枚図）</h2>
+  <div class="flow">
+    <div class="flow-row"><span class="fbox src">計画md（git正本）</span><span class="arr">─ commitすると自動 →</span><span class="fbox db">plan_docs</span><span class="flab">文書ミラー・消さない</span></div>
+    <div class="flow-row"><span class="fbox src">AIの作業</span><span class="arr">─ board.py steps/step-done →</span><span class="fbox db">todo_steps</span><span class="flab">ライブ進行の正本</span></div>
+    <div class="flow-row"><span class="fbox src">サブ起動</span><span class="arr">─ hook（新設）→</span><span class="fbox db">session_subagents</span><span class="flab">runtime・プロンプト付き</span></div>
+    <div class="flow-row"><span class="fbox db">3つのDB</span><span class="arr">─ SQLで導出（%・今ここ・稼働数）→</span><span class="fbox ui">focusmapボード</span></div>
+    <div class="fnote">保存するのは事実だけ（done/doing・時刻・本文）。「進捗%」「今ここ」「稼働N体」は全部SQLで導出し、主観値をDBに持たない — 同期忘れでズレる場所を構造的に無くす。</div>
+  </div>
+
+  <h2><span class="no">4</span>ボード上の見え方（タスク行を開いたところ）</h2>
+  <div class="mock">
+    <div class="mh">テーマ「当日ボードSQL化を実装完遂する」内のタスク行 — 展開状態</div>
+    <div class="mb">
+      <div class="m-todo">
+        <span class="ck"></span>
+        <div><span class="t">子03+04を仕上げる</span><span class="chip">計画 › 当日ボードSQL化 #03</span></div>
+      </div>
+      <div class="steps">
+        <div class="step done"><span class="m">✔</span><div><span class="t">DB先書き反転を実装</span> <span class="meta num">08:11 済</span></div></div>
+        <div class="step doing"><span class="m"><span class="dotl"></span></span><div><span class="t">レビューを実行</span><span class="kind">review</span> <span class="meta num">今ここ ・ 12分</span></div></div>
+        <div class="step"><span class="m">○</span><div><span class="t">評価mdを書いて保存</span></div></div>
+        <div class="step"><span class="m">○</span><div><span class="t">本番migration適用（人間ゲート）</span></div></div>
+      </div>
+      <div class="sess-line num"><span class="dotl"></span><b>impl-opus 実行中 12分</b><span class="rt">claude · opus</span><span>サブ2体 ▼</span></div>
+      <div class="subdetail">
+        <div class="sd-h">サブ 1/2 — 終了（8分）</div>
+        <div class="sd-row"><span class="k">runtime</span><span class="v"><b>claude · opus</b></span></div>
+        <div class="sd-row"><span class="k">起動方法</span><span class="v">Agentツール（impl-opus定義）</span></div>
+        <div class="sd-row"><span class="k">プロンプト</span><span class="v">「レーンE実装: board-sweepの読み先をデイリーmdからDBへ切り替える。背景: 対象repo…」<b>（タップで全文）</b></span></div>
+      </div>
+    </div>
+  </div>
+  <p class="lede" style="margin-top:8px">全工程が上から下へ時系列で並び、済みは✔＋斜線、今ここは点滅（2.4秒周期）。ステップが全部済んでも計画が閉じるまでこの表示のまま — 計画をdoneへ動かしたcommitの瞬間に、カードごと「終わったこと」へ落ちる。</p>
+
+  <h2><span class="no">5</span>進め方 — 4フェーズ＋前提ゲート</h2>
+  <div class="phases">
+    <div class="ph">
+      <div class="ph-t"><span class="ph-n gate">前提</span><b>いまのprogramを閉じる（人間ゲート2つ）</b></div>
+      <p>走行中のレーンE完了 → 評価 → 溜まっているmigration（サブ個体表・セッション所属列）の本番適用と push。これが通ると「計画タブ」「ステップ入れ子」の下地が本番に出る。</p>
+      <div class="gates">人間ゲート: migration適用の承認 ・ push の明示依頼</div>
+    </div>
+    <div class="ph">
+      <div class="ph-t"><span class="ph-n">子A</span><b>ボード純UI（DB変更ゼロ・最初に体感できる縦切り）</b></div>
+      <p>テーマ軸一本化（モックv2の形）＋ステップ縦タイムライン＋✔斜線＋今ここ点滅＋「きみの番」レーン。既存データだけで描く。</p>
+      <div class="cond">完了条件: スマホ実機で、テーマカード内の「1✔斜線 → 2実行中（点滅）」がライブで見える</div>
+    </div>
+    <div class="ph">
+      <div class="ph-t"><span class="ph-n">子B</span><b>計画接続（slug リンク＋全工程一括登録＋繰越し継承）</b></div>
+      <p>todoに計画slugリンク列＋step開始時刻列のmigration。子計画着手時に全工程を一括登録。daily-startの繰越しでリンクと未完ステップを継承。plansyncのdone/archive保持化。リンク切れ検知lint。</p>
+      <div class="gates">人間ゲート: inbox migration適用</div>
+    </div>
+    <div class="ph">
+      <div class="ph-t"><span class="ph-n">子C</span><b>サブエージェント詳細化（hook新設）</b></div>
+      <p>session_subagentsへ4列追加。Claude=PreToolUse hookでプロンプト・種別を捕捉（payload実測から）。Codex exec=呼び出し規律で渡す。UIはサブ行タップ展開。</p>
+      <div class="gates">人間ゲート: board migration適用 ・ hook登録変更の承認</div>
+    </div>
+    <div class="ph">
+      <div class="ph-t"><span class="ph-n">子D</span><b>完了移動の運用実測（2日）</b></div>
+      <p>計画リンク付きtodoの自動完了抑止・「計画ごと下へ」の実挙動・未分類の所属提案を2日回して微調整し、評価を書いて閉じる。</p>
+    </div>
+  </div>
+
+  <p class="lede" style="margin-top:20px">計画の置き場: 新program「ボードUI計画統合」を ai運用 plans に起こす想定（4子・7子ルール内）。バケツはactiveが満杯のため、既存「当日ボードSQL化」の親最終一括（前提ゲート）を先に済ませてdoneへ動かし、空いた席に入れるのが順路。OKをもらえたらprogram.mdを起票します。</p>
+</div>

@@ -1,0 +1,304 @@
+<title>当日ボード モックv2 — テーマ軸一本化</title>
+<style>
+  :root{
+    --ink:#1B2432; --sub:#5A6577; --faint:#8B94A6;
+    --line:#E3E7EF; --ground:#FFFFFF; --panel:#F4F6FA;
+    --accent:#2456D6; --accent-soft:#EAF0FC;
+    --live:#148A4E; --live-soft:#E8F5EE;
+    --wait:#B96A00; --wait-soft:#FDF3E4;
+    --done:#5A6577;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    color:var(--ink); background:var(--ground);
+    line-height:1.75; font-size:15px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:660px; margin:0 auto; padding:28px 16px 72px;}
+  h1{font-size:21px; line-height:1.4; letter-spacing:.01em; text-wrap:balance;}
+  .lede{color:var(--sub); font-size:13.5px; margin-top:6px;}
+  .num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum";}
+
+  /* ---- v2変更点 ---- */
+  .changes{margin:20px 0 30px; display:flex; flex-direction:column; gap:8px;}
+  .chg{display:flex; gap:10px; align-items:flex-start; background:var(--panel); border-radius:10px; padding:10px 14px; font-size:13.5px;}
+  .chg b{color:var(--accent);}
+  .chg .tag{flex:none; font-size:11px; font-weight:700; color:#fff; background:var(--accent); border-radius:5px; padding:2px 8px; margin-top:3px; letter-spacing:.06em;}
+
+  /* ---- セクション見出し ---- */
+  .sec{margin:34px 0 10px; font-size:12px; font-weight:700; color:var(--faint); letter-spacing:.14em;}
+
+  /* ---- モック画面 ---- */
+  .screen{border:1px solid var(--line); border-radius:18px; overflow:hidden; box-shadow:0 1px 3px rgba(27,36,50,.06);}
+  .app-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:14px 16px 10px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .app-head .date{font-weight:700; font-size:15px;}
+  .app-head .pulse-sum{font-size:12.5px; color:var(--sub); display:flex; gap:12px; align-items:center;}
+  .daybar{height:6px; background:var(--panel); position:relative;}
+  .daybar i{position:absolute; inset:0 auto 0 0; width:38%; background:var(--accent); border-radius:0 3px 3px 0;}
+  .daybar-cap{display:flex; justify-content:space-between; font-size:11px; color:var(--faint); padding:4px 16px 0;}
+
+  .dot{display:inline-block; width:8px; height:8px; border-radius:50%; flex:none; position:relative;}
+  .dot.live{background:var(--live); animation:blink 2.4s ease-in-out infinite;}
+  .dot.wait{background:var(--wait);}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+  @media (prefers-reduced-motion:reduce){.dot.live{animation:none;}}
+
+  /* ---- 質問レーン（最上部固定） ---- */
+  .asklane{background:var(--accent-soft); padding:12px 16px; border-bottom:1px solid var(--line);}
+  .asklane .lab{font-size:11px; font-weight:700; color:var(--accent); letter-spacing:.12em; margin-bottom:6px;}
+  .ask{background:#fff; border:1px solid #C9D7F4; border-radius:12px; padding:10px 12px;}
+  .ask p{font-size:13.5px; line-height:1.6;}
+  .ask .from{font-size:11px; color:var(--faint); margin-bottom:2px;}
+  .ask .btns{display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;}
+  .btn{font-size:12.5px; font-weight:600; border-radius:8px; padding:5px 14px; border:1px solid var(--line); background:#fff; color:var(--ink);}
+  .btn.pri{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  /* ---- テーマカード ---- */
+  .themes{padding:14px 12px 18px; display:flex; flex-direction:column; gap:14px; background:#FBFCFE;}
+  .theme{background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden;}
+  .th-head{padding:12px 14px 10px;}
+  .th-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+  .th-title{font-weight:700; font-size:15px; line-height:1.5;}
+  .th-pct{font-size:13px; font-weight:700; color:var(--accent); flex:none;}
+  .th-meter{height:4px; background:var(--panel); border-radius:2px; margin-top:8px; overflow:hidden;}
+  .th-meter i{display:block; height:100%; background:var(--accent); border-radius:2px;}
+  .th-live-strip{display:flex; gap:12px; align-items:center; font-size:12px; color:var(--sub); margin-top:7px; flex-wrap:wrap;}
+  .th-live-strip .on{color:var(--live); font-weight:600; display:flex; gap:5px; align-items:center;}
+  .th-live-strip .hold{color:var(--wait); font-weight:600; display:flex; gap:5px; align-items:center;}
+
+  /* 入れ子レール */
+  .rail{border-top:1px solid var(--line); padding:10px 14px 12px; display:flex; flex-direction:column; gap:2px;}
+  .row{display:flex; gap:9px; align-items:flex-start; padding:6px 0;}
+  .row .ck{flex:none; width:17px; height:17px; border:1.6px solid #C4CCDA; border-radius:50%; margin-top:4px;}
+  .row .ck.done{border-color:var(--live); background:var(--live-soft); position:relative;}
+  .row .ck.done::after{content:"✓"; position:absolute; inset:0; display:grid; place-items:center; font-size:10px; color:var(--live); font-weight:700;}
+  .row .bd{min-width:0; flex:1;}
+  .row .t{font-size:14px; line-height:1.55;}
+  .row.finished .t{color:var(--done);}
+  .row .meta{font-size:11.5px; color:var(--faint); margin-top:1px;}
+
+  /* セッション（タスク行の下にぶら下がるライブ行） */
+  .sess{margin:2px 0 4px 26px; border-left:2px solid var(--line); padding:4px 0 4px 12px; display:flex; flex-direction:column; gap:6px;}
+  .s-row{display:flex; gap:8px; align-items:flex-start; font-size:12.5px;}
+  .s-row .dot{margin-top:6px;}
+  .s-main{min-width:0;}
+  .s-name{font-weight:600;}
+  .s-name .rt{font-weight:500; font-size:10.5px; color:var(--faint); background:var(--panel); border-radius:4px; padding:1px 6px; margin-left:6px;}
+  .s-stat{color:var(--sub); font-size:11.5px;}
+  .s-stat .g{color:var(--live); font-weight:600;}
+  .s-stat .w{color:var(--wait); font-weight:600;}
+  .s-sub{color:var(--faint); font-size:11.5px;}
+
+  /* 終わったこと（テーマ内・折りたたみ） */
+  details.fin{margin-top:4px;}
+  details.fin summary{list-style:none; cursor:pointer; display:flex; gap:8px; align-items:center; font-size:12.5px; color:var(--sub); padding:6px 0 2px;}
+  details.fin summary::-webkit-details-marker{display:none;}
+  details.fin summary .tri{font-size:9px; color:var(--faint); transition:transform .15s;}
+  details.fin[open] summary .tri{transform:rotate(90deg);}
+  .fin-list{padding:4px 0 2px 25px; display:flex; flex-direction:column; gap:6px;}
+  .fin-item .t{font-size:13px; color:var(--done);}
+  .fin-item .meta{font-size:11px; color:var(--faint);}
+
+  /* 未分類 */
+  .stray{margin:0 12px 16px; background:var(--wait-soft); border:1px dashed #E4C089; border-radius:12px; padding:10px 14px;}
+  .stray .lab{font-size:11px; font-weight:700; color:var(--wait); letter-spacing:.1em; margin-bottom:4px;}
+  .stray .t{font-size:13px;}
+  .stray .q{font-size:12px; color:var(--sub); margin-top:4px;}
+  .stray .btns{display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;}
+
+  /* ---- 注釈 ---- */
+  .notes{margin-top:14px; display:flex; flex-direction:column; gap:8px;}
+  .note{display:flex; gap:10px; font-size:13px; color:var(--sub);}
+  .note .n{flex:none; width:20px; height:20px; border-radius:50%; background:var(--ink); color:#fff; font-size:11px; font-weight:700; display:grid; place-items:center; margin-top:2px;}
+  .anchor{display:inline-grid; place-items:center; width:18px; height:18px; border-radius:50%; background:var(--ink); color:#fff; font-size:10.5px; font-weight:700; vertical-align:middle;}
+
+  /* ---- 朝・夜 ---- */
+  .phases{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-top:12px;}
+  .phase{border:1px solid var(--line); border-radius:12px; padding:14px 16px;}
+  .phase h3{font-size:13.5px; margin-bottom:6px;}
+  .phase h3 span{color:var(--faint); font-weight:500; font-size:11.5px; margin-left:6px;}
+  .phase ul{padding-left:18px; font-size:12.5px; color:var(--sub); display:flex; flex-direction:column; gap:4px;}
+
+  /* ---- 実装への橋 ---- */
+  .bridge{margin-top:12px; display:flex; flex-direction:column; gap:8px;}
+  .br{display:flex; gap:10px; align-items:flex-start; font-size:13px; padding:10px 14px; border:1px solid var(--line); border-radius:10px;}
+  .br .st{flex:none; font-size:11px; font-weight:700; border-radius:5px; padding:2px 8px; margin-top:3px;}
+  .br .st.ok{background:var(--live-soft); color:var(--live);}
+  .br .st.todo{background:var(--wait-soft); color:var(--wait);}
+  .br .bd{color:var(--sub);}
+  .br .bd b{color:var(--ink);}
+</style>
+
+<div class="wrap">
+  <h1>当日ボード モックv2 — 「朝決めた目標」が唯一の軸</h1>
+  <p class="lede">2026-07-21 の実データで構成。動いているエージェントも終わったことも、独立区画をやめてテーマカードの中に入れ子で収まる。</p>
+
+  <div class="changes">
+    <div class="chg"><span class="tag">V2</span><div><b>テーマ軸に一本化。</b>「動いているエージェント」「終わったこと」の独立見出しを廃止。すべて朝決めたテーマの中に紐付く。</div></div>
+    <div class="chg"><span class="tag">V2</span><div><b>朝の承認バーを廃止。</b>10:03に自動確定起票済みなので、開いたら今日が並んでいる。人間の仕事は最上部の質問だけ。</div></div>
+    <div class="chg"><span class="tag">V2</span><div><b>ライブ感重視。</b>テーマ帯に稼働状況、セッション行に稼働分数・サブ体数・runtimeが常時見える。</div></div>
+  </div>
+
+  <div class="sec">昼の画面（メイン・スクロール1本）</div>
+  <div class="screen">
+
+    <div class="app-head">
+      <span class="date">7月21日（火）</span>
+      <span class="pulse-sum num"><span style="display:flex;gap:5px;align-items:center"><span class="dot live"></span>稼働 2</span><span style="display:flex;gap:5px;align-items:center"><span class="dot wait"></span>待機 1</span></span>
+    </div>
+    <div class="daybar"><i></i></div>
+    <div class="daybar-cap num"><span>今日の進み</span><span>38%　<span class="anchor">1</span></span></div>
+
+    <div class="asklane">
+      <div class="lab">きみの番（1件）　<span class="anchor">2</span></div>
+      <div class="ask">
+        <div class="from">デイリースタートから</div>
+        <p>「repo構造の標準化構想」は今日のテーマに入れますか？　月目標には載っていますが週の優先には未指定です。</p>
+        <div class="btns"><button class="btn pri">テーマに入れる</button><button class="btn">今日はしない</button></div>
+      </div>
+    </div>
+
+    <div class="themes">
+
+      <!-- テーマ1 -->
+      <div class="theme">
+        <div class="th-head">
+          <div class="th-top"><span class="th-title">当日ボードSQL化を実装完遂する</span><span class="th-pct num">40%</span></div>
+          <div class="th-meter"><i style="width:40%"></i></div>
+          <div class="th-live-strip num"><span class="on"><span class="dot live"></span>2体が作業中</span><span>やること 2 ・ 済 2　<span class="anchor">3</span></span></div>
+        </div>
+        <div class="rail">
+          <div class="row">
+            <span class="ck"></span>
+            <div class="bd">
+              <div class="t">子03+04（DB先書き反転・md2節廃止）を仕上げる</div>
+              <div class="meta">計画: 当日ボードSQL化/03+04</div>
+            </div>
+          </div>
+          <div class="sess">
+            <div class="s-row">
+              <span class="dot live"></span>
+              <div class="s-main">
+                <div class="s-name">board-sweepのDB読み化 <span class="rt">claude · opus</span></div>
+                <div class="s-stat num"><span class="g">実行 12分</span> ・ 今: sweep.pyの行取得を差し替え中　<span class="anchor">4</span></div>
+              </div>
+            </div>
+            <div class="s-row">
+              <span class="dot live"></span>
+              <div class="s-main">
+                <div class="s-name">文書の読み先をDBへ更新 <span class="rt">claude · opus</span></div>
+                <div class="s-stat num"><span class="g">実行 9分</span> ・ サブ2体（稼働1/終了1）</div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <span class="ck"></span>
+            <div class="bd">
+              <div class="t">評価を回して評価mdを保存する</div>
+              <div class="meta">実装完了後・impl-evaluator</div>
+            </div>
+          </div>
+          <details class="fin" open>
+            <summary><span class="tri">▶</span>終わったこと 2件　<span class="anchor">5</span></summary>
+            <div class="fin-list">
+              <div class="fin-item"><div class="t">board.pyをDB先書きへ反転（389テスト全緑・コミット済み）</div><div class="meta num">3セッション ・ 08:11</div></div>
+              <div class="fin-item"><div class="t">daily-notion-sync loopを廃止（verify 7 loops PASS）</div><div class="meta num">1セッション ・ 07:58</div></div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- テーマ2 -->
+      <div class="theme">
+        <div class="th-head">
+          <div class="th-top"><span class="th-title">デイリースタート自動朝会を検証する</span><span class="th-pct num" style="color:var(--live)">100%</span></div>
+          <div class="th-meter"><i style="width:100%; background:var(--live)"></i></div>
+          <div class="th-live-strip num"><span>やること 0 ・ 済 2</span></div>
+        </div>
+        <div class="rail">
+          <details class="fin" open>
+            <summary><span class="tri">▶</span>終わったこと 2件</summary>
+            <div class="fin-list">
+              <div class="fin-item"><div class="t">10:03初回実走に成功（themes 2・todos 2・ask 1・冪等確認）</div><div class="meta num">1セッション ・ 昨日 10:14</div></div>
+              <div class="fin-item"><div class="t">launchd登録完了（bootstrap＋enable・listで実機確認）</div><div class="meta num">1セッション ・ 07:42</div></div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- テーマ3 -->
+      <div class="theme">
+        <div class="th-head">
+          <div class="th-top"><span class="th-title">ボードUIをテーマ軸へ刷新する</span><span class="th-pct num">0%</span></div>
+          <div class="th-meter"><i style="width:0%"></i></div>
+          <div class="th-live-strip num"><span class="hold"><span class="dot wait"></span>1体が確認待ち</span></div>
+        </div>
+        <div class="rail">
+          <div class="row">
+            <span class="ck"></span>
+            <div class="bd">
+              <div class="t">モックv2を確定して実装計画を起こす</div>
+              <div class="meta">計画: デイリー運用刷新（子10候補）</div>
+            </div>
+          </div>
+          <div class="sess">
+            <div class="s-row">
+              <span class="dot wait"></span>
+              <div class="s-main">
+                <div class="s-name">focusmap UIモック作成 <span class="rt">claude · fable5</span></div>
+                <div class="s-stat num"><span class="w">確認待ち 3分</span> ・ 「モックv2はこの構成でよいか」</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 未分類 -->
+      <div class="stray">
+        <div class="lab">未分類 1件　<span class="anchor">6</span></div>
+        <div class="t">セッション「SQL入門mdの日付例文を直す」が始まりました</div>
+        <div class="q">AIの提案: テーマ「当日ボードSQL化」の下に入れますか？</div>
+        <div class="btns"><button class="btn pri">テーマ1に入れる</button><button class="btn">未分類のまま</button></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="n">1</span><div>今日の進み = 全テーマの済やること／全やること。夜に消し込むと伸びる。ヘッダーはこの1行だけに絞る。</div></div>
+    <div class="note"><span class="n">2</span><div>「きみの番」レーンは人間の仕事の全量。質問・提案・確認待ちがここに集まり、0件なら表示ごと消える。</div></div>
+    <div class="note"><span class="n">3</span><div>テーマ帯 = タイトル＋進捗％＋ライブ帯（稼働体数）。閉じた状態でも「どのテーマが動いているか」が一目で分かる。</div></div>
+    <div class="note"><span class="n">4</span><div>セッション行はやること行の下にぶら下がる（独立区画なし）。稼働分数・サブ体数・runtime・「今」の一言が常時見えるライブ表示。</div></div>
+    <div class="note"><span class="n">5</span><div>終わったことは各テーマ内の折りたたみ。1行要約＋セッション数で、展開すると何体で何をしたかが見える。</div></div>
+    <div class="note"><span class="n">6</span><div>テーマに紐付かなかったものだけが唯一の例外枠。AIが所属先を提案し、タップで吸収される。放置ゼロが夜の目標。</div></div>
+  </div>
+
+  <div class="sec">朝と夜はこの画面の状態違い（別画面を作らない）</div>
+  <div class="phases">
+    <div class="phase">
+      <h3>朝 10:03すぎ <span>眺めて答えるだけ・30秒</span></h3>
+      <ul>
+        <li>テーマ3〜5個が自動起票済みで並んでいる（承認バーなし）</li>
+        <li>「きみの番」に朝会の質問が1〜2件</li>
+        <li>セッション0体・進み0%から始まる</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <h3>夜 <span>消し込んで送るだけ・1分</span></h3>
+      <ul>
+        <li>残ったやること行に「明日へ」ボタンが出る</li>
+        <li>進み％が1日の成績表になる</li>
+        <li>未分類が残っていれば夜のうちに所属を決める</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sec">実装への橋（何が済みで何が要るか）</div>
+  <div class="bridge">
+    <div class="br"><span class="st ok">済み</span><div class="bd"><b>DB側の紐付け列</b> — todos.theme_id / sessions.todo_id・theme_id は実装済み（子08/09 migration の本番適用のみ人間ゲート待ち）。</div></div>
+    <div class="br"><span class="st ok">済み</span><div class="bd"><b>正本の一本化</b> — md2節廃止済みで、このボードが唯一の「今」。二重管理なしでUIを作れる。</div></div>
+    <div class="br"><span class="st todo">要実装</span><div class="bd"><b>daily-startの解像度</b> — テーマ4個目安＋todoのtheme紐付け起票（本日レーンGで実装中）。</div></div>
+    <div class="br"><span class="st todo">要実装</span><div class="bd"><b>focusmap画面</b> — テーマカードの入れ子UI・「きみの番」レーン・未分類の吸収ボタン。子10として起案する。</div></div>
+  </div>
+</div>

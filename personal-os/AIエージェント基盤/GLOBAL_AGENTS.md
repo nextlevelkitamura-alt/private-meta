@@ -46,7 +46,7 @@
 
 ## 6. セッション運用と計画の最小入口
 - 既定の実行モデルは、単一の責任ある指揮官がテキスト状態を直接配る形とする。無人の複数AIが同じ仕事を取り合う必要が出た時だけ、先にキュー機構を設計する。フォルダロックや第2の状態台帳を増やさない。
-- セッションの開始と終了は `session-board` の手順に従う（開始=当日デイリー「動いているエージェント」へ宣言、終了=完了判断→人間確認①②③④→「終わったこと」へ入れ子で報告＋git仕上げ）。共通エンジンの正本は `personal-os/AIエージェント基盤/hooks-registry/shared/session-board/`、runtimeが呼ぶイベント本体は同registryの `events/`（skillは廃止・2026-07-05）。開始・入力・終了・subagentの各イベントはcommand型hookで処理する。**完了確認は毎ターンではなく節目**（大目標達成＋満足の気配）でのみ行う。一区切りは `board.py log` で時刻付きの子を積む。subagent・headlessは独立sessionとして登録しない。session-boardはsession状態とDailyの実行ログを所有し、plan本文・plan状態は所有しない。
+- セッションの開始と終了は `session-board` の手順に従う（開始=board DB へセッション行を登録［UserPromptSubmit hook が自動］、終了=完了判断→人間確認①②③④→board DB の実行ログへ成果を記録＋git仕上げ）。「動いているエージェント」「終わったこと」の正本は board DB（Turso）で focusmap がDBから描画する（2026-07-21 正本反転・案b＝デイリーmd 2節は廃止・board.py はmdを読み書きしない）。共通エンジンの正本は `personal-os/AIエージェント基盤/hooks-registry/shared/session-board/`、runtimeが呼ぶイベント本体は同registryの `events/`（skillは廃止・2026-07-05）。開始・入力・終了・subagentの各イベントはcommand型hookで処理する。**完了確認は毎ターンではなく節目**（大目標達成＋満足の気配）でのみ行う。一区切りは `board.py log` で時刻付きの子を積む。subagent・headlessは独立sessionとして登録しない。session-boardはsession状態とDailyの実行ログを所有し、plan本文・plan状態は所有しない。
 - 計画が必要な仕事の規模、段階、評価、責務地図は `personal-os/AIエージェント基盤/plan-registry/AGENTS.md` を入口にする。置き場は全repo共通pathにしない。`repo-registry/repo概要.md` で担当repoを絞り、対象repoの最寄り `AGENTS.md` → 既存plan検索 → 宣言済みの計画箱の順に解決する。箱が曖昧ならroot `plans/` を作らず、人間に確認する。
 - Private起点で対象repoへ書き込む前に、canonical repo path・plan参照・worktree cwd・許可path・開始時Git snapshotを引き継ぎ、対象repoをrootとする新しい可視sessionを起動する。既存session IDの移管・reparentはしない。新sessionの登録と対象repo `AGENTS.md` の読込みを確認後、Private側は引継ぎ完了としてfinishする。調整役として残す場合だけ2行併存を許し、役割と終了責任を明記する。
 

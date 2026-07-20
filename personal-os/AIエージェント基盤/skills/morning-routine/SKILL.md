@@ -9,7 +9,8 @@ description: 朝会と夜会の定型手順。朝会=usage確認→前日/当日
 
 正本ポインタ（本文に複製しない）:
 
-- 当日の状態・担当・実行ログ: 当日デイリー（`my-brain/ゴール/デイリー/<年>/<月>/<日>.md`）と session-board
+- 当日の状態・担当・実行ログ（動いているエージェント／終わったこと）: board DB（Turso）が正本。`board.py show` か focusmap（DBから描画）で読む。デイリーmdには無い（2026-07-21 正本反転・案b）。前日ログの決定的収集は `../daily-start/scripts/fetch-context.sh`（`yesterday_session_logs`）
+- デイリーmd（`my-brain/ゴール/デイリー/<年>/<月>/<日>.md`）は人間記入節（今日すること・依頼インボックス・質問キュー・明日へ・逆算チェック）だけを持つ
 - サブスクと役割別モデル: `~/Private/personal-os/AIエージェント基盤/AIモデル一覧.md`
 - 規模・レビュー・人間ゲート: `~/Private/personal-os/AIエージェント基盤/GLOBAL_AGENTS.md` §7
 - 計画の置き場・状態語彙: `~/Private/personal-os/my-brain/areas/AGENTS.md`
@@ -18,7 +19,7 @@ description: 朝会と夜会の定型手順。朝会=usage確認→前日/当日
 ## 朝会モード（発火: おはよう・朝会・朝のルーチン・モーニングルーティン）
 
 1. Claude Code の `/usage`、Codex の `/status` を必要に応じて人間に確認してもらい、結果をモデル一覧と照合する。残量は記録の正本にしない。
-2. 前日デイリーの「今日のダイジェスト」「今日終わったこと」「明日へ」と、当日デイリーを読む。session-boardの動作中行とずれがあれば、担当AIが board update/log で直す。
+2. 前日の実績（終わったこと）は board DB（`../daily-start/scripts/fetch-context.sh` の `yesterday_session_logs`、または focusmap の前日ボード）から読む。前日デイリーmdの「明日へ」と当日デイリーmdの人間記入節も読む。動いているエージェント（現況）は `board.py show` で読み、実態とずれがあれば担当AIが `board.py update`/`log` で直す。
 3. active計画、`repo-registry/repo概要.md`、`projects/active/` の実体を突き合わせ（突き合わせは `repo-create` の `scripts/repoctl-check.sh` で機械確認する）、人間と「繰越・今日やること・動かさないもの」を決める。新しい玉は `kickoff` で依頼インボックスへ1行起票する。
 4. レーン数・担当・起動形・モデルを決める。規模と人間ゲートは `plan-triage` と `GLOBAL_AGENTS.md` §7 に従い、当日の決定はデイリーとsession-boardにだけ残す。
 5. 指揮官が必要なら `references/commander-prompt.md` の可変部を当日の担当に合わせて埋め、チャット出力として渡す。
@@ -26,7 +27,7 @@ description: 朝会と夜会の定型手順。朝会=usage確認→前日/当日
 
 ## 夜会モード（発火: 夜会・今日の締め・おつかれ）
 
-1. 当日デイリーの「今日のダイジェスト」とsession-boardの実行ログを読み、全体状況を人間へ短く報告する。
+1. 当日デイリーmdの人間記入節（今日すること・明日へ 等）と、board DB の当日実行ログ（`board.py show`／focusmap の当日「終わったこと」）を読み、全体状況を人間へ短く報告する。
 2. 今日のTODOの消し込み・繰越を人間と確認する。AIの更新は追記または `[x]` 化に注記を添え、削除は人間承認後にする。
 3. 23:30のみ、`skills/orca-cockpit/scripts/worktree-sweep.sh` を1回実行してクローズ候補/注意を夜会レポートへ載せる。検知だけで、down・削除・反映は人間ゲートに従う。
 4. 23:30のみ、「明日へ」の記入を促し、年間/3年目標との接続、放置目標、人間確認待ち、古いactive計画を確認する。新しい作業は依頼インボックスに1行起票する。

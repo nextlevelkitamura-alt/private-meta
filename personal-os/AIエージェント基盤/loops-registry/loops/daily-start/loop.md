@@ -33,9 +33,18 @@
    macOS に `flock` が無いため、既存 loop（board-sweep 系と同じ流儀）の mkdir ロック方式を採る。
 2. 当日の冪等ガード: `state/done-<YYYY-MM-DD(JST)>` があれば「skip: already done」をログに残して exit 0。
    done マーカーは run.sh は書かない（起動された AI＝スキルが finish 時に書く）。ここでは読むだけ。
-3. Orca 応答確認（`orca worktree ps --json` が exit 0 か）→ 可なら `cockpit.sh spawn` で可視1ペインを起動。
-4. Orca 不可、または spawn 失敗なら `claude -p` で headless 起動（同じプロンプト `scripts/prompt.md`）。
-5. ③④どちらも起動に失敗したら output ログにエラーを残し exit 1（リトライは今回入れない＝次の 10:03 発火に任せる）。
+3. Orca 応答確認（`orca worktree ps --json` が exit 0 か）。**不応答なら Orca.app を起動**（既定 `open -a Orca`・
+   `/Applications/Orca.app` 実在）し、`DAILY_START_ORCA_WAIT_SECONDS`（既定60秒）を上限に
+   `DAILY_START_ORCA_POLL_INTERVAL`（既定3秒）間隔でポーリングして runtime の応答回復を待つ
+   （人間指示 2026-07-21「Orca でしっかり起動できる形」＝GUI 未起動でも自力で立ち上げる）。
+4. 応答が取れたら `cockpit.sh spawn` で可視1ペインを **Private repo**（`DAILY_START_WT=name:Private`・
+   人間指示「Private repo で実行する」と一致）に起動する。
+5. Orca が上限までに応答しない、または spawn 失敗なら `claude -p` で headless 起動（同じプロンプト `scripts/prompt.md`）。
+6. ④⑤どちらも起動に失敗したら output ログにエラーを残し exit 1（リトライは今回入れない＝次の 10:03 発火に任せる）。
+
+`orca open`（純正の「起動＋runtime到達待ち」サブコマンド）でも同等の起動は可能だが、既定は非ブロッキングの
+`open -a Orca`＋自前ポーリングにして、待ち上限とフォールバック判断を run.sh 側に一元化している
+（`DAILY_START_ORCA_APP` を `'orca open'` に差し替えれば純正経路に切替可）。
 
 ## モデル選定（AIモデル一覧.md のレーン規約に従う）
 
@@ -62,8 +71,11 @@
 - `DAILY_START_STATE_DIR` / `DAILY_START_OUTPUT_DIR` / `DAILY_START_LOG_FILE` … state・ログの置き場。
 - `DAILY_START_LOCK_DIR`（既定 `/tmp/daily-start.lock`）/ `DAILY_START_LOCK_STALE_SECONDS`（既定 3600）。
 - `DAILY_START_DATE`（既定=今日 JST。冪等ガードの日付。テストで固定するのに使う）。
-- `DAILY_START_MODEL` / `DAILY_START_WT`（spawn の worktree selector・既定 `name:Private`）/ `DAILY_START_PERM`。
+- `DAILY_START_MODEL` / `DAILY_START_WT`（spawn の worktree selector・既定 `name:Private`＝Private repo で実行）/ `DAILY_START_PERM`。
 - `DAILY_START_HEADLESS_ARGS`（headless の tool 許可・既定 `--permission-mode acceptEdits`）。
+- `DAILY_START_ORCA_APP`（Orca 不応答時の app 起動コマンド・既定 `open -a Orca`）/
+  `DAILY_START_ORCA_WAIT_SECONDS`（応答回復の待ち上限・既定 60）/
+  `DAILY_START_ORCA_POLL_INTERVAL`（ポーリング間隔・既定 3）。
 - `DAILY_START_PROMPT_FILE`（既定 `scripts/prompt.md`）/ `DAILY_START_OWNER`。
 - `DAILY_START_COCKPIT` / `DAILY_START_ORCA_BIN` / `DAILY_START_CLAUDE_BIN`（起動コマンドのフルパス。テストで stub に差し替える）。
 
@@ -74,11 +86,13 @@
 
 ## テスト
 
-- `tests/test_run.sh`: run.sh の分岐を実 AI 起動なしで検査する（起動コマンドを stub に差し替える）。
+- `tests/test_run.sh`: run.sh の分岐を実 AI 起動なしで検査する（起動コマンド `orca`／`orca-app`／`cockpit.sh`／`claude` を stub に差し替える。全8件）。
   - done マーカーがある日は「起動せず exit 0」（skip 分岐）。
-  - Orca 応答ありなら可視ペイン stub が呼ばれる。
-  - Orca 応答なしなら headless stub が呼ばれる（フォールバック）。
-  - 両方失敗なら exit 1。
+  - Orca 即応答なら app 起動せず可視ペイン stub が呼ばれる。
+  - Orca 不応答 → app 起動 stub → 応答回復 → 可視ペイン stub（回復ポーリング経路）。
+  - Orca 不応答 → app 起動しても回復せず → headless stub（フォールバック）。
+  - Orca 即応答だが spawn 失敗 → headless stub（フォールバック）。
+  - 可視ペイン・headless の両方失敗なら exit 1。
 - plist lint: `plutil -lint com.kitamura.daily-start.plist` が OK（`tests/test_run.sh` 内でも検査）。
 
 ## 導入順（実装完了 → 人間GO → launchd load・人間ゲート）

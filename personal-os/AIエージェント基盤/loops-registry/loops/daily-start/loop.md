@@ -30,7 +30,7 @@
 ## 内部処理（run.sh の順番）
 
 1. 多重起動防止ロック（`/tmp/daily-start.lock`・mkdir ベース・stale 3600秒で自己修復）。
-   macOS に `flock` が無いため、既存 loop（daily-notion-sync）と同じ mkdir ロック方式を採る。
+   macOS に `flock` が無いため、既存 loop（board-sweep 系と同じ流儀）の mkdir ロック方式を採る。
 2. 当日の冪等ガード: `state/done-<YYYY-MM-DD(JST)>` があれば「skip: already done」をログに残して exit 0。
    done マーカーは run.sh は書かない（起動された AI＝スキルが finish 時に書く）。ここでは読むだけ。
 3. Orca 応答確認（`orca worktree ps --json` が exit 0 か）→ 可なら `cockpit.sh spawn` で可視1ペインを起動。

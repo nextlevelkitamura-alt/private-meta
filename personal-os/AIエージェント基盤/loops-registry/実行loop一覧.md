@@ -78,32 +78,6 @@
 - 意図状態: 稼働中
 - 最終実機確認: 2026-07-20 実装完了・未ロード（指揮官のlaunchd load待ち）
 
-## 情報同期
-
-<!-- LOOP:daily-notion-sync -->
-### `daily-notion-sync`
-- 領域: Personal OS
-- 分類: 情報同期
-- scope: global
-- 目的: 当日デイリーの稼働中・完了情報を表示専用のNotion表へミラーする
-- 内部処理: [{"name":"安全停止","detail":"v3 session-board行の解析不整合を修正・検証するまでNotion APIを実行しない"},{"name":"修正後の再開予定","detail":"v3行の正規化、archive保護、stub test、独立review、人間確認の順で復帰する"}]
-- 実行方法: 一時停止中（launchdをbootout済み）
-- 発火: 停止中（復帰承認後は30秒ごと）
-- 発火設定: {"StartInterval":30}
-- launchd構成: 専用loop。安全回復の完了と人間承認までunloaded
-- 統合判断: 維持。安全停止中。Notion誤archiveを防ぎ、v3解析・archive保護を検証してから再開を判断する
-- 失敗時: 停止を維持し、Notion APIを呼ばない
-- 記録: ローカル `loops/daily-notion-sync/output/logs/sync.{out,err}.log` ／ Notion表示 ／ stateは同loopの `state/`
-- runner: script
-- launchd label: com.kitamura.daily-notion-sync
-- 正本: loops/daily-notion-sync/loop.md
-- plist: loops/daily-notion-sync/com.kitamura.daily-notion-sync.plist
-- 意図状態: 一時停止
-- 停止理由: v3 session-board行を旧形式として解析し、Notion既存行を誤archiveし得るP0を検出したため
-- 停止日: 2026-07-14
-- 再判断期限: 2026-08-13
-- 最終実機確認: 2026-07-14 15:xx JST bootout確認済み / Notion APIは未実行
-
 ## 保守・整理
 
 <!-- LOOP:session-record-prune -->

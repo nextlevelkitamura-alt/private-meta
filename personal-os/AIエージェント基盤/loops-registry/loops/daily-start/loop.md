@@ -53,6 +53,9 @@
   （可視ペインは人が承認、headless は非対話でツールが拒否され得る）。完全無人で書き込ませたい場合は、
   人間が plist env を `DAILY_START_PERM=bypassPermissions`・`DAILY_START_HEADLESS_ARGS=--dangerously-skip-permissions`
   に設定する。これは無人 AI に無制限のツール実行を与える判断なので **人間が明示的に決める**（実装では既定にしない）。
+- **現在の設定**: 2026-07-20夜の人間明示承認（「デンジャラスモードでいい」）により、**現plistは危険側
+  （bypassPermissions / --dangerously-skip-permissions）を設定済み**。run.sh 側の既定は安全側のまま。
+  安全側へ戻すには plist の当該2 envを削除する（評価01の文書整合指摘への追記）。
 
 ## env（差し替え・テスト用。既定は run.sh 冒頭）
 

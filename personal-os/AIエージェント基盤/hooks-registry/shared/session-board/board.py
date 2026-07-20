@@ -38,6 +38,8 @@ _stmt_session_delete = turso_store.stmt_session_delete
 # 子09: セッション所属先の宣言（sessions.todo_id/theme_id）と大課題テーマの作成（inbox themes）。
 _stmt_session_affiliation = turso_store.stmt_session_affiliation
 _stmt_theme_insert = turso_store.stmt_theme_insert
+# 子03: 今日やること todo を inbox todos へ確定起票（board.py todo-add・daily-start が使う）。
+_stmt_todo_insert = turso_store.stmt_todo_insert
 # 子08: サブエージェント入れ子可視化（board DB: session_subagents の開始/終了/ラベル）。
 _stmt_subagent_start, _stmt_subagent_end = turso_store.stmt_subagent_start, turso_store.stmt_subagent_end
 _stmt_subagent_label = turso_store.stmt_subagent_label
@@ -330,7 +332,7 @@ def _mutate(cmd, args, entries, key, lines, pending_events):
 def main():
     if len(sys.argv) < 2:
         sys.exit("usage: board.py <add|update|flip|sub-start|sub-end|sub-label|finish|log|check|show|goals|reconcile|goal-add"
-                 "|theme-add|steps|step-done|step-doing|step-skip|ask|flow-done|answers> ...")
+                 "|theme-add|todo-add|steps|step-done|step-doing|step-skip|ask|flow-done|answers> ...")
     cmd, args, entries = parse_args(sys.argv[1:])
     if cmd == "goal-add":
         statement = _stmt_goal_insert(args.get("name"), args.get("date"), args.get("source", "chat"))
@@ -353,6 +355,37 @@ def main():
             sys.exit('usage: board.py theme-add --name "<テーマ名>" --purpose "<目的>" --done "<完了条件>"')
         _turso_sync([statement], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)
         print(theme_id)   # 呼び出し元（AI）が update --theme <id> や起票の紐付けに使う
+        return
+    if cmd == "todo-add":
+        # 子03: 今日やること todo を inbox todos へ確定起票（daily-start が使う・theme-add と同型）。
+        # CHECK制約列（assignee/source/route）は正当値のみ許可＝不正値は usage 停止（DB制約に頼らず機械保証）。
+        title = (args.get("title") or "").strip()
+        assignee = args.get("assignee", "self")
+        source = args.get("source", "cli")
+        route = args.get("route", "plan")
+        usage = ('usage: board.py todo-add --title "<やること>" [--note <メモ>] [--date YYYY-MM-DD] '
+                 '[--due YYYY-MM-DD] [--repo <slug>] [--assignee self|ai] [--route plan|routine|single] '
+                 '[--theme <theme_id>] [--carried-from YYYY-MM-DD] [--source web|chat|cli]')
+        if not title:
+            sys.exit(usage)
+        if assignee not in ("self", "ai"):
+            sys.exit(usage + "  （--assignee は self|ai）")
+        if source not in ("web", "chat", "cli"):
+            sys.exit(usage + "  （--source は web|chat|cli）")
+        if route not in ("plan", "routine", "single"):
+            sys.exit(usage + "  （--route は plan|routine|single）")
+        jst_now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+        do_date = (args.get("date") or "").strip() or jst_now.strftime("%Y-%m-%d")
+        todo_id = str(uuid.uuid4())
+        statement = _stmt_todo_insert(
+            todo_id, title, do_date,
+            note=args.get("note"), due_date=args.get("due"),
+            repo=args.get("repo", "none"), assignee=assignee, source=source, route=route,
+            theme_id=args.get("theme"), carried_from=args.get("carried-from"))
+        if statement is None:
+            sys.exit(usage)
+        _turso_sync([statement], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)
+        print(todo_id)   # 呼び出し元（AI）がステップ登録・質問・セッション紐付けに使う
         return
     if cmd == "sub-label":
         # 子08: サブ個体行へ1行ラベルを付ける（意味づけ＝AI・board DBのsession_subagentsだけを書く）。

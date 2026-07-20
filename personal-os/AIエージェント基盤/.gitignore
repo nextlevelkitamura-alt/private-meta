@@ -21,3 +21,6 @@ outputs/
 # inbox-patrol: patrol有効化フラグ・pull済みid・出所マップ・DB idキャッシュ・スキーママーカーの
 # 実行時状態（secretではないが非git管理。loop.md参照。2026-07-09 子06 tick統合で新設）
 /loops-registry/loops/inbox-patrol/state/
+
+# daily-start: 当日の冪等マーカー done-<日付>（起動された AI が書く実行時状態・非git管理。loop.md参照）
+/loops-registry/loops/daily-start/state/

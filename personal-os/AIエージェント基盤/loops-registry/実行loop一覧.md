@@ -57,6 +57,27 @@
 - 意図状態: 稼働中
 - 最終実機確認: 2026-07-12 16:53 JST loaded / last exit 0
 
+<!-- LOOP:daily-start -->
+### `daily-start`
+- 領域: Personal OS
+- 分類: AI運用・セッション管理
+- scope: global
+- 目的: 朝10:03にデイリースタートを起動し、今日の大課題と今日やることを確定起票させる
+- 内部処理: [{"name":"多重起動ロック","detail":"/tmpのmkdirロックを取り、stale(3600秒超)なら自己修復して奪う"},{"name":"冪等ガードを確認","detail":"当日のstate/done-日付があれば起票せずスキップしてexit 0で終わる"},{"name":"Orca応答を確認","detail":"orca worktree psが応答すれば可視ペイン経路、応答しなければheadless経路を選ぶ"},{"name":"可視ペインを起動","detail":"cockpit spawnでclaudeの可視1ペインを立て、無人モードのデイリースタートを実行させる"},{"name":"headlessへフォールバック","detail":"Orca不可またはspawn失敗ならclaude -pで同じプロンプトをheadless起動する"},{"name":"起動失敗を記録","detail":"可視ペインもheadlessも起動できなければoutputログにエラーを残しexit 1で終わる"}]
+- 実行方法: launchd → run.sh（薄い起動役）→ Orca可視ペイン優先／claude -p headlessフォールバック
+- 発火: 毎日 10:03
+- 発火設定: {"StartCalendarInterval":[{"Hour":10,"Minute":3}]}
+- launchd構成: 専用calendar loop。1日1回の儀式起動で、定刻を逃すとMac復帰時に1回実行される
+- 統合判断: 維持。1日1回の儀式起動でcalendar発火し、短周期loopと責務も周期も異なり統合する意味がない
+- 失敗時: 即時再試行なし。次の10:03発火に任せる。多重起動・当日済みはexit 0、起動失敗はexit 1
+- 記録: ローカル `loops/daily-start/output/logs/daily-start.{out,err}.log` ／ 冪等stateは同loopの `state/`
+- runner: ai
+- launchd label: com.kitamura.daily-start
+- 正本: loops/daily-start/loop.md
+- plist: loops/daily-start/com.kitamura.daily-start.plist
+- 意図状態: 稼働中
+- 最終実機確認: 2026-07-20 実装完了・未ロード（指揮官のlaunchd load待ち）
+
 ## 情報同期
 
 <!-- LOOP:daily-notion-sync -->

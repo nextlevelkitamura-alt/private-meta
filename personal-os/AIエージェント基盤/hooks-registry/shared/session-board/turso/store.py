@@ -139,6 +139,45 @@ def stmt_theme_insert(theme_id, name, purpose, done_criteria, goal_ref=None, pla
     return sql, args
 
 
+def stmt_todo_insert(todo_id, title, do_date, note=None, due_date=None, repo="none",
+                     assignee="self", source="cli", route="plan", goal_ref=None,
+                     theme_id=None, carried_from=None, session_key=None,
+                     status="open", ai_status="未検知", created_at=None):
+    """子03: 今日やること todo を inbox todos へ INSERT（board.py todo-add の実体）。
+    inbox todos スキーマ（focusmap db/turso/migrations の3ファイル）準拠で全列を明示する。
+    作成時は status='open'・ai_status='未検知'・completed_at/completed_by/question系はNULL、
+    question_allow_free=1・question_gate=0・route既定=plan。CHECK制約列（assignee/status/
+    ai_status/source/route）の値検証は呼び出し元（board.py）の usage 停止で機械保証する
+    （DB制約では縛らない・theme-add と同型）。title・do_date・todo_id 欠落は None（送らない）。"""
+    title = (title or "").strip()
+    if not todo_id or not title or not (do_date or "").strip():
+        return None
+    now = created_at or datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).isoformat(timespec="seconds")
+
+    def opt(value):
+        return text_arg(value) if (value or "").strip() else null_arg()
+
+    cols = ["id", "title", "note", "do_date", "due_date", "repo", "assignee",
+            "status", "ai_status", "source", "goal_ref", "session_key",
+            "created_at", "updated_at", "completed_at",
+            "question", "question_choices", "question_allow_free", "question_gate",
+            "question_asked_at", "answer", "answered_at", "answer_consumed_at",
+            "route", "completed_by", "theme_id", "carried_from", "awaiting_since"]
+    args = [
+        text_arg(todo_id), text_arg(title), opt(note), text_arg(do_date), opt(due_date),
+        text_arg(repo or "none"), text_arg(assignee or "self"),
+        text_arg(status or "open"), text_arg(ai_status or "未検知"), text_arg(source or "cli"),
+        opt(goal_ref), opt(session_key),
+        text_arg(now), text_arg(now), null_arg(),            # created_at, updated_at, completed_at
+        null_arg(), null_arg(), int_arg(1), int_arg(0),      # question, question_choices, allow_free=1, gate=0
+        null_arg(), null_arg(), null_arg(), null_arg(),      # question_asked_at, answer, answered_at, answer_consumed_at
+        text_arg(route or "plan"), null_arg(),               # route, completed_by
+        opt(theme_id), opt(carried_from), null_arg(),        # theme_id, carried_from, awaiting_since
+    ]
+    sql = f"INSERT INTO todos ({', '.join(cols)}) VALUES ({', '.join(['?'] * len(cols))})"
+    return sql, args
+
+
 def stmts_logs(repo, parent, entries, date_s, session_key=None, todo_id=None):
     # todo_id 未指定は従来の6列INSERT（session_logs.todo_id 未適用DBでも安全）。
     # 子05: --todo 指定時だけ todo_id 列を含む7列INSERT（migration適用後にAIが渡す）。

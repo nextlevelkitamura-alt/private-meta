@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kitamura.daily-start</string>
+
+  <!--
+    毎朝 10:03（JST）に「デイリースタート」儀式を1回起動する（StartCalendarInterval Hour=10 Minute=3）。
+    scripts/run.sh は薄い起動役: 多重起動防止ロック → 当日 state 確認（済みならスキップ）→
+    Orca 応答確認 → 可なら cockpit spawn で可視1ペイン、不可/失敗なら claude -p の headless へフォールバック。
+    themes/todos の確定起票・question 発行・実行ログ書き込みは、起動された AI（daily-start スキルの無人モード）が行う。
+
+    RunAtLoad は付けない（ロード直後の連打回避・既存 loop と同方針）。10:03 に Mac がスリープ等で
+    起動を逃した場合は、StartCalendarInterval が wake 後に1回だけ実行する。
+    run.sh 自体が mkdir ベースのロック（/tmp/daily-start.lock・stale 3600秒で自己修復）を持つため、
+    前回 run が残っていても二重起動しない。冪等ガード（state/done-<日付>）で手動実行済みの日はスキップする。
+
+    未ロード（有効化＝launchd load は人間ゲート）。有効化する場合（symlink 方式・既存 loop と同型）:
+      ln -s '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-start/com.kitamura.daily-start.plist' \
+        ~/Library/LaunchAgents/com.kitamura.daily-start.plist
+      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.kitamura.daily-start.plist
+      launchctl enable gui/$(id -u)/com.kitamura.daily-start
+    停止:
+      launchctl bootout gui/$(id -u)/com.kitamura.daily-start
+    手動実行（起動確認）: cd <このフォルダ> && scripts/run.sh
+
+    完全無人で board.py 等の書き込みを実行させたい場合は、下の DAILY_START_HEADLESS_ARGS を
+    '--dangerously-skip-permissions' に、DAILY_START_PERM を 'bypassPermissions' に人間が設定する
+    （既定は安全側の acceptEdits。permission 設計の判断は loop.md「permission と無人実行」を参照）。
+  -->
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd '/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-start' &amp;&amp; scripts/run.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-start</string>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>10</integer>
+    <key>Minute</key>
+    <integer>3</integer>
+  </dict>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>/Users/kitamuranaohiro</string>
+    <!-- orca(.local/bin) と claude(.npm-global/bin) を含める。launchd の PATH は最小なのでフルに列挙する。 -->
+    <key>PATH</key>
+    <string>/Users/kitamuranaohiro/.local/bin:/Users/kitamuranaohiro/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>TZ</key>
+    <string>Asia/Tokyo</string>
+    <!-- 完全無人での確定起票を許可（2026-07-20夜 人間明示承認「デンジャラスモードでいい」）。
+         安全側へ戻す場合はこの2値を削除する（既定 acceptEdits に戻る）。 -->
+    <key>DAILY_START_PERM</key>
+    <string>bypassPermissions</string>
+    <key>DAILY_START_HEADLESS_ARGS</key>
+    <string>--dangerously-skip-permissions</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-start/output/logs/daily-start.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/loops-registry/loops/daily-start/output/logs/daily-start.err.log</string>
+</dict>
+</plist>

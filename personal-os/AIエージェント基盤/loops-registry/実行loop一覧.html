@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="59b6bc4b4c64106a4f8ef88a1c088dd7fbc32eb8eb4c877c7b0dc4f87f5a95a1">
+  <meta name="source-sha256" content="73add8d9e06e46c97c64c0399ec217dc1e71a47b5a0a12f651f0bad93d66c408">
   <title>実行loop一覧</title>
   <style>
     :root {
@@ -103,19 +103,19 @@
   <main>
     <header class="page-header"><div><h1>実行loop一覧</h1><p class="lead">Macで動く自作loopを2領域で管理</p></div><div class="legend" aria-label="状態の凡例"><span><i></i>正常</span><span><i class="warn"></i>要確認</span><span><i class="stop"></i>停止</span></div></header>
     <section class="summary" aria-label="一覧の概要">
-      <div class="metric success"><span class="metric-icon">✓</span><div><small>launchd健康状態</small><strong>要確認</strong><p>正常6・要確認0・停止1</p></div></div>
-      <div class="metric"><span class="metric-icon">▶</span><div><small>登録済みloop数</small><strong>6 / 7</strong><p>launchctlの実機スナップショット</p></div></div>
+      <div class="metric success"><span class="metric-icon">✓</span><div><small>launchd健康状態</small><strong>要確認</strong><p>正常7・要確認0・停止1</p></div></div>
+      <div class="metric"><span class="metric-icon">▶</span><div><small>登録済みloop数</small><strong>7 / 8</strong><p>launchctlの実機スナップショット</p></div></div>
       <div class="metric"><span class="metric-icon">↻</span><div><small>最短実行間隔</small><strong>30秒ごと</strong><p>正確な次回時刻はlaunchdが管理</p></div></div>
-      <div class="metric"><span class="metric-icon">◷</span><div><small>状態取得時刻</small><strong>2026/07/14 16:45:25</strong><p>実機の状態はlaunchctlが正本</p></div></div>
+      <div class="metric"><span class="metric-icon">◷</span><div><small>状態取得時刻</small><strong>2026/07/20 23:44:43</strong><p>実機の状態はlaunchctlが正本</p></div></div>
     </section>
     <p class="snapshot-note">状態はHTML生成時のスナップショット。更新: <code>python3 verify.py --write-html</code></p>
     <section class="domain personal" aria-labelledby="domain-personal">
               <header class="domain-header">
                 <div class="domain-title"><span class="domain-icon">基盤</span><div><h2 id="domain-personal">Personal OS</h2><p>Mac / AIエージェント基盤の運用</p></div></div>
-                <div class="domain-health"><strong>4 loop</strong><span class="health-pill"><i></i>3 正常</span><span class="health-pill warning"><i></i>0 要確認</span><span class="health-pill stopped"><i></i>1 停止</span></div>
+                <div class="domain-health"><strong>5 loop</strong><span class="health-pill"><i></i>4 正常</span><span class="health-pill warning"><i></i>0 要確認</span><span class="health-pill stopped"><i></i>1 停止</span></div>
               </header>
               <div class="column-head" aria-hidden="true"><span>状態</span><span>loop名 / 何をする</span><span>実行間隔</span><span>次回</span><span>記録先</span></div>
-              <div class="loop-list"><div class="category-label">AI運用・セッション管理 <span>2 loop</span></div><details class="loop-row" data-loop-name="board-reconcile">
+              <div class="loop-list"><div class="category-label">AI運用・セッション管理 <span>3 loop</span></div><details class="loop-row" data-loop-name="board-reconcile">
                   <summary>
                     <span class="chevron" aria-hidden="true"></span>
                     <span class="status-dot healthy" title="launchd: 正常"></span>
@@ -133,7 +133,7 @@
                     <div class="detail-item"><dt>launchd構成</dt><dd>専用loop。状態照合だけを低負荷で行う</dd></div>
                     <div class="detail-item"><dt>統合判断</dt><dd>維持。閾値が10分・30分なので5分周期に固有の意味がある</dd></div>
                   </dl>
-                  <div class="row-meta"><code>com.kitamura.board-reconcile</code><span>launchd: 正常 ／ state=not running ／ runs=80 ／ last exit=0</span></div>
+                  <div class="row-meta"><code>com.kitamura.board-reconcile</code><span>launchd: 正常 ／ state=not running ／ runs=149 ／ last exit=0</span></div>
                 </details><details class="loop-row" data-loop-name="board-sweep">
                   <summary>
                     <span class="chevron" aria-hidden="true"></span>
@@ -152,11 +152,30 @@
                     <div class="detail-item"><dt>launchd構成</dt><dd>専用loop。意味判定とAI呼び出しを低頻度で行う</dd></div>
                     <div class="detail-item"><dt>統合判断</dt><dd>維持。5分の生存照合とは責務・負荷・安全条件が異なる</dd></div>
                   </dl>
-                  <div class="row-meta"><code>com.kitamura.board-sweep</code><span>launchd: 正常 ／ state=not running ／ runs=6 ／ last exit=0</span></div>
-                </details><div class="category-label">情報同期 <span>1 loop</span></div><details class="loop-row" data-loop-name="daily-notion-sync">
+                  <div class="row-meta"><code>com.kitamura.board-sweep</code><span>launchd: 正常 ／ state=not running ／ runs=12 ／ last exit=0</span></div>
+                </details><details class="loop-row" data-loop-name="daily-start">
                   <summary>
                     <span class="chevron" aria-hidden="true"></span>
                     <span class="status-dot stopped" title="launchd: 未ロード"></span>
+                    <span class="loop-copy"><code>daily-start</code><small>朝10:03にデイリースタートを起動し、今日の大課題と今日やることを確定起票させる</small></span>
+                    <span class="timing"><small>実行間隔</small><strong>毎日 10:03</strong></span>
+                    <span class="next"><small>次回</small><strong>次回スケジュール</strong></span>
+                    <span class="destination local">ローカルログ</span>
+                  </summary>
+                  <section class="process-block"><h3>内部処理</h3><p class="process-lead">起動後は、次の順番・条件で処理する。</p><ol class="process-steps"><li><span>1</span><div><strong>多重起動ロック</strong><p>/tmpのmkdirロックを取り、stale(3600秒超)なら自己修復して奪う</p></div></li><li><span>2</span><div><strong>冪等ガードを確認</strong><p>当日のstate/done-日付があれば起票せずスキップしてexit 0で終わる</p></div></li><li><span>3</span><div><strong>Orca応答を確認</strong><p>orca worktree psが応答すれば可視ペイン経路、応答しなければheadless経路を選ぶ</p></div></li><li><span>4</span><div><strong>可視ペインを起動</strong><p>cockpit spawnでclaudeの可視1ペインを立て、無人モードのデイリースタートを実行させる</p></div></li><li><span>5</span><div><strong>headlessへフォールバック</strong><p>Orca不可またはspawn失敗ならclaude -pで同じプロンプトをheadless起動する</p></div></li><li><span>6</span><div><strong>起動失敗を記録</strong><p>可視ペインもheadlessも起動できなければoutputログにエラーを残しexit 1で終わる</p></div></li></ol></section>
+                  <dl class="detail-strip">
+                    <div class="detail-item"><dt>実行方法</dt><dd>launchd → run.sh（薄い起動役）→ Orca可視ペイン優先／claude -p headlessフォールバック</dd></div>
+                    <div class="detail-item"><dt>失敗時</dt><dd>即時再試行なし。次の10:03発火に任せる。多重起動・当日済みはexit 0、起動失敗はexit 1</dd></div>
+                    <div class="detail-item"><dt>記録先</dt><dd>ローカル `loops/daily-start/output/logs/daily-start.{out,err}.log` ／ 冪等stateは同loopの `state/`</dd></div>
+                    <div class="detail-item"><dt>正本</dt><dd><code>loops/daily-start/loop.md</code></dd></div>
+                    <div class="detail-item"><dt>launchd構成</dt><dd>専用calendar loop。1日1回の儀式起動で、定刻を逃すとMac復帰時に1回実行される</dd></div>
+                    <div class="detail-item"><dt>統合判断</dt><dd>維持。1日1回の儀式起動でcalendar発火し、短周期loopと責務も周期も異なり統合する意味がない</dd></div>
+                  </dl>
+                  <div class="row-meta"><code>com.kitamura.daily-start</code><span>launchd: 未ロード ／ state=unloaded ／ runs=0 ／ last exit=-</span></div>
+                </details><div class="category-label">情報同期 <span>1 loop</span></div><details class="loop-row" data-loop-name="daily-notion-sync">
+                  <summary>
+                    <span class="chevron" aria-hidden="true"></span>
+                    <span class="status-dot healthy" title="launchd: 正常"></span>
                     <span class="loop-copy"><code>daily-notion-sync</code><small>当日デイリーの稼働中・完了情報を表示専用のNotion表へミラーする</small></span>
                     <span class="timing"><small>実行間隔</small><strong>停止中（復帰承認後は30秒ごと）</strong></span>
                     <span class="next"><small>次回</small><strong>次の30秒周期</strong></span>
@@ -171,11 +190,11 @@
                     <div class="detail-item"><dt>launchd構成</dt><dd>専用loop。安全回復の完了と人間承認までunloaded</dd></div>
                     <div class="detail-item"><dt>統合判断</dt><dd>維持。安全停止中。Notion誤archiveを防ぎ、v3解析・archive保護を検証してから再開を判断する</dd></div>
                   </dl>
-                  <div class="row-meta"><code>com.kitamura.daily-notion-sync</code><span>launchd: 未ロード ／ state=unloaded ／ runs=0 ／ last exit=-</span></div>
+                  <div class="row-meta"><code>com.kitamura.daily-notion-sync</code><span>launchd: 正常 ／ state=not running ／ runs=1471 ／ last exit=0</span></div>
                 </details><div class="category-label">保守・整理 <span>1 loop</span></div><details class="loop-row" data-loop-name="session-record-prune">
                   <summary>
                     <span class="chevron" aria-hidden="true"></span>
-                    <span class="status-dot healthy" title="launchd: 登録済み"></span>
+                    <span class="status-dot healthy" title="launchd: 正常"></span>
                     <span class="loop-copy"><code>session-record-prune</code><small>30日を超えたClaude・Codexセッション記録を内蔵ディスク上のTrashへ移す</small></span>
                     <span class="timing"><small>実行間隔</small><strong>月・水・金 18:00</strong></span>
                     <span class="next"><small>次回</small><strong>次回スケジュール</strong></span>
@@ -190,7 +209,7 @@
                     <div class="detail-item"><dt>launchd構成</dt><dd>専用calendar loop。定刻を逃すとMac復帰時に1回実行される</dd></div>
                     <div class="detail-item"><dt>統合判断</dt><dd>維持。曜日・時刻で動く保守処理で短周期loopと統合する意味がない</dd></div>
                   </dl>
-                  <div class="row-meta"><code>com.kitamura.session-record-prune</code><span>launchd: 登録済み ／ state=not running ／ runs=0 ／ last exit=(never exited)</span></div>
+                  <div class="row-meta"><code>com.kitamura.session-record-prune</code><span>launchd: 正常 ／ state=not running ／ runs=1 ／ last exit=0</span></div>
                 </details></div>
             </section><section class="domain work" aria-labelledby="domain-work">
               <header class="domain-header">
@@ -216,7 +235,7 @@
                     <div class="detail-item"><dt>launchd構成</dt><dd>親dispatcher。旧6本のNextLevel launchdを1本へ統合済み</dd></div>
                     <div class="detail-item"><dt>統合判断</dt><dd>統合済み。1分tickはこの1本だけに集約し、内部条件で実処理頻度を分ける</dd></div>
                   </dl>
-                  <div class="row-meta"><code>com.nextlevel.dispatcher</code><span>launchd: 正常 ／ state=not running ／ runs=398 ／ last exit=0</span></div>
+                  <div class="row-meta"><code>com.nextlevel.dispatcher</code><span>launchd: 正常 ／ state=not running ／ runs=740 ／ last exit=0</span></div>
                 </details><details class="loop-row" data-loop-name="worker-search-kanto">
                   <summary>
                     <span class="chevron" aria-hidden="true"></span>
@@ -235,7 +254,7 @@
                     <div class="detail-item"><dt>launchd構成</dt><dd>worker-search共通実装の関東target専用loop</dd></div>
                     <div class="detail-item"><dt>統合判断</dt><dd>統合候補。全国と同じ4分周期・同じ実装なので1親schedulerから順次起動できる</dd></div>
                   </dl>
-                  <div class="row-meta"><code>com.nextlevel.worker-search.schedule</code><span>launchd: 正常 ／ state=not running ／ runs=73 ／ last exit=0</span></div>
+                  <div class="row-meta"><code>com.nextlevel.worker-search.schedule</code><span>launchd: 正常 ／ state=not running ／ runs=157 ／ last exit=0</span></div>
                 </details><details class="loop-row" data-loop-name="worker-search-zenkoku">
                   <summary>
                     <span class="chevron" aria-hidden="true"></span>
@@ -254,7 +273,7 @@
                     <div class="detail-item"><dt>launchd構成</dt><dd>worker-search共通実装の全国target専用loop</dd></div>
                     <div class="detail-item"><dt>統合判断</dt><dd>統合候補。関東と同じ4分周期・同じ実装なので1親schedulerから順次起動できる</dd></div>
                   </dl>
-                  <div class="row-meta"><code>com.nextlevel.worker-search.zenkoku</code><span>launchd: 正常 ／ state=not running ／ runs=66 ／ last exit=0</span></div>
+                  <div class="row-meta"><code>com.nextlevel.worker-search.zenkoku</code><span>launchd: 正常 ／ state=not running ／ runs=156 ／ last exit=0</span></div>
                 </details></div>
             </section>
     <section class="live-plan"><h2>launchdをいつでもUIで見る設計</h2><p>静的な説明と変動する実機状態を混ぜず、余計な短周期loopも増やさない。</p><div class="live-grid">
@@ -264,7 +283,7 @@
     </div></section>
     <section class="rule"><strong>統合判断</strong>　1分周期はNextLevel dispatcher 1本へ6処理を統合済み。現在の重複候補は、同じ実装・同じ4分周期で動く関東／全国worker-searchの2本。停止・再登録を伴うため統合実装は別の人間ゲートで行う。</section>
     <section class="rule"><strong>新しいloopを追加するとき</strong>　正本MDへ「領域: Personal OS / 仕事」と内容分類を追記し、<code>python3 verify.py --write-html &amp;&amp; python3 verify.py</code>で表示と実体を揃える。ログ本文は集約せず、ここにはローカル・Notion・Google Sheetsなどの記録先だけを書く。</section>
-    <footer>正本: 実行loop一覧.md ／ source-sha256: 59b6bc4b4c64106a4f8ef88a1c088dd7fbc32eb8eb4c877c7b0dc4f87f5a95a1</footer>
+    <footer>正本: 実行loop一覧.md ／ source-sha256: 73add8d9e06e46c97c64c0399ec217dc1e71a47b5a0a12f651f0bad93d66c408</footer>
   </main>
 </body>
 </html>

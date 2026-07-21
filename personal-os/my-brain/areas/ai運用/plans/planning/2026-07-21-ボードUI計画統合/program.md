@@ -79,7 +79,7 @@ Wave 3: 子04 完了移動の運用実測（2日）→ program最終評価
 
 ファイル担当マップ（衝突させない契約。同一ファイルは関数単位に分離し追記のみ・Waveで直列化）:
 
-- 子01: `focusmap/src/`（today系コンポーネント・board page・lib/turso の読みクエリ）。`db/turso/migrations/`・`session-board/`・`plan-ops/` は触らない。
+- 子01: `focusmap/src/`（today系コンポーネント・board page・PCカレンダー画面サイドバー・lib/turso の読みクエリ）。`db/turso/migrations/`・`session-board/`・`plan-ops/` は触らない。子01内部は30分スプリントの3レーン並列（担当ファイル分離は子01「実行体制」節が正本）。
 - 子02: `focusmap/db/turso/migrations/`（inbox宛1本=todos.plan_slugのみ）・`focusmap/src/app/dashboard/plans/`・`plan-ops/scripts/plansync.py`・`session-board/board.py`＋`turso/store.py`（todo-add拡張・step-doing打刻・steps継承）・`skills/daily-start/SKILL.md`（繰越し継承＋全工程一括登録の節）。子01が作ったtoday系部品はpropsの追加のみ可（構造変更は子01へ差し戻し）。
 - 子03: `hooks-registry/events/`（新hook）・`shared/session-board/`（sub-start拡張）・board宛migration。表示側は新規ファイル（sub-detail部品）に閉じ、子01のtask-row部品を書き換えない。
 - 子04: コード変更なし（微調整が要れば該当子へ差し戻し）。

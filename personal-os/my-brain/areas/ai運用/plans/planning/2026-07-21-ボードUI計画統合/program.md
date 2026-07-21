@@ -54,7 +54,7 @@ program「当日ボードSQL化」の親最終一括が完了していること:
     役割: 実装
     対象repo: ~/Private/personal-os/AIエージェント基盤（hooks-registry）＋focusmap（表示側のみ）
     並列: 捕捉側は子01と可（focusmap禁止）／表示側は子01完了後
-    人間ゲート: board migration適用（session_subagents 詳細4列）・hook登録変更・push
+    人間ゲート: board migration適用（session_subagents 詳細5列）・hook登録変更・push
     次: payload実測から着手可（前提ゲート消化後）
     場所: plans/03 ／ 依存: 前提ゲート（表示側は子01）
 - [ ] 04 完了移動の運用実測 … 計画（前提ゲート待ち）
@@ -93,7 +93,7 @@ Wave 3: 子04 完了移動の運用実測（2日）→ program最終評価
 ## 人間ゲート一覧
 
 - inbox migration適用（子02: todos.plan_slug。※ todo_steps.started_at は前program子09のmigrationに含まれ、前提ゲートで適用済みとなる）
-- board migration適用（子03: session_subagents 詳細4列）
+- board migration適用（子03: session_subagents 詳細5列）
 - hook登録変更（子03: PreToolUse捕捉の settings.json 反映）
 - push・本番デプロイ反映（各Wave末）
 

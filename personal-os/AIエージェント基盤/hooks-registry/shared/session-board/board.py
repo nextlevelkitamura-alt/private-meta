@@ -62,6 +62,22 @@ _SB_DIR = os.path.dirname(os.path.abspath(__file__))
 # frontmatterの `board_route: routine` 宣言（skill/loop正本の1行が正本・第2の台帳を作らない）。
 _ROUTE_RE = re.compile(r"^board_route:\s*routine\s*$", re.M)
 
+# 子03: サブエージェントへ渡すプロンプト保存前の簡易マスキング。
+# `key: value` / `key=value` 形の秘密らしき値だけを [masked] へ潰す（キーと区切りは残す）。
+# 規約: 過剰マスクより「取りこぼし防止」を優先する＝疑わしい形は広めに潰し、誤検知で本文の一部が
+#   masked 化するのは許容する。完全な秘密検出ではない＝board DBへ全文TEXT保存する前段の粗いフィルタで、
+#   UIは1行要約＋折りたたみ表示にする。secret/tokenの値そのものはここでもログにも残さない。
+_SECRET_RE = re.compile(
+    r"(?i)(api[_-]?key|secret[_-]?key|access[_-]?key|token|secret|password|passwd|bearer|authorization)"
+    r"(\s*[:=]\s*)(\S+)")
+
+
+def _mask_secrets(text):
+    """プロンプト内の秘密らしき値を [masked] へ置換して返す。None/空は None。"""
+    if not text:
+        return None
+    return _SECRET_RE.sub(lambda m: f"{m.group(1)}{m.group(2)}[masked]", text)
+
 
 def _turso_send(statements, db_url=TURSO_DB_URL, service=TURSO_KEYCHAIN_SERVICE):
     return turso_store.send(statements, db_url, service, token_getter=_turso_token)
@@ -492,7 +508,15 @@ def main():
         # 親行が在る時だけ（final_row is not None＝存在しないkeyのsub-startは無害・行を作らない）。
         # 体数±1・🔵⇄🟢 の遷移（upsert/events）はそのまま。ここは「中身の見える化」を足すだけ。
         if final_row and cmd == "sub-start":
-            sub_stmt = _stmt_subagent_start(f"s:{key}", date_s)
+            # 子03: 詳細5列（全て任意・後方互換）。--type=agent_type / --via=launch_via。
+            # prompt は保存前に簡易マスキング。詳細が全て空なら store 側が旧来の狭いINSERTへ落ちる。
+            sub_stmt = _stmt_subagent_start(
+                f"s:{key}", date_s,
+                runtime=clean(args.get("runtime")) or None,
+                model=clean(args.get("model")) or None,
+                agent_type=clean(args.get("type")) or None,
+                launch_via=clean(args.get("via")) or None,
+                prompt=_mask_secrets(args.get("prompt")))
             if sub_stmt:
                 stmts.append(sub_stmt)
         elif final_row and cmd == "sub-end":

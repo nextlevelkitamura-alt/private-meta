@@ -115,9 +115,42 @@ def board_flip(key, state):
     subprocess.run([BOARD, "flip", "--key", key, "--state", state], capture_output=True)
 
 
-def board_sub_start(key):
-    """SubagentStart: サブ体数+1・🔵へ（board.py sub-start。行が無ければ何もしない）。"""
-    subprocess.run([BOARD, "sub-start", "--key", key], capture_output=True)
+def board_sub_start(key, detail=None):
+    """SubagentStart: サブ体数+1・🔵へ（board.py sub-start。行が無ければ何もしない）。
+    子03: detail(dict) があれば runtime/model/agent_type/launch_via/prompt を引数へ渡し個体行に enrich する。
+    詳細が取れない時は detail=None＝旧来どおり詳細なしで積む（後方互換・非ブロッキング）。"""
+    cmd = [BOARD, "sub-start", "--key", key]
+    if detail:
+        for flag, field in (("--runtime", "runtime"), ("--model", "model"),
+                            ("--type", "agent_type"), ("--via", "launch_via"),
+                            ("--prompt", "prompt")):
+            value = detail.get(field)
+            if value:
+                cmd += [flag, str(value)]
+    subprocess.run(cmd, capture_output=True)
+
+
+def _subspool():
+    if CORE_DIR not in sys.path:
+        sys.path.insert(0, CORE_DIR)
+    import subspool
+    return subspool
+
+
+def spool_subagent_detail(key, detail):
+    """子03: PreToolUse が抜いたサブ詳細を SubagentStart 用に一時スプールへ積む（best-effort）。"""
+    try:
+        return _subspool().push(key, detail)
+    except Exception:
+        return 0
+
+
+def pop_subagent_detail(key):
+    """子03: SubagentStart が最古のサブ詳細を1件取り出す（無ければ None・best-effort）。"""
+    try:
+        return _subspool().pop(key)
+    except Exception:
+        return None
 
 
 def board_sub_end(key):

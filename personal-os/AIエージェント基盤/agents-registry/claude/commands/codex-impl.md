@@ -29,6 +29,17 @@ description: Codexに実装を委任する（共通delegate経由・計画→実
 5. ライト以上は `impl-evaluator` を起動し、計画・diff範囲・規模を渡す。評価本文は計画と同じ場所の `評価NN.md` とし、PASS/FAIL/対象外を完了条件と同順で照合する。
 6. FAILは `修正NN.md` を作成し、同じdelegateの実装threadへresumeする。上限はライト=1回、フル=2回。全PASSだけ `planctl apply-evaluation` と `planctl sync-check` へ進む。
 
+## サブ可視化の呼び出し規律（子03・board記録）
+
+Codex への委任（delegate 経由でも直接 `codex exec` でも）は、Claude の `Agent`/`Task` ツールを通らないため
+`SubagentStart/Stop` hook に乗らない＝ボードの「サブN体」に自動で現れない。指揮官が委任の前後で明示記録する。
+
+- 委任直後: `python3 personal-os/AIエージェント基盤/hooks-registry/shared/session-board/board.py sub-start --key <s:自分のキー> --runtime codex --model <opus|sonnet|…> --via exec --prompt "<渡した依頼>"`
+- 完了時: 同 `board.py sub-end --key <s:自分のキー>`（最古の running 1本を close）
+
+`--prompt` は保存直前に board.py 側で簡易マスキングされる。詳細5列（runtime/model/agent_type/launch_via/prompt）は
+board DB `session_subagents` に載り、ボードで個体展開に使う。migration 未適用時は best-effort 送信がドロップするだけで体数±1の挙動は不変。
+
 ## 維持する制約
 
 - Task Packet、run manifest、result packetを正本とし、親会話の要約で置き換えない。

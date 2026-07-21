@@ -21,7 +21,10 @@ def main():
         return
     ev = d.get("hook_event_name") or ""
     if ev == "SubagentStart":
-        common.board_sub_start(key)
+        # 子03: 直前の PreToolUse（Agent/Task）がスプールしたサブ詳細を最古1件だけ取り出して enrich。
+        # 無ければ detail=None＝詳細なしで積む（Codex直接exec経路や捕捉失敗でも本体を止めない）。
+        detail = common.pop_subagent_detail(key)
+        common.board_sub_start(key, detail)
     elif ev == "SubagentStop":
         common.board_sub_end(key)
 

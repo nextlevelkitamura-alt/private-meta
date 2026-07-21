@@ -248,7 +248,7 @@ def _mirror(key, row):
     elif row.get("type") == "実装" and plan in (PLACEHOLDER, "なし"):
         lines.append("実装で計画:" + ("?" if plan == PLACEHOLDER else "なし") +
                      " → サクッと3条件（①1〜2ファイル②容易に戻せる③人間ゲート無し）を再確認。"
-                     "1つでもNOなら plan.md 必須＋実装後に評価NN.mdで採点（/codex-impl 手順0・areas§3）。")
+                     "1つでもNOなら plan.md 必須＋実装後に評価NN.mdで採点（agents-registryのreviewer・areas§3）。")
     elif plan == PLACEHOLDER:
         lines.append("計画:? → 拠り所（実装・レビュー）/置き先（計画）を update --plan で。"
                      "①1〜2ファイル②容易に戻せる③人間ゲート無し 全YESなら --plan なし。")

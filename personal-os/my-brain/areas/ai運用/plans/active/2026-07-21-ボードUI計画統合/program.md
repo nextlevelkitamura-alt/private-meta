@@ -69,7 +69,7 @@ program「当日ボードSQL化」の親最終一括が完了していること:
     対象repo: focusmap（表示差分のみ）
     並列: 子03表示側を統合済み（1レーンで一括実装・まとめ評価1本）
     人間ゲート: モック承認（済6往復v6確定）・push（済）・本番反映（済デプロイ中）
-    次: 本番実機で3段階ドリルダウン確認 → 評価/まとめ評価01.md（修正02+子05+子03+子06一括）。実装=focusmap e86bdaf4+21825e61（plan-steps/live-elapsed/step-doc-button/plan-doc API新規・SessionSubagent detail5列配線・指揮官バー・実装中ピル点滅・毎秒経過）。正本モック=references/board-mock-v6.html
+    次: まとめ評価01=APPROVED(コード全PASS・FAIL0・憲法違反0・保留8=実機人間ゲート)保存済み。残=実機目視で保留クリア→done。実装=focusmap e86bdaf4+21825e61（plan-steps/live-elapsed/step-doc-button/plan-doc API新規・SessionSubagent detail5列配線・指揮官バー・実装中ピル点滅・毎秒経過）。正本モック=references/board-mock-v6.html
     場所: plans/06 ／ 依存: 子05
 - [ ] 04 完了移動の運用実測 … 計画（前提ゲート待ち）
     役割: 評価

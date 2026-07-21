@@ -27,13 +27,15 @@
 - 既存部品の削除・改名・並び替え
 - 配色トークンの変更
 
-## レビュー項目（こうなっていれば正しい）
+## 完了条件（レビュー項目・こうなっていれば正しい）
 
-1. `artifact-template.html` に `.codeblock` のCSSと使用見本コメントがあり、既存トークン（`--mono` 等）を再利用している。dark分岐（`prefers-color-scheme`/`data-theme`）は追加されていない（部品の地色が暗いのはライト単色方針と矛盾しない）。
-2. `html-structure.md` §3 にウォークスルー型の行が1本増え、既存項目の番号・フォールバック関係（表→kv→steps→…→deflist）が壊れていない。
-3. 「実文で見せる・原文はdetailsへ」の指針が§2に1項目だけ追加されている。
-4. 変更ファイルが `skills/html/` 配下（＋更新義務がある場合の `global-skill-registry/` 最小行）に閉じている。
-5. パス指定でcommitされている（`git add -A` 不使用・push無し・コミットメッセージに変更理由1行）。
+- [x] `artifact-template.html` に `.codeblock` のCSSと使用見本コメントがあり、既存トークン（`--mono` 等）を再利用している。dark分岐（`prefers-color-scheme`/`data-theme`）は追加されていない（部品の地色が暗いのはライト単色方針と矛盾しない）。
+- [x] `html-structure.md` §3 にウォークスルー型の行が1本増え、既存項目の番号・フォールバック関係（表→kv→steps→…→deflist）が壊れていない。
+- [x] 「実文で見せる・原文はdetailsへ」の指針が§2に1項目だけ追加されている。
+- [x] 変更ファイルが `skills/html/` 配下（＋更新義務がある場合の `global-skill-registry/` 最小行）に閉じている。
+- [x] パス指定でcommitされている（`git add -A` 不使用・push無し・コミットメッセージに変更理由1行）。
+
+※ 2026-07-21クローズ儀式で見出し・チェックボックス書式へ正規化（文言は不変）。採点は評価01.md（遡及）。
 
 ## 戻し方
 

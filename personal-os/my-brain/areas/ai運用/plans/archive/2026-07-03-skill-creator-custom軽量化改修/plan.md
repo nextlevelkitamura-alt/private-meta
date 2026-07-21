@@ -36,17 +36,19 @@ Skill作成・改善の窓口 `skill-creator-custom` を、人間の5原則（SK
 
 実装後、以下を「こうなっていれば正しい」で検証する。★=最重要。
 
-1. ★**重複ゼロ**: skill配下の全mdで、workflow分割判断の条件リストは create-rules 1箇所のみ（review-rules は参照1行）。正本パス案内の段落は SKILL.md 1箇所のみ。「repo-localを無理にGlobal化しない」等の定型句は各観点で最大1回。（対象: SKILL.md / references/*.md / workflows/*.md）
-2. ★**SKILL.md router化**: SKILL.md が70行以内。内容は frontmatter・絶対ルール・Workflow振り分け・委譲・迷ったらのみ。構成ルール／plans細則／書き方の本文が無い。（対象: SKILL.md）
-3. ★**正本コピー撤去（paused欠落の恒久解消）**: plansのバケット語彙（active/paused/done/archive）と種別語彙の列挙が skill配下のどのmdにも無く、「ai運用/AGENTS.md のバケットに従う」等の参照1行になっている。（対象: skill配下全md）
-4. ★**「直す」動線の完成**: review-skill.md が レビュー→人間承認→修正実行→構成ゲート→SKILL.html再生成→報告 の順を持ち、修正実行のStepと完了条件を自分で持つ。承認なしに修正へ進まない禁止事項が残っている。（対象: workflows/review-skill.md）
-5. **workflow 4本と存在理由**: workflows/ が create-new.md / review-skill.md / scan.md / migrate-skill.md の4本。global-scan.md と repo-index-scan.md が存在しない。scan.md が対象（Global / repo-local）で分岐する。（対象: workflows/）
-6. **SKILL.html規約と実体**: create-rules に「人間向けHTMLは対になるmdと同名」「Skill編集の完了条件＝SKILL.html再生成」「AIから参照しない」「唯一の例外ファイル」が1箇所。`skill-creator-custom/SKILL.html` が存在し固定5節（①何をする ②いつ発火 ③構造図 ④workflow一覧 ⑤絶対ルール・安全＋更新日）。GLOBAL_AGENTS.md に命名ルール1行。（対象: SKILL.html / create-rules / GLOBAL_AGENTS.md）
-7. **フォルダ別作り込み基準**: create-rules に workflows/references/assets/scripts/outputs それぞれの「作る条件・書き方・作らない条件」があり、create-new.md の最小構成Stepがこれを上から自問する形になっている。（対象: create-rules / workflows/create-new.md）
-8. **outputs規約**: create-rules にapplied系の出力先明記ルールがあり、規約の正本は GLOBAL_AGENTS.md に1箇所（`outputs/<用途>/YYYY-MM/`・git追跡方針）。skill側にコピーしていない。（対象: create-rules / GLOBAL_AGENTS.md）
-9. **frontmatter拡張の反映**: create-rules に disable-model-invocation / allowed-tools / context:fork の採否基準と、paths は当面使わない旨がある。（対象: create-rules）
-10. **フォルダ整合と参照残りゼロ**: assets が skill-template.md と skill-template.html の2本。hub-skill-template.md / absorb-rules.md が存在しない。`rg` で旧ファイル名（global-scan / repo-index-scan / hub-skill-template / absorb-rules）への参照残りがゼロ。CLAUDE.md->AGENTS.md symlink維持。（対象: skill配下全体）
-11. **安全性**: secret・token混入なし。削除は本計画で承認された4ファイルのみ。commit / push していない。（対象: 作業全体）
+- [x] ★**重複ゼロ**: skill配下の全mdで、workflow分割判断の条件リストは create-rules 1箇所のみ（review-rules は参照1行）。正本パス案内の段落は SKILL.md 1箇所のみ。「repo-localを無理にGlobal化しない」等の定型句は各観点で最大1回。（対象: SKILL.md / references/*.md / workflows/*.md）
+- [x] ★**SKILL.md router化**: SKILL.md が70行以内。内容は frontmatter・絶対ルール・Workflow振り分け・委譲・迷ったらのみ。構成ルール／plans細則／書き方の本文が無い。（対象: SKILL.md）
+- [x] ★**正本コピー撤去（paused欠落の恒久解消）**: plansのバケット語彙（active/paused/done/archive）と種別語彙の列挙が skill配下のどのmdにも無く、「ai運用/AGENTS.md のバケットに従う」等の参照1行になっている。（対象: skill配下全md）
+- [x] ★**「直す」動線の完成**: review-skill.md が レビュー→人間承認→修正実行→構成ゲート→SKILL.html再生成→報告 の順を持ち、修正実行のStepと完了条件を自分で持つ。承認なしに修正へ進まない禁止事項が残っている。（対象: workflows/review-skill.md）
+- [x] **workflow 4本と存在理由**: workflows/ が create-new.md / review-skill.md / scan.md / migrate-skill.md の4本。global-scan.md と repo-index-scan.md が存在しない。scan.md が対象（Global / repo-local）で分岐する。（対象: workflows/）
+- [x] **SKILL.html規約と実体**: create-rules に「人間向けHTMLは対になるmdと同名」「Skill編集の完了条件＝SKILL.html再生成」「AIから参照しない」「唯一の例外ファイル」が1箇所。`skill-creator-custom/SKILL.html` が存在し固定5節（①何をする ②いつ発火 ③構造図 ④workflow一覧 ⑤絶対ルール・安全＋更新日）。GLOBAL_AGENTS.md に命名ルール1行。（対象: SKILL.html / create-rules / GLOBAL_AGENTS.md）
+- [x] **フォルダ別作り込み基準**: create-rules に workflows/references/assets/scripts/outputs それぞれの「作る条件・書き方・作らない条件」があり、create-new.md の最小構成Stepがこれを上から自問する形になっている。（対象: create-rules / workflows/create-new.md）
+- [x] **outputs規約**: create-rules にapplied系の出力先明記ルールがあり、規約の正本は GLOBAL_AGENTS.md に1箇所（`outputs/<用途>/YYYY-MM/`・git追跡方針）。skill側にコピーしていない。（対象: create-rules / GLOBAL_AGENTS.md）
+- [x] **frontmatter拡張の反映**: create-rules に disable-model-invocation / allowed-tools / context:fork の採否基準と、paths は当面使わない旨がある。（対象: create-rules）
+- [x] **フォルダ整合と参照残りゼロ**: assets が skill-template.md と skill-template.html の2本。hub-skill-template.md / absorb-rules.md が存在しない。`rg` で旧ファイル名（global-scan / repo-index-scan / hub-skill-template / absorb-rules）への参照残りがゼロ。CLAUDE.md->AGENTS.md symlink維持。（対象: skill配下全体）
+- [x] **安全性**: secret・token混入なし。削除は本計画で承認された4ファイルのみ。commit / push していない。（対象: 作業全体）
+
+※ 2026-07-21クローズ儀式でチェックボックス書式へ正規化（文言は不変）。採点は評価01.md（遡及）。
 
 ## 結果
 

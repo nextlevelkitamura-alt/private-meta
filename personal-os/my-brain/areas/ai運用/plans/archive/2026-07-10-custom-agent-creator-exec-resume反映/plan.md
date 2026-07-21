@@ -29,14 +29,16 @@
 - catalog / logs の更新（既存スキルの内容修正は更新義務の対象外と2026-07-10に確認済み）
 - `~/.claude/agents/` の2ファイル変更（完成済み・本計画の対象外）
 
-## レビュー項目（こうなっていれば正しい）
+## 完了条件（レビュー項目・こうなっていれば正しい）
 
-1. codex.md に `~/.codex/agents/*.toml` を実在機構として説明する記述が残っていない（歴史的注記は可）。
-2. codex.md に exec --json での thread_id 取得と exec resume の実文例があり、approval値4種（untrusted含む）が列挙されている。
-3. claude-code.md §7 に10分タイムアウトとスレッド非永続の注意があり、§10 の codex-consult が exec+resume 前提になっている。
-4. checklist.md の Codex 節に TOML 必須・developer_instructions 必須の項目が残っていない。
-5. codex-hooks.md の該当節に実機未確認の注記が入り、他の節は無変更。
-6. 変更が上記4ファイル＋本plan.mdに閉じ、パス指定でcommitされている（push無し）。
+- [x] codex.md に `~/.codex/agents/*.toml` を実在機構として説明する記述が残っていない（歴史的注記は可）。
+- [x] codex.md に exec --json での thread_id 取得と exec resume の実文例があり、approval値4種（untrusted含む）が列挙されている。
+- [x] claude-code.md §7 に10分タイムアウトとスレッド非永続の注意があり、§10 の codex-consult が exec+resume 前提になっている。
+- [x] checklist.md の Codex 節に TOML 必須・developer_instructions 必須の項目が残っていない。
+- [x] codex-hooks.md の該当節に実機未確認の注記が入り、他の節は無変更。
+- [x] 変更が上記4ファイル＋本plan.mdに閉じ、パス指定でcommitされている（push無し）。
+
+※ 2026-07-21クローズ儀式で見出し・チェックボックス書式へ正規化（文言は不変）。採点は評価01.md（遡及）。
 
 ## 戻し方
 

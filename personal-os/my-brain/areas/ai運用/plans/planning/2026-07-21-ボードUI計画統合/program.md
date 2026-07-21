@@ -34,6 +34,37 @@ program「当日ボードSQL化」の親最終一括が完了していること:
 3. 進捗%・今ここ・稼働N体は全てSQL導出。主観値・導出値をDBに保存しない。
 4. 計画リンクは path でなく slug（バケット移動・改名で切れない）。done/archive の plan_docs 行は削除せず保持する。
 
+## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
+
+- [ ] 01 ボード純UI … 計画（前提ゲート待ち）
+    役割: 実装
+    対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
+    並列: 子03（捕捉側）と可（repo非交差）
+    人間ゲート: push・本番デプロイ反映
+    次: 前提ゲート（当日ボードSQL化の親最終一括）消化後に着手
+    場所: plans/01 ／ 依存: 前提ゲート
+- [ ] 02 計画接続 … 計画（前提ゲート待ち）
+    役割: 実装
+    対象repo: focusmap ＋ ~/Private（plan-ops・session-board・skills/daily-start）
+    並列: 子01完了後（plansync部分のみ子01と並列可）
+    人間ゲート: inbox migration適用（todos.plan_slug）・push
+    次: 子01の部品契約確定後に着手
+    場所: plans/02 ／ 依存: 子01
+- [ ] 03 サブエージェント詳細化 … 計画（前提ゲート待ち）
+    役割: 実装
+    対象repo: ~/Private/personal-os/AIエージェント基盤（hooks-registry）＋focusmap（表示側のみ）
+    並列: 捕捉側は子01と可（focusmap禁止）／表示側は子01完了後
+    人間ゲート: board migration適用（session_subagents 詳細4列）・hook登録変更・push
+    次: payload実測から着手可（前提ゲート消化後）
+    場所: plans/03 ／ 依存: 前提ゲート（表示側は子01）
+- [ ] 04 完了移動の運用実測 … 計画（前提ゲート待ち）
+    役割: 評価
+    対象repo: なし（観測と記録）
+    並列: 不可（子01〜03完了後）
+    人間ゲート: なし
+    次: 子01〜03完了後に2日間の実測
+    場所: plans/04 ／ 依存: 子01・02・03
+
 ## 全体像・実行Wave（並列マップ）
 
 ```text
@@ -46,26 +77,30 @@ Wave 2: 子02 計画接続        … focusmap migration＋plans画面・plan-op
 Wave 3: 子04 完了移動の運用実測（2日）→ program最終評価
 ```
 
-ファイル担当マップ（相互に触らない契約）:
+ファイル担当マップ（衝突させない契約。同一ファイルは関数単位に分離し追記のみ・Waveで直列化）:
 
 - 子01: `focusmap/src/`（today系コンポーネント・board page・lib/turso の読みクエリ）。`db/turso/migrations/`・`session-board/`・`plan-ops/` は触らない。
-- 子02: `focusmap/db/turso/migrations/`（inbox宛1本）・`focusmap/src/app/dashboard/plans/`・`plan-ops/scripts/plansync.py`・`session-board/board.py`＋`turso/store.py`（todo-add拡張・steps継承）・`skills/daily-start/SKILL.md`（繰越し継承の1節）。子01が作ったtoday系部品はpropsの追加のみ可（構造変更は子01へ差し戻し）。
+- 子02: `focusmap/db/turso/migrations/`（inbox宛1本=todos.plan_slugのみ）・`focusmap/src/app/dashboard/plans/`・`plan-ops/scripts/plansync.py`・`session-board/board.py`＋`turso/store.py`（todo-add拡張・step-doing打刻・steps継承）・`skills/daily-start/SKILL.md`（繰越し継承＋全工程一括登録の節）。子01が作ったtoday系部品はpropsの追加のみ可（構造変更は子01へ差し戻し）。
 - 子03: `hooks-registry/events/`（新hook）・`shared/session-board/`（sub-start拡張）・board宛migration。表示側は新規ファイル（sub-detail部品）に閉じ、子01のtask-row部品を書き換えない。
 - 子04: コード変更なし（微調整が要れば該当子へ差し戻し）。
+- 共有ファイルの注意: `board.py`・`turso/store.py` は子02（todo-add/step系）と子03（sub-start系）が**別関数を追記のみ**で触る。Wave上は子03捕捉（Wave1）→子02（Wave2）の直列となるため物理衝突しないが、後発側は先発の変更をrebaseして重ねる。`lib/turso` の読みクエリは子01が骨格を定義し、子02/03は新規クエリファイル追加のみ可。
 
 ## 役割別コンテキスト
 
-- `実装/共通.md`: 実装担当が全子で守ること
-- `レビュー/共通.md`: レビュアーの観点
+- `実装/共通.md`: 実装担当が全子で守ること＋評価者の観点（レビュー/フォルダはlint規則7により作らない）
 - `評価/`: `NN-〈子名〉-評価RR.md`、programの統合評価は `評価RR.md`
 
 ## 人間ゲート一覧
 
-- inbox migration適用（子02: todos.plan_slug／todo_steps.started_at）
+- inbox migration適用（子02: todos.plan_slug。※ todo_steps.started_at は前program子09のmigrationに含まれ、前提ゲートで適用済みとなる）
 - board migration適用（子03: session_subagents 詳細4列）
 - hook登録変更（子03: PreToolUse捕捉の settings.json 反映）
 - push・本番デプロイ反映（各Wave末）
 
-## 状態
+## 完了条件
 
-planning（起票 2026-07-21）。activeへの遷移は前提ゲート消化＝「当日ボードSQL化」done移動で席が空いてから bucketctl で行う。
+- [ ] 全子（01〜04）の完了条件がPASSし、各子の評価mdが `評価/` に揃っている
+- [ ] programの統合評価 `評価/評価01.md` が全PASS（憲法4条の違反ゼロを含む）
+- [ ] スマホ実機で「テーマ軸ボード＋ステップ縦タイムライン＋計画チップ＋サブ詳細展開」が実データで動いている
+
+※ 状態の正本はフォルダ（現在 planning/）。activeへの遷移は前提ゲート消化＝「当日ボードSQL化」done移動で席が空いてから bucketctl で行う（起票 2026-07-21）。

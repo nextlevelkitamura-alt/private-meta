@@ -50,12 +50,12 @@ program「当日ボードSQL化」の親最終一括が完了していること:
     人間ゲート: inbox migration適用（todos.plan_slug）・push
     次: 子01の部品契約確定後に着手
     場所: plans/02 ／ 依存: 子01
-- [ ] 03 サブエージェント詳細化 … 捕捉側実装済み（統合待ち）・表示側未着手
+- [ ] 03 サブエージェント詳細化 … 捕捉側統合済み（366テストPASS・hook登録済み）・表示側未着手
     役割: 実装
     対象repo: ~/Private/personal-os/AIエージェント基盤（hooks-registry）＋focusmap（表示側のみ）
     並列: 捕捉側は子01と可（focusmap禁止）／表示側は子01完了後
     人間ゲート: board migration適用（session_subagents 詳細5列）・hook登録変更・push
-    次: branch worktree-agent-a5534d8b7f4935587（97c3e7a・テスト294PASS/回帰0・payload結論=プロンプトはPreToolUseで捕捉可）をmainへrebase統合（common.pyの他セッション未コミット変更の解消待ち）→ 人間ゲート（migration適用・registration-diff-03のsettings.json差分）→ 表示側を子01部品で実装
+    次: 人間ゲート残1=board migration適用（詳細5列・コマンド提示済み）→捕捉E2E実測→表示側を子01部品で実装。統合=9a9e204（rebase済み・366PASS）・PreToolUse hook登録済み（settings.json反映済み2026-07-21）・payload結論=プロンプト捕捉可
     場所: plans/03 ／ 依存: 前提ゲート消化済み（表示側は子01）
 - [ ] 04 完了移動の運用実測 … 計画（前提ゲート待ち）
     役割: 評価

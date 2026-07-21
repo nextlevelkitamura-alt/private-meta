@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>計画階層の再設計 — 図解提案</title>
+<style>
+  :root {
+    --ground: #F5F6F3;
+    --card: #FFFFFF;
+    --ink: #20282C;
+    --ink-2: #5A6A72;
+    --line: #D9DED8;
+    --bar-exec-text: #FFFFFF;
+    --accent: #2F5D8A;
+    --accent-soft: #E3ECF4;
+    --ok: #3E7C4F;
+    --ok-soft: #E4EFE6;
+    --warn: #A8752B;
+    --warn-soft: #F5EBD8;
+    --crit: #A94C3D;
+    --crit-soft: #F4E3DF;
+    --plan: #7A8A93;
+    --plan-soft: #EDF0EF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #15191C;
+      --card: #1D2327;
+      --ink: #E6E9E4;
+      --ink-2: #98A6AD;
+      --line: #333C41;
+      --accent: #6FA3D3;
+      --accent-soft: #22323F;
+      --ok: #7FBC8D;
+      --ok-soft: #1F2E23;
+      --warn: #D3A55C;
+      --warn-soft: #33290F;
+      --crit: #D3796A;
+      --crit-soft: #392019;
+      --plan: #8999A6;
+      --plan-soft: #242B2E;
+      --bar-exec-text: #10151A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #15191C;
+    --card: #1D2327;
+    --ink: #E6E9E4;
+    --ink-2: #98A6AD;
+    --line: #333C41;
+    --accent: #6FA3D3;
+    --accent-soft: #22323F;
+    --ok: #7FBC8D;
+    --ok-soft: #1F2E23;
+    --warn: #D3A55C;
+    --warn-soft: #33290F;
+    --crit: #D3796A;
+    --crit-soft: #392019;
+    --plan: #8999A6;
+    --plan-soft: #242B2E;
+    --bar-exec-text: #10151A;
+  }
+  :root[data-theme="light"] {
+    --ground: #F5F6F3;
+    --card: #FFFFFF;
+    --ink: #20282C;
+    --ink-2: #5A6A72;
+    --line: #D9DED8;
+    --accent: #2F5D8A;
+    --accent-soft: #E3ECF4;
+    --ok: #3E7C4F;
+    --ok-soft: #E4EFE6;
+    --warn: #A8752B;
+    --warn-soft: #F5EBD8;
+    --crit: #A94C3D;
+    --crit-soft: #F4E3DF;
+    --plan: #7A8A93;
+    --plan-soft: #EDF0EF;
+    --bar-exec-text: #FFFFFF;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium", "Yu Gothic", "Noto Sans JP", -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.85;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 40px 20px 80px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: .14em; color: var(--ink-2);
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  h1 {
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+    font-size: 30px; line-height: 1.45; margin: 0 0 14px; font-weight: 600;
+    text-wrap: balance;
+  }
+  .lead { color: var(--ink-2); max-width: 40em; margin: 0 0 8px; }
+  h2 {
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+    font-size: 21px; font-weight: 600; line-height: 1.5;
+    margin: 64px 0 6px; text-wrap: balance;
+  }
+  .h2sub { color: var(--ink-2); font-size: 13.5px; margin: 0 0 20px; }
+  .secno {
+    display: inline-block; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px; color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 3px; padding: 0 7px; margin-right: 10px; vertical-align: 3px;
+    letter-spacing: .06em;
+  }
+  p { max-width: 42em; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    padding: 22px 24px; margin: 18px 0;
+  }
+  .diagram { overflow-x: auto; }
+  .caption { font-size: 12.5px; color: var(--ink-2); margin-top: 14px; line-height: 1.7; }
+  .num { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+  /* 汎用チップ */
+  .chip {
+    display: inline-block; font-size: 11.5px; line-height: 1; padding: 5px 9px;
+    border-radius: 99px; font-weight: 600; letter-spacing: .03em;
+  }
+  .chip.full { background: var(--crit-soft); color: var(--crit); }
+  .chip.wait { background: var(--warn-soft); color: var(--warn); }
+  .chip.ok   { background: var(--ok-soft); color: var(--ok); }
+  .chip.free { background: var(--plan-soft); color: var(--ink-2); }
+  .chip.act  { background: var(--accent-soft); color: var(--accent); }
+
+  /* ── 図1 パイプライン ── */
+  .flow { display: flex; align-items: stretch; gap: 0; min-width: 620px; }
+  .stage {
+    flex: 1; border: 1.5px solid var(--line); border-radius: 8px;
+    padding: 14px 14px 12px; background: var(--card); display: flex;
+    flex-direction: column; gap: 6px; min-width: 120px;
+  }
+  .stage .st-name { font-weight: 700; font-size: 14px; }
+  .stage .st-cap { font-size: 12px; color: var(--ink-2); line-height: 1.6; }
+  .stage.is-full { border-color: var(--crit); }
+  .stage.is-open { border-style: dashed; }
+  .arr {
+    display: flex; align-items: center; justify-content: center;
+    width: 56px; flex: none; flex-direction: column; gap: 2px;
+  }
+  .arr .glyph { font-size: 20px; color: var(--ink-2); line-height: 1; }
+  .arr .note { font-size: 10.5px; color: var(--ink-2); text-align: center; line-height: 1.4; }
+  .arr.blocked .glyph { color: var(--crit); }
+  .arr.blocked .note { color: var(--crit); font-weight: 700; }
+  .evi { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 18px; }
+  .evi .e {
+    border-left: 3px solid var(--warn); background: var(--card);
+    border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 12.5px;
+    line-height: 1.7; border-top: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .evi .e b { display: block; font-size: 12px; }
+
+  /* ── 図2 却下案 ── */
+  .rejects { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .rej { border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; background: var(--card); }
+  .rej .r-head { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .rej .r-head .x { color: var(--crit); margin-right: 6px; font-weight: 800; }
+  .rej p { font-size: 13px; color: var(--ink-2); margin: 0; line-height: 1.75; }
+
+  /* ── 図3 Before / After ── */
+  .ba { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; min-width: 640px; align-items: start; }
+  .ba-col-label { font-size: 12px; letter-spacing: .1em; color: var(--ink-2); font-weight: 700; margin-bottom: 10px; }
+  .bigprog {
+    border: 1.5px solid var(--accent); border-radius: 8px; background: var(--card); padding: 12px 14px;
+  }
+  .bigprog .bp-name { font-weight: 700; font-size: 13.5px; margin-bottom: 8px; }
+  .kids { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .kid {
+    font-size: 10.5px; text-align: center; border-radius: 4px; padding: 5px 2px;
+    background: var(--plan-soft); color: var(--ink-2); line-height: 1.3;
+  }
+  .kid.done { background: var(--ok-soft); color: var(--ok); }
+  .kid.wait { background: var(--warn-soft); color: var(--warn); }
+  .bp-foot { font-size: 11.5px; color: var(--crit); margin-top: 10px; font-weight: 600; line-height: 1.5; }
+  .theme-band {
+    border: 1.5px solid var(--accent); border-radius: 8px; padding: 10px 14px;
+    background: var(--accent-soft); font-size: 13px; font-weight: 700; color: var(--accent);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  }
+  .theme-band .tb-meta { font-size: 11px; font-weight: 500; }
+  .terms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .term { border: 1.5px solid var(--line); border-radius: 8px; background: var(--card); padding: 10px 12px; }
+  .term.t-done { border-color: var(--ok); }
+  .term.t-act { border-color: var(--accent); }
+  .term.t-plan { border-style: dashed; }
+  .term .t-name { font-weight: 700; font-size: 12.5px; margin-bottom: 6px; }
+  .term .kids { grid-template-columns: repeat(2, 1fr); }
+  .succ { font-size: 11px; color: var(--ink-2); margin-top: 10px; line-height: 1.6; }
+
+  /* ── 図4 レーンチャート ── */
+  .lanes { min-width: 640px; }
+  .lane { display: grid; grid-template-columns: 168px 1fr; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .lane-label { font-size: 12.5px; font-weight: 700; line-height: 1.5; }
+  .lane-label small { display: block; font-weight: 500; color: var(--ink-2); font-size: 11px; }
+  .track { position: relative; height: 40px; background: var(--plan-soft); border-radius: 6px; }
+  .bar {
+    position: absolute; top: 6px; height: 28px; border-radius: 5px;
+    font-size: 11px; font-weight: 700; display: flex; align-items: center;
+    justify-content: center; padding: 0 6px; white-space: nowrap; overflow: hidden;
+  }
+  .bar.exec { background: var(--accent); color: var(--bar-exec-text); }
+  .bar.prep { background: var(--card); border: 1.5px dashed var(--accent); color: var(--accent); }
+  .bar.seed { background: var(--card); border: 1px dashed var(--line); color: var(--ink-2); font-weight: 500; }
+  .gate {
+    position: absolute; top: -4px; width: 2px; height: 48px; background: var(--ok);
+  }
+  .gate::after {
+    content: "◆"; position: absolute; top: -14px; left: -6px; color: var(--ok); font-size: 11px;
+  }
+  .axis { display: grid; grid-template-columns: 168px 1fr; gap: 12px; }
+  .axis .ax { font-size: 11px; color: var(--ink-2); display: flex; justify-content: space-between; padding-top: 4px; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 16px; font-size: 11.5px; color: var(--ink-2); }
+  .legend .l { display: flex; align-items: center; gap: 6px; }
+  .sw { width: 14px; height: 10px; border-radius: 3px; display: inline-block; }
+  .sw.exec { background: var(--accent); }
+  .sw.prep { border: 1.5px dashed var(--accent); background: var(--card); }
+  .sw.seed { border: 1px dashed var(--line); background: var(--card); }
+  .sw.gate { background: var(--ok); width: 3px; height: 14px; border-radius: 0; }
+
+  /* ── 図5 並列ルール ── */
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .rule { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 16px 18px; }
+  .rule .r-title { font-weight: 700; font-size: 13.5px; margin-bottom: 6px; }
+  .rule .r-title .mark { color: var(--accent); margin-right: 6px; }
+  .rule p { font-size: 12.5px; color: var(--ink-2); margin: 0; line-height: 1.75; }
+  .rule .ex { display: block; margin-top: 8px; font-size: 11.5px; color: var(--ink-2); border-top: 1px dashed var(--line); padding-top: 8px; }
+
+  /* ── 図6 サイクル ── */
+  .cycle { display: flex; align-items: stretch; gap: 0; min-width: 620px; }
+  .cyc {
+    flex: 1; border: 1px solid var(--line); border-radius: 8px; background: var(--card);
+    padding: 12px 14px; font-size: 12.5px; line-height: 1.7;
+  }
+  .cyc b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .cyc .step { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: var(--accent); letter-spacing: .05em; }
+
+  /* ── 図: テーマ vs プログラム ── */
+  .analogy { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .ana { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; background: var(--plan-soft); }
+  .ana .a-head { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .ana p { font-size: 12.5px; color: var(--ink-2); margin: 0; line-height: 1.8; }
+  table.cmp { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 12.5px; }
+  table.cmp th, table.cmp td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; vertical-align: top; line-height: 1.7; }
+  table.cmp thead th { background: var(--accent-soft); color: var(--accent); font-size: 12px; }
+  table.cmp tbody th { background: var(--plan-soft); white-space: nowrap; font-size: 12px; color: var(--ink-2); font-weight: 600; }
+
+  /* ── チェックリスト ── */
+  .todo { list-style: none; padding: 0; margin: 0; counter-reset: t; }
+  .todo li {
+    counter-increment: t; display: grid; grid-template-columns: 34px 1fr; gap: 12px;
+    padding: 14px 0; border-bottom: 1px solid var(--line); align-items: start;
+  }
+  .todo li:last-child { border-bottom: none; }
+  .todo li::before {
+    content: counter(t); font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    border: 1.5px solid var(--accent); border-radius: 50%; width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center; margin-top: 2px;
+  }
+  .todo b { font-size: 14px; }
+  .todo .d { font-size: 12.5px; color: var(--ink-2); line-height: 1.75; margin-top: 2px; }
+  .todo .when { font-size: 11px; font-weight: 700; margin-left: 8px; }
+  .todo .when.now { color: var(--ok); }
+  .todo .when.later { color: var(--warn); }
+
+  .foot { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-2); line-height: 1.8; }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 24px; }
+    .flow, .ba, .lanes, .cycle { min-width: 560px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Personal OS ／ 計画運用の再設計 ── 2026-07-21 提案</div>
+  <h1>層は増やさない。<br>小さく割って、早く閉じる。</h1>
+  <p class="lead">「プログラムが終わらないと次ができない」の正体は、階層の不足ではなく<b>出口の詰まり</b>でした。束ね役はすでにある「大課題テーマ」に任せ、programは「期」で小さく割る。計画づくり自体は枠を消費しないので、実装中でも次・次の次は常に仕込めます。</p>
+
+  <!-- ═══════════ 1 ═══════════ -->
+  <h2><span class="secno">1</span>いま何が詰まっているのか</h2>
+  <p class="h2sub">計画は左から右へ流れるベルトコンベア。いま<b>右端の出口</b>が閉じているため、全体が止まって見えています。</p>
+
+  <div class="card diagram">
+    <div class="flow">
+      <div class="stage is-open">
+        <span class="chip free">上限なし</span>
+        <span class="st-name">planning<br>（構想・育成）</span>
+        <span class="st-cap">計画を立てる場所。<b>何本置いても枠を食わない</b>。現在 <span class="num">8</span> 件待機</span>
+      </div>
+      <div class="arr"><span class="glyph">→</span><span class="note">昇格<br>(bucketctl)</span></div>
+      <div class="stage is-full">
+        <span class="chip full">5 / 5 満杯</span>
+        <span class="st-name">active<br>（実行中）</span>
+        <span class="st-cap">枠を食うのはここだけ。長寿命program <span class="num">3</span>本＋単発<span class="num">2</span>本が占有中</span>
+      </div>
+      <div class="arr blocked"><span class="glyph">⇸</span><span class="note">done満杯で<br>移動できない</span></div>
+      <div class="stage is-full">
+        <span class="chip full">8 / 8 満杯</span>
+        <span class="st-name">done<br>（閉じ待ち）</span>
+        <span class="st-cap">評価は全PASS済み。<b>人間のクローズ判断待ち</b>が8本滞留</span>
+      </div>
+      <div class="arr blocked"><span class="glyph">⇢</span><span class="note">ここが律速<br>（人間の帯域）</span></div>
+      <div class="stage is-open">
+        <span class="chip free">上限なし</span>
+        <span class="st-name">archive<br>（保管）</span>
+        <span class="st-cap">終了記録を残して閉じた計画の置き場</span>
+      </div>
+    </div>
+    <div class="evi">
+      <div class="e"><b>証拠1 ── 完了済みでも枠を占有</b>「計画立案実行完了基盤」は全6子が完了・完了条件も全チェック済みなのに、activeに残ったまま。</div>
+      <div class="e"><b>証拠2 ── 残っているのは人間作業だけ</b>「当日ボードSQL化」の5子は評価FAIL0まで到達済み。残タスクはmigration適用・push・本番反映という承認作業のみ。</div>
+      <div class="e"><b>証拠3 ── 枠の引き上げは既に失敗</b>7/19にactive上限を4→5へ引き上げたが、2日で再び満杯。「枠を増やす」は解決策にならないと実証済み。</div>
+    </div>
+    <p class="caption">つまり——programの中身が遅いのではなく、<b>「閉じる」という人間の判断が右端で滞留し、玉突きで左まで詰まっている</b>。層を何枚足してもこの出口は広がりません。</p>
+  </div>
+
+  <!-- ═══════════ 2 ═══════════ -->
+  <h2><span class="secno">2</span>討論で却下になった2案</h2>
+  <p class="h2sub">AI同士の討論＋反対尋問にかけた結果、どちらも「出口の詰まり」に作用しないと判定されました。</p>
+
+  <div class="rejects">
+    <div class="rej">
+      <div class="r-head"><span class="x">✕</span>案A：programの上にmdの新層を作る</div>
+      <p>7/19にあなたが採用した「大課題テーマ」（目的・完了条件・複数計画参照を持つDB正本）と<b>同じ役割の傘が2枚</b>になり、二重管理禁止の原則に反する。しかも出口（クローズ帯域）には一切作用しない。</p>
+    </div>
+    <div class="rej">
+      <div class="r-head"><span class="x">✕</span>案C：programを格上げして中間層を挿す</div>
+      <p>枠の数え方を変えても計算上<b>初日に空く枠はゼロ</b>（3傘＋単発2＝5で今と同じ）。滞留の実ブロッカーである承認作業も1件も減らない。「program」の意味が静かに変わる混乱コストだけが残る。</p>
+    </div>
+  </div>
+
+  <!-- ═══════════ 3 ═══════════ -->
+  <h2><span class="secno">3</span>採用案：テーマを傘に、programは「期」で割る</h2>
+  <p class="h2sub">大きな構想を1つの巨大programに全部入れるから終わらない。<b>テーマ（既存・DB）が構想全体を持ち、programは3〜4子の「第N期」として小さく閉じる</b>。</p>
+
+  <div class="card diagram">
+    <div class="ba">
+      <div>
+        <div class="ba-col-label">BEFORE ── 現状</div>
+        <div class="bigprog">
+          <div class="bp-name">巨大program（例：当日ボードSQL化 9子）</div>
+          <div class="kids">
+            <div class="kid done">01 完了</div>
+            <div class="kid">02 未着手</div>
+            <div class="kid">03 未着手</div>
+            <div class="kid">04 未着手</div>
+            <div class="kid wait">05 確認待ち</div>
+            <div class="kid wait">06 確認待ち</div>
+            <div class="kid wait">07 確認待ち</div>
+            <div class="kid wait">08 確認待ち</div>
+            <div class="kid wait">09 確認待ち</div>
+          </div>
+          <div class="bp-foot">全9子が終わるまでcompletedにならない<br>→ active 1枠を数週間占有し続ける</div>
+        </div>
+      </div>
+      <div>
+        <div class="ba-col-label">AFTER ── テーマ × 期分割</div>
+        <div class="theme-band">
+          <span>🏷 テーマ「AI実行ダッシュボード」</span>
+          <span class="tb-meta">DB正本（実装済み）／目的・完了条件・計画参照を保持</span>
+        </div>
+        <div class="terms">
+          <div class="term t-done">
+            <div class="t-name"><span class="chip ok">閉じた</span>　第1期</div>
+            <div class="kids">
+              <div class="kid done">01</div><div class="kid done">05</div>
+              <div class="kid done">06</div><div class="kid done">07</div>
+            </div>
+          </div>
+          <div class="term t-act">
+            <div class="t-name"><span class="chip act">実行中</span>　第2期</div>
+            <div class="kids">
+              <div class="kid">08</div><div class="kid">09</div>
+              <div class="kid">02</div><div class="kid">03</div>
+            </div>
+          </div>
+          <div class="term t-plan">
+            <div class="t-name"><span class="chip free">構想</span>　第3期</div>
+            <div class="kids">
+              <div class="kid">04</div><div class="kid">新案</div>
+            </div>
+          </div>
+        </div>
+        <div class="succ">期と期は既存の終了区分 <span class="num">superseded / merged</span>（後継リンク必須・bucketctl検証済み）で正式に接続。<b>新しい仕組みは何も作らない</b>——規約に「6〜7子を超える構想は継ぎ足さず割る」の2行を足すだけ。</div>
+      </div>
+    </div>
+    <p class="caption">各期は3〜4子なので、統合評価も人間の一括確認も小さく・早く回ってくる。「終わったのに閉じられない」期間が構造的に短くなり、active枠の回転が上がります。※進行中programの期分割は「静かな縮小」ではなく、人間ゲート付きの計画大幅更新（rename＋explain再提示）として正直に行います。</p>
+  </div>
+
+  <!-- ═══════════ 4 ═══════════ -->
+  <h2><span class="secno">4</span>テーマとプログラムの違い</h2>
+  <p class="h2sub">「テーマ＝プログラムを束ねるもの」という理解で<b>合っています</b>。違いは束ね方——テーマは<b>参照で束ねる</b>（所有しない）、プログラムは<b>所有して束ねる</b>（子計画を抱える）。</p>
+
+  <div class="card">
+    <div class="analogy">
+      <div class="ana">
+        <div class="a-head">🏷 テーマ ＝ 建てているビルそのもの</div>
+        <p>「AI実行ダッシュボードを作る」という<b>構想の傘</b>。工事が何期続いても残り続ける。中に部屋（子計画）は持たず、「この工事はうちのビルの分」と<b>指差す（参照する）</b>だけ。ボード上であなたが直接編集できる。</p>
+      </div>
+      <div class="ana">
+        <div class="a-head">📘 プログラム ＝ 第N期の工事</div>
+        <p>ビルを建てるための<b>有期の実行単位</b>。子計画（工程）を実際に配下に抱え、順序・依存（Wave）・評価・完了ゲートを持つ。終わったら閉じて、続きは次の期（後継program）へ引き継ぐ。</p>
+      </div>
+    </div>
+    <div class="diagram" style="margin-top:16px;">
+      <table class="cmp">
+        <thead><tr><th></th><th>テーマ（大課題テーマ）</th><th>プログラム</th></tr></thead>
+        <tbody>
+          <tr><th>役割</th><td>構想全体の傘。今日のボードの束ね帯でもある</td><td>実行の単位（第N期の工事）</td></tr>
+          <tr><th>束ね方</th><td><b>参照</b>で束ねる（plan_refsで指すだけ）</td><td><b>所有</b>で束ねる（plans/に子計画を抱える）</td></tr>
+          <tr><th>正本</th><td>DB（Turso themes）。ボードで人間が編集</td><td>md（git）。program.mdが親</td></tr>
+          <tr><th>寿命</th><td>長い（構想が続く限り）</td><td>有期（3〜4子で閉じる）</td></tr>
+          <tr><th>持つもの</th><td>目的・完了条件・的参照・計画参照</td><td>子計画マップ・Wave・評価・実行契約・完了ゲート</td></tr>
+          <tr><th>持たないもの</th><td>評価・Wave・人間ゲート・計画本文のコピー</td><td>期をまたぐ長期の構想（それはテーマ側の仕事）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">両者は二重管理ではなく<b>分業</b>：ビル（テーマ）は1つ、工事（プログラム）は期ごとに何本でも。討論で却下した案Aは「ビルの帳簿をもう1冊md側にも作る」案だったから二重管理になった、という関係です。</p>
+  </div>
+
+  <!-- ═══════════ 5 ═══════════ -->
+  <h2><span class="secno">5</span>実装中に「次」「次の次」を立てる方法</h2>
+  <p class="h2sub">鍵はひとつ——<b>枠を消費するのは「実行」だけ。「計画を立てる」はplanningで無制限にできる</b>。3つのレーンを常に走らせます。</p>
+
+  <div class="card diagram">
+    <div class="lanes">
+      <div class="lane">
+        <div class="lane-label">実行レーン<small>active枠を消費する唯一の場所</small></div>
+        <div class="track">
+          <div class="bar exec" style="left:0%; width:30%;">第1期 実装・評価</div>
+          <div class="gate" style="left:31.5%;"></div>
+          <div class="bar exec" style="left:34%; width:32%;">第2期 実装・評価</div>
+          <div class="gate" style="left:67.5%;"></div>
+          <div class="bar exec" style="left:70%; width:28%;">第3期 実装・評価</div>
+        </div>
+      </div>
+      <div class="lane">
+        <div class="lane-label">計画レーン<small>planning＝枠消費ゼロ・並走OK</small></div>
+        <div class="track">
+          <div class="bar prep" style="left:8%; width:22%;">第2期を計画（並走）</div>
+          <div class="bar prep" style="left:42%; width:22%;">第3期を計画（並走）</div>
+          <div class="bar prep" style="left:76%; width:20%;">第4期を計画…</div>
+        </div>
+      </div>
+      <div class="lane">
+        <div class="lane-label">構想レーン<small>テーマのplan_refs＝次の次のタネ</small></div>
+        <div class="track">
+          <div class="bar seed" style="left:0%; width:98%;">思いついた関連アイデアはテーマに登録して待機（合流も新規もここで判断）</div>
+        </div>
+      </div>
+    </div>
+    <div class="axis"><div></div><div class="ax"><span>時間 →</span><span></span></div></div>
+    <div class="legend">
+      <span class="l"><span class="sw exec"></span>実行（active）</span>
+      <span class="l"><span class="sw prep"></span>計画づくり（planning）</span>
+      <span class="l"><span class="sw seed"></span>構想（テーマ登録）</span>
+      <span class="l"><span class="sw gate"></span>◆ クローズ＝人間の一括確認</span>
+    </div>
+    <p class="caption"><b>回し方：</b>第1期の実装が走っている間に、第2期のplan.mdをplanningで書き上げてexplain合意まで済ませておく（枠は食わない）。第1期が◆で閉じた瞬間、第2期を昇格して途切れなく実行へ。「次の次」のアイデアは計画書を書く前段階としてテーマのplan_refsに1行登録——これで従来の「既存programへ無理やり合流 or 孤児として放置」の二択が解消されます。</p>
+  </div>
+
+  <!-- ═══════════ 6 ═══════════ -->
+  <h2><span class="secno">6</span>並列実行のルール（既存規約のまま使える）</h2>
+  <p class="h2sub">新しいルールは不要です。いまの規約が既に並列を許しており、条件を満たせば「期」同士も並走できます。</p>
+
+  <div class="rules">
+    <div class="rule">
+      <div class="r-title"><span class="mark">◎</span>program内の並列（子ども同士）</div>
+      <p>同じWave内の子は、<b>レーン別のファイル担当マップ＋worktree分離</b>を実行契約に書けば並列可。書いていない子は走らせない（既存ルール）。</p>
+      <span class="ex">実例：「計画とカスタムエージェント整理」はLane A / Bの2レーン並列で進行中</span>
+    </div>
+    <div class="rule">
+      <div class="r-title"><span class="mark">◎</span>program間の並列（期・計画同士）</div>
+      <p><b>対象repoやファイルが交差しなければ</b>、別のprogram（別の期）を同時にactiveで走らせてよい。交差する場合だけ直列調整。</p>
+      <span class="ex">実例：SQL化の子02（focusmap）×子03（AIエージェント基盤）はrepo非交差で並列宣言済み</span>
+    </div>
+    <div class="rule">
+      <div class="r-title"><span class="mark">◎</span>同時実行の上限</div>
+      <p>指揮官は<b>実装3レーンまで・同時評価は全体で2本まで</b>（plan-registry既存規約）。超える編成は人間へ明示してから。</p>
+      <span class="ex">activeの5枠と別の制限。枠が空いていてもレーンが埋まっていたら並列は増やさない</span>
+    </div>
+    <div class="rule">
+      <div class="r-title"><span class="mark">◎</span>ゲート待ちで止めない</div>
+      <p>人間ゲート（migration・push等）待ちの子は「待ち」に置いたまま、<b>ブロックされていない別の子・別の期を先に進める</b>。承認は溜めて一括で。</p>
+      <span class="ex">承認セット方式（既存）：危険操作は実行せず差分と根拠を積み、人間は最後に1枚で判断</span>
+    </div>
+  </div>
+
+  <!-- ═══════════ 7 ═══════════ -->
+  <h2><span class="secno">7</span>週次クローズ儀式──出口を定期的に開ける</h2>
+  <p class="h2sub">構造を直しても、閉じる判断が来なければまた詰まります。週1回・15分の儀式として固定します。</p>
+
+  <div class="card diagram">
+    <div class="cycle">
+      <div class="cyc"><span class="step">STEP 1</span><b>溜まる</b>評価全PASSの計画がdoneに、承認待ち操作が承認セットに、1週間ぶん溜まる。</div>
+      <div class="arr"><span class="glyph">→</span></div>
+      <div class="cyc"><span class="step">STEP 2</span><b>1枚で見る</b>週1回、承認セット（既存の一括判断文書）でdoneの計画と保留操作をまとめて確認。</div>
+      <div class="arr"><span class="glyph">→</span></div>
+      <div class="cyc"><span class="step">STEP 3</span><b>一括で閉じる</b>OKならまとめてarchiveへ。migration・pushなどの承認操作もこの場で実行。</div>
+      <div class="arr"><span class="glyph">→</span></div>
+      <div class="cyc"><span class="step">STEP 4</span><b>次が昇格</b>枠が空き、planningで合意済みの「次の期」が昇格。コンベアが回り続ける。</div>
+    </div>
+    <p class="caption">判断の質は落とさず、判断の<b>タイミングだけを束ねる</b>のがポイント。毎日ぽつぽつ確認を求められるより、週1で1枚を見るほうが人間の負荷も低い。</p>
+  </div>
+
+  <!-- ═══════════ 8 ═══════════ -->
+  <h2><span class="secno">8</span>追加アイデアの検討──done上限の撤廃と自動paused</h2>
+  <p class="h2sub">いただいた2案の検証結果。1つは条件付きで賛成、1つは形を変えての採用を推奨します。</p>
+
+  <div class="rejects">
+    <div class="rej" style="border-color: var(--ok);">
+      <div class="r-head"><span style="color:var(--ok); margin-right:6px;">○</span>done上限の撤廃 ── 採用（2026-07-21 裁定済み：無制限＋定期促し）</div>
+      <p>上限の本来の役割は「満杯にして人間に閉じさせる圧力」。しかしソロ＋AI運用では<b>AIが承認を代行できないため、圧力はAIの実行だけを止めて人間を速くしない</b>——それが今の三重満杯の実測です。よってハード上限（done=8）は撤廃してよい。<br><br><b>条件＝圧力の代替をセットで入れる：</b>(a) 滞留の可視化（「done 12件・最古21日」バッジ）、(b) ソフト閾値（例：10件）超えでデイリーに警告、(c) 週次クローズ儀式。done→archiveの「人間確認＋終了記録」ゲートは維持し、閉じる質は落としません。</p>
+    </div>
+    <div class="rej" style="border-color: var(--warn);">
+      <div class="r-head"><span style="color:var(--warn); margin-right:6px;">△</span>activeの自動paused降格 ── 検知は賛成・自動移動は修正推奨</div>
+      <p>放置計画の検知そのものは必要です。ただし「自動で移動」には3つのリスクがあります。(1) バケット移動は<b>検証つきbucketctl＋人間判断</b>が現行の大原則（hookは計画を移動しない・満杯でも自動退避しない）で、ここを最初の例外にすると誤動作時に計画が勝手に消えたように見える。(2) <b>1日は短すぎる</b>——人間ゲート待ちや週末で1日空くのは正常。承認待ちの計画をpausedへ落とすと視界から消えて、承認がさらに遅れる逆効果。(3) paused上限3が自動降格で即溢れる。<br><br><b>修正案＝「検知→提案→ワンタップ」の2段判定：</b>①承認待ちstale（人間ゲートでN日停止）→ pausedに落とさず「承認待ちN日」バッジで督促。②無活動stale（セッションもコミットも2〜3営業日ない）→ 理由・再開条件を自動起草したpaused降格<b>提案</b>をボードに出し、あなたのワンタップでbucketctlが検証つきで移動する。</p>
+    </div>
+  </div>
+
+  <!-- ═══════════ 9 ═══════════ -->
+  <h2><span class="secno">9</span>最初の一歩</h2>
+  <p class="h2sub">順番が重要です。1は今日できて、それだけで痛みの大半が消えます。</p>
+
+  <div class="card">
+    <ol class="todo">
+      <li><div><b>閉じる儀式・初回<span class="when now">今日できる</span></b><div class="d">done 8本の一括クローズ判断／完了済み「計画立案実行完了基盤」の最終確認／SQL化5子の人間ゲート（migration・push・本番反映）実行。<b>これだけでactive枠が2つ前後空く</b>。構造変更ゼロ。</div></div></li>
+      <li><div><b>子07・09を本番へ<span class="when now">確認待ちを通すだけ</span></b><div class="d">計画スマホ表示（子07）とテーマ階層（子09）は実装済み・評価FAIL0。これが通ると「テーマ＝傘」のUIが手に入り、本提案の見せ方がそのまま動き出す。</div></div></li>
+      <li><div><b>改善企画の実行<span class="when later">Lane A再編の完了後</span></b><div class="d">done上限のソフト化・stale検知（提案式）・期分割規約・テーマ境界の明文化・週次儀式を1本の企画に束ねて起案済み：<span class="num">plans/planning/2026-07-21-計画の回転と期分割運用/</span>。実装は「計画とカスタムエージェント整理」（plan-registry再編）の完了待ち。</div></div></li>
+      <li><div><b>週次クローズ儀式の定着<span class="when later">来週から</span></b><div class="d">週1回の承認セットレビューをルーティン化。必要ならloop/Routine化はloop-creatorゲートを通して。</div></div></li>
+    </ol>
+  </div>
+
+  <div class="foot">
+    <b>命名について：</b>討論の結論は「現行続投」。的 → テーマ → プログラム → 子計画 は、実は国際標準（Theme / Program / Plan）と日本語の両方で通る体系で、変える根拠が見つかりませんでした。検証済みの代替案——Project（projects/ フォルダと衝突）・Initiative（日本語で「主導権」連想）・Mission（良い語だが層を作らないので出番なし）・Epic（テーマの下の語で階層が逆転）。<br><br>
+    この企画書は <span class="num">ai運用/plans/planning/2026-07-21-計画の回転と期分割運用/plan.md</span> として起案し、作業ブランチのdraft PRに載せています。mainへは何も反映していません（マージ＝あなたの承認が実行ゲートです）。
+  </div>
+</div>
+</body>
+</html>

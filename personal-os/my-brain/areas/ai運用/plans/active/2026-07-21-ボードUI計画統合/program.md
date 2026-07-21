@@ -36,12 +36,12 @@ program「当日ボードSQL化」の親最終一括が完了していること:
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
 
-- [ ] 01 ボード純UI … 実装済み（2026-07-21 30分スプリント・評価中）
+- [ ] 01 ボード純UI … 実装+修正01済み（評価02全PASS・保留=実データ目視/push）
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 子03（捕捉側）と可（repo非交差）
     人間ゲート: push・本番デプロイ反映
-    次: 独立評価（reviewer走行中）→ 人間ゲート（push→Cloud Run）。実装=focusmap local main 220db7c5〜1b8faf28（PCサイドバー統合・10秒ポーリング込み。375px/1440px実走確認済み・テーマカード実データはinboxトークン未設定でローカル未確認）
+    次: 人間ゲート（push→Cloud Run）→ 実データ375px目視（評価02保留の解消）で完了。実装=focusmap local main 220db7c5〜b27fbb80（サイドバー同一部品化・評価01=FAIL2→修正01→評価02全PASS）
     場所: plans/01 ／ 依存: 前提ゲート（2026-07-21実測で子08/09migration・push・デプロイ済みを確認し消化と判断・人間GO「そのまま進めて」）
 - [ ] 02 計画接続 … 計画（前提ゲート待ち）
     役割: 実装

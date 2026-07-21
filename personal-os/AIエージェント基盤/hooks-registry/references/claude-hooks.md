@@ -54,6 +54,24 @@ sid, cwd, ev = d["session_id"], d["cwd"], d["hook_event_name"]
 
 終了コードは、`0` が成功（stdout の JSON を解釈）、`2` がブロッキングエラー（stderr がフィードバックになり、`PreToolUse` なら tool 呼び出しをブロック）、その他の非ゼロは非ブロッキング。**注意: 終了コード `1` も「継続」扱い**（Unix 慣習では失敗コードだが、Claude は非ブロッキングとして扱う）。
 
+### 5.1 サブ起動ツールの PreToolUse 実測（子03・2026-07-21）
+
+子03「サブエージェント詳細化」で、サブエージェント起動（`Agent` / `Task` ツール）の `PreToolUse` から
+`prompt`・`subagent_type`・`model` を捕捉できるか調べた記録。**推測と確認を分けて書く。**
+
+**確認できたこと（本 SDK の Agent ツール JSONSchema と §5 の共通スキーマから）**
+- `PreToolUse` の stdin JSON は `tool_name`・`tool_input`・`session_id`・`hook_event_name`・`cwd` を含む（§5 の共通スキーマ）。
+- サブ起動は Agent ツール。その `tool_input`（＝ツール引数）のキーは JSONSchema 上 `description`・`prompt`・`subagent_type`・`model`・
+  `run_in_background`・`isolation`。よって**プロンプト（`prompt`）・種別（`subagent_type`）・モデル（`model`）は tool_input から取れる**（＝子03計画の「PreToolUseでプロンプトが取れるか」への答えは Yes）。
+- `session_id` はサブ起動を発行した**親セッション**の id。`common.session_key()` の `sid[:8]` が親キーになり、
+  積み先（`session_subagents.session_key`）と一致する。
+
+**登録後のE2Eで実測する（推測で確定扱いにしない）**
+- 実配信での `tool_name` の literal 値が `Agent` か `Task` か（本体は `^(Agent|Task)$` の両対応で吸収済み）。
+- `model` がユーザー未指定でも `tool_input` に現れるか（現状の実装は明示指定時のみ抜き、未指定は表示側で親モデル補完）。
+- `PreToolUse`（push）→ 直後の `SubagentStart`（pop）の発火順序が確実に FIFO で対応するか（多重同時起動時）。
+- 実装は完全 fail-open（`events/pre-tool-use/capture-subagent-detail.py`）＝上記が外れても本体・サブ起動は止まらない。
+
 ## 6. 出力と制御（stdout JSON）
 
 hook は stdout に JSON を返せる。主なフィールド:

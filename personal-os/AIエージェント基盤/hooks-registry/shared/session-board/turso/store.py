@@ -24,6 +24,7 @@ def token(service=KEYCHAIN_SERVICE):
 def text_arg(value): return {"type": "text", "value": "" if value is None else str(value)}
 def int_arg(value): return {"type": "integer", "value": str(int(value))}
 def null_arg(): return {"type": "null"}
+def text_or_null(value): return null_arg() if value is None else text_arg(value)  # None=真のNULL（空文字と区別）
 
 
 def send(statements, db_url=DB_URL, service=KEYCHAIN_SERVICE, token_getter=token):
@@ -298,17 +299,35 @@ def stmt_flow_done(todo_id):
 # 「稼働中N体」は status='running' 集計でSQL導出する（主観値を保存しない）。
 
 
-def stmt_subagent_start(session_key, session_date, started_at=None):
+def stmt_subagent_start(session_key, session_date, started_at=None,
+                        runtime=None, model=None, agent_type=None,
+                        launch_via=None, prompt=None):
     """SubagentStart: 個体行を1本INSERT（sub_seq は 親セッション×日 内の MAX+1・labelはNULL）。
-    session_key は s:xxxx 形式で渡す（呼び出し元 board.py で付与済み）。"""
+    session_key は s:xxxx 形式で渡す（呼び出し元 board.py で付与済み）。
+
+    子03: runtime/model/agent_type/launch_via/prompt の詳細5列（migration 20260721_session_subagents_detail）。
+    後方互換（重要）: 詳細が全て None の時は旧来の狭いINSERT（7列）をそのまま返す＝
+      子03 migration 未適用の本番でも running 行の積みが壊れない。1つでも詳細が来たら
+      広いINSERT（12列）へ切替える（capture hook 登録＋migration適用が揃った後にだけ成立し、
+      未適用なら best-effort 送信がドロップするだけ＝子08の既存規律どおり本体は止めない）。"""
     if not session_key or not session_date:
         return None
     now = started_at or datetime.datetime.now().isoformat(timespec="seconds")
-    sql = ("INSERT INTO session_subagents (id, session_key, sub_seq, label, status, started_at, session_date) "
-           "VALUES (?, ?, (SELECT COALESCE(MAX(sub_seq), 0) + 1 FROM session_subagents "
-           "WHERE session_key = ? AND session_date = ?), NULL, 'running', ?, ?)")
-    return sql, [text_arg(uuid.uuid4().hex), text_arg(session_key), text_arg(session_key),
+    seq_sub = ("(SELECT COALESCE(MAX(sub_seq), 0) + 1 FROM session_subagents "
+               "WHERE session_key = ? AND session_date = ?)")
+    base_args = [text_arg(uuid.uuid4().hex), text_arg(session_key), text_arg(session_key),
                  text_arg(session_date), text_arg(now), text_arg(session_date)]
+    details = (runtime, model, agent_type, launch_via, prompt)
+    if all(v is None for v in details):
+        sql = ("INSERT INTO session_subagents (id, session_key, sub_seq, label, status, started_at, session_date) "
+               f"VALUES (?, ?, {seq_sub}, NULL, 'running', ?, ?)")
+        return sql, base_args
+    sql = ("INSERT INTO session_subagents "
+           "(id, session_key, sub_seq, label, status, started_at, session_date, "
+           "runtime, model, agent_type, launch_via, prompt) "
+           f"VALUES (?, ?, {seq_sub}, NULL, 'running', ?, ?, ?, ?, ?, ?, ?)")
+    return sql, base_args + [text_or_null(runtime), text_or_null(model), text_or_null(agent_type),
+                             text_or_null(launch_via), text_or_null(prompt)]
 
 
 def stmt_subagent_end(session_key, session_date, ended_at=None):

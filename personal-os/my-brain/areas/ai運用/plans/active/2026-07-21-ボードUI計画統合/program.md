@@ -36,13 +36,13 @@ program「当日ボードSQL化」の親最終一括が完了していること:
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
 
-- [ ] 01 ボード純UI … 計画（前提ゲート待ち）
+- [ ] 01 ボード純UI … 実装済み（2026-07-21 30分スプリント・評価中）
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 子03（捕捉側）と可（repo非交差）
     人間ゲート: push・本番デプロイ反映
-    次: 前提ゲート（当日ボードSQL化の親最終一括）消化後に着手
-    場所: plans/01 ／ 依存: 前提ゲート
+    次: 独立評価（reviewer走行中）→ 人間ゲート（push→Cloud Run）。実装=focusmap local main 220db7c5〜1b8faf28（PCサイドバー統合・10秒ポーリング込み。375px/1440px実走確認済み・テーマカード実データはinboxトークン未設定でローカル未確認）
+    場所: plans/01 ／ 依存: 前提ゲート（2026-07-21実測で子08/09migration・push・デプロイ済みを確認し消化と判断・人間GO「そのまま進めて」）
 - [ ] 02 計画接続 … 計画（前提ゲート待ち）
     役割: 実装
     対象repo: focusmap ＋ ~/Private（plan-ops・session-board・skills/daily-start）
@@ -50,13 +50,13 @@ program「当日ボードSQL化」の親最終一括が完了していること:
     人間ゲート: inbox migration適用（todos.plan_slug）・push
     次: 子01の部品契約確定後に着手
     場所: plans/02 ／ 依存: 子01
-- [ ] 03 サブエージェント詳細化 … 計画（前提ゲート待ち）
+- [ ] 03 サブエージェント詳細化 … 捕捉側実装済み（統合待ち）・表示側未着手
     役割: 実装
     対象repo: ~/Private/personal-os/AIエージェント基盤（hooks-registry）＋focusmap（表示側のみ）
     並列: 捕捉側は子01と可（focusmap禁止）／表示側は子01完了後
     人間ゲート: board migration適用（session_subagents 詳細5列）・hook登録変更・push
-    次: payload実測から着手可（前提ゲート消化後）
-    場所: plans/03 ／ 依存: 前提ゲート（表示側は子01）
+    次: branch worktree-agent-a5534d8b7f4935587（97c3e7a・テスト294PASS/回帰0・payload結論=プロンプトはPreToolUseで捕捉可）をmainへrebase統合（common.pyの他セッション未コミット変更の解消待ち）→ 人間ゲート（migration適用・registration-diff-03のsettings.json差分）→ 表示側を子01部品で実装
+    場所: plans/03 ／ 依存: 前提ゲート消化済み（表示側は子01）
 - [ ] 04 完了移動の運用実測 … 計画（前提ゲート待ち）
     役割: 評価
     対象repo: なし（観測と記録）

@@ -36,26 +36,26 @@ program「当日ボードSQL化」の親最終一括が完了していること:
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
 
-- [ ] 01 ボード純UI … 実装+修正01済み（評価02全PASS・保留=実データ目視/push）
+- [ ] 01 ボード純UI … 修正02まで実装済み（本番実機の人間確認待ち）
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 子03（捕捉側）と可（repo非交差）
-    人間ゲート: push・本番デプロイ反映
-    次: 人間ゲート（push→Cloud Run）→ 実データ375px目視（評価02保留の解消）で完了。実装=focusmap local main 220db7c5〜b27fbb80（サイドバー同一部品化・評価01=FAIL2→修正01→評価02全PASS）
-    場所: plans/01 ／ 依存: 前提ゲート（2026-07-21実測で子08/09migration・push・デプロイ済みを確認し消化と判断・人間GO「そのまま進めて」）
-- [ ] 02 計画接続 … 計画（前提ゲート待ち）
+    人間ゲート: push・本番デプロイ反映（2026-07-21消化済み）
+    次: 本番実機375px目視（人間）→ 評価03で完了判定。経緯=評価02全PASS→本番実機で人間FAIL指摘（見づらい・きみの番不要・詳細常時表示）→修正02（きみの番廃止・テーマ/未分類のデフォルト折りたたみ・1行サマリ化）=focusmap 2dcd7420・push済み・完了条件も改訂済み
+    場所: plans/01 ／ 依存: 前提ゲート消化済み
+- [ ] 02 計画接続 … 実装完了（テスト603PASS・inbox migration適用済み・push済み・本番実機確認待ち）
     役割: 実装
     対象repo: focusmap ＋ ~/Private（plan-ops・session-board・skills/daily-start）
     並列: 子01完了後（plansync部分のみ子01と並列可）
-    人間ゲート: inbox migration適用（todos.plan_slug）・push
-    次: 子01の部品契約確定後に着手
+    人間ゲート: inbox migration適用（todos.plan_slug）=2026-07-21適用・検証済み ／ push=同日消化
+    次: 本番で計画チップ・md文書タブの実機確認 → 評価md作成。実装=基盤267ce08＋focusmap 5f520df7（plan_slug列・計画チップ・ライブ進行タブ・plansync3バケット走査・繰越し継承手順）
     場所: plans/02 ／ 依存: 子01
 - [ ] 03 サブエージェント詳細化 … 捕捉側統合済み（366テストPASS・hook登録済み）・表示側未着手
     役割: 実装
     対象repo: ~/Private/personal-os/AIエージェント基盤（hooks-registry）＋focusmap（表示側のみ）
     並列: 捕捉側は子01と可（focusmap禁止）／表示側は子01完了後
     人間ゲート: board migration適用（session_subagents 詳細5列）・hook登録変更・push
-    次: 人間ゲート残1=board migration適用（詳細5列・コマンド提示済み）→捕捉E2E実測→表示側を子01部品で実装。統合=9a9e204（rebase済み・366PASS）・PreToolUse hook登録済み（settings.json反映済み2026-07-21）・payload結論=プロンプト捕捉可
+    次: 捕捉E2E実測→表示側（sub-detail）を修正02後の畳みUI規約に合わせて実装（初回実装エージェントはセッション圧縮で消失・成果物なし＝再実行）。board migration適用済み（詳細5列・2026-07-21）・統合=9a9e204（rebase済み・366PASS）・PreToolUse hook登録済み（settings.json反映済み2026-07-21）・payload結論=プロンプト捕捉可
     場所: plans/03 ／ 依存: 前提ゲート消化済み（表示側は子01）
 - [ ] 04 完了移動の運用実測 … 計画（前提ゲート待ち）
     役割: 評価

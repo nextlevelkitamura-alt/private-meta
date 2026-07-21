@@ -170,13 +170,17 @@ def stmt_theme_insert(theme_id, name, purpose, done_criteria, goal_ref=None, pla
 def stmt_todo_insert(todo_id, title, do_date, note=None, due_date=None, repo="none",
                      assignee="self", source="cli", route="plan", goal_ref=None,
                      theme_id=None, carried_from=None, session_key=None,
-                     status="open", ai_status="未検知", created_at=None):
+                     status="open", ai_status="未検知", created_at=None, plan_slug=None):
     """子03: 今日やること todo を inbox todos へ INSERT（board.py todo-add の実体）。
-    inbox todos スキーマ（focusmap db/turso/migrations の3ファイル）準拠で全列を明示する。
+    inbox todos スキーマ（focusmap db/turso/migrations の各ファイル）準拠で全列を明示する。
     作成時は status='open'・ai_status='未検知'・completed_at/completed_by/question系はNULL、
     question_allow_free=1・question_gate=0・route既定=plan。CHECK制約列（assignee/status/
     ai_status/source/route）の値検証は呼び出し元（board.py）の usage 停止で機械保証する
-    （DB制約では縛らない・theme-add と同型）。title・do_date・todo_id 欠落は None（送らない）。"""
+    （DB制約では縛らない・theme-add と同型）。title・do_date・todo_id 欠落は None（送らない）。
+
+    子02: plan_slug（slug#NN 形式・migration 20260721_todos_plan_slug 適用後のみ）で計画（program子/
+    単発）へリンクする。NULL=計画に紐づかない。plan_slug 付き todo は全step消化でも flow-done で
+    自動完了しない（stmt_flow_done の WHERE plan_slug IS NULL で抑止）。"""
     title = (title or "").strip()
     if not todo_id or not title or not (do_date or "").strip():
         return None
@@ -190,7 +194,7 @@ def stmt_todo_insert(todo_id, title, do_date, note=None, due_date=None, repo="no
             "created_at", "updated_at", "completed_at",
             "question", "question_choices", "question_allow_free", "question_gate",
             "question_asked_at", "answer", "answered_at", "answer_consumed_at",
-            "route", "completed_by", "theme_id", "carried_from", "awaiting_since"]
+            "route", "completed_by", "theme_id", "carried_from", "awaiting_since", "plan_slug"]
     args = [
         text_arg(todo_id), text_arg(title), opt(note), text_arg(do_date), opt(due_date),
         text_arg(repo or "none"), text_arg(assignee or "self"),
@@ -201,6 +205,7 @@ def stmt_todo_insert(todo_id, title, do_date, note=None, due_date=None, repo="no
         null_arg(), null_arg(), null_arg(), null_arg(),      # question_asked_at, answer, answered_at, answer_consumed_at
         text_arg(route or "plan"), null_arg(),               # route, completed_by
         opt(theme_id), opt(carried_from), null_arg(),        # theme_id, carried_from, awaiting_since
+        opt(plan_slug),                                      # plan_slug（子02・計画リンク）
     ]
     sql = f"INSERT INTO todos ({', '.join(cols)}) VALUES ({', '.join(['?'] * len(cols))})"
     return sql, args
@@ -256,13 +261,19 @@ def stmts_todo_steps(todo_id, titles, kind="step", session_key=None):
 
 
 def stmt_step_status(todo_id, seq, status):
-    """ステップ状態を前進（doing/done/skipped）。完了済み(done)行は触らない=過去行UPDATE禁止の機械保証。"""
+    """ステップ状態を前進（doing/done/skipped）。完了済み(done)行は触らない=過去行UPDATE禁止の機械保証。
+
+    子02: status='doing' の時だけ started_at へ打刻する（既存 20260719 migration の列・「経過◯分」の
+    SQL導出アンカー）。COALESCE で最初の doing 時刻を保持し、再 doing で上書きしない。done/skipped は
+    started_at を触らない（既存値を保つ＝所要分の起点を壊さない）。done は done_at を刻む（従来どおり）。"""
     if not todo_id or status not in _STEP_STATUSES:
         return None
     now = datetime.datetime.now().isoformat(timespec="seconds")
-    sql = "UPDATE todo_steps SET status = ?, done_at = ? WHERE todo_id = ? AND seq = ? AND status != 'done'"
+    sql = ("UPDATE todo_steps SET status = ?, done_at = ?, "
+           "started_at = CASE WHEN ? = 'doing' THEN COALESCE(started_at, ?) ELSE started_at END "
+           "WHERE todo_id = ? AND seq = ? AND status != 'done'")
     done_at = text_arg(now) if status == "done" else null_arg()
-    return sql, [text_arg(status), done_at, text_arg(todo_id), int_arg(seq)]
+    return sql, [text_arg(status), done_at, text_arg(status), text_arg(now), text_arg(todo_id), int_arg(seq)]
 
 
 def stmt_ask(todo_id, question, choices=None, allow_free=True, gate=False):
@@ -282,13 +293,18 @@ def stmt_ask(todo_id, question, choices=None, allow_free=True, gate=False):
 
 def stmt_flow_done(todo_id):
     """定型自動流入: routine確定で done へ直行。ただし未完了ステップが残る間は完了させない（NOT EXISTS）。
-    宣言照合(scan_board_routes)を通した呼び出し元だけがこの文を送る前提。"""
+    宣言照合(scan_board_routes)を通した呼び出し元だけがこの文を送る前提。
+
+    子02（flow-done抑止・二重の安全）: plan_slug 付き todo は全step消化でも completed_at を自動セットしない
+    （WHERE plan_slug IS NULL）。「本日分は済み・斜線のまま」を維持し、計画完了の判定は plan_progress
+    （child/cond全消化）＋ bucket='done' に委ねる。既定 route='plan' なので元々発火しないが、将来の
+    routine経路追加に備えた明示抑止。"""
     if not todo_id:
         return None
     now = datetime.datetime.now().isoformat(timespec="seconds")
     sql = ("UPDATE todos SET status = 'done', ai_status = '完了', route = 'routine', completed_by = 'routine', "
            "completed_at = ?, updated_at = ? "
-           "WHERE id = ? AND status != 'done' "
+           "WHERE id = ? AND status != 'done' AND plan_slug IS NULL "
            "AND NOT EXISTS (SELECT 1 FROM todo_steps s WHERE s.todo_id = todos.id AND s.status IN ('todo', 'doing'))")
     return sql, [text_arg(now), text_arg(now), text_arg(todo_id)]
 

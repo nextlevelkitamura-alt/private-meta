@@ -60,9 +60,13 @@ JSONに含まれるもの:
      増やさず、`board.py ask` で「これは今日やるべきか／どのテーマに入れるか」を人間に確認してから起票する
      （themes を今日の見取り図に保つため）。
    - 各 theme に最低1件は「今日やること」をぶら下げる（大課題だけ立てて todos ゼロにしない）。塊が大きければ複数件に割る。
-   - 計画（`plans/` 配下の program/plan）に対応するやることは、`--note` に**計画パス参照**を入れる（既存流儀を維持。
-     例: `--note "計画: .../plans/03-儀式の自動実行.md"`）。`--route plan` と併せて出所を辿れるようにする。
-   - **繰越し**: `carried_todos` から今日やると判断したものは、**新todoを起票し `--carried-from <元do_date>` を付ける**（既存todoの `do_date` は動かさない＝focusmap todos.ts の「未来先送りは人間タップのみ」契約を破らない。朝の昨日→今日引き寄せだけが自動可）。繰越し todo も該当テーマへ `--theme` で紐付ける。
+   - 計画（`plans/` 配下の program/plan）に対応するやることは、**`--plan <slug#NN>` で計画リンクを付ける**
+     （例: `--plan "2026-07-21-ボードUI計画統合#02"`。program子は `slug#NN`、単発は `slug`）。
+     `todos.plan_slug` 列に入り、ボードのやること行に計画チップが出て詳細のライブ進行タブへ繋がる。
+     `--route plan` と併せて出所を辿れるようにする（`--note "計画: .../plans/03-….md"` の併記も可）。
+     計画リンク付き todo は全step消化でも自動完了せず「本日分は済み・斜線」で残る（完了判定は計画のdone移動）。
+     着手時は次節「全工程一括登録」で未来工程まで `steps` を積む。
+   - **繰越し**: `carried_todos` から今日やると判断したものは、**新todoを起票し `--carried-from <元do_date>` を付ける**（既存todoの `do_date` は動かさない＝focusmap todos.ts の「未来先送りは人間タップのみ」契約を破らない。朝の昨日→今日引き寄せだけが自動可）。繰越し todo も該当テーマへ `--theme` で紐付ける。計画リンク付きの繰越しは次節「繰越し継承」に従い `--plan` と未完stepを引き継ぐ。
    - `--assignee` / `--route` は自己判定する。**`route=routine` を自称起票しない**（routine は skill/loop正本の `board_route: routine` 宣言照合＝`board.py flow-done` 経由のみ。迷ったら `plan`）。
    - repo slug は inbox repos マスタ（`shigoto`/`focusmap`/`private`/`ai-platform`/`none`）に合わせる。私用・repo無しは `none`。
 5. **質問（気になる点だけ）**: 過多・不明玉・衝突・繰越し要否の迷いだけを、該当todoに対して
@@ -80,6 +84,32 @@ JSONに含まれるもの:
 4. 無人版と**同じ実行ログ**（`state/done-<YYYY-MM-DD>` ＋ `board.py log`）を書く。
    これにより、手動で回した日は10:03の定期実行が冪等ガードでスキップされる。
 5. 起票後の修正は通常セッション（チャット）で受ける。最初は無人版で運用し、対話で決めたくなったら対話モードを既定へ切り替えればよい。
+
+## 全工程一括登録（計画リンク付き todo・子02）
+
+計画（program子/単発）に着手する日は、そのやること todo に**全工程を最初から一括登録する**。未来工程まで
+時系列で見えることが討論裁定の中核（「今ここ・この先」がボードのタイムラインに並ぶ）。
+
+1. `--plan <slug#NN>` を付けて todo を起票し、返る `todo_id` を控える。
+2. その計画の工程（例: 実装 → レビュー → 評価 …）を **1コマンドで一括登録**する。`--entry` を並べる:
+   `board.py steps --todo <todo_id> --entry "実装" --entry "レビュー" --entry "評価"`。
+   seq は登録順に自動採番される（`todo` 内 MAX+1）。手直し工程は後から `--kind fix` で追記する。
+3. 着手する工程だけ `board.py step-doing --todo <todo_id> --seq <n>` で `doing` にする（`started_at` が打刻され
+   「経過◯分」がSQL導出で出る）。完了したら `step-done`、飛ばす工程は `step-skip`。
+4. 全工程を消化しても todo は自動完了しない（`plan_slug` 付きは flow-done 抑止）。「本日分は済み・斜線のまま」を
+   維持し、計画そのものの完了は計画の done 移動（bucket）で表す。
+
+## 繰越し継承（計画リンク付き todo・子02）
+
+計画リンク付き todo を翌日へ繰り越すときは、**リンクと未完ステップを新todoへ継承する**（毎朝ゼロから積み直さない）。
+
+1. 繰越しは既存流儀どおり**新todoを起票**し `--carried-from <元do_date>` を付ける（元todoの `do_date` は動かさない）。
+2. 元todoの `--plan <slug#NN>` と `--theme <theme_id>` を新todoにも**そのまま引き継ぐ**。
+3. 未完ステップ（`todo` / `doing` / 未着手の `review` `fix`）だけを新todoへ `board.py steps` で**再登録する**。
+   - **seq は新todo内で振り直す**（1 から採番＝MAX+1 で自然に連番になる）。
+   - **`done`（完了済み）ステップは継承しない**（昨日やり切った工程を今日また出さない）。`skipped` も継承しない。
+   - `doing` だった工程は新todoでは未着手(`todo`)として積み直し、今日あらためて `step-doing` で始める。
+4. これで「計画リンクとステップが繰越し翌日も継続する」（完了条件2）。継承の判断に迷う工程は `board.py ask` で確認する。
 
 ## routine の自称禁止（重要）
 

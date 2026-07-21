@@ -12,7 +12,12 @@
        専用spool名 `plansync-spool` を使い、再送も inbox 宛senderで回す（DB取り違え防止）。
   3. content_hash 冪等（同一内容は再送スキップ）。git_commit はファイルへの最終コミットhash。
   4. secret疑い正規表現にヒットした文書は同期拒否し、通知（notices log + stderr）を出す。
-  5. active から出た計画（削除・git mv）はミラーからDELETE（表示キャッシュなので非破壊扱い）。孤児行を残さない。
+  5. 走査は active|done|archive の3バケット（planning は対象外）。plan_docs.bucket にフォルダ名を書く。
+     active→done/archive のバケット移動で計画はUIから消えない（新bucket行がupsertされ継続）。
+     自動DELETEは commit経路の明示的なファイル削除（差分同期）に限る。日次フル reconcile は孤児を
+     削除せず notify（きみの番へ通知）する＝沈黙して消えない・古い行の誤爆削除を防ぐ。
+     ※ plan_docs のPK(path)・plan_progress のPK(program_slug)は変更しない（バケット移動は path変化＝
+       旧path削除＋新path挿入で表現。PK変更が要る事態になれば停止して人間へ報告する契約）。
 
 CLI:
   plansync.py scan  [--root R] [--json]                 # dry-run抽出のみ（DB非依存・書込なし）
@@ -226,7 +231,7 @@ class Doc:
         return {k: getattr(self, k) for k in self.__slots__ if k != "abspath"}
 
 
-def _mk_doc(abspath, repo_root, program_slug, kind, nn):
+def _mk_doc(abspath, repo_root, program_slug, kind, nn, bucket="active"):
     body = read_text(abspath)
     rel = os.path.relpath(abspath, repo_root)
     return Doc(
@@ -235,7 +240,7 @@ def _mk_doc(abspath, repo_root, program_slug, kind, nn):
         kind=kind,
         nn=nn or "",
         title=h1_title(body, os.path.splitext(os.path.basename(abspath))[0]),
-        bucket="active",
+        bucket=bucket,
         body=body,
         content_hash=hashlib.sha256(body.encode("utf-8")).hexdigest(),
         git_commit=last_commit_of(rel, repo_root),
@@ -243,8 +248,10 @@ def _mk_doc(abspath, repo_root, program_slug, kind, nn):
     )
 
 
-def extract_plan_dir(plan_dir, repo_root):
-    """1つの active 計画フォルダから Doc群を抽出する。対象外(references/explain/misc)は無視。"""
+def extract_plan_dir(plan_dir, repo_root, bucket="active"):
+    """1つの計画フォルダ（bucket=active|done|archive）から Doc群を抽出する。
+    対象外(references/explain/misc)は無視。bucket は plan_docs.bucket 列へ書く（active から done/archive へ
+    動いても表示キャッシュが消えないための状態列。子02・program.md 正本境界4条）。"""
     slug = os.path.basename(plan_dir.rstrip("/"))
     docs = []
 
@@ -252,15 +259,15 @@ def extract_plan_dir(plan_dir, repo_root):
     plan_md = os.path.join(plan_dir, "plan.md")
 
     if os.path.isfile(program_md):
-        docs.append(_mk_doc(program_md, repo_root, slug, KIND_PROGRAM, ""))
+        docs.append(_mk_doc(program_md, repo_root, slug, KIND_PROGRAM, "", bucket))
     elif os.path.isfile(plan_md):
-        docs.append(_mk_doc(plan_md, repo_root, slug, KIND_SINGLE, ""))
+        docs.append(_mk_doc(plan_md, repo_root, slug, KIND_SINGLE, "", bucket))
 
     # 役割別コンテキスト
     for role in ("実装",):
         rp = os.path.join(plan_dir, role, "共通.md")
         if os.path.isfile(rp):
-            docs.append(_mk_doc(rp, repo_root, slug, KIND_ROLE, ""))
+            docs.append(_mk_doc(rp, repo_root, slug, KIND_ROLE, "", bucket))
 
     # 子計画 / plans/ 内の評価
     plans_dir = os.path.join(plan_dir, "plans")
@@ -271,13 +278,13 @@ def extract_plan_dir(plan_dir, repo_root):
             fp = os.path.join(plans_dir, name)
             m_eval = RE_EVAL_SUFFIX.match(name)
             if m_eval:
-                docs.append(_mk_doc(fp, repo_root, slug, KIND_EVAL, m_eval.group(1)))
+                docs.append(_mk_doc(fp, repo_root, slug, KIND_EVAL, m_eval.group(1), bucket))
             elif RE_EVAL_BARE.match(name):
-                docs.append(_mk_doc(fp, repo_root, slug, KIND_EVAL, ""))
+                docs.append(_mk_doc(fp, repo_root, slug, KIND_EVAL, "", bucket))
             else:
                 m_child = RE_CHILD.match(name)
                 if m_child:
-                    docs.append(_mk_doc(fp, repo_root, slug, KIND_CHILD, m_child.group(1)))
+                    docs.append(_mk_doc(fp, repo_root, slug, KIND_CHILD, m_child.group(1), bucket))
                 # それ以外(NN無しmd)は対象外
 
     # 評価/ フォルダ（program集約）
@@ -289,33 +296,39 @@ def extract_plan_dir(plan_dir, repo_root):
             fp = os.path.join(eval_dir, name)
             m_eval = RE_EVAL_SUFFIX.match(name)
             docs.append(_mk_doc(fp, repo_root, slug, KIND_EVAL,
-                                m_eval.group(1) if m_eval else ""))
+                                m_eval.group(1) if m_eval else "", bucket))
 
     # 単発plan隣接の評価/修正
     if os.path.isfile(plan_md) and not os.path.isfile(program_md):
         for name in sorted(os.listdir(plan_dir)):
             if RE_EVAL_BARE.match(name):
-                docs.append(_mk_doc(os.path.join(plan_dir, name), repo_root, slug, KIND_EVAL, ""))
+                docs.append(_mk_doc(os.path.join(plan_dir, name), repo_root, slug, KIND_EVAL, "", bucket))
 
     return docs
 
 
+# 子02: active から出た計画を UI から消さないため、走査対象を active|done|archive の3バケットへ拡張する。
+# planning は表示キャッシュ対象外（未着手＝ボードに出さない）のまま。
+SYNC_BUCKETS = ("active", "done", "archive")
+
+
 def find_plan_dirs(areas_root):
-    """areas/*/plans/active/<slug>/ の一覧（絶対パス）を返す。"""
+    """areas/*/plans/<bucket>/<slug>/ の一覧を (絶対path, bucket) で返す（bucket=active|done|archive）。"""
     out = []
-    for active in sorted(glob.glob(os.path.join(areas_root, "*", "plans", "active"))):
-        for entry in sorted(os.listdir(active)):
-            d = os.path.join(active, entry)
-            if os.path.isdir(d) and not entry.startswith("."):
-                out.append(d)
+    for bucket in SYNC_BUCKETS:
+        for bpath in sorted(glob.glob(os.path.join(areas_root, "*", "plans", bucket))):
+            for entry in sorted(os.listdir(bpath)):
+                d = os.path.join(bpath, entry)
+                if os.path.isdir(d) and not entry.startswith("."):
+                    out.append((d, bucket))
     return out
 
 
 def extract_all(areas_root, repo_root):
     docs = []
     progress = []
-    for d in find_plan_dirs(areas_root):
-        dd = extract_plan_dir(d, repo_root)
+    for d, bucket in find_plan_dirs(areas_root):
+        dd = extract_plan_dir(d, repo_root, bucket)
         docs.extend(dd)
         slug = os.path.basename(d.rstrip("/"))
         program_md = os.path.join(d, "program.md")
@@ -331,18 +344,18 @@ def extract_all(areas_root, repo_root):
     return docs, progress
 
 
-def is_active_plan_path(rel_path):
-    """repo相対pathが active計画のミラー対象pathかを判定（post-commit差分の絞り込み用）。"""
+def is_plan_doc_path(rel_path):
+    """repo相対pathが計画ミラー対象path（active|done|archive）かを判定（post-commit差分の絞り込み用）。"""
     parts = rel_path.split("/")
     try:
         i = parts.index("areas")
     except ValueError:
         return False
     tail = parts[i + 1:]
-    # areas/<area>/plans/active/<slug>/...
+    # areas/<area>/plans/<bucket>/<slug>/...
     if len(tail) < 5:
         return False
-    if tail[1] != "plans" or tail[2] != "active":
+    if tail[1] != "plans" or tail[2] not in SYNC_BUCKETS:
         return False
     return rel_path.endswith(".md")
 
@@ -454,9 +467,11 @@ def build_plan(areas_root, repo_root, only_paths=None):
         wanted = set(only_paths)
         sync_docs = [d for d in sync_docs if d.path in wanted]
         blocked = [b for b in blocked if b[0] in wanted]
-        # wanted のうち現存しない = active から出た → DELETE
+        # wanted のうち現存しない = そのpathのファイルがcommitで削除/改名された → DELETE（明示削除のみ）。
+        # active→done 等のバケット移動は、旧pathのファイル削除＋新pathのファイル追加が同一commitに乗るため、
+        # 旧path行を消し新path行(bucket=done)をupsertする＝計画の表示は新bucketで継続し消えない（子02）。
         for p in sorted(wanted):
-            if p not in present_paths and is_active_plan_path(p):
+            if p not in present_paths and is_plan_doc_path(p):
                 deletions.append(p)
         # 差分モードでは progress は関係slugだけ
         touched_slugs = {d.program_slug for d in docs if d.path in wanted}
@@ -500,14 +515,18 @@ def apply_sync(plan, full=False):
         statements.append(stmt_doc_delete(store, p))
 
     if full:
-        # 孤児reconcile: DBに在って現存active対象に無いpath/slugをDELETE。
+        # 子02: 日次フル reconcile は孤児を自動DELETEしない（削除は commit経路の明示ファイル削除＝差分同期に限る）。
+        # DBに在って現存(active|done|archive)に無いpath/slugは「差分」として notify（きみの番へ通知）するだけ。
+        # これにより active→done 移動が日次経路で誤DELETEされることを防ぎ、沈黙して消えない（program.md 方針）。
         db_paths, db_slugs = _fetch_db_keys(store)
         present = plan["present_paths"]
         present_slugs = {pr["program_slug"] for pr in plan["progress"]}
-        for p in sorted(db_paths - present):
-            statements.append(stmt_doc_delete(store, p))
-        for s in sorted(db_slugs - present_slugs):
-            statements.append(stmt_progress_delete(store, s))
+        orphan_paths = sorted(db_paths - present)
+        orphan_slugs = sorted(db_slugs - present_slugs)
+        for p in orphan_paths:
+            notify(f"孤児検知(自動削除しない・要確認): plan_docs.path={p}")
+        for s in orphan_slugs:
+            notify(f"孤児検知(自動削除しない・要確認): plan_progress.program_slug={s}")
 
     if not statements:
         return 0
@@ -674,8 +693,6 @@ def cmd_sync(args):
     only_paths = None
     if not args.all:
         only_paths = [p.strip() for p in (args.paths or []) if p.strip()]
-        # active計画mdでない差分は無視
-        only_paths = [p for p in only_paths if is_active_plan_path(p) or True]
 
     plan = build_plan(areas_root, repo_root, only_paths=only_paths)
     for p, hits in plan["blocked"]:

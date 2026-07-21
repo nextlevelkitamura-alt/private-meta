@@ -98,12 +98,16 @@ stmt = flat()[0]
 ok("step-done: UPDATE todo_steps", "UPDATE todo_steps SET status" in stmt[0])
 ok("step-done: 完了済みは触らない(status != 'done')", "status != 'done'" in stmt[0])
 ok("step-done: status=done・done_atに時刻", vals(stmt)[0] == "done" and types(stmt)[1] == "text")
-ok("step-done: seqはinteger", types(stmt)[3] == "integer" and vals(stmt)[3] == "2")
+# 子02: 引数順は [status, done_at, status(CASE用), started_at(now), todo_id, seq]。seqは末尾のinteger。
+ok("step-done: seqはinteger", types(stmt)[5] == "integer" and vals(stmt)[5] == "2")
 
 clear()
 run("step-doing", "--todo", "T1", "--seq", "3")
 stmt = flat()[0]
 ok("step-doing: status=doing・done_atはNULL", vals(stmt)[0] == "doing" and types(stmt)[1] == "null")
+# 子02: doing遷移で started_at を打刻（CASE WHEN ?='doing' THEN COALESCE(started_at, ?)）。
+ok("step-doing: started_at打刻SQL", "started_at = CASE WHEN" in stmt[0] and "COALESCE(started_at" in stmt[0])
+ok("step-doing: CASE判定に status・started_at値にnow", vals(stmt)[2] == "doing" and types(stmt)[3] == "text")
 
 clear()
 run("step-skip", "--todo", "T1", "--seq", "4")

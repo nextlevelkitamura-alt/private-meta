@@ -441,7 +441,7 @@ def main():
         route = args.get("route", "plan")
         usage = ('usage: board.py todo-add --title "<やること>" [--note <メモ>] [--date YYYY-MM-DD] '
                  '[--due YYYY-MM-DD] [--repo <slug>] [--assignee self|ai] [--route plan|routine|single] '
-                 '[--theme <theme_id>] [--carried-from YYYY-MM-DD] [--source web|chat|cli]')
+                 '[--theme <theme_id>] [--plan <slug#NN>] [--carried-from YYYY-MM-DD] [--source web|chat|cli]')
         if not title:
             sys.exit(usage)
         if assignee not in ("self", "ai"):
@@ -457,7 +457,8 @@ def main():
             todo_id, title, do_date,
             note=args.get("note"), due_date=args.get("due"),
             repo=args.get("repo", "none"), assignee=assignee, source=source, route=route,
-            theme_id=args.get("theme"), carried_from=args.get("carried-from"))
+            theme_id=args.get("theme"), carried_from=args.get("carried-from"),
+            plan_slug=args.get("plan"))   # 子02: 計画リンク（slug#NN）。--plan で受ける
         if statement is None:
             sys.exit(usage)
         _turso_sync([statement], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)

@@ -81,7 +81,7 @@ COL = {name: i for i, name in enumerate([
     "created_at", "updated_at", "completed_at",
     "question", "question_choices", "question_allow_free", "question_gate",
     "question_asked_at", "answer", "answered_at", "answer_consumed_at",
-    "route", "completed_by", "theme_id", "carried_from", "awaiting_since"])}
+    "route", "completed_by", "theme_id", "carried_from", "awaiting_since", "plan_slug"])}
 
 JST_TODAY = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y-%m-%d")
 
@@ -110,6 +110,14 @@ ok("todo-add: completed_at/completed_by/question系は作成時NULL",
 ok("todo-add: note/due/theme/carried_from未指定はNULL",
    t[COL["note"]] == "null" and t[COL["due_date"]] == "null"
    and t[COL["theme_id"]] == "null" and t[COL["carried_from"]] == "null")
+ok("todo-add: plan_slug未指定はNULL（子02）", t[COL["plan_slug"]] == "null")
+
+# 子02: --plan で計画リンク（slug#NN）を刻む
+clear()
+run("todo-add", "--title", "子02を実装", "--plan", "2026-07-21-ボードUI計画統合#02")
+stmts, _ = last()
+ok("todo-add: --plan が plan_slug 列へ",
+   vals(stmts[0])[COL["plan_slug"]] == "2026-07-21-ボードUI計画統合#02")
 
 # 生成した todo_id を stdout へ（AIがステップ登録・質問・紐付けに使う）
 import io  # noqa: E402
@@ -158,8 +166,10 @@ for r in ("plan", "routine", "single"):
 # ---- store.py builder: stmt_todo_insert の決定的な形 ----
 st = store.stmt_todo_insert("TID", "やること", "2099-05-01")
 ok("stmt_todo_insert: INSERT INTO todos", st is not None and st[0].startswith("INSERT INTO todos"))
-ok("stmt_todo_insert: 列数とプレースホルダ数が一致（28）",
-   st[0].count("?") == 28 and len(st[1]) == 28)
+ok("stmt_todo_insert: 列数とプレースホルダ数が一致（29）",
+   st[0].count("?") == 29 and len(st[1]) == 29)
+ok("stmt_todo_insert: plan_slug指定が末尾列へ",
+   [a.get("value") for a in store.stmt_todo_insert("i", "t", "2099-05-01", plan_slug="s#01")[1]][COL["plan_slug"]] == "s#01")
 sv = [a.get("value") for a in st[1]]
 ok("stmt_todo_insert: id/title/do_dateが載る",
    sv[COL["id"]] == "TID" and sv[COL["title"]] == "やること" and sv[COL["do_date"]] == "2099-05-01")

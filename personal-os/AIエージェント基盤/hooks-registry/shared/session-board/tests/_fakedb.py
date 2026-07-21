@@ -41,10 +41,12 @@ _INBOX_DDL = [
         created_at TEXT, updated_at TEXT, completed_at TEXT,
         question TEXT, question_choices TEXT, question_allow_free INTEGER, question_gate INTEGER,
         question_asked_at TEXT, answer TEXT, answered_at TEXT, answer_consumed_at TEXT,
-        route TEXT, completed_by TEXT, theme_id TEXT, carried_from TEXT, awaiting_since TEXT)""",
+        route TEXT, completed_by TEXT, theme_id TEXT, carried_from TEXT, awaiting_since TEXT,
+        plan_slug TEXT)""",
+    # todo_steps.started_at は子09の 20260719 migration で追加済み（本番適用済み）＝子02の step-doing 打刻対象。
     """CREATE TABLE todo_steps (
         id TEXT PRIMARY KEY, todo_id TEXT, seq INTEGER, title TEXT, kind TEXT,
-        status TEXT, session_key TEXT, created_at TEXT, done_at TEXT)""",
+        status TEXT, session_key TEXT, created_at TEXT, done_at TEXT, started_at TEXT)""",
     """CREATE TABLE themes (
         id TEXT PRIMARY KEY, name TEXT, purpose TEXT, done_criteria TEXT,
         goal_ref TEXT, plan_refs TEXT, sort_order INTEGER, status TEXT,

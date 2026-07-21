@@ -29,9 +29,11 @@ else
   CHANGED="$(git -C "$REPO" -c core.quotepath=false show --name-only --format= HEAD 2>/dev/null)"
 fi
 
-# active計画md だけへ絞る（areas/<area>/plans/active/<slug>/....md）
+# ミラー対象バケットの計画mdへ絞る（areas/<area>/plans/<bucket>/<slug>/....md）。
+# 子02でplansyncがactive|done|archiveの3バケット走査になったため、hook側も同じ範囲を拾う
+# （activeのみだとdone/archiveへのgit mv直後の新pathが次のフル同期まで反映されない）。
 PATHS="$(printf '%s\n' "$CHANGED" \
-  | grep -E 'personal-os/my-brain/areas/[^/]+/plans/active/[^/]+/.*\.md$' || true)"
+  | grep -E 'personal-os/my-brain/areas/[^/]+/plans/(active|done|archive)/[^/]+/.*\.md$' || true)"
 
 [ -n "$PATHS" ] || exit 0
 

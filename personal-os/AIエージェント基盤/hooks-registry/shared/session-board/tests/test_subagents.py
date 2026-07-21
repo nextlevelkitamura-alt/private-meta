@@ -155,7 +155,7 @@ clear()
 run("sub-start", "--key", "detl0010", "--runtime", "claude", "--model", "opus",
     "--type", "reviewer", "--via", "agent-tool",
     "--prompt", "レビューして api_key=SECRET123 と token: abcdef を使う")
-ins = [(s, a) for s, a in captured if "INTO session_subagents" in s]
+ins = [(s, a) for s, a in captured() if "INTO session_subagents" in s]
 ok("sub-start 詳細: 広いINSERT 1本", len(ins) == 1 and "runtime" in ins[0][0])
 insvals = vals(ins[0][1]) if ins else []
 ok("sub-start 詳細: runtime/model/type/via が乗る",

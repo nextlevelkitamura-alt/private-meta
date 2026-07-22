@@ -70,7 +70,7 @@ plans/
    - `active → done` は最終評価md全PASS後だけ。問題があれば `done → active` へ戻す。
    - `done → archive` は人間確認と終了記録後だけ。`planning/active/paused → archive` は `superseded/merged/conflict/cancelled` の終了記録と人間確認がある時だけ。
    - repoへ卒業 → バケット移動ではなく §5 の卒業手順で repo へ移す。
-   - 終了区分は `completed`／`superseded`／`merged`／`conflict`／`cancelled`。`completed` は全完了条件・最終評価全PASS（Programは全子完了）を要し、その他は理由・人間確認・未完了事項、さらに `superseded/merged/conflict` は後継・統合先を要する。移動は `bucketctl` を使い、上限は active=5・paused=3・done=8（planning/archiveは無制限）とする（2026-07-19人間承認でactive 4→5）。
+   - 終了区分は `completed`／`superseded`／`merged`／`conflict`／`cancelled`。`completed` は全完了条件・最終評価全PASS（Programは全子完了）を要し、その他は理由・人間確認・未完了事項、さらに `superseded/merged/conflict` は後継・統合先を要する。移動は `bucketctl` を使い、上限は active=6・paused=3・done=8（planning/archiveは無制限）とする（2026-07-19人間承認でactive 4→5、2026-07-22人間承認で5→6）。
 4. 空の `planning/` `paused/` `done/` `archive/` は `.gitkeep` を置く。`移行済み/` は空フォルダを先に作らず、初回卒業時に作る。
 5. `plan.md` を計画本文の正本にする。追加ファイルは分離した方が読みやすい時だけ作る。実行結果・評価からの同期は `planctl`、終了記録の検証を含む遷移は `bucketctl` が担当する。
 

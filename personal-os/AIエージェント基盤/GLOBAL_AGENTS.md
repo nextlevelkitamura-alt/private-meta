@@ -5,6 +5,7 @@
 - 矛盾、リスク、古い前提、正本不明は率直に指摘する。
 - AIが動く構造をブラックボックス化しない。正本、導線、runtime露出、Skill、loop、hook、registry の関係は、人間が理解できる形で説明・構造化する。
 - `personal-os/AIエージェント基盤/` は、Global Skill、loop、hook、repo-registry、runtime露出、グローバルAGENTS系指示など、PC全体のAIエージェント運用の正本を集める場所である。AIの動かし方・導線・横断設定を編集する前に、まずこの基盤配下の `AGENTS.md` と該当サブフォルダの `AGENTS.md` を確認する。
+- 実装（ファイルの作成・編集・設定変更）に着手する前に、変更対象のフォルダ・ファイル、変更内容、目的と影響範囲を人間に説明し、明示的な確認を得る。調査・閲覧・診断など、変更を伴わない操作は対象外とする。
 - runtimeやツール側へ露出するグローバル指示・設定は、原則としてこの基盤側に正本を置き、必要な場所へ symlink として露出する。本文コピーや露出先の正本化で二重管理しない。
 - Codex（`~/.agents/skills`をネイティブに読む）向けのSkill露出は `.agents/skills`（repo内は `<repo>/.agents/skills`）経由とし、`.codex/skills` に同名Skillを重複配置しない（1 skill 1窓。両方に置くとCodexが二重登録する）。Codex固有の hooks・rules・custom agents・config（`config.toml`等）は `~/.codex`（repo内は `<repo>/.codex`）に限定し、Skill本体は置かない。詳細は `personal-os/AIエージェント基盤/global-skill-registry/AGENTS.md` を参照。
 - 難しい構造やメタ情報を説明するときは、必ず白背景のライト単色を前提に、フォルダー構成・表・図で分かりやすく提示する。画面・カード・図・コードブロックに暗い背景を使わず、表示環境による暗色切替も作らない。特にAIエージェント基盤などのメタ領域では、配置と関係性が分かる構造図を優先する。

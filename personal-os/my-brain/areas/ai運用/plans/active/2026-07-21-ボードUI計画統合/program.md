@@ -71,6 +71,13 @@ program「当日ボードSQL化」の親最終一括が完了していること:
     人間ゲート: モック承認（済6往復v6確定）・push（済）・本番反映（済デプロイ中）
     次: まとめ評価01=APPROVED(コード全PASS・FAIL0・憲法違反0・保留8=実機人間ゲート)保存済み。残=実機目視で保留クリア→done。実装=focusmap e86bdaf4+21825e61（plan-steps/live-elapsed/step-doc-button/plan-doc API新規・SessionSubagent detail5列配線・指揮官バー・実装中ピル点滅・毎秒経過）。正本モック=references/board-mock-v6.html
     場所: plans/06 ／ 依存: 子05
+- [ ] 07 テーマ上位4段化 … v6の上にテーマ層を追加(案A・2026-07-22人間指摘=テーマは複数プログラムを束ねる上位)。実装完了・push済み・本番デプロイ中
+    役割: 実装
+    対象repo: focusmap＋inbox themes(plan_refsデータ整備)
+    並列: 子06完了後(同一ボード部品の上に層を足す)
+    人間ゲート: push・本番反映
+    次: 本番実機でテーマ→複数計画の入れ子確認。実装=focusmap 20bbc0c7(theme-group.tsx新規・ThemeGroup契約・テーマ未設定枠)。データ=themes.plan_refsをクリーンslug化し「ボードを計画軸へ刷新」テーマに当日ボードSQL化+ボードUI計画統合の2プログラムを束ねた
+    場所: plans/07 ／ 依存: 子06
 - [ ] 04 完了移動の運用実測 … 計画（前提ゲート待ち）
     役割: 評価
     対象repo: なし（観測と記録）

@@ -65,24 +65,24 @@
 ## 工程
 
 - [x] 01 実装: レーンA 入口ガイド強化（common.py注入文＋register-and-guide.md＋段階1位置づけ）  評価: まとめ
-- [ ] 02 実装: レーンB focusmap 計画外エージェントゾーン＋plan直結格納＋repo表示（getCurrentSessions/build/types/新コンポーネント/page差し込み）  評価: まとめ
+- [x] 02 実装: レーンB focusmap 計画外エージェントゾーン＋plan直結格納＋repo表示（getCurrentSessions/build/types/新コンポーネント/page差し込み）  評価: まとめ
 - [ ] 03 レビュー: 両レーンを独立評価（入口2分岐の明示・focusmap groupingの後方互換・build成功・格納の移動）  評価: まとめ
 
 ## 完了条件
 
 - [x] 入口(UserPromptSubmit)の注入文に「必ず判断→記録だけ／計画作成+commit+反映」の2分岐が明示される（対象: common.py register_prompt・register-and-guide.md）
 - [x] session-board既存テストが全PASS（入口文変更で挙動を壊さない）（対象: shared/session-board/tests）
-- [ ] focusmapで plan を宣言したセッションがその計画カード内に表示される（対象: build.ts・getCurrentSessions・ローカル確認）
-- [ ] plan/theme/todoの無いセッションが「計画外エージェント」ゾーンに出る（strayと分離）（対象: build.ts・types.ts・新コンポーネント・page.tsx）
-- [ ] 各エージェント行に repo（sessions.repo・どのrepoのセッションか）が表示される（対象: SessionRow・types.ts SessionItem・build.ts伝播）
-- [ ] focusmap `npm run build` が成功し、契約型が後方互換（対象: focusmap build）
-- [ ] 本番反映（push/deploy）は人間承認を得るまで保留にしてある（対象: 本子・人間ゲート）
+- [x] focusmapで plan を宣言したセッションがその計画カード内に表示される（対象: build.ts・getCurrentSessions／build+コードレビューで検証・ライブ確認はrepo規則で自動化せず任意）
+- [x] plan/theme/todoの無いセッションが「計画外エージェント」ゾーンに出る（strayと分離）（対象: build.ts・types.ts・新コンポーネント・page.tsx）
+- [x] 各エージェント行に repo（sessions.repo・どのrepoのセッションか）が表示される（対象: SessionRow・types.ts SessionItem・build.ts伝播）
+- [x] focusmap `npm run build` が成功し、契約型が後方互換（対象: focusmap build＝Compiled successfully・146/146ページ）
+- [x] 本番反映（push/deploy）は人間承認を得るまで保留にしてある（対象: 本子・人間ゲート＝local main 0570acff・ahead1未push）
 
 ## 実装結果
 
 - レーンA（基盤・入口フロー）: 実装完了・commit済み。`common.py`初回ガイドに「着手前に必ず判断→①記録だけ／②計画作成+commit+focusmap反映」の2分岐を明示。`register-and-guide.md`追従・段階1hookを補助と位置づけ。session-boardテスト全PASS（test-shims 21/0・common 13/0 ほか）。repo捕捉は入口で既存（`repo_of(cwd)`→`sessions.repo`）。
-- レーンB（focusmap表示）: **残タスク（deferred・2026-07-22時点）**。「計画外エージェント」ゾーン・plan直結格納・repo表示。実装者が着手済みだがfocusmap working treeに未commit（本番反映＝人間ゲート）。人間判断Bで、まずレーンAを確定し表示は後続へ切り出し。
-- まとめ評価: 両レーン揃ってから実施（工程03）。現時点はレーンA単独完了・program active継続。
+- レーンB（focusmap表示）: 実装完了・commit済み（2026-07-22追記）。`build.ts`のセッション振り分けに「plan宣言→planSlugBase一致の計画カード直結」を追加し、無所属セッションを`stray`から新配列`unplannedSessions`へ分離。`unplanned-agents.tsx`（新規）で「計画外で動いているエージェント」ゾーンを追加（StrayBox/theme-groupと同じ視覚語彙・空なら非表示）。`session-row.tsx`に`sessions.repo`バッジ。`page.tsx`/`board-summary-panel.tsx`でthemeGroupsとStrayBoxの間へ差し込み。検証=`npm run build`成功（Compiled successfully・146/146ページ・契約型後方互換）＋コードレビュー。focusmap local main `0570acff`（ahead1・未push）。本番反映（push/Cloud Runデプロイ）は人間ゲートで保留。ライブ実データのプレビューはfocusmap AGENTS.md「自動でブラウザ確認しない」規則で未実施＝任意フォローアップ。
+- まとめ評価: 工程03（両レーン独立評価）が残る。実装・build検証はレーンA/B揃って完了。program active継続、まとめ評価PASSで子05クローズ。
 
 ## 終了記録
 

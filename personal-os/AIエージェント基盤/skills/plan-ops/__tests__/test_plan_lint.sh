@@ -96,4 +96,43 @@ child_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/generated-program/plans/01-子.md
 assert_eq "(l) repo-local想定の子雛形はplaceholder以外で通る" "$?" "0"
 assert_contains "(l) 子雛形lintの成功を表示" "$child_out" "違反なし"
 
+# ── テンプレv2: 工程節の必須化・形式検査・評価混在（frontmatter「テンプレ: v2」の時だけ発火）
+# (m) v2マーカー有り＋工程節なし → FAIL
+cp "$FIX/clean-plan.md" "$WORKDIR/v2-no-steps.md"
+perl -0pi -e 's/^(分類: .*\n)/${1}テンプレ: v2\n/m' "$WORKDIR/v2-no-steps.md"
+v2_no_steps_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v2-no-steps.md" 2>&1)"
+assert_eq "(m) v2で工程節なしはexit 1" "$?" "1"
+assert_contains "(m) 工程節なしを検出" "$v2_no_steps_out" "工程節が無い（テンプレv2は必須）"
+
+# (n) v2マーカー有り＋工程行が形式不正 → FAIL
+cp "$FIX/clean-plan.md" "$WORKDIR/v2-bad-step.md"
+perl -0pi -e 's/^(分類: .*\n)/${1}テンプレ: v2\n/m' "$WORKDIR/v2-bad-step.md"
+perl -0pi -e 's/## 完了条件/## 工程\n\n- [ ] 実装 内容\n\n## 完了条件/' "$WORKDIR/v2-bad-step.md"
+v2_bad_step_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v2-bad-step.md" 2>&1)"
+assert_eq "(n) v2で工程行形式不正はexit 1" "$?" "1"
+assert_contains "(n) 工程行形式不正を検出" "$v2_bad_step_out" "工程行の形式不正"
+
+# (o) v2マーカー有り＋正しい工程節 → 違反なし
+cp "$FIX/clean-plan.md" "$WORKDIR/v2-ok.md"
+perl -0pi -e 's/^(分類: .*\n)/${1}テンプレ: v2\n/m' "$WORKDIR/v2-ok.md"
+perl -0pi -e 's/## 完了条件/## 工程\n\n- [ ] 01 実装: 内容  評価: まとめ\n\n## 完了条件/' "$WORKDIR/v2-ok.md"
+v2_ok_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v2-ok.md")"
+assert_eq "(o) v2で正しい工程節はexit 0" "$?" "0"
+assert_contains "(o) 違反なしを表示" "$v2_ok_out" "違反なし"
+
+# (p) v2マーカー無し（既存相当）＋工程節なし → 新検査が発火しない
+cp "$FIX/clean-plan.md" "$WORKDIR/legacy-no-marker.md"
+legacy_marker_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/legacy-no-marker.md")"
+assert_eq "(p) マーカー無しはexit 0" "$?" "0"
+assert_not_contains "(p) マーカー無しでは工程検査が発火しない" "$legacy_marker_out" "工程節が無い"
+
+# (q) v2マーカー有り＋本文に評価スコア混在 → FAIL
+cp "$FIX/clean-plan.md" "$WORKDIR/v2-eval-mix.md"
+perl -0pi -e 's/^(分類: .*\n)/${1}テンプレ: v2\n/m' "$WORKDIR/v2-eval-mix.md"
+perl -0pi -e 's/## 完了条件/## 工程\n\n- [ ] 01 実装: 内容  評価: まとめ\n\n## 完了条件/' "$WORKDIR/v2-eval-mix.md"
+printf '\n- [PASS] 混在した評価\n' >> "$WORKDIR/v2-eval-mix.md"
+v2_eval_mix_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v2-eval-mix.md" 2>&1)"
+assert_eq "(q) v2で評価混在はexit 1" "$?" "1"
+assert_contains "(q) 評価混在を検出" "$v2_eval_mix_out" "評価本文が計画に混在"
+
 report

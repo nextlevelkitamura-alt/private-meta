@@ -50,7 +50,7 @@ Wave 3:
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
 
-- [ ] 01 テンプレ工程化とまとめ評価規約 … 計画（方針確定・未着手）
+- [x] 01 テンプレ工程化とまとめ評価規約 … 完了（評価01=全PASS・APPROVED・都度評価済み・全体人間確認待ち）
     役割: 実装
     対象repo: ~/Private（plan-ops templates/scripts・plan-registry/AGENTS.md）
     並列: 可

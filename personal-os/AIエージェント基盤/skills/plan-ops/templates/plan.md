@@ -1,4 +1,5 @@
 分類: <skill/repo/loop/横断> ／ 種別: <新規作成/既存改善/統合整理>
+テンプレ: v2
 規模: <ライト/フル>
 形態判定: <単発> ／ 理由: <同じ所有範囲・rollback単位などを1行で>
 並列: <可/不可>
@@ -32,6 +33,11 @@
 - 完了時に返す情報: result packet（status / base_commit / result_commit / changed_paths / tests / assumptions / blockers / remaining_risks / out_of_scope_findings）
 
 ## 方針
+
+## 工程
+
+<!-- 1行1工程。NNは連番、種別は 実装|レビュー|修正、評価は 都度|まとめ。まとめ評価が既定。 -->
+- [ ] 01 実装: <最初の実装工程>  評価: まとめ
 
 ## 完了条件
 

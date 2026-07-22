@@ -65,13 +65,15 @@ def all_checked(plan):
 
 def evaluation_files(directory):
     """計画自身の評価md。新配置（評価/ 直下・2026-07-17分離）を優先し、無ければ旧配置（計画直下）へ
-    フォールバックする。子の評価（NN-子名-評価RR.md）は「評価」で始まらないため、ここには混ざらない。"""
+    フォールバックする。まとめ評価（複数工程・複数子を1本で採点・2026-07-22）も計画自身の評価として拾う。
+    子の評価（NN-子名-評価RR.md／NN-子名-まとめ評価RR.md）は数字始まりで「評価」「まとめ評価」いずれの
+    globにもマッチしないため、ここには混ざらない。"""
     folder = directory / "評価"
     if folder.is_dir():
-        found = sorted(folder.glob("評価*.md"))
+        found = sorted(list(folder.glob("評価*.md")) + list(folder.glob("まとめ評価*.md")))
         if found:
             return found
-    return sorted(directory.glob("評価*.md"))
+    return sorted(list(directory.glob("評価*.md")) + list(directory.glob("まとめ評価*.md")))
 
 
 def evaluation_passes(directory):

@@ -201,4 +201,35 @@ folder_fail_out="$($SCRIPTS/bucketctl.sh move "$TRANS/plans/done/completed-eval-
 assert_eq "(i) 評価/配置のFAILはarchive拒否" "$folder_fail_rc" "1"
 assert_contains "(i) FAIL理由を返す" "$folder_fail_out" "最終評価"
 
+# (j) まとめ評価（複数工程・複数子を1本で採点・2026-07-22）を done ゲートが認識する。
+SUMMARY="$WORKDIR/summary"
+mkdir -p "$SUMMARY/plans/active/まとめ対象/評価" "$SUMMARY/plans/active/まとめFAIL対象/評価" "$SUMMARY/plans/done"
+printf '# plan\n\n## 完了条件\n- [x] 確認\n' > "$SUMMARY/plans/active/まとめ対象/plan.md"
+printf '# plan\n\n## 完了条件\n- [x] 確認\n' > "$SUMMARY/plans/active/まとめFAIL対象/plan.md"
+cat > "$SUMMARY/plans/active/まとめ対象/評価/まとめ評価01.md" <<'EOF'
+## 項目別採点
+- [PASS] 工程01の完了条件
+- [PASS] 工程02の完了条件
+## 総合判定
+全PASS
+EOF
+cat > "$SUMMARY/plans/active/まとめFAIL対象/評価/まとめ評価01.md" <<'EOF'
+## 項目別採点
+- [PASS] 工程01の完了条件
+- [FAIL] 工程02の完了条件
+## 総合判定
+FAILあり
+EOF
+git -C "$SUMMARY" init -q
+git -C "$SUMMARY" config user.name test
+git -C "$SUMMARY" config user.email test@example.invalid
+git -C "$SUMMARY" add plans
+git -C "$SUMMARY" commit -qm seed
+summary_out="$("$SCRIPTS/bucketctl.sh" move "$SUMMARY/plans/active/まとめ対象" --to done 2>&1)"; summary_rc=$?
+assert_eq "(j) まとめ評価全PASSでactive→done dry-runが通る" "$summary_rc" "0"
+assert_contains "(j) dry-runを表示" "$summary_out" "dry-run"
+summary_fail_out="$("$SCRIPTS/bucketctl.sh" move "$SUMMARY/plans/active/まとめFAIL対象" --to done 2>&1)"; summary_fail_rc=$?
+assert_eq "(j) まとめ評価にFAILがあればactive→doneを拒否" "$summary_fail_rc" "1"
+assert_contains "(j) FAIL理由を返す" "$summary_fail_out" "最終評価md全PASS"
+
 report

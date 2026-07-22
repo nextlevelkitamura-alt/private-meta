@@ -17,6 +17,7 @@ usage: new-plan.sh --out <生成する.mdの絶対パス> [--program] [--class <
   --class    分類（skill/repo/loop/横断 等）。省略時はプレースホルダのまま
   --kind     種別（新規作成/既存改善/統合整理）。省略時はプレースホルダのまま
 
+生成物はテンプレv2＝工程節必須（frontmatter「テンプレ: v2」＋「## 工程」節をテンプレ本体に含む）。
 テンプレ本文の正本: skills/plan-ops/templates/{plan.md,program.md}（areas/AGENTS.md §3 転記）
 EOF
   exit 2

@@ -19,6 +19,44 @@ PROGRAM_SECTIONS = ["目的", "非対象", "正本境界", "全体像・実行Wa
 MAP_FIELDS = ["役割:", "対象repo:", "並列:", "人間ゲート:", "次:", "場所:", "依存:", "参照:"]
 PLACEHOLDER_RE = re.compile(r"<[^>]+>")
 REVIEW_FIELD_RE = re.compile(r"(?:^|[／\s])レビュー\s*:")
+# テンプレv2の工程節（マーカーがv2の時だけ発火）。1行1工程: `- [ ] NN 種別: 内容  評価: 都度|まとめ`。
+STEP_CHECKBOX_RE = re.compile(r"\s*- \[[ x]\]")
+STEP_LINE_RE = re.compile(r"- \[[ x]\] \d{2} (?:実装|レビュー|修正): .+ 評価: (?:都度|まとめ)")
+# 計画本文への評価混在（v2の時だけ発火）。評価は 評価/評価RR.md へ分離する。
+EVAL_SCORE_RE = re.compile(r"^\s*- \[(?:PASS|FAIL|対象外)\]")
+
+
+def is_template_v2(lines):
+    found = parse_top_field(lines, "テンプレ:")
+    return found is not None and found[0] == "v2"
+
+
+def lint_steps(path, lines, out):
+    """テンプレv2の「## 工程」節を検査する。単発plan.mdとProgram子にだけ呼ぶ（programには呼ばない）。"""
+    section = find_section(lines, "工程")
+    if section is None:
+        report(path, 1, "工程節が無い（テンプレv2は必須）", out)
+        return
+    _, start, end = section
+    step_indices = [idx for idx in range(start, end) if STEP_CHECKBOX_RE.match(lines[idx])]
+    if not step_indices:
+        report(path, section[0] + 1, "工程節に工程行が無い（テンプレv2は必須）", out)
+        return
+    for idx in step_indices:
+        if not STEP_LINE_RE.match(lines[idx].strip()):
+            report(path, idx + 1, "工程行の形式不正（- [ ] NN 実装|レビュー|修正: 内容  評価: 都度|まとめ）", out)
+
+
+def lint_eval_mixing(path, lines, out):
+    """計画本文に評価スコア行・採点見出しが混在していないか検査する（v2の時だけ）。"""
+    message = "評価本文が計画に混在。評価は 評価/評価RR.md へ分離する"
+    for idx, line in enumerate(lines, 1):
+        if EVAL_SCORE_RE.match(line):
+            report(path, idx, message, out)
+            break
+    scoring = find_section(lines, "項目別採点")
+    if scoring is not None:
+        report(path, scoring[0] + 1, message, out)
 
 
 def field_value(lines, section, label):
@@ -75,6 +113,12 @@ def lint_plan(path, lines, allow_placeholders, out):
         _, start, end = completion
         if not any(re.match(r"\s*- \[[ x]\]", lines[idx]) for idx in range(start, end)):
             report(path, completion[0] + 1, "完了条件が1件以上必要", out)
+
+    # テンプレv2マーカーがある計画にだけ、工程節の必須化・形式検査・評価混在検査を発火させる。
+    # マーカー無し/v2でない既存計画では新検査を一切発火させない（後方互換）。
+    if is_template_v2(lines):
+        lint_steps(path, lines, out)
+        lint_eval_mixing(path, lines, out)
 
     if not allow_placeholders:
         for idx, line in enumerate(lines, 1):

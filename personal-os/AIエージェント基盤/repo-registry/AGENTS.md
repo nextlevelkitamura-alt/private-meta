@@ -7,7 +7,7 @@ repoの現在状態は `/Users/kitamuranaohiro/Private/projects/{active,paused,a
 ## 1. 役割
 
 1. `logs/`: repoとrepo-local Skillの履歴。
-2. `repo概要.md`: 担当repo判定の索引（定型4行=役割/場所/入口/登録のポインタのみ）。plan-triage・session-board・loop-creator・morning-routineが読む。**repoの登録・移動・archiveと同一作業単位で更新する**（書き手は `repo-create` / `repo-relocation` の各workflow）。整合は `../skills/repo-create/scripts/repoctl-check.sh` で機械確認する。
+2. `repo概要.md`: 担当repo判定の索引（定型4行=役割/場所/入口/登録のポインタのみ）。plan-registryの経路解決（triage決定手続き）・session-board・loop-creator・morning-routineが読む。**repoの登録・移動・archiveと同一作業単位で更新する**（書き手は `repo-create` / `repo-relocation` の各workflow）。整合は `../skills/repo-create/scripts/repoctl-check.sh` で機械確認する。
 
 repo新規作成、repo改善、所有repo未確定のrepo-local Skill計画は `/Users/kitamuranaohiro/Private/personal-os/my-brain/areas/ai運用/plans/` を見る。
 

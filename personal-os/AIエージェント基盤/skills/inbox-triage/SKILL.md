@@ -9,8 +9,8 @@ description: 人間が指定したデイリー依頼インボックス1行を、
 
 ## 1. 必ず読む
 
-1. `../plan-triage/references/route-contract.md`: action、停止、handoffの唯一の契約。
-2. 規模判定時は `../plan-triage/workflows/triage.md` Step 2。
+1. `../../plan-registry/route-contract.md`: action、停止、handoffの唯一の契約。
+2. 規模判定時は `../../plan-registry/triage.md` Step 2。
 3. 雛形生成時だけ `../plan-ops/SKILL.md` §2.2。
 
 ## 2. 入力

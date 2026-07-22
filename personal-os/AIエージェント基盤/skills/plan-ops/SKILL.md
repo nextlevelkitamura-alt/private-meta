@@ -24,7 +24,7 @@ description: 計画ライフサイクルの機械手続き（program.md子計画
 
 ## 不変の境界
 
-1. 置き場の解決・既存planへの合流・規模判定は `plan-triage`、計画内容の判断は判断系Skillが担当する。
+1. 置き場の解決・既存planへの合流・規模判定は `plan-registry`（経路解決＝triage決定手続き §6）、計画内容の判断は判断系Skillが担当する。
 2. このSkillは固定pathのscriptを呼ぶ窓口であり、`scripts/`、`templates/`、`__tests__/` を移動・改名しない。
 3. `plan-lint.sh` は明示pathだけを読む。雛形直後だけは `--allow-placeholders` を使えるが、実行開始前はplaceholder無しで通す。書込み・`git mv`・commitはworkflowの条件と人間ゲートに従う。pushはしない。
 4. バケット（フォルダ）と `program.md` の子計画マップ、各plan本文が状態の正本であり、第2の台帳は作らない。run manifestはgitignore配下の実行時情報であり、状態台帳ではない。
@@ -32,7 +32,7 @@ description: 計画ライフサイクルの機械手続き（program.md子計画
 
 ## 使わない場面
 
-- 「どこに計画を置くか」や「サクッと／ライト／フル」を決めるだけなら `plan-triage`。
+- 「どこに計画を置くか」や「サクッと／ライト／フル」を決めるだけなら `plan-registry`（経路解決＝triage決定手続き §6）。
 - 実装の評価、実行中レーンの監督、完了判断はこのSkillの外。必要なSkill・計画の手順へ戻る。
 
 人間向けの全体図は `SKILL.html`。正本はこの `SKILL.md` と各workflow/referenceである。

@@ -1,0 +1,47 @@
+{
+  "schema_version": "plan-triage.route-fixtures/v1",
+  "contract": "../../route-contract.md",
+  "normalization": {
+    "private_root": "$PRIVATE",
+    "repo_root": "$REPO",
+    "worktree_root": "$WORKTREE",
+    "secret_values": "forbidden"
+  },
+  "cases": [
+    {
+      "id": "repo-work-existing-plan",
+      "input": {"origin": "repo", "repo": "$REPO/work", "registry_reads": 0, "declared_boxes": ["領域/集客/LINE返信/計画/plan.md"], "existing_plans": ["領域/集客/LINE返信/計画/plan.md"], "request_kind": "area-local"},
+      "expected": {"exit_code": 0, "action": "join_existing", "canonical_repo": "$REPO/work", "registry_reads": 0, "canonical_plan_path": "$REPO/work/領域/集客/LINE返信/計画/plan.md", "plan_class": "area-local", "execution_cwd": "$REPO/work", "handoff_required": false, "stop_reason": null, "findings": [], "secret_values_emitted": 0}
+    },
+    {
+      "id": "private-work-area-new",
+      "input": {"origin": "private", "registry_repo": "$REPO/work", "declared_boxes": ["領域/整備/AI運用/計画/plan.md"], "existing_plans": [], "request_kind": "area-local"},
+      "expected": {"exit_code": 0, "action": "create_new", "canonical_repo": "$REPO/work", "registry_reads": 1, "canonical_plan_path": "$REPO/work/領域/整備/AI運用/計画/plan.md", "plan_class": "area-local", "execution_cwd": "$WORKTREE/work", "handoff_required": true, "stop_reason": null, "findings": [], "secret_values_emitted": 0}
+    },
+    {
+      "id": "repo-work-cross-domain-root",
+      "input": {"origin": "repo", "repo": "$REPO/work", "registry_reads": 0, "declared_boxes": ["plans/planning/横断改善/plan.md"], "existing_plans": [], "request_kind": "repo-root"},
+      "expected": {"exit_code": 0, "action": "create_new", "canonical_repo": "$REPO/work", "registry_reads": 0, "canonical_plan_path": "$REPO/work/plans/planning/横断改善/plan.md", "plan_class": "repo-root", "execution_cwd": "$REPO/work", "handoff_required": false, "stop_reason": null, "findings": [], "secret_values_emitted": 0}
+    },
+    {
+      "id": "repo-focusmap-declared-box",
+      "input": {"origin": "repo", "repo": "$REPO/focusmap", "registry_reads": 0, "declared_boxes": ["docs/ai/plans/active/canary/plan.md"], "existing_plans": [], "request_kind": "repo-declared"},
+      "expected": {"exit_code": 0, "action": "create_new", "canonical_repo": "$REPO/focusmap", "registry_reads": 0, "canonical_plan_path": "$REPO/focusmap/docs/ai/plans/active/canary/plan.md", "plan_class": "repo-declared", "execution_cwd": "$REPO/focusmap", "handoff_required": false, "stop_reason": null, "findings": [], "secret_values_emitted": 0}
+    },
+    {
+      "id": "private-existing-plan-ambiguous",
+      "input": {"origin": "private", "registry_repo": "$REPO/work", "declared_boxes": ["領域/整備/AI運用/計画/plan.md"], "existing_plans": ["領域/整備/AI運用/計画/plan.md", "plans/active/AI運用改善/plan.md"], "request_kind": "area-local"},
+      "expected": {"exit_code": 3, "action": "stop", "canonical_repo": "$REPO/work", "registry_reads": 1, "canonical_plan_path": null, "plan_class": "none", "execution_cwd": "$REPO/work", "handoff_required": false, "stop_reason": "EXISTING_PLAN_AMBIGUOUS", "findings": ["EXISTING_PLAN_AMBIGUOUS"], "secret_values_emitted": 0}
+    },
+    {
+      "id": "private-plan-box-missing",
+      "input": {"origin": "private", "registry_repo": "$REPO/missing-box", "declared_boxes": [], "existing_plans": [], "request_kind": "repo-declared"},
+      "expected": {"exit_code": 3, "action": "stop", "canonical_repo": "$REPO/missing-box", "registry_reads": 1, "canonical_plan_path": null, "plan_class": "none", "execution_cwd": "$REPO/missing-box", "handoff_required": false, "stop_reason": "PLAN_BOX_MISSING", "findings": ["PLAN_BOX_MISSING"], "secret_values_emitted": 0}
+    },
+    {
+      "id": "private-plan-box-ambiguous",
+      "input": {"origin": "private", "registry_repo": "$REPO/ambiguous", "declared_boxes": ["docs/ai/plans/active/a/plan.md", "plans/planning/a/plan.md"], "existing_plans": [], "request_kind": "repo-declared"},
+      "expected": {"exit_code": 3, "action": "stop", "canonical_repo": "$REPO/ambiguous", "registry_reads": 1, "canonical_plan_path": null, "plan_class": "none", "execution_cwd": "$REPO/ambiguous", "handoff_required": false, "stop_reason": "PLAN_BOX_AMBIGUOUS", "findings": ["PLAN_BOX_AMBIGUOUS"], "secret_values_emitted": 0}
+    }
+  ]
+}

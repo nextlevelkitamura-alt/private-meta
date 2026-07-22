@@ -1,6 +1,6 @@
 ---
 name: plan-create-review
-description: 計画を作る・既存計画へ合流する・programの子計画を管理する・評価と遷移を進める・終了を伝えてdone/archiveへ閉じる時に、plan-registryと既存のplan-triage/plan-opsへ正しくつなぐ利用者向け入口Skill。Use when「この仕事の計画を作って」「既存計画に入れたい」「子計画を追加したい」「計画を評価して」「この計画は終了・archiveへ」。作業の起票、route基準の定義、scriptの再実装、実装レーンの監督には使わない。
+description: 計画を作る・既存計画へ合流する・programの子計画を管理する・評価と遷移を進める・終了を伝えてdone/archiveへ閉じる時に、plan-registry（規約＋経路解決＝triage決定手続き）と既存のplan-opsへ正しくつなぐ利用者向け入口Skill。Use when「この仕事の計画を作って」「既存計画に入れたい」「子計画を追加したい」「計画を評価して」「この計画は終了・archiveへ」。作業の起票、route基準の定義、scriptの再実装、実装レーンの監督には使わない。
 ---
 
 # plan-create-review
@@ -21,7 +21,7 @@ description: 計画を作る・既存計画へ合流する・programの子計画
 
 ## 委譲と境界
 
-1. `plan-triage` は基準を依頼へ適用して書込みなしrouteを返す。このSkillはroute JSONや置き場判断を再実装しない。
+1. `plan-registry` の経路解決（triage決定手続き §6・`triage.md`）は基準を依頼へ適用して書込みなしrouteを返す。このSkillはroute JSONや置き場判断を再実装しない。
 2. `plan-ops` は雛形、既存子計画マップ更新、静的lint、planning→active昇格の固定scriptを持つ。このSkillはscriptを複製しない。
 3. `kickoff` はデイリーへの起票ゲート、`cockpit-supervisor` は実行中レーンの監督。どちらの本文・状態も所有しない。
 4. hook / session-boardに計画本文・状態・repo・評価合否を決めさせない。

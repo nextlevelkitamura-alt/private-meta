@@ -33,7 +33,7 @@
 ## Step 2: 所有repoと計画経路を解決する
 
 1. repo内起点は最寄り `AGENTS.md` から始める。
-2. Private起点は `plan-triage` に委譲し、`/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/repo-registry/repo概要.md` でcanonical repoだけを選ぶ。
+2. Private起点は `plan-registry` の経路解決（triage決定手続き §6）に委譲し、`/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/repo-registry/repo概要.md` でcanonical repoだけを選ぶ。
 3. Privateから別repoへ書く場合は、グローバル指示が定める新しい対象repo所有sessionへのhandoff後に続行する。
 4. 特定repoの業務・固有データ・資格情報に依存するならrepo-local。複数repo/runtimeにまたがる運用責務だけglobal候補とする。
 5. 既存planを先に検索し、一意なら合流する。新設・発火変更・停止・再開・廃止は人間ゲートとする。

@@ -31,6 +31,9 @@ from _planops_map import (
 MAP_HEADING = "子計画マップ"
 COMPLETION_HEADING = "完了条件"
 REVIEW_FIELD_RE = re.compile(r"(?:^|[／\s])レビュー\s*:")
+# 工程節のステップ行（- [ ] NN 実装|レビュー|修正: 内容  評価: 都度|まとめ）は種別に「レビュー」を
+# 正規に取るため、旧「レビュー:」フィールド禁止の対象から除外する。
+STEP_LINE_RE = re.compile(r"- \[[ x]\] \d{2} (?:実装|レビュー|修正): .+ 評価: (?:都度|まとめ)")
 
 # 状態語彙の正本: GLOBAL_AGENTS.md §7 の段階語彙（企画/計画/実装/評価/修正/人間確認/完了）
 # ＋ 実運用のマップ状態語（完了/実装中/評価待ち/保留 等）。完全一致で判定する
@@ -92,7 +95,7 @@ def check_completion_checked(child_path, out):
 def check_review_field(path, lines, out):
     """旧レビュー役割を新しい計画のメタデータへ戻さない。"""
     for index, line in enumerate(lines, 1):
-        if REVIEW_FIELD_RE.search(line):
+        if REVIEW_FIELD_RE.search(line) and not STEP_LINE_RE.match(line.strip()):
             out.append(f"{path}:{index}: 旧「レビュー:」フィールドは使えない。実装・評価に分ける")
 
 

@@ -21,6 +21,7 @@ PLACEHOLDER_RE = re.compile(r"<[^>]+>")
 REVIEW_FIELD_RE = re.compile(r"(?:^|[／\s])レビュー\s*:")
 # テンプレv2の工程節（マーカーがv2の時だけ発火）。1行1工程: `- [ ] NN 種別: 内容  評価: 都度|まとめ`。
 STEP_CHECKBOX_RE = re.compile(r"\s*- \[[ x]\]")
+# 工程行は種別に「レビュー」を正規に取るため、旧「レビュー:」フィールド禁止の対象から除外する（下の除外に使う）。
 STEP_LINE_RE = re.compile(r"- \[[ x]\] \d{2} (?:実装|レビュー|修正): .+ 評価: (?:都度|まとめ)")
 # 計画本文への評価混在（v2の時だけ発火）。評価は 評価/評価RR.md へ分離する。
 EVAL_SCORE_RE = re.compile(r"^\s*- \[(?:PASS|FAIL|対象外)\]")
@@ -85,7 +86,7 @@ def parse_top_field(lines, label):
 
 def lint_plan(path, lines, allow_placeholders, out):
     for idx, line in enumerate(lines, 1):
-        if REVIEW_FIELD_RE.search(line):
+        if REVIEW_FIELD_RE.search(line) and not STEP_LINE_RE.match(line.strip()):
             report(path, idx, "旧「レビュー:」フィールドは使えない。実装・評価に分ける", out)
     for heading in PLAN_SECTIONS:
         if find_section(lines, heading) is None:
@@ -154,7 +155,7 @@ def lint_program(path, lines, allow_placeholders, out):
     if review_dir.exists():
         report(str(review_dir), 1, "レビュー/ フォルダは使えない。評価/へ統一する", out)
     for idx, line in enumerate(lines, 1):
-        if REVIEW_FIELD_RE.search(line):
+        if REVIEW_FIELD_RE.search(line) and not STEP_LINE_RE.match(line.strip()):
             report(path, idx, "旧「レビュー:」フィールドは使えない。実装・評価に分ける", out)
     for heading in PROGRAM_SECTIONS:
         if find_section(lines, heading) is None:
@@ -202,7 +203,7 @@ def lint_child_mapping(program, program_lines, block, child, child_lines, out):
     if os.path.realpath(target) != os.path.realpath(program):
         report(child, 1, "親計画backlinkが対象program.mdと不一致", out)
     for idx, line in enumerate(child_lines, 1):
-        if REVIEW_FIELD_RE.search(line):
+        if REVIEW_FIELD_RE.search(line) and not STEP_LINE_RE.match(line.strip()):
             report(child, idx, "旧「レビュー:」フィールドは使えない。実装・評価に分ける", out)
     for label in ("並列:", "人間ゲート:"):
         parent = map_value(program_lines, block, label)

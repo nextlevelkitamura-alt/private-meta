@@ -135,4 +135,12 @@ v2_eval_mix_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v2-eval-mix.md" 2>&1)"
 assert_eq "(q) v2で評価混在はexit 1" "$?" "1"
 assert_contains "(q) 評価混在を検出" "$v2_eval_mix_out" "評価本文が計画に混在"
 
+# (r) 工程節の「レビュー」種別行は旧「レビュー:」フィールド禁止に誤ヒットしない
+cp "$FIX/clean-plan.md" "$WORKDIR/v2-step-review.md"
+perl -0pi -e 's/^(分類: .*\n)/${1}テンプレ: v2\n/m' "$WORKDIR/v2-step-review.md"
+perl -0pi -e 's/## 完了条件/## 工程\n\n- [ ] 01 実装: 作る  評価: まとめ\n- [ ] 02 レビュー: 見る  評価: まとめ\n\n## 完了条件/' "$WORKDIR/v2-step-review.md"
+v2_step_review_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v2-step-review.md" 2>&1)"
+assert_eq "(r) 工程レビュー行のplanはexit 0" "$?" "0"
+assert_not_contains "(r) 工程レビュー行を旧フィールド扱いしない" "$v2_step_review_out" "旧「レビュー:」フィールド"
+
 report

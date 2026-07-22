@@ -1,35 +1,49 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>html — Skill説明書</title>
-<style>:root{--g:#fff;--s:#fff;--s2:#f7f8fb;--i:#19212f;--m:#5f6879;--l:#dbdfea;--a:#2c3a8c;--as:#e9ecfa;--w:#b4472b;--ws:#f7e8e2;--f:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono",Menlo,Consolas,monospace}*{box-sizing:border-box}body{margin:0;background:var(--g);color:var(--i);font-family:var(--f);line-height:1.7;padding:40px 20px 72px}.wrap{max-width:840px;margin:auto;display:flex;flex-direction:column;gap:36px}.eye{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin:0 0 10px}h1{font-size:29px;margin:0;line-height:1.2}.lede{font-size:15.5px;color:var(--m);max-width:68ch;margin:12px 0 0}h2{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--m);font-weight:500;margin:0 0 14px}section{display:flex;flex-direction:column}p{margin:0 0 10px;font-size:14px}ul{margin:0;padding-left:20px;font-size:14px}li{margin-bottom:7px}figure,.wf,.ref{background:var(--s);border:1px solid var(--l);border-radius:13px;padding:16px 18px}.tree{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.9;white-space:pre-wrap}.wf,.ref{margin-bottom:12px}.h{font-size:14px;font-weight:600;margin:0 0 6px}.d,.c{font-size:13.5px;color:var(--m);margin:0 0 10px}.steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}.step{background:var(--s2);border:1px solid var(--l);border-radius:8px;padding:4px 10px}.gate{background:var(--ws);border-color:var(--w);color:#8c3620;font-weight:600}.arr{color:var(--m)}code{font-family:var(--mono);font-size:12px;background:var(--s2);padding:1px 6px;border-radius:6px}.rule{border-left:3px solid var(--w);background:var(--ws);border-radius:0 10px 10px 0;padding:12px 16px;font-size:13.5px}.foot{font-size:12.5px;color:var(--m);border-top:1px solid var(--l);padding-top:16px}@media(max-width:620px){body{padding:28px 14px 60px}}</style></head><body><main class="wrap">
-<header><p class="eye">Skill説明書 · applied + understanding gate</p><h1>html</h1><p class="lede">通常の1枚HTML作成と、メタ構造を人間が理解するまで同じHTMLで説明する理解ゲートを、別workflowへ振り分ける統合窓口。</p></header>
+<style>:root{--g:#fff;--s:#fff;--s2:#f7f8fb;--i:#19212f;--m:#5f6879;--l:#dbdfea;--a:#2c3a8c;--ai:#202c6e;--as:#e9ecfa;--go:#2e7d5b;--gi:#1e5a40;--gs:#e3f1ea;--w:#b4472b;--ws:#f7e8e2;--f:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;--mono:"SF Mono",Menlo,Consolas,monospace}*{box-sizing:border-box}body{margin:0;background:var(--g);color:var(--i);font-family:var(--f);line-height:1.7;padding:40px 20px 72px}.wrap{max-width:840px;margin:auto;display:flex;flex-direction:column;gap:38px}.eye{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin:0 0 10px}h1{font-size:29px;margin:0;line-height:1.2}.lede{font-size:15.5px;color:var(--m);max-width:68ch;margin:12px 0 0}.lede b{color:var(--i)}h2{font-size:17px;font-weight:700;color:var(--i);border-left:5px solid var(--a);padding-left:12px;margin:0 0 14px;line-height:1.4}section{display:flex;flex-direction:column}p{margin:0 0 10px;font-size:14px}ul{margin:0;padding-left:20px;font-size:14px}li{margin-bottom:7px}li b{font-weight:600}figure,.box{background:var(--s);border:1px solid var(--l);border-radius:13px;padding:16px 18px;margin:0}.tree{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.9;white-space:pre-wrap}.note{color:var(--m)}.sand{display:flex;flex-direction:column;gap:8px}.band{border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:600;border:1px solid var(--l);background:var(--s)}.band .c{display:block;font-weight:400;font-size:12px;color:var(--m)}.band.q{background:var(--as);border-color:var(--a);color:var(--ai)}.band.q .c{color:var(--ai)}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}@media(max-width:680px){.cards{grid-template-columns:1fr}}.card{background:var(--s);border:1px solid var(--l);border-radius:13px;padding:15px 16px}.card .h{font-size:14px;font-weight:700;margin:0 0 6px}.card p{font-size:13px;color:var(--m);margin:0}.card p b{color:var(--i)}.rule{border-left:3px solid var(--w);background:var(--ws);border-radius:0 10px 10px 0;padding:12px 16px;font-size:13.5px;margin-bottom:8px}code{font-family:var(--mono);font-size:12px;background:var(--s2);padding:1px 6px;border-radius:6px}.foot{font-size:12.5px;color:var(--m);border-top:1px solid var(--l);padding-top:16px}@media(max-width:620px){body{padding:28px 14px 60px}}</style></head><body><main class="wrap">
 
-<section><h2>いつ発火するか</h2><ul><li>通常HTML: 「/html」「この内容をHTMLで見せて」「比較を図とカードで1枚にまとめて」</li><li>メタ説明: 「meta-explain」「この仕組みを分かるまで説明して」「実装前に構成を見せて」</li><li>スマホ表示: 「スマホで見せて」「ブラウザURLで開きたい」</li><li>使わない: 正本md・継続編集する計画・デイリーの置き換え、軽い依頼整理、問いで詰める壁打ち</li></ul></section>
+<header><p class="eye">Skill説明書 · applied</p><h1>html</h1><p class="lede">回答・作業結果・実装説明を「見て分かる1枚HTML」にする窓口。<b>型は1つ（サンドイッチ構造）</b>で、モード選択や合言葉は無い。読者想定は「コーディングしないが、GO/NGを判断する人」。2026-07-22にquick/full二択とmeta-explain workflowを統合・廃止。</p></header>
+
+<section><h2>いつ発火するか</h2><ul>
+<li><b>使う</b>: 「/html」「この内容をHTMLで見せて」「レポート・調査まとめ・比較・ダッシュボード」「実装前に構成を見せて」「分かるまで説明して」</li>
+<li><b>スマホ表示</b>: 「スマホで見せて」「ブラウザURLで開きたい」（明示依頼時だけ）</li>
+<li><b>使わない</b>: 正本md・継続編集する計画・デイリーの置き換え、軽い依頼整理（naiyou-suriawase）、問いで詰める壁打ち（grill-me）</li>
+</ul></section>
+
+<section><h2>サンドイッチ構造（すべてのページの並び）</h2><div class="box sand">
+<div class="band">① 結論<span class="c">1〜2文・専門用語なし。ここだけ読めば概要が分かる</span></div>
+<div class="band q">② 先に質問<span class="c">判断してほしいことを1行ずつ番号つきで予告</span></div>
+<div class="band">③ 詳しい説明<span class="c">図解が主役。実装の話なら3点セット（下）を必ず入れる</span></div>
+<div class="band q">④ もう一度質問<span class="c">推奨案つき・ここで答えてもらう</span></div>
+</div><p style="margin-top:10px;font-size:13px;color:var(--m)">質問が無ければ②④を省き①③だけ（レポート・調査まとめはこの形）。指摘は同じHTML・同じURLを更新し、更新履歴にvNを積む。</p></section>
+
+<section><h2>実装説明の3点セット（③の必須要素）</h2><div class="cards">
+<div class="card"><p class="h">1. どこを触る</p><p>フォルダ構成図（R1）で全体を見せ、<b>今回触る場所だけ着色</b>。触らない場所も見せる。</p></div>
+<div class="card"><p class="h">2. こう変わる</p><p>before/after対比図（R5）。同じ図法で並べ、<b>差分だけ緑</b>で着色。</p></div>
+<div class="card"><p class="h">3. 中身の意味</p><p>コードの直後に<b>「つまり: 」の日常語1行訳</b>を必ず添える。全文は折りたたみへ。</p></div>
+</div></section>
+
+<section><h2>守るルール</h2>
+<div class="rule">実装・変更の説明では、人間の合意まで対象の実装・削除・移動・改名・symlink変更をしない（理解ループ）。</div>
+<div class="rule">すべて白背景のライト単色。暗い背景・表示環境による配色切替を作らない。self-contained・JSなし。</div>
+<ul style="margin-top:8px">
+<li><b>用語はその場で訳す</b>: 初出で1回だけ言い換え。用語集は作らない。</li>
+<li><b>長文を書かない</b>: 1項目2行まで。超えたら図か折りたたみへ。</li>
+<li><b>secret・token・credential・認証値</b>をHTMLに含めない。commit・push・外部送信はしない。</li>
+</ul></section>
 
 <section><h2>構造</h2><figure><pre class="tree">html/
-├── SKILL.md                         発火・workflow振り分け・共通安全
+├── SKILL.md                         入口・共通の出力・安全方針
 ├── workflows/
-│   ├── create-html.md               通常HTML作成
-│   ├── meta-explain.md              メタ説明の理解ゲート
-│   └── mobile-preview.md            Codexスマホ表示
+│   ├── create-html.md               HTML作成（1本道・公開前チェック）
+│   └── mobile-preview.md            スマホ表示（明示依頼時だけ）
 ├── references/
-│   ├── html-structure.md            共通制約・部品選択（1段目=図解判定）・節の型
-│   ├── diagram-recipes.md           図解レシピ集（内容→図の対応表・量の目安）
-│   ├── mode-quick.md                軽い一時説明（図も雛形ベースで既定）
-│   ├── mode-full.md                 重要な恒久資料（主要節の過半で図が主役）
-│   └── meta-explain-layout.md       固定7節型・理解ループの見せ方
+│   ├── html-structure.md            読者想定・サンドイッチ構造・部品選択ラダー
+│   ├── diagram-recipes.md           図解レシピ集（内容→図の対応表 R1〜R6）
+│   └── impl-explain.md              実装説明の3点セット・理解ループ
 ├── scripts/                         スマホ表示の起動・検証
-├── assets/artifact-template.html    HTML骨組み・部品カタログ・図解雛形R1〜R6の正本
-└── SKILL.html                       この人間向け説明書</pre></figure></section>
+└── assets/artifact-template.html    部品CSSと図解レシピ雛形の正本</pre></figure></section>
 
-<section><h2>各workflowの中身</h2>
-<div class="wf"><p class="h"><code>create-html.md</code> — 通常HTML</p><p class="d">対象確認後にquick/fullを選び、共通構造とtemplateから必ず白背景のself-containedな1枚HTMLを作る。ローカル保存時は、恒久知識の隣接HTMLか計画内<code>explain/</code>へ置く。</p><div class="steps"><span class="step">対象確認</span><span class="arr">→</span><span class="step">quick/full</span><span class="arr">→</span><span class="step">白背景HTML作成</span><span class="arr">→</span><span class="step">PC確認・提示</span></div><p class="c"><b>完了条件:</b> 白背景・暗い背景なし・表示環境による配色切替なしをPCで確認し、正本を置き換えずに提示する。</p></div>
-<div class="wf"><p class="h"><code>meta-explain.md</code> — メタ説明</p><p class="d">正本とruntime露出を読み取り調査し、白背景の固定7節型HTMLを、人間が理解・合意するまで同一ファイルで更新する。ローカル保存時は説明対象の計画内<code>explain/</code>を使う。</p><div class="steps"><span class="step">対象・正本特定</span><span class="arr">→</span><span class="step">現状調査</span><span class="arr">→</span><span class="step">白背景説明HTML</span><span class="arr">→</span><span class="step gate">理解合意</span><span class="arr">→</span><span class="step">計画へ接続</span></div><p class="c"><b>完了条件:</b> 未決事項が全て回答済みで「理解した・これでいい」の明示がある。合意前は説明対象を編集しない。</p></div>
-<div class="wf"><p class="h"><code>mobile-preview.md</code> — スマホ・ブラウザ表示</p><p class="d">明示依頼時だけ対象HTMLをQuick Tunnelで公開し、HTTPS・200・title・tmuxを検証する。</p><div class="steps"><span class="step">機密確認</span><span class="arr">→</span><span class="step gate">明示公開</span><span class="arr">→</span><span class="step">start/status</span><span class="arr">→</span><span class="step">表示検証</span><span class="arr">→</span><span class="step">URL提示</span></div></div>
-</section>
+<p class="foot">正本: <code>personal-os/AIエージェント基盤/skills/html/</code>（runtime側はsymlink露出）。この説明書はSKILL.mdの人間向け表示で、正本は常にmd側。スキル本文を編集したら作り直す。</p>
 
-<section><h2>referencesの中身</h2><div class="ref"><p class="h"><code>html-structure.md</code></p><p class="d">全workflow共通のArtifact制約、部品選択（1段目は図解判定＝構造・流れ・関係・層・差分・経緯なら図が主役）、表の条件、節の型（リード1行→図＋キャプション→補足が既定）、白背景・ライト単色の必須規約、HTML/Markdown境界。</p></div><div class="ref"><p class="h"><code>diagram-recipes.md</code></p><p class="d">図解レシピ集。内容→図の対応表（R1ボックス型ツリー図／R2横フロー図／R3関係図／R4レイヤー図／R5 before-after対比図／R6タイムライン）、量の目安（主要節の過半で図が主役・1ページ最低1枚・装飾だけの図は禁止）、図中の色・文字量の規約。SVG雛形の実体はテンプレ側。</p></div><div class="ref"><p class="h"><code>mode-quick.md</code> / <code>mode-full.md</code></p><p class="d">通常HTMLの作り込み量。quick/fullどちらも白背景と図解既定は共通。quickは雛形コピペの図1〜2枚で軽く、fullは主要節の過半で図が主役。</p></div><div class="ref"><p class="h"><code>meta-explain-layout.md</code></p><p class="d">メタ説明固有の「全体→差分→本文」、固定7節、見せ方マッピング（diagram-recipes.mdのレシピ名を参照）、同一URL理解ループ。</p></div></section>
-
-<section><h2>絶対ルール・安全方針</h2><div class="rule">全HTMLを必ず白背景のライト単色で作り、暗い背景と表示環境による配色切替を作らない。正本mdをHTMLで置き換えない。secret・token・認証値を含めない。スマホURLは明示依頼時だけ発行する。メタ説明は自発起動せず、人間の合意まで説明対象の実装・削除・移動・改名・symlink変更をしない。</div></section>
-
-<p class="foot">更新日: 2026-07-17（図解主役化: 選択ラダー1段目に図解判定・diagram-recipes.md新設・quickの図解禁止を撤廃） ／ 正本: <code>SKILL.md</code>（この説明書は正本md群から再生成した人間向け表示）</p>
 </main></body></html>

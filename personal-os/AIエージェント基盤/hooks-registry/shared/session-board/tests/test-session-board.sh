@@ -44,7 +44,7 @@ echo "=== 3. 読み系はオフラインで missing/空（hookを止めない）
 
 echo "=== 4. inbox系コマンドが exit 0（daily/keyに触れない）==="
 ok "todo-add exit0"   "$BOARD" todo-add --title "求人票のドラフト" --assignee ai --route single
-ok "theme-add exit0"  "$BOARD" theme-add --name "T" --purpose "P" --done "D"
+ok "theme-add exit0(意図1行のみ)"  "$BOARD" theme-add --name "T"
 ok "steps exit0"      "$BOARD" steps --todo T1 --entry "ステップ1" --entry "ステップ2"
 ok "step-done exit0"  "$BOARD" step-done --todo T1 --seq 1
 ok "ask exit0"        "$BOARD" ask --todo T1 --q "按分は？" --choice A --choice B
@@ -53,7 +53,7 @@ ok "goal-add exit0"   "$BOARD" goal-add --name "今週の目標"
 echo "=== 5. 不正引数は usage 停止（非0＋usage文）==="
 ok "add --key必須"     bash -c "! '$BOARD' add >/dev/null 2>&1"
 "$BOARD" todo-add 2>&1 | grep -q "usage: board.py todo-add"; ok "todo-add title欠落=usage" test $? -eq 0
-"$BOARD" theme-add --name X 2>&1 | grep -q "usage: board.py theme-add"; ok "theme-add 目的欠落=usage" test $? -eq 0
+"$BOARD" theme-add --purpose P --done D 2>&1 | grep -q "usage: board.py theme-add"; ok "theme-add 名前欠落=usage" test $? -eq 0
 "$BOARD" todo-add --title x --assignee boss 2>&1 | grep -q "assignee"; ok "todo-add 不正assignee=usage" test $? -eq 0
 "$BOARD" goal-add 2>&1 | grep -q "usage: board.py goal-add"; ok "goal-add name欠落=usage" test $? -eq 0
 

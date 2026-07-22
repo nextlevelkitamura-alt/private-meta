@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # 子09「大課題テーマ階層と横断表示」の session-board 追加分を検証する。
-#   - theme-add: inbox themes への INSERT。AI起点は目的・完了条件が必須（欠落は usage 停止＝送信なし）。
+#   - theme-add: inbox themes への INSERT。子03で意図1行(--name)のみ必須へ緩和（目的・完了条件は任意＝NULL可）。
 #   - update --todo/--theme: sessions.todo_id/theme_id への所属先宣言（board DB・MDには載せない）。
 #   - store.py の builder（stmt_theme_insert / stmt_session_affiliation）の決定的な形。
 # board.main() を in-process で叩き、_turso_sync をモックして送信文をキャプチャする
@@ -101,12 +101,18 @@ ok("theme-add: 生成したテーマIDをstdoutへ", len(printed) >= 8 and vals(
 ok("theme-add: goal_refが載る", vals(stmts[0])[4] == "2026-07-17-求人整備")
 ok("theme-add: plan_refsはslugのJSON配列", json.loads(vals(stmts[0])[5]) == ["plan-a", "plan-b"])
 
-# 目的・完了条件の欠落は usage 停止＝送信なし（AI起点の機械必須化）
+# 子03（朝会刷新）: テーマ＝意図1行に簡素化。必須は --name だけで、目的・完了条件は任意
+# （欠落は NULL 保存＝未記入バッジ）。名前欠落だけが usage 停止。
 clear()
-run("theme-add", "--name", "名前だけ")                                  # purpose/done無し
-run("theme-add", "--name", "名前", "--purpose", "目的だけ")             # done無し
-run("theme-add", "--purpose", "p", "--done", "d")                       # name無し
-ok("theme-add: 目的・完了条件・名のいずれか欠落は送信しない", len(synced) == 0)
+run("theme-add", "--name", "意図1行だけのテーマ")                       # purpose/done無し=通る
+stmts, _ = last()
+ok("theme-add: 意図1行(--nameのみ)で1件INSERTして送る",
+   len(stmts) == 1 and "INSERT INTO themes" in stmts[0][0])
+ok("theme-add: 未指定の目的・完了条件はNULL（未記入バッジ・空テーマ扱い不変）",
+   types(stmts[0])[2] == "null" and types(stmts[0])[3] == "null")
+clear()
+run("theme-add", "--purpose", "p", "--done", "d")                       # name無し=送らない
+ok("theme-add: 名前(--name)欠落だけは usage 停止＝送信しない", len(synced) == 0)
 
 # ---- update --todo/--theme: sessions.todo_id/theme_id への宣言（board DB・MDは廃止＝正本反転）----
 # 反転後は MD を書かない。所属先は board DB の affiliation UPDATE で宣言し、DBに反映されることを検証する。

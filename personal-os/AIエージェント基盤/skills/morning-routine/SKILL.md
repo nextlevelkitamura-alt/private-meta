@@ -9,21 +9,21 @@ description: 朝会と夜会の定型手順。朝会=usage確認→前日/当日
 
 正本ポインタ（本文に複製しない）:
 
-- 当日の状態・担当・実行ログ（動いているエージェント／終わったこと）: board DB（Turso）が正本。`board.py show` か focusmap（DBから描画）で読む。デイリーmdには無い（2026-07-21 正本反転・案b）。前日ログの決定的収集は `../daily-start/scripts/fetch-context.sh`（`yesterday_session_logs`）
+- 当日の状態・担当・実行ログ（動いているエージェント／終わったこと）: board DB（Turso）が正本。`board.py show` か focusmap（DBから描画）で読む。デイリーmdには無い（2026-07-21 正本反転・案b）。前日ログとactive計画の工程進捗の決定的収集は `../daily-start/scripts/fetch-context.sh`（`yesterday_session_logs`／`active_plans`）
 - デイリーmd（`my-brain/ゴール/デイリー/<年>/<月>/<日>.md`）は人間記入節（今日すること・依頼インボックス・質問キュー・明日へ・逆算チェック）だけを持つ
 - サブスクと役割別モデル: `~/Private/personal-os/AIエージェント基盤/AIモデル一覧.md`
 - 規模・レビュー・人間ゲート: `~/Private/personal-os/AIエージェント基盤/GLOBAL_AGENTS.md` §7
 - 計画の置き場・状態語彙: `~/Private/personal-os/my-brain/areas/AGENTS.md`
-- 入口判断（規模/経路/起動形/モデル）: skill `plan-triage` ／ 実行中の監督: skill `cockpit-supervisor`
+- 入口判断（規模/経路/人間ゲート）: `~/Private/personal-os/AIエージェント基盤/plan-registry/AGENTS.md` ／ モデル・レーン規約: `~/Private/personal-os/AIエージェント基盤/AIモデル一覧.md` ／ 実行中の監督: skill `cockpit-supervisor`
 
 ## 朝会モード（発火: おはよう・朝会・朝のルーチン・モーニングルーティン）
 
 1. Claude Code の `/usage`、Codex の `/status` を必要に応じて人間に確認してもらい、結果をモデル一覧と照合する。残量は記録の正本にしない。
 2. 前日の実績（終わったこと）は board DB（`../daily-start/scripts/fetch-context.sh` の `yesterday_session_logs`、または focusmap の前日ボード）から読む。前日デイリーmdの「明日へ」と当日デイリーmdの人間記入節も読む。動いているエージェント（現況）は `board.py show` で読み、実態とずれがあれば担当AIが `board.py update`/`log` で直す。
-3. active計画、`repo-registry/repo概要.md`、`projects/active/` の実体を突き合わせ（突き合わせは `repo-create` の `scripts/repoctl-check.sh` で機械確認する）、人間と「繰越・今日やること・動かさないもの」を決める。新しい玉は `kickoff` で依頼インボックスへ1行起票する。
-4. レーン数・担当・起動形・モデルを決める。規模と人間ゲートは `plan-triage` と `GLOBAL_AGENTS.md` §7 に従い、当日の決定はデイリーとsession-boardにだけ残す。
+3. **計画確認→選択**（daily-start ①②）: `../daily-start/scripts/fetch-context.sh` の `active_plans` で各active計画の工程進捗（済/全ステップ・次の工程・優先）を把握し、`repo-registry/repo概要.md` と `projects/active/` の実体を突き合わせ（機械確認は `repo-create` の `scripts/repoctl-check.sh`）、人間と「今日進める計画・繰越・動かさないもの」を決める。選んだ意図は **テーマ=意図1行**（任意）で `board.py theme-add --name` に載せる（目的・完了条件は付けない＝正本は計画md）。新しい玉は `kickoff` で依頼インボックスへ1行起票する。
+4. **AI割り振り案→承認**（daily-start ③）: 選択計画の「次の工程」を、役割別モデル（`AIモデル一覧.md`）と計画の `並列:` に照らし「どのAIで・並列可か」の割り振り案として提示し、人間の承認を取る。規模・人間ゲートは `~/Private/personal-os/AIエージェント基盤/plan-registry/AGENTS.md` と `GLOBAL_AGENTS.md` §7 に従い、当日の決定はsession-boardにだけ残す。
 5. 指揮官が必要なら `references/commander-prompt.md` の可変部を当日の担当に合わせて埋め、チャット出力として渡す。
-6. 朝会結論を当日のTODOへ追記する。既存行の削除・書換は人間のみ、`auto:*` 区画には触らない。
+6. **繰越し・滞留確認**（daily-start ④）と確定起票: 承認後の起票（選択計画の「## 工程」節→`board.py steps` の自動登録・作文ゼロ）は daily-start が担う。テーマ/やることをこの場で作文しない。既存TODO行の削除・書換は人間のみ、`auto:*` 区画には触らない。
 
 ## 夜会モード（発火: 夜会・今日の締め・おつかれ）
 

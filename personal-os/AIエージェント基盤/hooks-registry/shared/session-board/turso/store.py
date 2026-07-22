@@ -145,8 +145,10 @@ def stmt_session_affiliation(key, todo_id=None, theme_id=None):
 
 def stmt_theme_insert(theme_id, name, purpose, done_criteria, goal_ref=None, plan_refs=None):
     """子09: 大課題テーマを inbox themes へ INSERT（board.py theme-add の実体）。
-    themes.ts insertTheme と同型: sort_order は active テーマの MAX+1。purpose/done_criteria は
-    AI起点では必須（欠落チェックは呼び出し元＝board.py の usage 停止で機械保証・DB制約では縛らない）。
+    themes.ts insertTheme と同型: sort_order は active テーマの MAX+1。name（意図1行）だけ必須で、
+    purpose/done_criteria は任意（未指定は NULL 保存＝未記入バッジ。完了条件の正本は計画md側。
+    2026-07-22 子03でテーマ簡素化・両方必須を緩和）。欠落チェックは呼び出し元＝board.py の usage
+    （name 欠落だけ停止）で機械保証・DB制約では縛らない。
     plan_refs は slug のリスト（JSON配列文字列で保存・本文コピーはしない）。"""
     name = (name or "").strip()
     if not theme_id or not name:

@@ -415,20 +415,22 @@ def main():
         if statement is None: sys.exit('usage: board.py goal-add --name "<目標>" [--date YYYY-MM-DD] [--source chat]')
         _turso_sync([statement], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE); return
     if cmd == "theme-add":
-        # 子09: 大課題テーマの作成（inbox themes）。AI起点は目的・完了条件を必須にし、
-        # 欠落は usage 停止＝機械必須化（DB制約では縛らない・人間のボード即席作成は空可）。
+        # 子03（朝会刷新）: テーマ＝意図1行に簡素化。必須は --name（意図1行）だけにする。
+        # 目的(--purpose)・完了条件(--done)は任意で、欠落時は builder が NULL 保存＝focusmap 側の
+        # 「未記入バッジ」がそのまま出る（空テーマの扱いは不変）。完了条件の正本は計画md側へ一本化する。
+        # （旧・子09: AI起点は目的・完了条件も必須にしていた＝テーマ名≒完了条件の三重コピーの一因。緩和）
         name = (args.get("name") or "").strip()
         purpose = (args.get("purpose") or "").strip()
         done = (args.get("done") or args.get("done-criteria") or "").strip()
-        if not name or not purpose or not done:
-            sys.exit('usage: board.py theme-add --name "<テーマ名>" --purpose "<目的>" --done "<完了条件>" '
-                     '[--goal <的slug>] [--plan <計画slug> ...]  '
-                     '（AI起点は目的・完了条件が必須。人間のボード即席作成はボードUI側で空可）')
+        if not name:
+            sys.exit('usage: board.py theme-add --name "<テーマ=意図1行>" '
+                     '[--purpose <目的>] [--done <完了条件>] [--goal <的slug>] [--plan <計画slug> ...]  '
+                     '（必須は意図1行の --name のみ。完了条件の正本は計画md側）')
         plans = args.get("plans") or ([args["plan"]] if args.get("plan") else [])
         theme_id = str(uuid.uuid4())
         statement = _stmt_theme_insert(theme_id, name, purpose, done, args.get("goal"), plans)
         if statement is None:
-            sys.exit('usage: board.py theme-add --name "<テーマ名>" --purpose "<目的>" --done "<完了条件>"')
+            sys.exit('usage: board.py theme-add --name "<テーマ=意図1行>" [--purpose <目的>] [--done <完了条件>]')
         _turso_sync([statement], db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE)
         print(theme_id)   # 呼び出し元（AI）が update --theme <id> や起票の紐付けに使う
         return

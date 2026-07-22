@@ -19,7 +19,7 @@
 
 ## 非対象
 
-- ボード表示側（focusmap）の変更（「ボードUI計画統合」done の所掌。本programは計画を作る仕組みのみ）。
+- focusmapのボードUI大改修（子07の4段構造は「ボードUI計画統合」done の所掌）。ただし子05は入口フローに伴う「計画外エージェントゾーン」1つの追加だけfocusmapに触れる（大改修はしない）。
 - md＋git正本・バケット状態管理・plansync一方向ミラーの根幹変更（触らない）。
 - plan-ops の実行ツール群（bucketctl/planctl/plan-lint/plansync＝15スクリプト）のskillからの移設（opsは本物のツール＝skillのまま。移すのはtriageの決定手続きだけ）。
 - 既存計画への遡及適用（新規計画から適用。既存active/doneはそのまま）。
@@ -46,6 +46,8 @@ Wave 2:
   └ 子03 朝会刷新＋テーマ簡素化                      … daily-start SKILL＋fetch-context＋board.py theme-add
 Wave 3:
   └ 子04 立案強制hookの要否判断と設計                … 実装系ツール前ゲートの設計 or 見送り記録
+Wave 4（入口フローとボード格納・子01-04の後）:
+  └ 子05 入口triageとエージェント格納フロー          … 基盤=入口ガイド強化 ＋ focusmap=計画外エージェントゾーン（2レーン並列可・別repo）
 ```
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
@@ -78,12 +80,20 @@ Wave 3:
     人間ゲート: hook登録（実装する場合のみ）
     次: 「ライト以上の実装を計画なしで始めたら警告/停止」hookの要否判断。現状は助言のみ（register-and-guideはexit0＝非ブロック）。設計案（実装系ツール前ゲートで対象repoのactive計画/起票を確認）を出し、過剰摩擦なら見送りを記録。やるならPreToolUse hookで最小の警告から
     場所: plans/04 ／ 依存: 子01
+- [ ] 05 入口triageとエージェント格納フロー … 実装中（起こし済み・2レーン着手）
+    役割: 実装
+    対象repo: ~/Private（基盤）＋ projects/active/focusmap（表示）
+    並列: 可
+    人間ゲート: focusmapの本番反映（git push / Cloud Runデプロイ）
+    次: レーンA=common.py入口ガイドに「必ず判断→記録だけ/計画作成+commit+反映」の2分岐を明示／レーンB=focusmapに「計画外エージェント」ゾーンとplan直結格納を追加。本番反映は人間承認まで保留
+    場所: plans/05 ／ 依存: 子03
 
 ## 人間ゲート
 
 - skill削除（子02: plan-triage を skill-delete で閉じる）＋ global-skill-registry catalog 更新
 - daily-start 手順書の差し替え（子03: 朝の儀式の変更）
 - hook登録（子04: 立案強制hookを実装する場合のみ）
+- focusmapの本番反映（子05: git push / Cloud Runデプロイ。ローカルcommit/buildまではゲート外）
 
 ## 完了条件
 
@@ -93,6 +103,7 @@ Wave 3:
 - [ ] 翌朝のdaily-start実走で、テーマ作文・やること作文が発生せず、選択計画の工程がそのままDB登録される（対象: daily-start・翌朝実測）
 - [ ] theme-addが意図1行だけで通り、完了条件入力が要求されない（対象: session-board）
 - [ ] 立案強制hookの要否が判断され、実装 or 見送りの記録がある（対象: 子04）
+- [ ] 入口(UserPromptSubmit)の注入文に「必ず判断→記録だけ／計画作成+commit+反映」の2分岐が明示され、focusmapに「計画外エージェント」ゾーンが出てplan宣言で計画へ格納される（対象: 子05・common.py・focusmap build）
 
 ## 関連
 

@@ -25,6 +25,13 @@
 - 入口: `projects/active/仕事/AGENTS.md`
 - 登録: `logs/repositories/registered/2026-07/07-17-shigoto.md`
 
+## NextLevel Career Site
+
+- 役割: 公開求人・相談導線と社内求人管理を提供するNext.js/Supabase/Cloud Runアプリ（repo-id: nextlevel-career-site）
+- 場所: `projects/active/nextlevel-career-site/`
+- 入口: `projects/active/nextlevel-career-site/AGENTS.md`
+- 登録: `logs/repositories/registered/2026-07/07-22-nextlevel-career-site.md`
+
 ## focusmap
 
 - 役割: AIが管理・実行し人間は俯瞰・承認するダッシュボード（旧shikumika）

@@ -48,13 +48,18 @@
 
 ## 完了条件
 
-- [ ] 立案強制hookの要否が根拠付きで判断され、記録がある（対象: 本子の実装結果 or 見送り記録）
-- [ ] 実装する場合: 警告hookが登録され、サクッと3条件は免除される（対象: hooks-registry・settings.json）
-- [ ] 見送る場合: 代替（朝会での計画確認）で穴が埋まることを明記（対象: 本子・子03との整合）
+- [x] 立案強制hookの要否が根拠付きで判断され、記録がある（対象: 本子の実装結果 or 見送り記録）
+- [ ] 実装する場合: 警告hookが登録され、サクッと3条件は免除される（対象: hooks-registry・settings.json）※hook本体は実装・単体検証済み／登録は人間ゲート保留
+- [ ] 見送る場合: 代替（朝会での計画確認）で穴が埋まることを明記（対象: 本子・子03との整合）※対象外（人間が段階1採用を選択）
 
 ## 実装結果
 
-実装後にplanctlが追記・更新する。実行前は記入しない。
+- status: 判断・実装済み（人間判断=段階1採用）／hook登録の人間ゲートが保留。
+- 判断: references/子04-立案強制hook判断.md（見送り側の分析＋段階案）。人間は見送りでなく段階1を選択。
+- changed_paths: hooks-registry/events/pre-tool-use/{guard-plan-gate.py(新),guard-plan-gate.md(新),AGENTS.md(2hook反映)}・references/子04-立案強制hook判断.md。
+- 検証: guard-plan-gate.py単体（.git+active計画→免除／なし→警告1回／別session再警告／.md・scratchpad免除／異常入力exit0）。
+- 人間ゲート保留: guard-plan-gate登録（settings.json＋codex hooks.json＋再trust）。未登録＝現在は作用しない。
+- サクッと免除: 免除条件に.md・active計画・session1回を実装（3条件の完全自動判定は原理的に不可のため弱い信号でwarn-only）。
 
 ## 終了記録
 

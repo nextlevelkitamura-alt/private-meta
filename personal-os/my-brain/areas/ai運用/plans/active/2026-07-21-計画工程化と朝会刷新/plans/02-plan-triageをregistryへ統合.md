@@ -51,14 +51,19 @@
 
 ## 完了条件
 
-- [ ] triage手続き・テストが plan-registry 配下にある（対象: plan-registry/AGENTS.md・scripts/）
-- [ ] skills/plan-triage が閉じ（skill-delete承認・deletedログ）、catalogから除かれている（対象: skills/・global-skill-registry）
-- [ ] 9参照すべてが plan-registry を指し、「skill plan-triage」の残参照が0（対象: 各SKILL.md・grep）
-- [ ] triageの判定挙動が移設前後で不変（検証テストがplan-registry配下で全PASS）（対象: 移設テスト）
+- [x] triage手続き・テストが plan-registry 配下にある（対象: plan-registry/AGENTS.md・scripts/）
+- [x] skills/plan-triage が閉じ（skill-delete承認・deletedログ）、catalogから除かれている（対象: skills/・global-skill-registry）
+- [x] 9参照すべてが plan-registry を指し、「skill plan-triage」の残参照が0（対象: 各SKILL.md・grep）
+- [x] triageの判定挙動が移設前後で不変（検証テストがplan-registry配下で全PASS）（対象: 移設テスト）
 
 ## 実装結果
 
-実装後にplanctlが追記・更新する。実行前は記入しない。
+- status: done（実装=implementer / 評価=reviewer独立・WARNING→catalog1行修正→APPROVED相当 / まとめ評価01で全PASS）。
+- changed_paths: plan-registry/{AGENTS.md §6新設,triage.md,route-contract.md,examples/,scripts/}・11参照skill・catalog/meta.md・repo-registry/AGENTS.md・skills/plan-triage(削除)。
+- tests: 移設先validate-route-cases/inbox-contract exit0（移設元とbyte-identical）・削除後も独立にexit0・残参照0。
+- 人間ゲート: plan-triage物理削除を2026-07-22人間承認→skill-delete実行（deletedログ07-22・露出0本）。
+- commit: 移設(子02)＋削除(子02ゲート)の2コミット。
+- remaining_risks: 表示専用HTMLのstale（フォローアップ）・スキーマ識別子plan-triage.route/v1は契約名で意図的保持。
 
 ## 終了記録
 

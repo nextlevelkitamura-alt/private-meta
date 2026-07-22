@@ -57,21 +57,21 @@ Wave 3:
     人間ゲート: なし
     次: plan.md/子計画テンプレに「## 工程」節（`- [ ] NN 実装|レビュー|修正: 内容 評価: 都度|まとめ`）を必須追加。new-plan.shが単発でも評価/分離生成。plan-lintが工程節欠落・実装/評価混在を検出。plan-registryに「まとめ評価既定・都度は後続が直接使う工程だけ」を正文化＋まとめ評価テンプレ追加
     場所: plans/01 ／ 依存: なし
-- [ ] 02 plan-triageをplan-registryへ統合 … 計画（2026-07-22人間決定=triageは露出なしの決定手続き・registryと基準二重）
+- [x] 02 plan-triageをplan-registryへ統合 … 完了（移設＋skill削除・reviewer挙動不変byte-identical・まとめ評価01全PASS・2026-07-22人間承認で削除実行）
     役割: 実装
     対象repo: ~/Private（plan-registry・skills/plan-triage削除・9参照更新・global-skill-registry catalog）
     並列: 可
     人間ゲート: skill削除（plan-triage）はskill-delete承認・catalog更新
     次: triage workflow(triage.md 93行)＋検証テスト(validate-route-cases.mjs/fixtures)を plan-registry/（scripts/・本文）へ移設。plan-registry/AGENTS.mdがtriage決定手続きを吸収。「skill plan-triage」参照9箇所（kickoff/plan-create-review/morning-routine/inbox-triage/orca-cockpit/loop-creator/repo-create/custom-agent-creator）をplan-registry参照へ更新。skill-delete経由でplan-triage skillを閉じる
     場所: plans/02 ／ 依存: なし（子01と独立）
-- [ ] 03 朝会刷新とテーマ簡素化 … 計画（子01の工程節が前提）
+- [ ] 03 朝会刷新とテーマ簡素化 … 保留（reviewerコード全PASS・2026-07-22人間承認でcommit済み・翌朝10:03自動実走の実測2件が最終確認に残る）
     役割: 実装
     対象repo: ~/Private（skills/daily-start・morning-routine・session-board board.py theme-add）
     並列: 不可
     人間ゲート: daily-start手順書の差し替え（朝の儀式変更）
     次: daily-startを作文起票→「①active計画の工程進捗要約 ②今日進める計画の選択 ③次工程のAI割り振り案の提示と人間承認 ④繰越し・滞留質問の確認」へ全面改訂。起票は選択計画の工程節→自動steps登録（作文ゼロ）。テーマ3〜5個義務廃止。theme-addの完了条件を必須から外し意図1行に
     場所: plans/03 ／ 依存: 子01
-- [ ] 04 立案強制hookの要否判断と設計 … 計画（判断ゲート）
+- [ ] 04 立案強制hookの要否判断と設計 … 保留（人間判断=段階1採用・guard-plan-gate.py実装/単体検証済み・hook登録の人間承認が残る）
     役割: 実装
     対象repo: ~/Private（hooks-registry・要実装時のみ）
     並列: 可

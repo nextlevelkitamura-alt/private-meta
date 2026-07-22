@@ -60,25 +60,29 @@
 3. plan/theme/todoのいずれも無いセッションを、strayでなく新配列「計画外エージェント」へ。`types.ts` `BoardV2Data` に `unplannedSessions` を追加。
 4. 新ゾーンの表示コンポーネントを追加し、`page.tsx` の themeGroups と StrayBox の間へ差し込む。空なら非表示。
 5. 「移動して見える」＝plan宣言したセッションが次ポーリングで計画カード内 `cardSessions` へ移る（既存描画を流用）。
+6. 各エージェント行に `sessions.repo`（gitトップのbasename・入口hookで捕捉済み）を控えめに表示する。どのrepoのセッションで動いているエージェントかを人間が理解できるようにする（`SessionItem.repo` を伝播し `SessionRow` で描画・計画外ゾーンにも出る）。
 
 ## 工程
 
-- [ ] 01 実装: レーンA 入口ガイド強化（common.py注入文＋register-and-guide.md＋段階1位置づけ）  評価: まとめ
-- [ ] 02 実装: レーンB focusmap 計画外エージェントゾーン＋plan直結格納（getCurrentSessions/build/types/新コンポーネント/page差し込み）  評価: まとめ
+- [x] 01 実装: レーンA 入口ガイド強化（common.py注入文＋register-and-guide.md＋段階1位置づけ）  評価: まとめ
+- [ ] 02 実装: レーンB focusmap 計画外エージェントゾーン＋plan直結格納＋repo表示（getCurrentSessions/build/types/新コンポーネント/page差し込み）  評価: まとめ
 - [ ] 03 レビュー: 両レーンを独立評価（入口2分岐の明示・focusmap groupingの後方互換・build成功・格納の移動）  評価: まとめ
 
 ## 完了条件
 
-- [ ] 入口(UserPromptSubmit)の注入文に「必ず判断→記録だけ／計画作成+commit+反映」の2分岐が明示される（対象: common.py register_prompt・register-and-guide.md）
-- [ ] session-board既存テストが全PASS（入口文変更で挙動を壊さない）（対象: shared/session-board/tests）
+- [x] 入口(UserPromptSubmit)の注入文に「必ず判断→記録だけ／計画作成+commit+反映」の2分岐が明示される（対象: common.py register_prompt・register-and-guide.md）
+- [x] session-board既存テストが全PASS（入口文変更で挙動を壊さない）（対象: shared/session-board/tests）
 - [ ] focusmapで plan を宣言したセッションがその計画カード内に表示される（対象: build.ts・getCurrentSessions・ローカル確認）
 - [ ] plan/theme/todoの無いセッションが「計画外エージェント」ゾーンに出る（strayと分離）（対象: build.ts・types.ts・新コンポーネント・page.tsx）
+- [ ] 各エージェント行に repo（sessions.repo・どのrepoのセッションか）が表示される（対象: SessionRow・types.ts SessionItem・build.ts伝播）
 - [ ] focusmap `npm run build` が成功し、契約型が後方互換（対象: focusmap build）
 - [ ] 本番反映（push/deploy）は人間承認を得るまで保留にしてある（対象: 本子・人間ゲート）
 
 ## 実装結果
 
-実装後にplanctlが追記・更新する。実行前は記入しない。
+- レーンA（基盤・入口フロー）: 実装完了・commit済み。`common.py`初回ガイドに「着手前に必ず判断→①記録だけ／②計画作成+commit+focusmap反映」の2分岐を明示。`register-and-guide.md`追従・段階1hookを補助と位置づけ。session-boardテスト全PASS（test-shims 21/0・common 13/0 ほか）。repo捕捉は入口で既存（`repo_of(cwd)`→`sessions.repo`）。
+- レーンB（focusmap表示）: **残タスク（deferred・2026-07-22時点）**。「計画外エージェント」ゾーン・plan直結格納・repo表示。実装者が着手済みだがfocusmap working treeに未commit（本番反映＝人間ゲート）。人間判断Bで、まずレーンAを確定し表示は後続へ切り出し。
+- まとめ評価: 両レーン揃ってから実施（工程03）。現時点はレーンA単独完了・program active継続。
 
 ## 終了記録
 

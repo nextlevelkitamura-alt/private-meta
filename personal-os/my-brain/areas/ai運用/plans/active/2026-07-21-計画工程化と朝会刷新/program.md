@@ -80,7 +80,7 @@ Wave 4（入口フローとボード格納・子01-04の後）:
     人間ゲート: hook登録（実装する場合のみ）
     次: 「ライト以上の実装を計画なしで始めたら警告/停止」hookの要否判断。現状は助言のみ（register-and-guideはexit0＝非ブロック）。設計案（実装系ツール前ゲートで対象repoのactive計画/起票を確認）を出し、過剰摩擦なら見送りを記録。やるならPreToolUse hookで最小の警告から
     場所: plans/04 ／ 依存: 子01
-- [ ] 05 入口triageとエージェント格納フロー … 実装中（起こし済み・2レーン着手）
+- [ ] 05 入口triageとエージェント格納フロー … 保留（レーンA=入口フロー完了commit・レーンB=focusmap表示（計画外ゾーン/plan格納/repo表示）は残タスク・未commit）
     役割: 実装
     対象repo: ~/Private（基盤）＋ projects/active/focusmap（表示）
     並列: 可

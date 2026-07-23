@@ -15,6 +15,8 @@
       構造・流れ・関係・層・差分・経緯が主題なら図（下の図解レシピ雛形R1〜R6）が主役。
       詳細=表ではない。表は §6 の5条件を満たす時だけ（テキストの既定の受け皿は .deflist）。
   - 読者は「コーディングしないがGO/NGを判断する人」: コードには「つまり」1行訳、用語は初出で言い換え。
+  - 強調3ルール(html-structure.md §4): 見出しh2は信号（大きめ・太字・左バー＝既定CSS）。
+      結論の一句は .key で1ブロック1回だけ色をのせる。周りは静かに保ち色を増やしすぎない。
   - 実装・変更の説明は references/impl-explain.md の3点セット(どこを触る→こう変わる→中身の意味)を必ず入れる。
   - 軽い内容は不要な節・部品を丸ごと削って短くする（構造と読みやすさのルールは同じ）。
 -->
@@ -36,7 +38,10 @@
   h1{font-size:32px;font-weight:600;letter-spacing:-.01em;margin:0;line-height:1.2;text-wrap:balance}
   .lede{margin:14px 0 0;font-size:16px;color:var(--muted);max-width:60ch}
   .lede b{color:var(--ink);font-weight:600}
-  h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 6px}
+  h2{font-size:19px;font-weight:700;color:var(--ink);margin:0 0 10px;border-left:5px solid var(--accent);padding-left:13px;line-height:1.4}
+  h2 .sub{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-top:2px}
+  /* ── key: 結論の一句のマーカー強調。1ブロック1回だけ（多用すると効かない）。補助の太字は b のまま ── */
+  .key{color:var(--accent-ink);font-weight:700;background:linear-gradient(transparent 62%, var(--accent-soft) 62%)}
   .slede{margin:0 0 16px;font-size:14.5px;color:var(--ink);max-width:64ch}
   section{display:flex;flex-direction:column}
   code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;border-radius:6px}

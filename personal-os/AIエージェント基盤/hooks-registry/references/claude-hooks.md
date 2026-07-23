@@ -235,7 +235,7 @@ Codex と揃える共通の床。Claude では次の hook で実現する（`cla
 
 反映は**保存で自動**（file watcher が拾う）。**trust は不要**（Codex との最大の違い）。`/hooks` コマンドで内容確認・個別無効化はできるが、実行の必須ゲートではない。
 
-現在のsession-boardのClaude登録表は `~/.claude/settings.json` の `hooks` 項目そのもの。repo側は共通実行本体 `../events/` と登録規則 `../claude/AGENTS.md` を管理し、Claude専用の `hooks.json` や同期スクリプトは置かない。settings全体はsymlinkにせず、変更時は必要な `hooks` 項目だけを直接更新する。現在の5イベントと実行本体の対応は `../claude/AGENTS.md` が正本。基盤の規律どおり、user設定へのhook追加・削除は人間ゲート。
+現在のsession-boardのClaude登録表は `~/.claude/settings.json` の `hooks` 項目そのもの。repo側は共通実行本体 `../events/` と登録規則 `../claude/AGENTS.md` を管理し、Claude専用の `hooks.json` や同期スクリプトは置かない。settings全体はsymlinkにせず、変更時は必要な `hooks` 項目だけを直接更新する。現在のイベントと実行本体の対応は `../claude/AGENTS.md` が正本。変更後はJSON構文・登録表・実イベントをAIがreadbackする。
 
 ## 12. 注意点
 

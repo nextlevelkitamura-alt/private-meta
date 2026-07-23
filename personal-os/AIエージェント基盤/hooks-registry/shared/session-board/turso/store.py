@@ -12,12 +12,18 @@ INBOX_DB_URL = "https://personal-os-inbox-nextlevelkitamura-alt.aws-ap-northeast
 INBOX_KEYCHAIN_SERVICE = "turso-personal-os-inbox"
 TIMEOUT = 3
 STATE_WORD = {"🟢": "run", "⏸": "wait", "🔵": "sub"}
+_TOKEN_CACHE = {}
 
 
 def token(service=KEYCHAIN_SERVICE):
+    if service in _TOKEN_CACHE:
+        return _TOKEN_CACHE[service]
     try:
         result = subprocess.run(["security", "find-generic-password", "-a", os.environ.get("USER", ""), "-s", service, "-w"], capture_output=True, text=True, timeout=2)
-        return result.stdout.strip() or None
+        value = result.stdout.strip() or None
+        if value:
+            _TOKEN_CACHE[service] = value
+        return value
     except Exception: return None
 
 
@@ -35,7 +41,10 @@ def send(statements, db_url=DB_URL, service=KEYCHAIN_SERVICE, token_getter=token
         requests = [{"type": "execute", "stmt": {"sql": sql, "args": args}} for sql, args in statements] + [{"type": "close"}]
         request = urllib.request.Request(db_url + "/v2/pipeline", data=json.dumps({"requests": requests}).encode(), method="POST",
                                          headers={"Authorization": f"Bearer {secret}", "Content-Type": "application/json"})
-        urllib.request.urlopen(request, timeout=TIMEOUT); return True
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            payload = json.loads(response.read().decode())
+        results = payload.get("results") or []
+        return len(results) >= len(statements) and not any("error" in item for item in results[:len(statements)])
     except Exception: return False
 
 
@@ -62,6 +71,44 @@ def read(statement, db_url=DB_URL, service=KEYCHAIN_SERVICE, token_getter=token)
         for raw in result.get("rows", []):
             rows.append({cols[i]: (None if cell.get("type") == "null" else cell.get("value")) for i, cell in enumerate(raw)})
         return rows
+    except Exception:
+        return None
+
+
+def read_many(statements, db_url=DB_URL, service=KEYCHAIN_SERVICE, token_getter=token):
+    """複数SELECTを1 pipelineで読み、各SELECTの行配列を入力順に返す。失敗は None。"""
+    statements = [statement for statement in statements if statement]
+    if not statements or os.environ.get("SESSION_BOARD_NO_TURSO"):
+        return None
+    try:
+        secret = token_getter(service)
+        if not secret:
+            return None
+        requests = [
+            {"type": "execute", "stmt": {"sql": sql, "args": args}}
+            for sql, args in statements
+        ] + [{"type": "close"}]
+        request = urllib.request.Request(
+            db_url + "/v2/pipeline",
+            data=json.dumps({"requests": requests}).encode(),
+            method="POST",
+            headers={"Authorization": f"Bearer {secret}", "Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            payload = json.loads(response.read().decode())
+        results = payload.get("results") or []
+        if len(results) < len(statements) or any("error" in item for item in results[:len(statements)]):
+            return None
+        batches = []
+        for item in results[:len(statements)]:
+            result = item["response"]["result"]
+            cols = [column.get("name") for column in result.get("cols", [])]
+            batches.append([
+                {cols[index]: (None if cell.get("type") == "null" else cell.get("value"))
+                 for index, cell in enumerate(raw)}
+                for raw in result.get("rows", [])
+            ])
+        return batches
     except Exception:
         return None
 
@@ -123,6 +170,119 @@ def stmt_goals_distinct():
     sql = ("SELECT goal FROM sessions WHERE goal IS NOT NULL AND goal != '?' "
            "GROUP BY goal ORDER BY MIN(updated_at)")
     return sql, []
+
+
+# ---- Focusmap Daily session routing（2026-07-23・既存表は変更しない） ----
+
+def stmt_execution_context_upsert(session_key, context, now=None):
+    if not session_key or not context or not context.get("repo_key"):
+        return None
+    at = now or datetime.datetime.now().isoformat(timespec="seconds")
+    sql = ("INSERT INTO session_execution_contexts "
+           "(session_key, runtime, repo_key, display_name, scope_kind, identity_state, "
+           "canonical_repo_path, worktree_root, cwd_path, branch, first_seen_at, updated_at) "
+           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+           "ON CONFLICT(session_key) DO UPDATE SET runtime=excluded.runtime, repo_key=excluded.repo_key, "
+           "display_name=excluded.display_name, scope_kind=excluded.scope_kind, "
+           "identity_state=excluded.identity_state, canonical_repo_path=excluded.canonical_repo_path, "
+           "worktree_root=excluded.worktree_root, cwd_path=excluded.cwd_path, branch=excluded.branch, "
+           "updated_at=excluded.updated_at")
+    return sql, [text_arg(session_key), text_arg(context.get("runtime")), text_arg(context.get("repo_key")),
+                 text_arg(context.get("display_name")), text_arg(context.get("scope_kind")),
+                 text_arg(context.get("identity_state")), text_or_null(context.get("canonical_repo_path")),
+                 text_arg(context.get("worktree_root")), text_arg(context.get("cwd_path")),
+                 text_or_null(context.get("branch")), text_arg(at), text_arg(at)]
+
+
+def stmt_route_pending(proposal_id, session_key, turn_id, runtime, repo_key,
+                       event_fingerprint, safe_summary=None, now=None):
+    if not all((proposal_id, session_key, turn_id, runtime, repo_key, event_fingerprint)):
+        return None
+    at = now or datetime.datetime.now().isoformat(timespec="seconds")
+    sql = ("INSERT INTO session_route_proposals "
+           "(id, session_key, turn_id, runtime, repo_key, event_fingerprint, safe_summary, "
+           "route_kind, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?) "
+           "ON CONFLICT(session_key, turn_id) DO NOTHING")
+    return sql, [text_arg(proposal_id), text_arg(session_key), text_arg(turn_id), text_arg(runtime),
+                 text_arg(repo_key), text_arg(event_fingerprint), text_or_null(safe_summary),
+                 text_arg(at), text_arg(at)]
+
+
+def stmt_route_propose(session_key, turn_id, route_kind, status="proposed",
+                       theme_id=None, plan_slug=None, summary=None, reason=None, now=None):
+    allowed_kinds = {"plan", "theme_work", "plan_candidate", "theme_candidate", "unclassified"}
+    allowed_status = {"proposed", "accepted", "rejected", "superseded"}
+    if not session_key or not turn_id or route_kind not in allowed_kinds or status not in allowed_status:
+        return None
+    at = now or datetime.datetime.now().isoformat(timespec="seconds")
+    sql = ("UPDATE session_route_proposals SET route_kind = ?, status = ?, theme_id = ?, plan_slug = ?, "
+           "safe_summary = COALESCE(?, safe_summary), reason = ?, updated_at = ? "
+           "WHERE session_key = ? AND turn_id = ? AND status IN ('pending', 'proposed')")
+    return sql, [text_arg(route_kind), text_arg(status), text_or_null(theme_id), text_or_null(plan_slug),
+                 text_or_null(summary), text_or_null(reason), text_arg(at), text_arg(session_key), text_arg(turn_id)]
+
+
+def stmt_execution_context_read(session_key):
+    if not session_key:
+        return None
+    return ("SELECT session_key, runtime, repo_key, display_name, scope_kind, identity_state, "
+            "canonical_repo_path, worktree_root, cwd_path, branch, updated_at "
+            "FROM session_execution_contexts WHERE session_key = ?", [text_arg(session_key)])
+
+
+def stmt_session_route_read(session_key):
+    if not session_key:
+        return None
+    return ("SELECT session_key, theme_id, todo_id, plan FROM sessions WHERE session_key = ?",
+            [text_arg(session_key)])
+
+
+def stmt_latest_route_read(session_key):
+    if not session_key:
+        return None
+    return ("SELECT turn_id, route_kind, theme_id, plan_slug, safe_summary, reason, status, updated_at "
+            "FROM session_route_proposals WHERE session_key = ? AND status IN ('proposed', 'accepted') "
+            "ORDER BY CASE status WHEN 'accepted' THEN 0 ELSE 1 END, updated_at DESC LIMIT 1",
+            [text_arg(session_key)])
+
+
+def stmt_route_turn_read(session_key, turn_id):
+    if not session_key or not turn_id:
+        return None
+    return ("SELECT turn_id, route_kind, theme_id, plan_slug, safe_summary, reason, status, updated_at "
+            "FROM session_route_proposals WHERE session_key = ? AND turn_id = ? LIMIT 1",
+            [text_arg(session_key), text_arg(turn_id)])
+
+
+def stmt_theme_candidates(date_s, repo_label, limit=5):
+    """今日かつ対象repoのtodoを持つThemeだけを候補にする。repo不明はfail-closed。"""
+    return (
+        "SELECT DISTINCT th.id, th.name, th.purpose, th.done_criteria, th.plan_refs, th.sort_order "
+        "FROM themes th "
+        "JOIN todos td ON td.theme_id = th.id "
+        "JOIN repos rp ON rp.slug = td.repo "
+        "WHERE th.status = 'active' AND td.do_date = ? AND td.status != 'dropped' "
+        "AND (LOWER(rp.slug) = LOWER(?) OR LOWER(rp.name) = LOWER(?)) "
+        "ORDER BY th.sort_order, th.updated_at DESC LIMIT ?",
+        [text_arg(date_s or ""), text_arg(repo_label or ""), text_arg(repo_label or ""), int_arg(limit)],
+    )
+
+
+def stmt_plan_candidates(date_s, repo_label, limit=5):
+    """今日＋対象repoのThemeが参照するactive/planning Planだけを候補にする。"""
+    return (
+        "SELECT DISTINCT pd.program_slug, pd.title, pd.bucket, pd.path "
+        "FROM themes th "
+        "JOIN json_each(COALESCE(th.plan_refs, '[]')) ref "
+        "JOIN plan_docs pd ON pd.program_slug = ref.value "
+        "JOIN todos td ON td.theme_id = th.id "
+        "JOIN repos rp ON rp.slug = td.repo "
+        "WHERE th.status = 'active' AND td.do_date = ? AND td.status != 'dropped' "
+        "AND (LOWER(rp.slug) = LOWER(?) OR LOWER(rp.name) = LOWER(?)) "
+        "AND pd.kind IN ('program', 'single') AND pd.bucket IN ('active', 'planning') "
+        "ORDER BY CASE pd.bucket WHEN 'active' THEN 0 ELSE 1 END, pd.synced_at DESC LIMIT ?",
+        [text_arg(date_s or ""), text_arg(repo_label or ""), text_arg(repo_label or ""), int_arg(limit)],
+    )
 
 
 def stmt_session_affiliation(key, todo_id=None, theme_id=None):

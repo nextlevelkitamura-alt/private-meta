@@ -21,16 +21,16 @@
     <div class="box"><b>agent-hooks/events/…</b><br>共通Python本体を実行</div>
   </div>
 
-  <h2>変更は3段階で確認する</h2>
-  <p>設定を更新しても、trustは人間が操作するまで有効になりません。</p>
+  <h2>変更は3段階で自動確認する</h2>
+  <p>設定更新後は、Codex公式app-server APIから現在hashを取得して自動trustし、状態を読み戻します。</p>
   <div class="steps">
     <div class="step"><span class="num">01</span><b>本体と説明をそろえる</b>対象イベントの <code>.py</code> と同名 <code>.md</code> を確認する。</div>
     <div class="step"><span class="num">02</span><b>hooks.jsonを更新・診断</b>JSON検証と <code>registered.sh</code> の読み取り診断を行う。</div>
-    <div class="step"><span class="num">03</span><b>/hooks で再trust</b>hashが変わるため、人間がCodexで信頼を更新する。</div>
+    <div class="step"><span class="num">03</span><b>自動trust・readback</b><code>trust-current.py</code> が現在hashだけを保存し、全hookがtrustedか再確認する。</div>
   </div>
 
   <h2>repoへ入れないもの</h2>
   <p>Codexのlocal状態は登録正本とは別です。</p>
-  <div class="callout"><b>ローカル状態:</b> <code>~/.codex/config.toml</code> の <code>[hooks.state]</code> と <code>notify</code> はrepoへ移しません。trust状態を直接編集せず、<code>/hooks</code> を使います。</div>
+  <div class="callout"><b>ローカル状態:</b> <code>~/.codex/config.toml</code> の <code>[hooks.state]</code> と <code>notify</code> はrepoへ移しません。trust更新は設定本文の直接加工ではなく、Codexの <code>hooks/list</code> と <code>config/batchWrite</code> を使います。</div>
 </body>
 </html>

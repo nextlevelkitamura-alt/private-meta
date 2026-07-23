@@ -24,10 +24,10 @@ codex_prompt(){ python3 "$EV/prompt-register/register-and-guide.py" --runtime co
 J_SS='{"session_id":"beefcafe-0000-1111-2222-333344445555","transcript_path":"'$SP'/tx/proj/beefcafe-0000.jsonl","cwd":"/tmp/repoZ","hook_event_name":"SessionStart"}'
 J_UP='{"session_id":"beefcafe-0000-1111-2222-333344445555","transcript_path":"'$SP'/tx/proj/beefcafe-0000.jsonl","cwd":"/tmp/repoZ","prompt":"セッションボードを再設計して実装まで進めたい"}'
 
-echo "=== 1. Claude SessionStart: 通知1行（遅延登録・枠は作らない）==="
+echo "=== 1. Claude SessionStart: 通知＋固定分類policy（遅延登録・枠は作らない）==="
 OUT=$(echo "$J_SS" | claude_start)
-echo "$OUT" | grep -q "ボードキー s:beefcafe"; ok "SS通知1行" test $? -eq 0
-[ "$(echo "$OUT" | wc -l | tr -d ' ')" = "1" ]; ok "SS注入は1行だけ" test $? -eq 0
+echo "$OUT" | grep -q "ボードキー s:beefcafe"; ok "SS通知" test $? -eq 0
+echo "$OUT" | grep -q "FOCUSMAP SESSION ROUTING POLICY v1"; ok "SSイベントで固定policy注入" test $? -eq 0
 echo "$OUT" | grep -q "最初のプロンプト時に登録"; ok "SS通知は遅延登録を告知" test $? -eq 0
 
 echo "=== 2. 正本反転: shim経由でも当日デイリーMDを書かない ==="

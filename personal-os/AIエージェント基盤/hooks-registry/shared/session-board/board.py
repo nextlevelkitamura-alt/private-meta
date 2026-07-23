@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """session-board CLI調停。MD確定後にTursoをベストエフォート送信する。"""
 import datetime
+import json
 import os
 import re
 import sys
@@ -10,6 +11,7 @@ import uuid  # 子09 theme-add のテーマID採番
 from md import store as md_store
 from turso import spool as turso_spool
 from turso import store as turso_store
+from sanitize import sanitize_text
 
 # 2026-07-21 正本反転（子03・案b）: board.py は当日デイリーMDを一切読み書きしない。
 # 運用データ（sessions/events/logs/subagents）の正本は Turso（board DB）。md_store は
@@ -55,7 +57,17 @@ _stmts_todo_steps, _stmt_step_status = turso_store.stmts_todo_steps, turso_store
 _stmt_ask, _stmt_flow_done = turso_store.stmt_ask, turso_store.stmt_flow_done
 _stmt_unconsumed_answers = turso_store.stmt_unconsumed_answers
 _stmt_mark_answers_consumed = turso_store.stmt_mark_answers_consumed
+_stmt_execution_context_upsert = turso_store.stmt_execution_context_upsert
+_stmt_route_pending = turso_store.stmt_route_pending
+_stmt_route_propose = turso_store.stmt_route_propose
+_stmt_execution_context_read = turso_store.stmt_execution_context_read
+_stmt_session_route_read = turso_store.stmt_session_route_read
+_stmt_latest_route_read = turso_store.stmt_latest_route_read
+_stmt_route_turn_read = turso_store.stmt_route_turn_read
+_stmt_theme_candidates = turso_store.stmt_theme_candidates
+_stmt_plan_candidates = turso_store.stmt_plan_candidates
 _turso_read = turso_store.read
+_turso_read_many = turso_store.read_many
 
 # board.py自身の実体ディレクトリ（route宣言スキャンの既定ルート算出に使う）。
 _SB_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -191,6 +203,16 @@ def _turso_read_inbox(statement):
     return _turso_read(statement, db_url=TURSO_INBOX_DB_URL, service=TURSO_INBOX_KEYCHAIN_SERVICE, token_getter=_turso_token)
 
 
+def _turso_read_many_inbox(statements):
+    """inbox DBの複数SELECTを1 pipelineで読む。失敗時は None。"""
+    return _turso_read_many(
+        statements,
+        db_url=TURSO_INBOX_DB_URL,
+        service=TURSO_INBOX_KEYCHAIN_SERVICE,
+        token_getter=_turso_token,
+    )
+
+
 def collect_answers(key):
     """当該セッション(s:key)の未消費回答を注入文へ整形し、消費済みに落とす。
     回答が無い/読めない時は空文字（best-effort・hookをブロックしない）。"""
@@ -286,6 +308,111 @@ def _run_inbox_command(cmd, args, entries):
         text = collect_answers(key)
         if text:
             print(text)
+        return True
+    return False
+
+
+def _routing_context_payload(session_key, repo_label=None, date_s=None):
+    """board/inboxを各1 pipelineで読み、短い分類Contextの材料だけ返す。"""
+    board_batches = _turso_read_many([
+        _stmt_execution_context_read(session_key),
+        _stmt_session_route_read(session_key),
+        _stmt_latest_route_read(session_key),
+    ]) or [[], [], []]
+    while len(board_batches) < 3:
+        board_batches.append([])
+    context_rows, session_rows, latest_rows = board_batches[:3]
+    execution = context_rows[0] if context_rows else None
+    label = (repo_label or (execution or {}).get("display_name") or "").strip()
+    if not date_s:
+        _, date_s = daily_path()
+    inbox_batches = _turso_read_many_inbox([
+        _stmt_theme_candidates(date_s, label, 5),
+        _stmt_plan_candidates(date_s, label, 5),
+    ]) or [[], []]
+    while len(inbox_batches) < 2:
+        inbox_batches.append([])
+    return {
+        "execution": execution,
+        "session_route": session_rows[0] if session_rows else None,
+        "latest_route": latest_rows[0] if latest_rows else None,
+        "themes": inbox_batches[0],
+        "plans": inbox_batches[1],
+        "candidate_scope": {"date": date_s, "repo": label},
+    }
+
+
+def _routing_context_from_args(args):
+    return {
+        "runtime": args.get("runtime"),
+        "repo_key": args.get("repo-key"),
+        "display_name": args.get("display-name"),
+        "scope_kind": args.get("scope-kind"),
+        "identity_state": args.get("identity-state"),
+        "canonical_repo_path": args.get("repo-path") or None,
+        "worktree_root": args.get("worktree-root"),
+        "cwd_path": args.get("cwd-path"),
+        "branch": args.get("branch") or None,
+    }
+
+
+def _run_routing_command(cmd, args):
+    """分類用のadditive表を操作する。migration未適用時もbest-effortで本体を止めない。"""
+    session_key = args.get("key") or ""
+    session_key = session_key if session_key.startswith("s:") else ("s:" + session_key if session_key else "")
+    if cmd == "context-upsert":
+        statement = _stmt_execution_context_upsert(session_key, _routing_context_from_args(args))
+        if statement:
+            _turso_sync([statement])
+        return True
+    if cmd == "route-pending":
+        statement = _stmt_route_pending(
+            args.get("id"), session_key, args.get("turn"), args.get("runtime"),
+            args.get("repo-key"), args.get("event-fingerprint") or args.get("fingerprint"),
+            sanitize_text(args.get("summary"), 80))
+        if statement:
+            _turso_sync([statement])
+        return True
+    if cmd == "route-prepare":
+        context = _routing_context_from_args(args)
+        statements = [
+            _stmt_execution_context_upsert(session_key, context),
+            _stmt_route_pending(
+                args.get("id"), session_key, args.get("turn"), args.get("runtime"),
+                args.get("repo-key"), args.get("event-fingerprint"),
+                sanitize_text(args.get("summary"), 80),
+            ),
+        ]
+        _turso_sync([statement for statement in statements if statement])
+        print(json.dumps(_routing_context_payload(
+            session_key,
+            repo_label=context.get("display_name"),
+            date_s=args.get("date"),
+        ), ensure_ascii=False))
+        return True
+    if cmd == "route-propose":
+        safe_summary = sanitize_text(args.get("summary"), 80) if args.get("summary") is not None else None
+        safe_reason = sanitize_text(args.get("reason"), 160) if args.get("reason") is not None else None
+        statement = _stmt_route_propose(
+            session_key, args.get("turn"), args.get("kind"), args.get("status", "proposed"),
+            args.get("theme"), args.get("plan"), safe_summary, safe_reason)
+        if statement is None:
+            sys.exit("usage: board.py route-propose --key <s:key> --turn <id> --kind <plan|theme_work|plan_candidate|theme_candidate|unclassified> [--status proposed|accepted|rejected|superseded] [--theme <id>] [--plan <slug>] [--summary <safe>] [--reason <safe>]")
+        _turso_sync([statement])
+        rows = _turso_read(_stmt_route_turn_read(session_key, args.get("turn"))) or []
+        if not rows:
+            print("unavailable")
+        elif rows[0].get("route_kind") == args.get("kind") and rows[0].get("status") == args.get("status", "proposed"):
+            print(f"recorded status={rows[0].get('status')}")
+        else:
+            print(f"unchanged status={rows[0].get('status')}")
+        return True
+    if cmd == "route-context":
+        print(json.dumps(_routing_context_payload(
+            session_key,
+            repo_label=args.get("repo"),
+            date_s=args.get("date"),
+        ), ensure_ascii=False))
         return True
     return False
 
@@ -408,8 +535,11 @@ def _mutate_db(cmd, args, entries, key, row, pending_events):
 def main():
     if len(sys.argv) < 2:
         sys.exit("usage: board.py <add|update|flip|sub-start|sub-end|sub-label|finish|log|check|show|goals|reconcile|goal-add"
-                 "|theme-add|todo-add|steps|step-done|step-doing|step-skip|ask|flow-done|answers> ...")
+                 "|theme-add|todo-add|steps|step-done|step-doing|step-skip|ask|flow-done|answers"
+                 "|context-upsert|route-pending|route-prepare|route-context|route-propose> ...")
     cmd, args, entries = parse_args(sys.argv[1:])
+    if _run_routing_command(cmd, args):
+        return
     if cmd == "goal-add":
         statement = _stmt_goal_insert(args.get("name"), args.get("date"), args.get("source", "chat"))
         if statement is None: sys.exit('usage: board.py goal-add --name "<目標>" [--date YYYY-MM-DD] [--source chat]')

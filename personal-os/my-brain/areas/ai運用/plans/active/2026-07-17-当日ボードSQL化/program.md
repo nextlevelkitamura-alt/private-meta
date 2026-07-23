@@ -4,7 +4,7 @@
 
 # 当日ボードSQL化
 
-人間確認方針: 最終一括（危険操作は実行前に個別承認）
+完了方針: 子と統合評価が全PASSならAIがDB反映・commit・push・本番readback・終了記録まで自律実行
 差し戻し上限: フル=2・ライト=1（超過は人間へエスカレーション。正本は plan-registry/AGENTS.md）
 
 ## 目的
@@ -50,6 +50,12 @@
 
 05 ─→ 08 サブエージェント入れ子可視化（focusmap＋hook）  ※05のUI部品依存・03とはhook交差のため直列調整
 05 ─→ 09 大課題テーマ階層と横断表示（focusmap）  ※02/03/08と表示surface交差のため直列調整・04と的slug集計を共有
+
+09 ─→ 10 セッション分類契約と明示Skill（AIエージェント基盤）
+       └→ 11 Hook順序とrepo実行Context（Codex先行→Claude互換確認）
+            └→ 12 Dailyのrepo選択とTheme内作業（focusmap）
+                 └→ 13 人間採用と単発完了導線（focusmap＋session-board）
+                      └→ 14 分類統合評価と段階展開
 ```
 
 ## 子計画マップ   ※ 子の状態変更と同じコミットでここを更新
@@ -126,11 +132,51 @@
     次: 人間ゲート（inbox/board migration・push・本番反映）→実挙動確認と375px目視（親最終一括）
     場所: plans/09 ／ 依存: 05（02/03/08と交差調整）
     参照: references/ボード大課題階層モックv5-2026-07-19.html（UI正本）・R1/R2調査統合（2026-07-19）
+- [ ] 10 セッション分類契約と明示Skill … 評価待ち
+    役割: 企画・実装
+    対象repo: /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤
+    並列: 不可 ／ レビュー: まとめ
+    自律実行: Global Skill新設・runtime露出・readback
+    次: 子11完了後、子14でHookとの語彙・露出を統合評価
+    場所: plans/10-セッション分類契約と明示Skill.md ／ 依存: 09
+    参照: AIエージェント基盤/harness-registry/focusmap-daily.md
+- [ ] 11 Hook順序とrepo実行Context … 評価待ち
+    役割: 実装
+    対象repo: /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤
+    並列: 不可 ／ レビュー: まとめ
+    自律実行: board DB migration適用・Codex公式API自動trust・readback（登録pathは維持）
+    次: 追加2表migration・実DB readback・Codex自動trustは完了。SessionStart実測後に子12へ
+    場所: plans/11-Hook順序とrepo実行Context.md ／ 依存: 10
+    参照: hooks-registry/events/prompt-register/・hooks-registry/shared/session-board/
+- [ ] 12 Dailyのrepo選択とTheme内作業 … 計画
+    役割: 実装
+    対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
+    並列: 不可 ／ レビュー: まとめ
+    自律実行: origin/main push・本番反映・本番readback
+    次: session由来repo selectorとTheme直下作業帯を追加
+    場所: plans/12-Dailyのrepo選択とTheme内作業.md ／ 依存: 11
+    参照: harness-registry/focusmap-daily.md
+- [ ] 13 人間採用と単発完了導線 … 計画
+    役割: 実装
+    対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤 session-board）
+    並列: 不可 ／ レビュー: まとめ
+    自律実行: inbox/board DB本番書込み・origin/main push・本番反映・rollback検証
+    次: proposal採用、Theme内Todo、完了チェック、archiveを接続
+    場所: plans/13-人間採用と単発完了導線.md ／ 依存: 12
+    参照: harness-registry/focusmap-daily.md
+- [ ] 14 分類統合評価と段階展開 … 計画
+    役割: 評価・統合
+    対象repo: /Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤＋/Users/kitamuranaohiro/Private/projects/active/focusmap
+    並列: 不可 ／ レビュー: まとめ
+    自律実行: Codex/Claude本番有効化・origin/main push・本番反映・統合readback
+    次: 未登録repo、worktree、非Git、DB障害、誤分類、人間訂正を統合評価
+    場所: plans/14-分類統合評価と段階展開.md ／ 依存: 13
+    参照: plans/10〜13の実装・評価結果
 
-## 人間ゲート
+## 自律実行と検証
 
-- 最終一括確認: 全子完了＋統合評価（`評価/評価01.md`）全PASS後に、program全体を一度だけ人間確認して完了にする
-- 実行前に個別承認が必要な操作（各子の `人間ゲート:` にも記載）:
+- 全子完了＋統合評価（`評価/評価01.md`）全PASS後に、AIがprogramの終了記録・commit・通常push・本番readbackまで行う。結果を変える未確定の人間判断がある時だけ停止する。
+- 実行前に対象・preflight・rollbackを確認し、実行後にreadbackする操作:
   - Tursoへのmigration適用（新テーブル todos・reposマスタ）＝子01
   - loop/launchd登録（AI起票キューの検知機構）＝子02
   - session-board hookの挙動変更と、デイリーmd「動いているエージェント」「終わったこと」2節の生成化/廃止＝子03
@@ -140,8 +186,9 @@
   - 依存パッケージ追加（react-markdown・remark-gfm）＝子07
   - board DBへのmigration適用（session_subagents）＝子08
   - inbox migration適用（themes〔purpose・done_criteria込み〕・todos.theme_id/carried_from/awaiting_since・todo_steps.started_at）と board migration適用（sessions.todo_id/theme_id）・_first_guide宣言行の追加＝子09
+  - board DBへの分類migration適用（session_execution_contexts・session_route_proposals）とCodex公式API自動trust＝子11
   - origin/main への push・Cloud Run本番反映＝子01・02・04・05・07・08・09
-- planning→active昇格は、explain/program.html の提示と人間の実行OKを得てから bucketctl で行う（active上限3の確認込み）
+- planning→active昇格は、explain/program.html・目的・範囲・完了条件を確認し、bucketctlの機械検証後にAIが行う（active上限3の確認込み）
 
 ## 完了条件（レビュー項目）
 
@@ -153,6 +200,9 @@
 - [ ] 各タスクにステップ入れ子・タスク別%・状態ラベルが表示され、ステップ✔=AI自動・見出し完了=人間タップの2層チェックで「終わったこと」へ移動し、AIの質問に選択肢＋自由入力でスマホ回答できる（対象: 子05・board画面）
 - [ ] スマホの「計画」タブでactive計画の一覧・進捗（子N/M・完了条件x/y）・md本文が読み取り専用で確認でき、md正本を書き換える経路がDB側に存在しない（対象: 子06・07）
 - [ ] ボードに大課題テーマの階層が表示され、テーマの編集・タスクの翌日引き継ぎ・エージェント行の「テーマ›タスク」位置表示・終わったことのテーマ別入れ子が動き、的・計画の本文コピーがDBに存在しない（対象: 子09・board画面）
+- [ ] Codex / Claudeの全トップレベルセッションがrepo-registry登録有無に関係なく受付され、UserPromptSubmitで短い分類packetが注入される。AIが提案を書かなかった場合も判定待ちとして消えない（対象: 子10・11）
+- [ ] Dailyのrepo selectorに登録済みGit・未登録Git・非Git作業フォルダが区別して表示され、linked worktreeは同じrepoへまとめられる（対象: 子11・12）
+- [ ] Themeへ貢献する計画外修正がTheme直下の「テーマ内作業」に表示され、正式Plan進捗%と単発完了数が混ざらず、人間チェック後にTheme別archiveへ入る（対象: 子12・13）
 - [ ] 統合評価 `評価/評価01.md` が全PASS（対象: 評価/）
 
 ## 関連

@@ -20,11 +20,11 @@ active計画の一意解決も原理的に困難。よって**弱い信号で wa
 
 ## 登録状態（重要）
 
-- **Claude=登録済み**（2026-07-22人間承認）。`~/.claude/settings.json` の `PreToolUse` に matcher `^(Edit|Write|MultiEdit)$` で
+- **Claude=登録済み**。`~/.claude/settings.json` の `PreToolUse` に matcher `^(Edit|Write|MultiEdit)$` で
   `.../events/pre-tool-use/guard-plan-gate.py --runtime claude` を `guard-plan-bucket-move` の直後へ追加。保存で即反映・trust不要。
   ※ この `.py` は stdin のみ読み `--runtime` 引数は無視する（Claude/Codex共通の `additionalContext` 形式で出力）。引数は姉妹hookと手順を揃えるための飾り。
-- **Codex=未登録**。入れる場合は `hooks-registry/codex/hooks.json` の `PreToolUse` に対応エントリ（Codex側のtool名を確認）を足し、人間が `/hooks` で再trust。
-- hook登録は GLOBAL_AGENTS.md §7 の人間ゲート。確認は `shared/session-board/registered.sh`。
+- **Codex=未登録**。入れる場合は `hooks-registry/codex/hooks.json` の `PreToolUse` に対応エントリ（Codex側のtool名を確認）を足し、`codex/trust-current.py` で自動trustする。
+- hook登録は GLOBAL_AGENTS.md §7 の自律実行境界に従う。確認は `shared/session-board/registered.sh` とtrust readbackで行う。
 - 段階を上げる（段階2=`ask`・段階3=ファイル計数閾値）のは、段階1の誤検知率を実測してから。deny からは始めない。
 
 ## 検証

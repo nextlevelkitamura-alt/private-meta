@@ -8,8 +8,8 @@
    警告のみ注入する（deny も ask もしない・exit0）。免除（.md・plans/references/評価/scratchpad・active計画あり・
    session1回）と設計根拠は同名 `guard-plan-gate.md`（program「計画立案システム刷新」子04 §3.2）。
 
-登録状態: `guard-plan-gate` は **Claude=登録済み**（2026-07-22人間承認・`settings.json` の `PreToolUse` matcher
-`^(Edit|Write|MultiEdit)$`）／**Codex=未登録**（登録はGLOBAL_AGENTS.md §7の人間ゲート）。`guard-plan-bucket-move` は
+登録状態: `guard-plan-gate` は **Claude=登録済み**（`settings.json` の `PreToolUse` matcher
+`^(Edit|Write|MultiEdit)$`）／**Codex=未登録**（必要性をAIが評価し、登録する場合はJSON検証・自動trust・readbackまで行う）。`guard-plan-bucket-move` は
 Claude/Codex とも登録済み。各runtimeの実登録は `~/.claude/settings.json` と `codex/hooks.json` を正とする。
 
 `CLAUDE.md` はこのファイルへの相対symlink。

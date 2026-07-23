@@ -18,7 +18,7 @@ Skill本文は置かず、どこに何を作ったか、どこから移したか
 4. 移行ログでは、移行理由、正本選定、検証。
 5. runtime露出結果。
 6. 特殊事情だけの備考。
-7. **段階runtime露出のバックログ**: 一部runtimeだけ露出した場合は、残りを `未露出バックログ:` 行へ列挙する（新規作成テンプレ参照）。`grep -rl '未露出バックログ' created/` で未完了露出を持つSkillを、`grep -r '未露出バックログ' created/` で残り露出先を機械的に一覧できる。実運用後に人間承認で追加したら、該当runtimeを `露出:` 側へ移し、全runtimeへ露出したら `未露出バックログ:` 行を消す。
+7. **段階runtime露出のバックログ**: 一部runtimeだけ露出した場合は、残りを `未露出バックログ:` 行へ列挙する（新規作成テンプレ参照）。`grep -rl '未露出バックログ' created/` で未完了露出を持つSkillを、`grep -r '未露出バックログ' created/` で残り露出先を機械的に一覧できる。実運用と互換性を検証後、AIが該当runtimeを `露出:` 側へ移し、全runtimeへ露出したら `未露出バックログ:` 行を消す。
 
 日付時刻は、実行時に `date '+%Y-%m-%d %H:%M JST'` で確認する。**HH:mm を必ず入れる**（月日だけにしない）。過去ログから引き継ぐ履歴で時刻が分からない場合だけ、引き継ぎ履歴内では日付のみを残してよい。
 
@@ -59,7 +59,7 @@ Skill本文は置かず、どこに何を作ったか、どこから移したか
 - 正本: `/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/skills/skill-name`
 - 概要: 1〜2行で何をするSkillかを書く。
 - 露出: <実際に露出したruntime。全露出は `~/.agents` / `~/.codex` / `~/.claude` / `~/.gemini/config` / `~/.gemini/antigravity-cli`。段階露出なら露出した分だけ書く（例 `~/.claude`（YYYY-MM-DD））>
-- 未露出バックログ: <段階露出で残したruntimeを列挙（例 `~/.agents` `~/.codex` `~/.gemini/config` `~/.gemini/antigravity-cli`）。実運用後に人間承認で追加予定。**全runtimeへ露出済みなら本行を書かない**>
+- 未露出バックログ: <段階露出で残したruntimeを列挙（例 `~/.agents` `~/.codex` `~/.gemini/config` `~/.gemini/antigravity-cli`）。実運用と互換性検証後にAIが追加する。**全runtimeへ露出済みなら本行を書かない**>
 - 備考: なし
 ```
 
@@ -87,7 +87,7 @@ Skill本文は置かず、どこに何を作ったか、どこから移したか
 - 日付時刻: YYYY-MM-DD HH:mm JST（`date '+%Y-%m-%d %H:%M JST'` で確認・**HH:mm 必須**。月日だけにしない）
 - 削除元: `/Users/kitamuranaohiro/Private/personal-os/AIエージェント基盤/skills/skill-name`
 - 概要: 1〜2行で何をするSkillだったかを書く。
-- 承認: <YYYY-MM-DD 人間承認（決定ログ#N 等の参照）。削除は人間ゲートのため必須>
+- 実行判断: <YYYY-MM-DD。削除理由、参照確認、runtime露出撤去、回復手段の確認結果>
 - 露出削除: <実際に撤去した露出先。例 5露出先すべて `~/.agents` / `~/.codex` / `~/.claude` / `~/.gemini/config` / `~/.gemini/antigravity-cli`（計N本）>
 - 理由: <重複 / 統合 / 不要化 / 誤作成 / その他>。<なぜ削除するのかを1文で書く>
 - 吸収部品の移動先: <このSkillから吸収した部品→移動先path を列挙。無ければ「なし」（詳細な吸収候補調査は別ログへ）>

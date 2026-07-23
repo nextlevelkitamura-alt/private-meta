@@ -7,12 +7,13 @@
 
 1. runtime が stdin JSON を渡して `reconcile-and-notify.py` を実行する。
 2. `.py` が `shared/session-board/common.py` の `start_register()` を呼ぶ。
-3. `start_register()` は、古い🟢/🔵行を生存照合して必要なら⏸へ直す。
-4. この時点ではボード行を作らない。キーと「最初の意味あるプロンプトで登録する」という短い通知だけを返す。
-5. 次の `UserPromptSubmit` で `../prompt-register/register-and-guide.py` が行を登録し、AIに開始ガイドを注入する。
-6. AIは依頼を理解した後、注入された `board.py update` で目標・種別・今・計画・モデルを1回整える。
+3. `start_register()` は、`routing.py`でrepo/worktree/branchを機械判定し、`board.py context-upsert`へbest-effort記録する。
+4. 古い🟢/🔵行を生存照合して必要なら⏸へ直す。
+5. この時点ではsession本体のボード行を作らない。キー通知と固定分類方針`../prompt-register/session-classification-policy.md`をそのSessionStartイベントで返す。resume/compactでも方針復元のため再注入される。
+6. 次の `UserPromptSubmit` で `../prompt-register/register-and-guide.py` が行とturn pendingを登録し、AIに開始ガイドと短い動的候補を注入する。
+7. AIは依頼を理解した後、注入された `board.py update`でsession行を整え、`route-propose`で対象turnの意味分類を提案する。
 
-この分離は、プロンプトを持たない補助セッションを🟢の幽霊枠として残さないため。
+この分離は、開始時の実行場所だけを捕捉しつつ、プロンプトを持たない補助セッションを🟢の幽霊枠として残さないため。
 
 ## runtime ごとの差
 
@@ -31,4 +32,4 @@ Claudeは `~/.claude/settings.json` の `hooks` 項目、Codexは `../../codex/h
 
 - `.py` を変える前に同名 `.md` を更新・確認する。
 - `--runtime` の分岐は出力形式だけに留める。セッション状態のロジックは `common.py` に置く。
-- 登録を変えたら `../../shared/session-board/registered.sh` で窓を確認する。Codexは人間が `/hooks` で再trustする。
+- 登録を変えたら `../../shared/session-board/registered.sh` で窓を確認する。Codexは `../../codex/trust-current.py` で自動trustし、状態をreadbackする。

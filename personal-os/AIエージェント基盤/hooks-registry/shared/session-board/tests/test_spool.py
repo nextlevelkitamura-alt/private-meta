@@ -31,11 +31,28 @@ def ok(name, cond):
 
 
 def urlopen_mock(req, timeout=None):
-    calls.append(json.loads(req.data.decode("utf-8")))
+    body = json.loads(req.data.decode("utf-8"))
+    calls.append(body)
     outcome = outcomes.pop(0) if outcomes else "success"
     if outcome == "fail":
         raise TimeoutError("mock timeout")
-    return object()
+    execute_count = sum(1 for request in body.get("requests", []) if request.get("type") == "execute")
+    payload = {"results": [
+        {"response": {"result": {"cols": [], "rows": []}}}
+        for _ in range(execute_count)
+    ]}
+
+    class Response:
+        def read(self):
+            return json.dumps(payload).encode()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    return Response()
 
 
 board._turso_token = lambda _service=board.TURSO_KEYCHAIN_SERVICE: "test-token"

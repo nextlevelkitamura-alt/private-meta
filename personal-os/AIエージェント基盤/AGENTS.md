@@ -33,5 +33,6 @@ global に使うもの（Skill・loop・hook）は、実体をここに登録し
 - `repo-registry/` … repo と repo-local Skill の履歴
 - `plan-registry/` … 計画運用の規約・責務地図の入口（計画本文・状態・履歴は所有しない）
 - `hooks-registry/` … Claude/Codex 共通のイベント実行本体（`events/`）・共通エンジン（`shared/`）・runtime別の登録表を管理する正本
+- `harness-registry/` … Claude/Codex hook・loop・script・DB・Focusmap UI の横断運用を、人間とAIが同じ地図で理解するための説明mdと派生HTML置き場
 - `agents-registry/` … Claude カスタムエージェント・コマンドの正本（runtime `~/.claude/agents|commands/` へ symlink 露出。2026-07-11新設）
 - `git-registry/` … 全体git構成（2repo・追跡範囲・push・スマホ閲覧）の一望正本

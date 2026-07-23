@@ -18,7 +18,7 @@ PY
 echo ""
 echo "== Codex（~/.codex/config.toml の notify / hooks.state）=="
 grep -nE '^notify|^\[hooks' ~/.codex/config.toml 2>/dev/null | sed 's/^/  /' || echo "  (なし)"
-echo "  ※ hooks.json の内容変更後は Codex で /hooks 再trust（trusted_hash が変わるまで旧hookは不許可）"
+echo "  ※ hooks.json の内容変更後は codex/trust-current.py で自動trustし、全hookの状態をreadbackする"
 echo ""
 echo "== launchd（com.kitamura.*）=="
 launchctl list 2>/dev/null | grep kitamura | sed 's/^/  /' || echo "  (なし＝全停止中)"

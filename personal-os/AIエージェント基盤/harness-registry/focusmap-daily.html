@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Focusmap Daily — Hook・AI判断・Theme内作業の実装計画</title>
+  <style>
+    :root {
+      color-scheme: light only;
+      --ink:#172033; --muted:#657086; --line:#dbe2ec; --soft:#f6f8fb;
+      --blue:#3157c8; --blue-bg:#edf2ff; --green:#167451; --green-bg:#eaf7f1;
+      --amber:#9a6500; --amber-bg:#fff6de; --red:#a64038; --red-bg:#fff0ee;
+      --violet:#6b4cc2; --violet-bg:#f3efff; --shadow:0 10px 30px rgba(29,45,82,.08);
+    }
+    * { box-sizing:border-box; }
+    html { background:#fff; scroll-behavior:smooth; }
+    body { margin:0; background:#fff; color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Yu Gothic",sans-serif; line-height:1.75; }
+    main { width:min(1180px,calc(100% - 36px)); margin:28px auto 70px; }
+    header { padding:42px 46px; border:1px solid var(--line); border-top:5px solid var(--blue); border-radius:18px; background:linear-gradient(135deg,#fff 0%,#f7f9ff 100%); box-shadow:var(--shadow); }
+    .eyebrow { margin:0 0 10px; color:var(--blue); font-weight:800; font-size:13px; letter-spacing:.08em; }
+    h1 { margin:0; font-size:clamp(29px,4.6vw,48px); line-height:1.22; letter-spacing:-.035em; }
+    .lead { margin:18px 0 0; max-width:940px; font-size:18px; color:#3d4960; }
+    .lead strong { color:var(--ink); }
+    nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:24px; }
+    nav a { color:#30405f; text-decoration:none; background:#fff; border:1px solid var(--line); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:700; }
+    section { margin-top:28px; padding:34px 38px; border:1px solid var(--line); border-radius:16px; background:#fff; }
+    h2 { margin:0 0 8px; font-size:26px; line-height:1.35; letter-spacing:-.02em; }
+    h3 { margin:0 0 7px; font-size:17px; line-height:1.45; }
+    p { margin:8px 0; }
+    code { font-family:"SFMono-Regular",Consolas,monospace; background:#f1f4f8; border:1px solid #e4e9f0; border-radius:5px; padding:1px 5px; color:#29354c; font-size:.92em; }
+    .sub { margin:0 0 22px; color:var(--muted); }
+    .grid2,.grid3,.grid4 { display:grid; gap:14px; }
+    .grid2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .grid3 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .grid4 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .card { padding:18px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+    .card p { color:var(--muted); font-size:14px; }
+    .tag { display:inline-block; border-radius:999px; padding:3px 9px; font-size:11px; font-weight:800; margin-bottom:8px; }
+    .blue { color:#2948a3; background:var(--blue-bg); }
+    .green { color:#126244; background:var(--green-bg); }
+    .amber { color:#815400; background:var(--amber-bg); }
+    .red { color:#8d352f; background:var(--red-bg); }
+    .violet { color:#553a9c; background:var(--violet-bg); }
+    .callout { padding:17px 19px; border-left:4px solid var(--blue); border-radius:0 10px 10px 0; background:var(--blue-bg); }
+    .callout.warn { border-color:#d48a00; background:var(--amber-bg); }
+    .callout.ok { border-color:var(--green); background:var(--green-bg); }
+    .question { padding:20px; border:1px solid #cfd8ea; border-radius:12px; background:#fbfcff; }
+    .question + .question { margin-top:12px; }
+    .question b { color:var(--blue); }
+    .answer { margin-top:9px; padding-top:9px; border-top:1px dashed #cfd8ea; color:#35425a; }
+    .flow { display:grid; grid-template-columns:repeat(7,minmax(105px,1fr)); align-items:stretch; gap:22px; margin-top:22px; }
+    .flow .node { position:relative; min-height:128px; padding:16px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; text-align:center; }
+    .flow .node:not(:last-child)::after { content:"→"; position:absolute; right:-20px; top:44%; color:#7a879c; font-weight:900; font-size:20px; }
+    .flow .n { display:grid; place-items:center; width:27px; height:27px; margin:0 auto 8px; border-radius:50%; background:var(--blue-bg); color:var(--blue); font-size:12px; font-weight:900; }
+    .flow strong { display:block; font-size:14px; }
+    .flow small { display:block; margin-top:6px; color:var(--muted); line-height:1.45; }
+    .axis { display:grid; grid-template-columns:150px 1fr 1fr 1fr; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    .axis > div { padding:13px 14px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .axis > div:nth-child(4n) { border-right:0; }
+    .axis > div:nth-last-child(-n+4) { border-bottom:0; }
+    .axis .head { background:var(--soft); font-weight:800; color:#334158; }
+    .axis .label { background:#fbfcfe; font-weight:800; }
+    .tree { padding:22px; border:1px solid var(--line); border-radius:12px; background:var(--soft); font-family:"SFMono-Regular",Consolas,monospace; font-size:14px; line-height:1.8; white-space:pre-wrap; }
+    .decision { display:grid; grid-template-columns:1.1fr .9fr; gap:16px; }
+    .route { padding:16px 17px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+    .route + .route { margin-top:10px; }
+    .route strong { display:block; }
+    .route span { color:var(--muted); font-size:13px; }
+    table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border:1px solid var(--line); border-radius:12px; font-size:14px; }
+    th,td { padding:12px 13px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line); }
+    th { background:var(--soft); color:#344158; font-size:12px; }
+    tr:last-child td { border-bottom:0; }
+    .phase { display:grid; grid-template-columns:74px 1fr 160px; gap:14px; align-items:start; padding:15px 0; border-bottom:1px solid var(--line); }
+    .phase:last-child { border-bottom:0; }
+    .phase-no { display:grid; place-items:center; height:42px; border-radius:9px; color:#fff; background:var(--blue); font-weight:900; }
+    .phase p { margin:3px 0; color:var(--muted); font-size:14px; }
+    .gate { justify-self:end; border-radius:999px; padding:5px 10px; font-size:11px; font-weight:800; color:#815400; background:var(--amber-bg); }
+    .wire { border:1px solid #cfd7e5; border-radius:14px; overflow:hidden; background:#fff; }
+    .wire-head { display:flex; justify-content:space-between; gap:10px; padding:13px 16px; background:#f6f8fb; border-bottom:1px solid var(--line); font-weight:800; }
+    .wire-body { padding:14px; }
+    .repochips { display:flex; flex-wrap:wrap; gap:7px; }
+    .repochips span { padding:5px 10px; border:1px solid var(--line); border-radius:999px; font-size:12px; }
+    .proposal { display:grid; grid-template-columns:22px 1fr auto; gap:10px; align-items:start; padding:12px; margin-top:10px; border:1px solid var(--line); border-radius:9px; }
+    .box { width:18px; height:18px; border:2px solid #8290a6; border-radius:4px; margin-top:2px; }
+    .proposal small { display:block; color:var(--muted); }
+    .action { padding:4px 8px; border-radius:6px; color:#126244; background:var(--green-bg); font-size:11px; font-weight:800; white-space:nowrap; }
+    .stack { display:grid; gap:10px; }
+    .event { display:grid; grid-template-columns:150px 1fr; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); }
+    .event:last-child { border-bottom:0; }
+    .event strong { color:#2b3a55; }
+    .packet { padding:17px; border:1px solid #cbd6ea; border-radius:10px; background:#fbfcff; font-family:"SFMono-Regular",Consolas,monospace; font-size:13px; line-height:1.7; white-space:pre-wrap; }
+    .theme-work { margin:11px 0; padding:13px; border:1px solid #b9d9cd; border-radius:10px; background:var(--green-bg); }
+    .theme-work-row { display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:center; padding:8px 0; border-bottom:1px solid #cfe6dd; font-size:13px; }
+    .theme-work-row:last-child { border-bottom:0; }
+    .repochip-new { border-style:dashed!important; border-color:#d4a643!important; background:var(--amber-bg); }
+    .repo-meta { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
+    .risk-list { margin:0; padding-left:20px; }
+    .risk-list li { margin:8px 0; }
+    .source { margin:0; padding-left:20px; color:#4a566b; font-size:13px; }
+    .revision { margin-top:22px; color:#778298; font-size:12px; text-align:right; }
+    @media(max-width:980px){ .flow{grid-template-columns:1fr 1fr}.flow .node:not(:last-child)::after{display:none}.grid4{grid-template-columns:1fr 1fr}.axis{grid-template-columns:130px 1fr}.axis>div{border-bottom:1px solid var(--line)!important}.axis>div:nth-child(2n){border-right:0}.axis>div:nth-last-child(-n+2){border-bottom:0!important}.decision{grid-template-columns:1fr}.phase{grid-template-columns:58px 1fr}.gate{grid-column:2;justify-self:start}.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.event{grid-template-columns:1fr} }
+    @media(max-width:640px){ main{width:min(100% - 20px,1180px);margin-top:10px}header,section{padding:24px 20px;border-radius:13px}.grid4,.flow{grid-template-columns:1fr}.axis{grid-template-columns:1fr}.axis>div{border-right:0}.axis .head:not(:first-child){display:none}.phase{grid-template-columns:50px 1fr}.wire-head{display:block}.repochips{margin-top:8px} }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">FOCUSMAP DAILY / HARNESS DESIGN / 更新日 2026-07-23</p>
+    <h1>Hookは事実を記録する<br>AIは仕事の意味を判断する<br>Focusmapで人間が確定する</h1>
+    <p class="lead"><strong>Hook・policy・Skillを分けて実装しました。</strong> 固定方針は各SessionStartイベントで渡してresume/compact後にも復元し、毎UserPromptSubmitではturnをpending受付して「今日＋対象repo」のTheme・Plan候補だけを短く注入します。Skill全文は繰り返しません。AIは5分類を提案し、曖昧なものだけ人間が確定します。</p>
+    <nav>
+      <a href="#questions">先に決めること</a><a href="#roles">使い分け</a><a href="#flow">発火順</a><a href="#classification">分類ルール</a><a href="#repo">repo表示</a><a href="#ui">Theme内作業</a><a href="#data">正本とDB</a><a href="#plan">大きめの計画</a><a href="#confirm">最終確認</a>
+    </nav>
+  </header>
+
+  <section id="questions">
+    <h2>合意して実装した5点</h2>
+    <p class="sub">この5点は設計案ではなく、Hook・Skill・追加DDLの現行契約です。本番Turso適用は完了し、Focusmap UI接続が次段階です。</p>
+    <div class="question"><b>Q1. 毎回の分類基準はSKILL.mdを強制読込するか</b><div class="answer"><strong>しない。</strong> 固定方針は各SessionStartイベントで <code>session-classification-policy.md</code> を注入し、resume/compact後にも復元する。毎promptは現在地と候補だけを短く渡し、Skillは未分類を再評価する明示ワークフローにした。</div></div>
+    <div class="question"><b>Q2. repo-registry外の新しいrepoもメニューへ出すか</b><div class="answer"><strong>推奨: 出す。</strong> 全トップレベルセッションから自動検出し、<code>未登録</code> バッジを付ける。ただしrepo-registryへは自動登録しない。フルpathは通常表示せず、必要時だけマスクして見せる。</div></div>
+    <div class="question"><b>Q3. すぐ終わる計画外修正をThemeに入れるか</b><div class="answer"><strong>推奨: Themeに貢献するなら入れる。</strong> ただし偽のPlanにはせず、Theme直下の「テーマ内作業」帯に置く。Theme進捗%は正式Plan工程だけで計算し、単発は別件数で表示する。</div></div>
+    <div class="question"><b>Q4. AIはどこまで自動確定してよいか</b><div class="answer"><strong>推奨:</strong> Planカードから起動、handoffにIDあり、同sessionで人間確定済み、ユーザーが明示、の時だけ自動紐付け。意味が似ているだけなら提案に留める。</div></div>
+    <div class="question"><b>Q5. 計画箱を新しく作るか</b><div class="answer"><strong>推奨: 作らない。</strong> 既存の「当日ボードSQL化」programへ、Global Skill・Hook/DB・UI・人間操作・統合評価の子10〜14として合流する。</div></div>
+  </section>
+
+  <section id="roles">
+    <h2>Script・Hook・Markdown・Skillの使い分け</h2>
+    <p class="sub">AIがScriptを読むのではありません。HookがScriptを実行し、Scriptが作った短いMarkdown本文をAIが読みます。</p>
+    <div class="grid4">
+      <div class="card"><span class="tag blue">Hook</span><h3>発火タイミング</h3><p>UserPromptSubmit、SubagentStart、Stopなど「いつ実行するか」を決めるセンサー。</p></div>
+      <div class="card"><span class="tag green">Python</span><h3>事実と順番</h3><p>ID・時刻・cwd・repoを記録し、DB取得と注入文の組立を決めた順に実行する。</p></div>
+      <div class="card"><span class="tag amber">Policy MD</span><h3>開始イベントで戻す固定境界</h3><p>既存Plan・Theme内作業・新候補・未分類の境界。SessionStartでPythonがplain textとして注入する。</p></div>
+      <div class="card"><span class="tag violet">Skill</span><h3>人が明示する整理手順</h3><p>未分類のまとめ直し、誤分類監査、Theme・Plan候補の再検討。必要な時だけ全文を読む。</p></div>
+    </div>
+    <div class="callout warn" style="margin-top:14px"><strong>同一イベントのHookを分けて順番に動かすことはできません。</strong> Codex・Claudeとも一致する複数Hookは並列です。DB記録 → policy読込 → 候補取得 → context返却の順序は、1本の統括Scriptの中で保証します。</div>
+    <div class="grid2" style="margin-top:14px">
+      <div class="card"><span class="tag red">非推奨</span><h3>SKILL.md本文だけを毎回注入</h3><p>技術的には可能ですが、Skillの発動ではありません。frontmatter・明示呼出し・Skill内hook等が効かず、同じ文書に2つの実行経路が生まれます。</p></div>
+      <div class="card"><span class="tag green">採用済み</span><h3>PolicyとSkillを役割で分ける</h3><p>開始時の固定基準は短いpolicy。毎promptは動的packet。人が明示して行う再分類だけ <code>session-routing</code> Skillが担当します。</p></div>
+    </div>
+  </section>
+
+  <section id="flow">
+    <h2>イベント順と、1本のScript内部の順番</h2>
+    <p class="sub">SessionStartは実行場所の事実を捕捉し、分類の主入口はUserPromptSubmitに固定します。</p>
+    <div class="event"><strong>SessionStart</strong><div>session/runtime/cwdを観測し、repo・worktree・branchをbest-effortで記録。分類はまだ行わず、その開始イベントで固定policyを返す。resume/compactでも方針を復元する。</div></div>
+    <div class="event"><strong>UserPromptSubmit</strong><div><strong>1本の <code>register-and-guide.py</code></strong> が直列に、①入力正規化 → ②session登録/復帰 → ③<code>route-prepare</code>でContext＋pendingを同一batch → ④今日＋対象repoの候補取得 → ⑤1つの短いContext作成、まで行う。</div></div>
+    <div class="event"><strong>メインAI</strong><div>注入された基準と候補を読み、既存Plan・Theme内作業・新Plan候補・新Theme候補・独立単発・判定待ちのどれかを構造化提案する。自然言語SQLは使わず専用CLIへ書き戻す。</div></div>
+    <div class="event"><strong>SubagentStart / Stop</strong><div>親sessionの分類を継承。agent_id・役割・開始/終了時刻・状態を機械記録する。subagentごとにDailyの独立sessionを増やさない。</div></div>
+    <div class="event"><strong>Stop</strong><div>turn終了とrun→waitだけを扱う。分類を決めない。完了確認は人間の節目で行い、単発Todoのチェック後にarchiveへ移す。</div></div>
+    <div class="packet" style="margin-top:18px">[FOCUSMAP ROUTING CONTEXT]
+turn: &lt;turn-id&gt;
+repo: focusmap / main
+current: theme=&lt;id&gt; / plan=&lt;slug&gt;
+
+未所属時だけ、今日＋対象repoのTheme候補・参照Plan候補を最大3件ずつ追加。
+required: 5分類をroute-proposeへ1回記録。
+write-back: board.py route-propose ...</div>
+    <div class="callout" style="margin-top:14px"><strong>重要:</strong> AIへ渡すのは生プロンプト全文や長いPlan本文ではありません。判断に必要な短い候補だけに絞り、Hook出力の上限と対話ノイズを抑えます。</div>
+  </section>
+
+  <section>
+    <h2>実装したSkillの役割は「再分類と監査」</h2>
+    <p class="sub">毎promptの自動受付はHookが所有し、Skillは人間が「未分類を整理して」と頼んだ時だけ使います。CodexとClaudeは同じ正本をsymlink経由で読みます。</p>
+    <div class="tree">skills/session-routing/
+├─ SKILL.md    … 57行の再分類手順・5分類・専用CLI
+└─ SKILL.html  … 白背景の人間向け説明書
+
+~/.agents/skills/session-routing → 正本（Codex）
+~/.claude/skills/session-routing → 正本（Claude）</div>
+    <div class="callout ok" style="margin-top:14px"><strong>発動関係:</strong> HookがSkillを呼ぶのではありません。Hookはpendingと判断材料を必ず用意し、通常のメインAIがその場で提案します。Skillは後から人間が明示して整理する別の入口です。</div>
+  </section>
+
+  <section id="classification">
+    <h2>計画外の作業をどう判別するか</h2>
+    <p class="sub">「Skillを使ったか」ではなく、「何の目的を進め、どのくらい継続するか」で決めます。</p>
+    <div class="axis">
+      <div class="head">分類</div><div class="head">判断条件</div><div class="head">Focusmap表示</div><div class="head">人間操作</div>
+      <div class="label">既存Plan</div><div>明示ID・Planカード起動・handoffあり、または特定Planの工程/修正。</div><div>Planカード内の実装中Codex/Claude。</div><div>原則不要。誤り時だけ付け替え。</div>
+      <div class="label">Theme内単発</div><div>Themeへ直接貢献。特定Planには属さず、今日・1sessionで完了。</div><div>Theme直下「テーマ内作業」の単発行。</div><div>完了チェックでarchive。</div>
+      <div class="label">Theme内計画外修正</div><div>Theme全体の障害を除く。特定Planの修正ならPlan内へ戻す。</div><div>Theme直下「計画外修正」の行。</div><div>必要なら後からPlanへ移す。</div>
+      <div class="label">新Plan候補</div><div>複数工程・複数session/日・依存・独立評価が必要。</div><div>Theme内作業に「Plan候補」バッジ。</div><div>plan-create-reviewを開始。</div>
+      <div class="label">新Theme候補</div><div>独立目的・完了条件があり、複数Planを束ねる可能性。</div><div>未分類のTheme候補。</div><div>チェックでTheme採用。</div>
+      <div class="label">独立単発 / 判定待ち</div><div>既存Themeへ貢献しない一回限り、または判断材料不足。</div><div>未分類。repo単位で表示。</div><div>独立完了または所属を確定。</div>
+    </div>
+    <div class="callout warn" style="margin-top:14px"><strong>AIの自動確定は限定します。</strong> 意味の類似だけでは紐付けません。明示ID、起動元、handoff、同session内の人間確定がない場合はproposalとして残します。</div>
+  </section>
+
+  <section id="repo">
+    <h2>新しいrepoは、自動検出してDailyメニューへ出す</h2>
+    <p class="sub">repo-registryは参加条件にしません。Focusmapの既存Project切替も置き換えず、Daily専用のrepo selectorを独立して置きます。</p>
+    <div class="wire">
+      <div class="wire-head"><span>デイリー　7月23日(木)</span><div class="repochips"><span>すべて 4</span><span>focusmap 2</span><span>AI基盤 1</span><span class="repochip-new">未登録 · ui-lab 1</span><span>作業フォルダ 1</span></div></div>
+      <div class="wire-body">
+        <div class="grid3">
+          <div class="card"><span class="tag green">登録済み</span><h3>focusmap</h3><p>branch <code>daily-ui</code>・稼働2</p><span class="repo-meta">詳細で ~/Private/projects/active/focusmap</span></div>
+          <div class="card"><span class="tag amber">未登録 Git</span><h3>ui-lab</h3><p>branch <code>main</code>・稼働1</p><span class="repo-meta">registry登録は人間操作。自動登録しない。</span></div>
+          <div class="card"><span class="tag blue">非Git</span><h3>作業フォルダ</h3><p>repoとして偽装しない。</p><span class="repo-meta">必要時だけマスク済みpathを表示。</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <div class="card"><h3>repoとworktreeを分離</h3><p>Git common-dirで同じrepoへまとめ、worktree root・実cwd・branchはsessionの子情報として残します。top menuではworktreeごとに重複させません。</p></div>
+      <div class="card"><h3>pathは通常隠す</h3><p>同名衝突の診断には有効ですが、ユーザー名・案件名の画面漏えいを避けるため、通常は表示名＋branchだけ。詳細popoverで <code>~/Private/…</code> を任意表示します。</p></div>
+    </div>
+  </section>
+
+  <section id="ui">
+    <h2>Theme内に「計画」と「すぐ終わる作業」を共存させる</h2>
+    <p class="sub">計画外修正を偽のPlanへ押し込まず、Themeへ貢献する仕事として視覚的に分けます。Themeは複数Planを束ねる目的の器です。</p>
+    <div class="wire">
+      <div class="wire-head"><span>Theme　FocusmapでAIとの協業を見える化する</span><span>33%　工程 4/12　計画2　単発1/3　稼働2</span></div>
+      <div class="wire-body">
+        <div class="theme-work">
+          <h3>テーマ内作業　3件</h3>
+          <div class="theme-work-row"><span class="tag green">単発</span><span>Themeの目的文をその場で修正</span><span>Codex 稼働中</span></div>
+          <div class="theme-work-row"><span class="tag amber">計画外修正</span><span>repoチップが消える表示不具合を直す</span><span>確認待ち</span></div>
+          <div class="theme-work-row"><span class="tag violet">Plan候補</span><span>全runtimeの分類精度を継続評価する</span><span>計画化を始める</span></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><span class="tag blue">Plan active</span><h3>DailyをTheme・Plan中心に再設計</h3><p>43%　工程3/7　Codex 稼働中</p></div>
+          <div class="card"><span class="tag violet">Plan planning</span><h3>HookでSessionをPlanへ紐付ける</h3><p>20%　工程1/5　Claude 確認待ち</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout ok" style="margin-top:14px"><strong>完了の扱い:</strong> Theme内単発は必ずTodoを作ってsessionへ紐付けます。人間のチェックで完了し、終了一覧のTheme見出し配下へarchiveします。sessionだけで終わらせると完了分類が崩れるためです。</div>
+    <div class="callout warn" style="margin-top:12px"><strong>進捗%は混ぜません。</strong> Themeの%は正式Plan工程だけ。単発は <code>単発 1/3</code> の別表示にし、軽い修正を大量に終えただけで計画進捗が膨らむことを防ぎます。</div>
+  </section>
+
+  <section id="data">
+    <h2>既存データを壊さず、2つの追加tableで分ける</h2>
+    <p class="sub">既存 <code>sessions/events/logs/subagents</code> とTheme・Planデータは変更せず、観測事実とAI提案を別の追加tableにします。</p>
+    <div class="tree">personal-os/AIエージェント基盤/
+├─ harness-registry/
+│  ├─ focusmap-daily.md       … 人間とAIが読む全体設計の正本
+│  └─ focusmap-daily.html     … この白背景の人間向け説明
+├─ hooks-registry/
+│  ├─ events/prompt-register/
+│  │  ├─ register-and-guide.py             … UserPromptSubmitの1本の統括入口
+│  │  └─ session-classification-policy.md  … 各SessionStartで復元する固定方針
+│  └─ shared/session-board/
+│     ├─ common.py                       … 事実受付・候補読込・Context組立
+│     ├─ routing.py                      … Git common-dir / worktree / branch判定
+│     ├─ sanitize.py                     … secret・連絡先マスク＋上限
+│     ├─ board.py                        … route-prepare/context/propose CLI
+│     └─ turso/migrations/20260723_session_routing.sql
+├─ skills/session-routing/               … 作成・runtime露出済み
+└─ plan-registry/                        … 新Plan候補を正式計画へする手続き
+
+projects/active/focusmap/
+├─ src/app/api/board/                    … repo scope・提案・採用API
+└─ src/components/today/board-v2/        … Theme内作業・未分類・repo selector
+
+各repo/plans/.../plan.md      … Plan本文と状態の唯一の正本</div>
+    <div class="grid2" style="margin-top:14px">
+      <div class="card"><span class="tag blue">新規 1</span><h3>session_execution_contexts</h3><p>session_key、repo_key、登録状態、表示名、canonical repo、worktree root、実cwd、branch、first/last seen。repoの観測事実だけを持つ。</p></div>
+      <div class="card"><span class="tag violet">新規 2</span><h3>session_route_proposals</h3><p>session/turn、event fingerprint、分類kind、Theme/Plan候補、安全な短い要約、理由、pending/accepted/rejected。AI提案と人間判断を持つ。</p></div>
+    </div>
+    <h3 style="margin-top:24px">保存境界</h3>
+    <table>
+      <thead><tr><th>列のまとまり</th><th>保存するもの</th><th>保存しないもの</th></tr></thead>
+      <tbody>
+        <tr><td>repo観測</td><td>Git common-dir由来のopaque repo_key、worktree、branch、マスク可能なpath</td><td>remote URL、credential、basenameだけの結合</td></tr>
+        <tr><td>AI提案</td><td>event fingerprint、安全な1行要約、kind、Theme/Plan ID候補、短い理由</td><td>生プロンプト全文、Prompt由来hash、AIの思考過程</td></tr>
+        <tr><td>人間判断</td><td>pending / accepted / rejected / superseded、決定時刻</td><td>曖昧一致による自動Theme作成</td></tr>
+        <tr><td>既存データ</td><td>新promptからbest-effort自己修復</td><td>旧basenameからpathを推測するbackfill、既存tableのALTER</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn" style="margin-top:14px"><strong>既存の <code>sessions.repo</code> は表示用basenameだけで安定IDではありません。</strong> 破壊的に置換せず、新tableを第一参照にし、古いsessionは従来labelで表示。新しいpromptが来た時から正しいrepo contextへ自己修復します。</div>
+  </section>
+
+  <section>
+    <h2>初期段階では新しいloopを作らない</h2>
+    <div class="grid3">
+      <div class="card"><span class="tag green">daily-start</span><h3>朝の候補を整える</h3><p>今日使うactive Theme・Planを提示する。セッションの意味分類はしない。</p></div>
+      <div class="card"><span class="tag blue">session-board</span><h3>イベントごとに記録</h3><p>run/wait/subとrepo contextを更新。分類提案はUserPromptSubmitから行う。</p></div>
+      <div class="card"><span class="tag amber">将来のみ</span><h3>未分類の通知</h3><p>pendingが実測で溜まった時だけ、通知loopを別計画で検討する。</p></div>
+    </div>
+    <p class="callout" style="margin-top:14px"><strong>理由:</strong> 分類はpromptが来た瞬間に必要です。後追いloopを正本にすると、表示の遅延と二重判断が発生します。</p>
+  </section>
+
+  <section id="plan">
+    <h2>既存programへ子10〜14として直列で合流する</h2>
+    <p class="sub">合流先: <code>ai運用/plans/active/2026-07-17-当日ボードSQL化/</code>。1つの巨大な子計画にせず、責務・依存・評価境界で分割します。</p>
+    <div class="phase"><div class="phase-no">10</div><div><h3>分類契約と明示Skill</h3><p>policyの短い判断基準、再分類Skill、structured output、使う時・使わない時を確定。正本Markdownを現在のTheme構造へ更新。</p></div><span class="gate">内容承認</span></div>
+    <div class="phase"><div class="phase-no">11</div><div><h3>Hook順序・repo identity・追加DB</h3><p>UserPromptSubmitの1統括Script、session_execution_contexts、session_route_proposalsをfake DBで実装。既存tableは変更しない。</p></div><span class="gate">Skill/Hook/DDL承認</span></div>
+    <div class="phase"><div class="phase-no">12</div><div><h3>Daily repo selectorとTheme内作業UI</h3><p>登録済み・未登録・非Gitを分離表示。build層でTheme直下作業とPlan作業を分け、既存カードへ誤投入しない。</p></div><span class="gate">UI実機確認</span></div>
+    <div class="phase"><div class="phase-no">13</div><div><h3>人間採用・Todo・archive・正式Plan化</h3><p>楽観的UI、rollback、Theme内単発Todo、完了チェック、新Theme採用、plan-create-reviewへのhandoffを接続。</p></div><span class="gate">本番DB書込承認</span></div>
+    <div class="phase"><div class="phase-no">14</div><div><h3>統合評価と段階展開</h3><p>未登録repo、linked worktree、非Git、同名repo、途中の所属変更、DB障害、subagent継続、Codex/Claude parityを評価して段階展開。</p></div><span class="gate">最終人間確認</span></div>
+    <div class="callout ok" style="margin-top:16px"><strong>実装順:</strong> 10 → 11 → 12 → 13 → 14。まずshadow proposalまでを通し、AI提案が妥当と確認してから所属変更・Theme作成を有効にします。</div>
+  </section>
+
+  <section>
+    <h2>先に潰すべき失敗</h2>
+    <div class="grid2">
+      <div class="card"><span class="tag red">順序崩れ</span><h3>同一イベントの複数Hookへ分割</h3><p>並列実行されるため、DB受付とcontext生成を同じ統括Script内で直列化する。所有者の違うHook同士は相互依存させない。</p></div>
+      <div class="card"><span class="tag red">偽Skill発動</span><h3>SKILL.md本文の注入をSkillと呼ぶ</h3><p>plain context注入とSkill invocationを明確に分ける。自動処理はpolicy、明示整理はSkill。</p></div>
+      <div class="card"><span class="tag red">repo混同</span><h3>basename衝突・worktree重複</h3><p>Git common-dir由来repo_keyとworktree root・実cwdを分離。未登録と非Gitを明示し、remote URLは保存しない。</p></div>
+      <div class="card"><span class="tag red">進捗水増し</span><h3>単発をPlan工程へ混ぜる</h3><p>Theme内作業帯へ分離し、Plan進捗%と単発完了数を別指標にする。</p></div>
+    </div>
+  </section>
+
+  <section id="confirm">
+    <h2>実装済みと次の自動工程</h2>
+    <div class="grid3">
+      <div class="card"><span class="tag green">1</span><h3>PolicyとSkillを分離</h3><p>SessionStartは固定policy、毎promptは短い動的packet。Skillは明示的な再分類だけに使う。</p></div>
+      <div class="card"><span class="tag green">2</span><h3>未登録repoも表示</h3><p>全sessionから検出するが、自動registry登録はしない。pathは通常隠す。</p></div>
+      <div class="card"><span class="tag green">3</span><h3>Theme内作業を追加</h3><p>単発・計画外修正・Plan候補をTheme直下へ。Plan進捗とは別計数。</p></div>
+      <div class="card"><span class="tag green">4</span><h3>曖昧一致はproposal</h3><p>明示的な根拠がある時だけ自動紐付け。意味類似は人間確認へ。</p></div>
+      <div class="card"><span class="tag green">5</span><h3>既存programの子10〜14</h3><p>新しい箱を増やさず、Global Skillから統合評価まで直列で進める。</p></div>
+    </div>
+    <div class="callout" style="margin-top:16px"><strong>現在地:</strong> Skill、Hook共通処理、Codex JSON、Claude plain text、追加DDLを実装済み。本番Tursoへ追加2表・3 indexを適用し、実DBのproposal書込み・読戻しまで確認しました。CodexのSessionStartは公式APIで自動trust済み。次はFocusmap UIのproposal読取・採用操作です。</div>
+  </section>
+
+  <section>
+    <h2>根拠として確認したもの</h2>
+    <ul class="source">
+      <li><a href="https://developers.openai.com/codex/hooks">OpenAI Codex Hooks</a> — 同一イベントHookの並列、各イベントの入力・context出力</li>
+      <li><a href="https://developers.openai.com/codex/skills">OpenAI Codex Skills</a> — name/description/pathから始まる段階読込、明示・暗黙呼出し</li>
+      <li><a href="https://code.claude.com/docs/en/hooks">Claude Code Hooks</a> — command hook、additionalContext、同一イベントの並列</li>
+      <li><a href="https://code.claude.com/docs/en/skills">Claude Code Skills</a> — Skill全文のloadと明示呼出し</li>
+      <li>hooks-registry/codex/hooks.json — 現在のイベント登録</li>
+      <li>hooks-registry/events/prompt-register/register-and-guide.py — 現在のUserPromptSubmit入口</li>
+      <li>hooks-registry/shared/session-board/common.py / routing.py — session受付、短いContext、repo/worktree判定</li>
+      <li>repo-create/references/migration-contract.md — canonical repo / worktree分離契約</li>
+      <li>focusmap/src/components/today/board-v2/build.ts — Theme-only作業が先頭Planへ入る現状</li>
+      <li>focusmap/src/components/today/board-v2/theme-plan-board.tsx — 現在のrepo chip生成元</li>
+      <li>my-brain/areas/ai運用/plans/active/2026-07-17-当日ボードSQL化/program.md — 合流先</li>
+    </ul>
+  </section>
+
+    <p class="revision">更新履歴: v6 — SessionStartイベント単位のpolicy復元、route-prepare直列化、今日＋対象repo候補、worktree正本分離、secret/連絡先マスク、採用済みroute保護とreadbackへ更新。</p>
+</main>
+</body>
+</html>

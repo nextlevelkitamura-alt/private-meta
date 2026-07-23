@@ -31,10 +31,32 @@ _BOARD_DDL = [
         id TEXT PRIMARY KEY, session_key TEXT NOT NULL, sub_seq INTEGER NOT NULL,
         label TEXT, status TEXT NOT NULL DEFAULT 'running',
         started_at TEXT NOT NULL, ended_at TEXT, session_date TEXT NOT NULL)""",
+    """CREATE TABLE session_execution_contexts (
+        session_key TEXT PRIMARY KEY,
+        runtime TEXT NOT NULL CHECK (runtime IN ('codex', 'claude')),
+        repo_key TEXT NOT NULL, display_name TEXT NOT NULL,
+        scope_kind TEXT NOT NULL CHECK (scope_kind IN ('git', 'folder')),
+        identity_state TEXT NOT NULL CHECK (identity_state IN ('detected', 'unregistered')),
+        canonical_repo_path TEXT, worktree_root TEXT NOT NULL, cwd_path TEXT NOT NULL,
+        branch TEXT, first_seen_at TEXT NOT NULL, updated_at TEXT NOT NULL)""",
+    """CREATE TABLE session_route_proposals (
+        id TEXT PRIMARY KEY, session_key TEXT NOT NULL, turn_id TEXT NOT NULL,
+        runtime TEXT NOT NULL CHECK (runtime IN ('codex', 'claude')), repo_key TEXT NOT NULL,
+        event_fingerprint TEXT NOT NULL, safe_summary TEXT,
+        route_kind TEXT NOT NULL DEFAULT 'pending'
+          CHECK (route_kind IN ('pending', 'plan', 'theme_work', 'plan_candidate', 'theme_candidate', 'unclassified')),
+        theme_id TEXT, plan_slug TEXT, reason TEXT,
+        status TEXT NOT NULL DEFAULT 'pending'
+          CHECK (status IN ('pending', 'proposed', 'accepted', 'rejected', 'superseded')),
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+        UNIQUE(session_key, turn_id))""",
 ]
 
 # 本番 inbox DB のテーブル（テストで書く分だけ・列は builder 準拠）。
 _INBOX_DDL = [
+    """CREATE TABLE repos (
+        slug TEXT PRIMARY KEY, name TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT)""",
     """CREATE TABLE todos (
         id TEXT PRIMARY KEY, title TEXT, note TEXT, do_date TEXT, due_date TEXT, repo TEXT,
         assignee TEXT, status TEXT, ai_status TEXT, source TEXT, goal_ref TEXT, session_key TEXT,
@@ -53,6 +75,9 @@ _INBOX_DDL = [
         created_at TEXT, updated_at TEXT)""",
     """CREATE TABLE goals (
         id INTEGER PRIMARY KEY, name TEXT, goal_date TEXT, created_at TEXT, source TEXT, status TEXT)""",
+    """CREATE TABLE plan_docs (
+        path TEXT PRIMARY KEY, program_slug TEXT, kind TEXT, nn TEXT, title TEXT, bucket TEXT,
+        body TEXT, content_hash TEXT, git_commit TEXT, synced_at TEXT)""",
 ]
 
 
@@ -111,6 +136,15 @@ class FakeTurso:
         cols = [c[0] for c in cur.description] if cur.description else []
         return [dict(zip(cols, row)) for row in cur.fetchall()]
 
+    def read_many(self, statements, db_url=None, service=None, token_getter=None):
+        batches = []
+        for statement in statements:
+            rows = self.read(statement, db_url=db_url, service=service, token_getter=token_getter)
+            if rows is None:
+                return None
+            batches.append(rows)
+        return batches
+
     # ---- 検証補助 ----
     def flat(self):
         """全バッチをフラット化した [(sql, args), ...]。"""
@@ -137,6 +171,7 @@ def install(board):
     fake = FakeTurso()
     board._turso_send = fake.send
     board._turso_read = fake.read
+    board._turso_read_many = fake.read_many
     return fake
 
 

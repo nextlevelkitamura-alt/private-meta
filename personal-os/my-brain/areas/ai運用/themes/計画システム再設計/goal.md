@@ -14,7 +14,7 @@
 
 - このテーマフォルダを正式な検討場所として使い、新しい計画フォルダは作らない。
 - 全体目的と現在の決定は、この `goal.md` に置く。
-- 個別検討は [topics/database/](./topics/database/) と [topics/ui/](./topics/ui/) の2つだけに分ける。
+- 個別検討は [databaseの保存・参照設計](./topics/database/保存・参照設計.md) と [topics/ui/](./topics/ui/) の2つだけに分ける。
 - `focusmap/` というトピックフォルダは作らず、Focusmap全体の確認事項は `goal.md` に置く。
 - 両方のトピックで使う調査・根拠は [references/](./references/) に置く。
 - 現段階では `program / plan / 子計画` に分類しない。
@@ -31,7 +31,7 @@
 
 ## 検討場所
 
-- [topics/database/](./topics/database/): DBの持ち方、正本境界、同期、AIからの参照・更新方法
+- [topics/database/保存・参照設計.md](./topics/database/保存・参照設計.md): DBの持ち方、正本境界、同期、AIからの参照・更新方法の正本
 - [topics/ui/](./topics/ui/): Focusmapでの見え方、操作、PC・スマホの使用体験
 - [references/](./references/): databaseとuiの両方で参照する調査・根拠資料
 - [壁打ち/](./壁打ち/): 会話ごとの検討ログ

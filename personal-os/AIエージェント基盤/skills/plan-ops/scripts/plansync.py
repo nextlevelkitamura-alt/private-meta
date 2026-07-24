@@ -12,7 +12,7 @@
        専用spool名 `plansync-spool` を使い、再送も inbox 宛senderで回す（DB取り違え防止）。
   3. content_hash 冪等（同一内容は再送スキップ）。git_commit はファイルへの最終コミットhash。
   4. secret疑い正規表現にヒットした文書は同期拒否し、通知（notices log + stderr）を出す。
-  5. 走査は active|done|archive の3バケット（planning は対象外）。plan_docs.bucket にフォルダ名を書く。
+  5. 走査は planning|active|done|archive の4バケット。plan_docs.bucket にフォルダ名を書く。
      active→done/archive のバケット移動で計画はUIから消えない（新bucket行がupsertされ継続）。
      自動DELETEは commit経路の明示的なファイル削除（差分同期）に限る。日次フル reconcile は孤児を
      削除せず notify（きみの番へ通知）する＝沈黙して消えない・古い行の誤爆削除を防ぐ。
@@ -249,7 +249,7 @@ def _mk_doc(abspath, repo_root, program_slug, kind, nn, bucket="active"):
 
 
 def extract_plan_dir(plan_dir, repo_root, bucket="active"):
-    """1つの計画フォルダ（bucket=active|done|archive）から Doc群を抽出する。
+    """1つの計画フォルダ（bucket=planning|active|done|archive）から Doc群を抽出する。
     対象外(references/explain/misc)は無視。bucket は plan_docs.bucket 列へ書く（active から done/archive へ
     動いても表示キャッシュが消えないための状態列。子02・program.md 正本境界4条）。"""
     slug = os.path.basename(plan_dir.rstrip("/"))
@@ -307,13 +307,13 @@ def extract_plan_dir(plan_dir, repo_root, bucket="active"):
     return docs
 
 
-# 子02: active から出た計画を UI から消さないため、走査対象を active|done|archive の3バケットへ拡張する。
-# planning は表示キャッシュ対象外（未着手＝ボードに出さない）のまま。
-SYNC_BUCKETS = ("active", "done", "archive")
+# Dailyでは、これからThemeへ束ねる計画も選べる必要があるため planning も表示ミラーへ含める。
+# 計画本文・状態の正本は引き続きフォルダで、plan_docs は読み取りキャッシュに限定する。
+SYNC_BUCKETS = ("planning", "active", "done", "archive")
 
 
 def find_plan_dirs(areas_root):
-    """areas/*/plans/<bucket>/<slug>/ の一覧を (絶対path, bucket) で返す（bucket=active|done|archive）。"""
+    """areas/*/plans/<bucket>/<slug>/ の一覧を (絶対path, bucket) で返す。"""
     out = []
     for bucket in SYNC_BUCKETS:
         for bpath in sorted(glob.glob(os.path.join(areas_root, "*", "plans", bucket))):
@@ -345,7 +345,7 @@ def extract_all(areas_root, repo_root):
 
 
 def is_plan_doc_path(rel_path):
-    """repo相対pathが計画ミラー対象path（active|done|archive）かを判定（post-commit差分の絞り込み用）。"""
+    """repo相対pathが計画ミラー対象pathかを判定（post-commit差分の絞り込み用）。"""
     parts = rel_path.split("/")
     try:
         i = parts.index("areas")
@@ -516,7 +516,7 @@ def apply_sync(plan, full=False):
 
     if full:
         # 子02: 日次フル reconcile は孤児を自動DELETEしない（削除は commit経路の明示ファイル削除＝差分同期に限る）。
-        # DBに在って現存(active|done|archive)に無いpath/slugは「差分」として notify（きみの番へ通知）するだけ。
+        # DBに在って現存(planning|active|done|archive)に無いpath/slugは「差分」として notifyするだけ。
         # これにより active→done 移動が日次経路で誤DELETEされることを防ぎ、沈黙して消えない（program.md 方針）。
         db_paths, db_slugs = _fetch_db_keys(store)
         present = plan["present_paths"]

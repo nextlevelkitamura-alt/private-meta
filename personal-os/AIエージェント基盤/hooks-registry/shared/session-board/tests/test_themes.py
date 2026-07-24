@@ -155,6 +155,17 @@ ok("stmt_theme_insert: name/purpose/done_criteriaを載せる",
 ok("stmt_theme_insert: idまたはnameが空はNone",
    store.stmt_theme_insert("", "n", "p", "d") is None and store.stmt_theme_insert("i", "", "p", "d") is None)
 
+candidate = store.stmt_theme_candidate_insert(
+    "CID", "新Theme候補", purpose="目的", repo_slug="focusmap",
+    session_key="s:cccc", turn_id="turn-1")
+ok("stmt_theme_candidate_insert: Themeへ昇格せず候補箱へ出す",
+   candidate is not None and "theme_candidates" in candidate[0]
+   and "INSERT OR IGNORE" in candidate[0]
+   and vals(candidate)[1:4] == ["新Theme候補", "目的", None])
+ok("stmt_theme_candidate_insert: id/name欠落は送らない",
+   store.stmt_theme_candidate_insert("", "名前") is None
+   and store.stmt_theme_candidate_insert("CID", "") is None)
+
 aff = store.stmt_session_affiliation("cccc", todo_id="T", theme_id="H")
 ok("stmt_session_affiliation: 両指定で todo/theme/keyの3値", vals(aff) == ["T", "H", "s:cccc"])
 aff = store.stmt_session_affiliation("cccc", todo_id="T")

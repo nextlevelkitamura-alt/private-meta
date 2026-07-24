@@ -74,13 +74,26 @@ cat > "$DONEDIR/plan.md" <<'EOF'
 - [x] 済み条件
 EOF
 
+# --- fixture: planning バケットの計画（Themeへ紐付ける前からDailyで選択できる） ---
+PLANNINGDIR="$AREAS/testarea/plans/planning/2026-01-05-計画中例"
+mkdir -p "$PLANNINGDIR"
+cat > "$PLANNINGDIR/plan.md" <<'EOF'
+分類: skill ／ 種別: 新規作成
+
+# 計画中例
+
+## 完了条件
+
+- [ ] 計画中条件
+EOF
+
 # ============================================================
 # (a) scan: kind分類の件数
 # ============================================================
 OUT="$("$SCRIPTS/plansync.py" scan --root "$AREAS" --repo-root "$TMP" 2>/dev/null)"
 assert_contains "(a) programを1件抽出" "$OUT" "program=1"
-# 子02: done バケットの計画も走査対象＝single は active2件 + done1件 = 3件
-assert_contains "(a) single 3件（単発例＋秘密混入＋done完了例）" "$OUT" "single=3"
+# planning/done バケットの計画も走査対象＝single は active2件 + planning1件 + done1件 = 4件
+assert_contains "(a) single 4件（active＋planning＋done）" "$OUT" "single=4"
 assert_contains "(a) child 2件" "$OUT" "child=2"
 assert_contains "(a) role 1件（実装共通のみ）" "$OUT" "role=1"
 assert_contains "(a) eval 3件" "$OUT" "eval=3"
@@ -104,8 +117,8 @@ NOTICES="$TMP/state/plansync-notices.log"
 assert_eq "(c) 通知ログが作られる" "$( [ -f "$NOTICES" ] && echo yes || echo no )" "yes"
 assert_not_contains "(c) 通知ログにsecret値を書かない" "$(cat "$NOTICES")" "AKIAABCDEFGHIJKLMNOP"
 
-# 同期対象は 全11件（active10 + done1） - 拒否1件 = 9件
-assert_contains "(c) 同期対象9件（done完了例を含む）" "$OUT" "同期対象(secret通過): 9 件"
+# 同期対象は planning計画を含み、secret拒否だけを除く
+assert_contains "(c) 同期対象10件（planning/doneを含む）" "$OUT" "同期対象(secret通過): 10 件"
 
 # ============================================================
 # (g) 子02: done バケットの計画が走査され bucket=done で載る（active→doneで消えない）
@@ -114,6 +127,8 @@ JOUT="$("$SCRIPTS/plansync.py" scan --root "$AREAS" --repo-root "$TMP" --json 2>
 assert_contains "(g) done計画のpathが載る" "$JOUT" "plans/done/2026-01-04-完了例/plan.md"
 assert_contains "(g) bucket=done が付く" "$JOUT" '"bucket": "done"'
 assert_contains "(g) active計画は bucket=active のまま" "$JOUT" '"bucket": "active"'
+assert_contains "(g) planning計画のpathが載る" "$JOUT" "plans/planning/2026-01-05-計画中例/plan.md"
+assert_contains "(g) bucket=planning が付く" "$JOUT" '"bucket": "planning"'
 
 # ============================================================
 # (d) 差分sync(dry-run): activeから消えたpathはDELETE候補になる

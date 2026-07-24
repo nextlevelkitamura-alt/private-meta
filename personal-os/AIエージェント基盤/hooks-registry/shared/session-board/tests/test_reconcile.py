@@ -4,7 +4,7 @@
 # 沈黙した行の内部row（state=WAIT・sub=0）のリストを返す。旧MD reconcile の生存判定ロジックを流用:
 #   ・files が皆無なら降格しない（探索不能時に全行一括⏸を防ぐ安全弁）
 #   ・transcript あり（mtime経路）は最終更新からの沈黙で判定（🟢10分/🔵30分）
-#   ・transcript なし（ファイル皆無経路）は updated_at からの沈黙で判定（🟢15分/🔵30分・上限720分で逆行クロック弾き）
+#   ・transcript なし（ファイル皆無経路）は updated_at からの沈黙で判定（🟢15分/🔵30分・12時間超も降格）
 # fake DB に行を直接seedし、board._list_transcripts を差し替えて判定だけを検証する（実ボード非依存）。
 import datetime
 import os
@@ -83,7 +83,12 @@ seed("aaaa0001", "sub", 35, sub=1)
 ok("③ 🔵35分→降格", "aaaa0001" in demoted_keys())
 seed("aaaa0001", "run", 10)
 ok("🟢10分→維持(15分未満)", "aaaa0001" not in demoted_keys())
-# ⑤ 逆行クロック（未来 updated_at）→ 上限NOFILE_MAXレンジ外で弾く
+# 12時間を超えた ghost も必ず降格（旧 NOFILE_MAX 上限で永久残留しない）
+seed("aaaa0001", "run", board.NOFILE_MAX + 60)
+ok("12時間超の🟢ghost→降格", "aaaa0001" in demoted_keys())
+seed("aaaa0001", "sub", board.NOFILE_MAX + 60, sub=2)
+ok("12時間超の🔵ghost→降格", "aaaa0001" in demoted_keys())
+# ⑤ 逆行クロック（未来 updated_at）は age < 0 のため弾く
 seed("aaaa0001", "run", -3)
 ok("⑤ 逆行クロック(3分未来)→降格しない", "aaaa0001" not in demoted_keys())
 

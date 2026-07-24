@@ -48,6 +48,92 @@ def send(statements, db_url=DB_URL, service=KEYCHAIN_SERVICE, token_getter=token
     except Exception: return False
 
 
+def transaction(statements, expected_affected=None, db_url=DB_URL,
+                service=KEYCHAIN_SERVICE, token_getter=token):
+    """HTTP pipeline の baton を使い、複数文を1トランザクションで実行する。
+
+    route proposal と sessions 所属のように、片方だけの成功を許さない更新用。
+    各文の affected_row_count が expected_affected と一致した時だけ COMMIT し、
+    SQL error・0件更新・通信失敗は ROLLBACK する。spool には載せない。
+    """
+    statements = [statement for statement in statements if statement]
+    if not statements or os.environ.get("SESSION_BOARD_NO_TURSO"):
+        return False
+    expected = list(expected_affected or [1] * len(statements))
+    if len(expected) != len(statements):
+        return False
+
+    baton = None
+    endpoint = db_url.rstrip("/") + "/v2/pipeline"
+    headers = {"Content-Type": "application/json"}
+
+    def post(body, target=None):
+        request = urllib.request.Request(
+            target or endpoint,
+            data=json.dumps(body).encode(),
+            method="POST",
+            headers=headers,
+        )
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            return json.loads(response.read().decode())
+
+    def all_ok(payload, count):
+        results = payload.get("results") or []
+        return len(results) >= count and not any("error" in item for item in results[:count])
+
+    def close_with(sql):
+        if not baton:
+            return False
+        payload = post({
+            "baton": baton,
+            "requests": [
+                {"type": "execute", "stmt": {"sql": sql, "args": []}},
+                {"type": "close"},
+            ],
+        })
+        return all_ok(payload, 2)
+
+    try:
+        secret = token_getter(service)
+        if not secret:
+            return False
+        headers["Authorization"] = f"Bearer {secret}"
+
+        begun = post({"requests": [
+            {"type": "execute", "stmt": {"sql": "BEGIN IMMEDIATE", "args": []}},
+        ]})
+        if not all_ok(begun, 1) or not begun.get("baton"):
+            return False
+        baton = begun["baton"]
+        base_url = begun.get("base_url")
+        if base_url:
+            endpoint = base_url.rstrip("/") + "/v2/pipeline"
+
+        work = post({
+            "baton": baton,
+            "requests": [
+                {"type": "execute", "stmt": {"sql": sql, "args": args}}
+                for sql, args in statements
+            ],
+        })
+        if not all_ok(work, len(statements)):
+            close_with("ROLLBACK")
+            return False
+
+        for index, wanted in enumerate(expected):
+            result = work["results"][index].get("response", {}).get("result", {})
+            if int(result.get("affected_row_count", -1)) != int(wanted):
+                close_with("ROLLBACK")
+                return False
+        return close_with("COMMIT")
+    except Exception:
+        try:
+            close_with("ROLLBACK")
+        except Exception:
+            pass
+        return False
+
+
 def execute(statements, sender, spool_append, db_url=DB_URL, service=KEYCHAIN_SERVICE):
     if not statements or os.environ.get("SESSION_BOARD_NO_TURSO"): return 0
     return 0 if sender(statements, db_url=db_url, service=service) else spool_append(statements)
@@ -222,6 +308,35 @@ def stmt_route_propose(session_key, turn_id, route_kind, status="proposed",
                  text_or_null(summary), text_or_null(reason), text_arg(at), text_arg(session_key), text_arg(turn_id)]
 
 
+def stmt_session_route_apply(session_key, route_kind, theme_id=None, plan_slug=None):
+    """accepted の実所属だけを sessions へ反映する。
+
+    plan は plan_slug 必須で sessions.plan へ、theme_work は theme_id 必須で
+    sessions.theme_id へ書く。plan に theme_id が明示された時だけ両方を更新する。
+    候補系kindは所属を変えないため None。
+    """
+    if not session_key:
+        return None
+    if route_kind == "plan" and plan_slug:
+        if theme_id is None:
+            return ("UPDATE sessions SET plan = ? WHERE session_key = ?",
+                    [text_arg(plan_slug), text_arg(session_key)])
+        return ("UPDATE sessions SET plan = ?, theme_id = ? WHERE session_key = ?",
+                [text_arg(plan_slug), text_arg(theme_id), text_arg(session_key)])
+    if route_kind == "theme_work" and theme_id:
+        return ("UPDATE sessions SET theme_id = ? WHERE session_key = ?",
+                [text_arg(theme_id), text_arg(session_key)])
+    return None
+
+
+def stmt_session_exists_guard(session_key):
+    """accepted候補でもsession行の存在を同一トランザクション内で保証する。"""
+    if not session_key:
+        return None
+    return ("UPDATE sessions SET session_key = session_key WHERE session_key = ?",
+            [text_arg(session_key)])
+
+
 def stmt_execution_context_read(session_key):
     if not session_key:
         return None
@@ -327,6 +442,28 @@ def stmt_theme_insert(theme_id, name, purpose, done_criteria, goal_ref=None, pla
             (text_arg(plan_refs_json) if plan_refs_json else null_arg()),
             text_arg(now), text_arg(now)]
     return sql, args
+
+
+def stmt_theme_candidate_insert(candidate_id, name, purpose=None, done_criteria=None,
+                                goal_ref=None, repo_slug=None, session_key=None,
+                                turn_id=None, proposed_by="ai"):
+    """AIの新Theme提案をinboxへ冪等登録する。Theme本体には昇格させず、Dailyの採用操作を待つ。"""
+    name = (name or "").strip()
+    if not candidate_id or not name or proposed_by not in ("ai", "human"):
+        return None
+    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).isoformat(timespec="seconds")
+
+    def opt(value):
+        return text_arg(value) if (value or "").strip() else null_arg()
+
+    sql = ("INSERT OR IGNORE INTO theme_candidates "
+           "(id, name, purpose, done_criteria, goal_ref, repo_slug, source_session_key, source_turn_id, "
+           "proposed_by, status, created_at, updated_at) "
+           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'proposed', ?, ?)")
+    return sql, [
+        text_arg(candidate_id), text_arg(name), opt(purpose), opt(done_criteria), opt(goal_ref),
+        opt(repo_slug), opt(session_key), opt(turn_id), text_arg(proposed_by), text_arg(now), text_arg(now),
+    ]
 
 
 def stmt_todo_insert(todo_id, title, do_date, note=None, due_date=None, repo="none",

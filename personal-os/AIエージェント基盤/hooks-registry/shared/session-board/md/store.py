@@ -18,7 +18,8 @@ import os
 RUN, WAIT, SUB = "🟢", "⏸", "🔵"
 STATE_WORD = {RUN: "run", WAIT: "wait", SUB: "sub"}
 # 生存照合の沈黙しきい値（分）。mtime 経路=STALE_MIN(通常)/STALE_MIN_SUB(サブ)、
-# ファイル皆無経路=STALE_MIN_NOFILE(通常)/STALE_MIN_SUB(サブ)、NOFILE_MAX は逆行クロック弾き上限。
+# ファイル皆無経路=STALE_MIN_NOFILE(通常)/STALE_MIN_SUB(サブ)。NOFILE_MAX は旧判定の互換定数。
+# 現在の reconcile は12時間超の ghost も降格し、未来時刻は負の age で除外する。
 STALE_MIN, STALE_MIN_SUB, STALE_MIN_NOFILE, NOFILE_MAX = 10, 30, 15, 720
 PLACEHOLDER = "?"
 

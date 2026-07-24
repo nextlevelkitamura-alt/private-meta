@@ -42,6 +42,7 @@ _stmt_goals_distinct = turso_store.stmt_goals_distinct
 # 子09: セッション所属先の宣言（sessions.todo_id/theme_id）と大課題テーマの作成（inbox themes）。
 _stmt_session_affiliation = turso_store.stmt_session_affiliation
 _stmt_theme_insert = turso_store.stmt_theme_insert
+_stmt_theme_candidate_insert = turso_store.stmt_theme_candidate_insert
 # 子03: 今日やること todo を inbox todos へ確定起票（board.py todo-add・daily-start が使う）。
 _stmt_todo_insert = turso_store.stmt_todo_insert
 # 子08: サブエージェント入れ子可視化（board DB: session_subagents の開始/終了/ラベル）。
@@ -60,6 +61,8 @@ _stmt_mark_answers_consumed = turso_store.stmt_mark_answers_consumed
 _stmt_execution_context_upsert = turso_store.stmt_execution_context_upsert
 _stmt_route_pending = turso_store.stmt_route_pending
 _stmt_route_propose = turso_store.stmt_route_propose
+_stmt_session_route_apply = turso_store.stmt_session_route_apply
+_stmt_session_exists_guard = turso_store.stmt_session_exists_guard
 _stmt_execution_context_read = turso_store.stmt_execution_context_read
 _stmt_session_route_read = turso_store.stmt_session_route_read
 _stmt_latest_route_read = turso_store.stmt_latest_route_read
@@ -68,6 +71,7 @@ _stmt_theme_candidates = turso_store.stmt_theme_candidates
 _stmt_plan_candidates = turso_store.stmt_plan_candidates
 _turso_read = turso_store.read
 _turso_read_many = turso_store.read_many
+_turso_transaction = turso_store.transaction
 
 # board.py自身の実体ディレクトリ（route宣言スキャンの既定ルート算出に使う）。
 _SB_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -168,7 +172,10 @@ def reconcile_db(now_dt=None):
         if transcript is None:
             age = _minutes_since_iso(db_row.get("updated_at"), now_dt)
             limit = STALE_MIN_SUB if row["state"] == SUB else STALE_MIN_NOFILE
-            demote = bool(files) and age is not None and limit < age < NOFILE_MAX
+            # transcript 一覧が取得できている場合だけ、updated_at の沈黙時間で降格する。
+            # 未来時刻は age < 0 のため引き続き除外される。NOFILE_MAX を上限にすると、
+            # 12時間を超えた本物の ghost が永久に run/sub のまま残るため上限は設けない。
+            demote = bool(files) and age is not None and age > limit
         else:
             limit = STALE_MIN_SUB if row["state"] == SUB else STALE_MIN
             try:
@@ -393,19 +400,120 @@ def _run_routing_command(cmd, args):
     if cmd == "route-propose":
         safe_summary = sanitize_text(args.get("summary"), 80) if args.get("summary") is not None else None
         safe_reason = sanitize_text(args.get("reason"), 160) if args.get("reason") is not None else None
+        route_kind = args.get("kind")
+        route_status = args.get("status", "proposed")
         statement = _stmt_route_propose(
-            session_key, args.get("turn"), args.get("kind"), args.get("status", "proposed"),
+            session_key, args.get("turn"), route_kind, route_status,
             args.get("theme"), args.get("plan"), safe_summary, safe_reason)
-        if statement is None:
+        accepted_contract_ok = not (
+            route_status == "accepted" and (
+                (route_kind == "plan" and not args.get("plan")) or
+                (route_kind == "theme_work" and not args.get("theme"))
+            )
+        )
+        if statement is None or not accepted_contract_ok:
             sys.exit("usage: board.py route-propose --key <s:key> --turn <id> --kind <plan|theme_work|plan_candidate|theme_candidate|unclassified> [--status proposed|accepted|rejected|superseded] [--theme <id>] [--plan <slug>] [--summary <safe>] [--reason <safe>]")
-        _turso_sync([statement])
-        rows = _turso_read(_stmt_route_turn_read(session_key, args.get("turn"))) or []
-        if not rows:
+
+        # proposed/rejected/superseded は従来通り提案表だけ。sessions 所属は変えない。
+        if route_status != "accepted":
+            _turso_sync([statement])
+            # 新Theme候補だけはDailyの採用UIへ出す。Theme本体はまだ作らず、
+            # 人間がチェックした時にTheme・当日行・repo所属へ原子的に昇格する。
+            if route_status == "proposed" and route_kind == "theme_candidate" and safe_summary:
+                candidate_id = str(uuid.uuid5(
+                    uuid.NAMESPACE_URL,
+                    f"focusmap-theme-candidate:{session_key}:{args.get('turn') or ''}",
+                ))
+                candidate_statement = _stmt_theme_candidate_insert(
+                    candidate_id,
+                    safe_summary,
+                    purpose=safe_reason,
+                    done_criteria=sanitize_text(args.get("done"), 160) if args.get("done") is not None else None,
+                    goal_ref=sanitize_text(args.get("goal"), 120) if args.get("goal") is not None else None,
+                    repo_slug=args.get("repo"),
+                    session_key=session_key,
+                    turn_id=args.get("turn"),
+                )
+                if candidate_statement:
+                    _turso_sync([candidate_statement], db_url=TURSO_INBOX_DB_URL,
+                                service=TURSO_INBOX_KEYCHAIN_SERVICE)
+            rows = _turso_read(_stmt_route_turn_read(session_key, args.get("turn"))) or []
+            if not rows:
+                print("unavailable")
+            elif rows[0].get("route_kind") == route_kind and rows[0].get("status") == route_status:
+                print(f"recorded status={rows[0].get('status')}")
+            else:
+                print(f"unchanged status={rows[0].get('status')}")
+            return True
+
+        # accepted はproposalとsession行をまず同時に読み、行不在・競合・別のacceptedを除外する。
+        current_batches = _turso_read_many([
+            _stmt_route_turn_read(session_key, args.get("turn")),
+            _stmt_session_route_read(session_key),
+        ]) or [[], []]
+        while len(current_batches) < 2:
+            current_batches.append([])
+        proposal_rows, session_rows = current_batches[:2]
+        if not proposal_rows or not session_rows:
             print("unavailable")
-        elif rows[0].get("route_kind") == args.get("kind") and rows[0].get("status") == args.get("status", "proposed"):
-            print(f"recorded status={rows[0].get('status')}")
-        else:
-            print(f"unchanged status={rows[0].get('status')}")
+            return True
+        current = proposal_rows[0]
+        desired_matches = (
+            current.get("route_kind") == route_kind and
+            current.get("theme_id") == args.get("theme") and
+            current.get("plan_slug") == args.get("plan")
+        )
+        if current.get("status") == "accepted" and not desired_matches:
+            print("unchanged status=accepted")
+            return True
+
+        affiliation = _stmt_session_route_apply(
+            session_key, route_kind, args.get("theme"), args.get("plan"))
+        session = session_rows[0]
+
+        def affiliation_matches():
+            if route_kind == "plan":
+                return session.get("plan") == args.get("plan") and (
+                    args.get("theme") is None or session.get("theme_id") == args.get("theme"))
+            if route_kind == "theme_work":
+                return session.get("theme_id") == args.get("theme")
+            return True
+
+        tx_statements = []
+        if current.get("status") != "accepted":
+            tx_statements.append(statement)
+        if affiliation is not None and not affiliation_matches():
+            tx_statements.append(affiliation)
+        elif affiliation is None and current.get("status") != "accepted":
+            # candidate/unclassified も accepted する時はsession行不在を許さない。
+            tx_statements.append(_stmt_session_exists_guard(session_key))
+
+        if tx_statements and not _turso_transaction(tx_statements, [1] * len(tx_statements)):
+            print("unavailable")
+            return True
+
+        # proposalとsessions所属を1 pipelineでreadbackし、両方が契約通りの時だけ成功とする。
+        readback = _turso_read_many([
+            _stmt_route_turn_read(session_key, args.get("turn")),
+            _stmt_session_route_read(session_key),
+        ]) or [[], []]
+        while len(readback) < 2:
+            readback.append([])
+        proposal_after = readback[0][0] if readback[0] else None
+        session_after = readback[1][0] if readback[1] else None
+        proposal_ok = bool(proposal_after) and all((
+            proposal_after.get("route_kind") == route_kind,
+            proposal_after.get("status") == "accepted",
+            proposal_after.get("theme_id") == args.get("theme"),
+            proposal_after.get("plan_slug") == args.get("plan"),
+        ))
+        session_ok = bool(session_after)
+        if session_ok and route_kind == "plan":
+            session_ok = session_after.get("plan") == args.get("plan") and (
+                args.get("theme") is None or session_after.get("theme_id") == args.get("theme"))
+        elif session_ok and route_kind == "theme_work":
+            session_ok = session_after.get("theme_id") == args.get("theme")
+        print("recorded status=accepted" if proposal_ok and session_ok else "unavailable")
         return True
     if cmd == "route-context":
         print(json.dumps(_routing_context_payload(

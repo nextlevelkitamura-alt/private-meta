@@ -36,3 +36,4 @@ global に使うもの（Skill・loop・hook）は、実体をここに登録し
 - `harness-registry/` … Claude/Codex hook・loop・script・DB・Focusmap UI の横断運用を、人間とAIが同じ地図で理解するための説明mdと派生HTML置き場
 - `agents-registry/` … Claude カスタムエージェント・コマンドの正本（runtime `~/.claude/agents|commands/` へ symlink 露出。2026-07-11新設）
 - `git-registry/` … 全体git構成（2repo・追跡範囲・push・スマホ閲覧）の一望正本
+- `DBレジストリ/` … Focusmapに関係する接続サービスの正本・安全確認・CLI/公式コンソール・ローカル設定を値なしで案内する入口

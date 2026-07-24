@@ -8,6 +8,7 @@ global に使うもの（Skill・loop・hook）は、実体をここに登録し
 - 絶対ルール（自律実行の検証・回復性／secret禁止／単一正本・二重管理禁止／git仕上げ）は personal-os の `AGENTS.md`（`../AGENTS.md`）に従う。
 - フォルダ固有の機能・構成は、そのフォルダの `AGENTS.md` に書く。この入口には書かない。
 - Global か repo-local か：複数 repo/runtime で使うメタ的なもの（planning・review・orchestration・Skill運用・loop・hook）→ ここに登録。特定 repo 依存 → `projects/<repo>/`、ここには履歴だけ。迷ったら repo-local。
+- DB、オブジェクトストレージ、Workers、Cloud Run等を新規利用・設定確認・変更する前は、標準名 `database-registry` の値を持たない案内を先に読む。案内は権限ではないため、共通の実行ゲートは `GLOBAL_AGENTS.md` の「接続サービスの運用ゲート」を正とする。
 
 ## 新しく足すときの手順
 - フォルダ/内容を足したら：

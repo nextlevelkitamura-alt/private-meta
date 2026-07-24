@@ -45,6 +45,15 @@
 - git操作は範囲を確認し、`git add -A` を避け、対象パスだけをstageする。関連検証とsecret確認が通れば、AIがcommitと通常pushまで完了する。
 - force push、履歴改変、広範囲削除など回復性を大きく下げる操作は、必要性と復旧点を確認してから実行する。依頼目的から外れる場合は行わない。
 
+### 接続サービスの運用ゲート
+
+- DB、オブジェクトストレージ、Workers、Cloud Run等を新規利用・設定確認・変更する前に、標準名 `database-registry` の案内を読む。案内は値を持たない地図であって、認証・接続・変更の権限を与えるものではない。
+- 読み取り確認は案内に定めた安全な手順だけで行い、認証値、接続文字列、環境変数値、またはそのまま再利用できるCLI出力を表示・記録・commitしない。
+- 新しいproject、bucket、database等の資源を作る前に、所有repo、用途、対象環境、最小権限、命名、削除時の回復手段を確定する。
+- schema migrationの前に、対象環境、互換性、バックアップまたはPITRの可否、段階的変更、実行後のschema readbackを確認する。
+- 本番反映の前に、対象project/account/region、dry-runまたはstaging、rollback、反映後の稼働確認を確定する。
+- 計画または作業記録には、対象、実施内容、readbackの成否だけを残す。認証値・接続文字列・CLI出力は残さない。
+
 ## 6. セッション運用と計画の最小入口
 - 既定の実行モデルは、単一の責任ある指揮官がテキスト状態を直接配る形とする。無人の複数AIが同じ仕事を取り合う必要が出た時だけ、先にキュー機構を設計する。フォルダロックや第2の状態台帳を増やさない。
 - セッションの開始と終了は `session-board` の手順に従う（開始=board DBへセッション行を自動登録、終了=完了判断→成果・検証結果をboard DBへ記録→git仕上げ）。「動いているエージェント」「終わったこと」の正本は board DB（Turso）で focusmap がDBから描画する（2026-07-21 正本反転・案b＝デイリーmd 2節は廃止・board.py はmdを読み書きしない）。共通エンジンの正本は `personal-os/AIエージェント基盤/hooks-registry/shared/session-board/`、runtimeが呼ぶイベント本体は同registryの `events/`（skillは廃止・2026-07-05）。開始・入力・終了・subagentの各イベントはcommand型hookで処理する。人間判断が必要な未解決事項が無ければ、完了確認待ちで停止せずAIが終了処理まで行う。一区切りは `board.py log` で時刻付きの子を積む。subagent・headlessは独立sessionとして登録しない。session-boardはsession状態とDailyの実行ログを所有し、plan本文・plan状態は所有しない。

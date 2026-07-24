@@ -18,7 +18,7 @@
 - `focusmap/` というトピックフォルダは作らず、Focusmap全体の確認事項は `goal.md` に置く。
 - 両方のトピックで使う調査・比較・根拠は [concepts/research/](./concepts/research/) に置く。
 - 現段階では `program / plan / 子計画` に分類しない。
-- Theme固有のactive計画は [plans/active/](./plans/active/) に置く。横断計画は `ai運用/plans/` に残す。
+- Theme固有のactive計画は [plans/active/](./plans/active/) に置く。AI運用直下の計画箱は廃止し、Themeに属さない実装計画は所有repoの計画箱へ置く。
 
 ### 計画運用
 
@@ -35,4 +35,4 @@
 - [concepts/topics/ui/](./concepts/topics/ui/): Focusmapでの見え方、操作、PC・スマホの使用体験
 - [concepts/research/](./concepts/research/): databaseとuiの両方で参照する調査・比較・根拠資料
 - [concepts/discussion-logs/](./concepts/discussion-logs/): 壁打ち・検討から残す記録
-- [plans/](./plans/): Theme固有の実行計画。計画内の `references/` は補助根拠資料として別用途で維持する
+- [plans/](./plans/): Theme固有の実行計画。親正本は `plan-0.md`、評価は `evaluations/`、調査・比較・根拠は既定で `concepts/research/` に置く

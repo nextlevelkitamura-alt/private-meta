@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# plan-ops / new-plan — テンプレ正本(skills/plan-ops/templates/)から単発plan.md/program.mdを生成する。
+# plan-ops / new-plan — テンプレ正本(skills/plan-ops/templates/)から、最寄りAGENTSが指定する単発計画本文（plan-0.md/plan.md）またはprogram.mdを生成する。
 #
 # 痛点対策: テンプレ本文の正本が areas/AGENTS.md §3 の埋め込みテキストのみだった二重管理の芽を、
 #           単一正本(templates/)からの生成に置き換える。中身（目的/現状/方針等）は書かない＝雛形のみ。
@@ -12,7 +12,7 @@ usage() {
   cat >&2 <<'EOF'
 usage: new-plan.sh --out <生成する.mdの絶対パス> [--program] [--legacy-v2] [--class <分類>] [--kind <種別>]
   --out        生成先の絶対パス（必須。親ディレクトリが無ければ作成。既存ファイルは上書きしない）
-  --program    単発plan.mdでなくprogram.mdテンプレ（子計画マップ雛形付き）を生成する。
+  --program    単発計画本文（plan-0.mdまたはplan.md）でなくprogram.mdテンプレ（子計画マップ雛形付き）を生成する。
                同じフォルダに 実装/共通.md・評価/(.gitkeep) も生成する。
   --legacy-v2  旧テンプレv2（工程節・実行契約つきの重量版）で単発plan.mdを生成する。
   --class      分類（skill/repo/loop/横断 等）。省略時はプレースホルダのまま

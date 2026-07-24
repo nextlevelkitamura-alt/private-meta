@@ -11,6 +11,7 @@ scripts/new-plan.sh --out <生成する.mdの絶対パス> [--program] [--class 
 - `--program` なしは単発plan、ありは子計画マップ付きprogramの雛形を生成する。program生成では同じフォルダに `実装/共通.md`・`評価/`（実装規約と評価置き場）も生成する。programの親正本は `program.md` だけで、同階層に `plan.md` は作らない。
 - 親ディレクトリは自動作成するが、既存ファイルは上書きしない。
 - 本文テンプレの正本は `templates/plan.md` と `templates/program.md`。生成後に目的・対象・完了条件を人が埋める。
+- AI運用Themeの新規親計画は、最寄り `AGENTS.md` が宣言する `plans/<bucket>/<計画名>/plan-0.md` を `--out` に指定する。評価は必要な時だけ同フォルダの `evaluations/` に置き、汎用 `references/` は作らない。
 - 置き場が曖昧、既存planと競合、または人間ゲートを含む場合は生成を止めて `plan-registry`（経路解決＝triage決定手続き §6）／ 指揮官へ戻す。
 
 ## 2. program の子計画を作る

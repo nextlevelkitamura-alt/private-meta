@@ -55,7 +55,7 @@
 | `GLOBAL_AGENTS.md` | 全runtime向けの最小ゲート、自律実行と停止条件 | 詳細な運用手順、テンプレ全文 |
 | 対象repoの最寄り `AGENTS.md` | そのrepoの計画箱とローカル規約 | 他repoの置き場判断 |
 | `my-brain/areas/AGENTS.md` | areaの物理バケット、テンプレの配置、評価文書、卒業手順 | 規模別評価やSkillの責務判断 |
-| `ai運用/AGENTS.md` | Personal OS基盤・横断計画のarea固有配置 | Global共通規約の複製 |
+| `ai運用/AGENTS.md` | AI運用Themeの固定構造とTheme配下の計画配置 | Global共通規約の複製 |
 | 経路解決（`triage.md`／`route-contract.md`） | registryの規模基準を適用した書込みなしのroute解決（対象repo・既存plan・宣言済み箱） | 規模基準の定義、ファイル書込み、計画内容、評価合否の判断 |
 | `plan-ops` | 雛形、子計画マップ更新、静的lintなど決定的な手続き | 置き場、優先度、評価合否の判断 |
 | `plan-create-review` | 利用者の目的を作成・合流・program管理・評価・終了（archive）のworkflowへ振り分け、registryの経路解決（triage決定手続き）/opsへ委譲する一本入口 | 規模基準・route・script・計画本文・評価合否・runtime露出の所有 |
@@ -80,7 +80,7 @@
 ## 5. 物理的な置き場
 
 - repo固有の仕事は、そのrepoの最寄り `AGENTS.md` が宣言する計画箱を使う。
-- Personal OS、横断repo、Global Skill、repo、loopの横断計画は `../../my-brain/areas/ai運用/plans/` を起点にし、`../../my-brain/areas/AGENTS.md` のバケット規約に従う。Theme固有の計画は、対象Theme最寄り `AGENTS.md` が宣言するTheme配下の計画箱を起点にする。
+- AI運用の構想と計画は、対象Theme最寄り `AGENTS.md` が宣言する `../../my-brain/areas/ai運用/themes/<Theme>/` 配下の固定計画箱を起点にする。AI運用直下の共通 `plans/` は存在しない。Themeに属さない実装計画は所有repoの最寄り `AGENTS.md` が宣言する計画箱を使う。
 - `plan-registry/` へ計画本文、評価結果、移行ログ、session-boardの行をコピーしない。必要な時は正本への相対パスを参照する。
 
 ## 6. 経路解決（triage決定手続き）

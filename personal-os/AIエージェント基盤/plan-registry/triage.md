@@ -23,7 +23,7 @@
 ### repo内起点
 
 1. `git rev-parse --show-toplevel` 相当でcanonical repoを固定する。
-2. 起点から最寄りの `AGENTS.md` を読む。Theme内起点ではTheme最寄りの `AGENTS.md` を優先し、そのTheme固有の計画箱と横断計画箱を混同しない。repo-registryは読まない。
+2. 起点から最寄りの `AGENTS.md` を読む。AI運用Theme内起点ではTheme最寄りの `AGENTS.md` を優先し、そのTheme配下だけを計画箱として扱う。AI運用直下の共通計画箱は推測・作成しない。repo-registryは読まない。
 3. AGENTSが宣言した検索範囲だけで既存planを先に検索する。
 4. 一意な既存planがあれば `join_existing`。一致0件なら宣言済み計画箱を新規候補にする。
 
@@ -82,7 +82,7 @@
 1. `サクッと` は計画書なし。
 2. ライト以上は、解決済みの絶対pathを `../skills/plan-ops/scripts/new-plan.sh --out <path>` へ渡す案を出す。
 3. `bucketctl` はrepo AGENTSがroot bucket計画と宣言した対象だけに使う。
-4. 領域plan、`docs/ai/plans/active` などrepo固有箱へroot bucket操作を適用しない。
+4. AI運用ではTheme外のroot bucketを作成・操作しない。`docs/ai/plans/active` などrepo固有箱へも、所属repoの規約外からroot bucket操作を適用しない。
 5. Private起点の実書込みはhandoff完了後の対象repo sessionが所有する。
 
 ## Step 7: 完了確認

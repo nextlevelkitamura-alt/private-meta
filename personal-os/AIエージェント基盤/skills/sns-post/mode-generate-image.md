@@ -11,7 +11,7 @@ Gemini（gemini.google.com）をブラウザ自動操作で画像生成。OpenAI
 
 ## 画像生成エンジン連携
 
-生成方式は `images-generate/SKILL.md`（`image_gen`＋`exec resume`）に従う。
+汎用の画像生成は `images-generate/SKILL.md` に従い、組み込み `image_gen` で直接実行する。以下は投稿予約用の `sns-post` 固有パイプラインであり、汎用Skillの動作は変えない。
 
 - 投稿予約に使う本番画像は、原則 ChatGPT ブラウザ生成を推奨する
 - ChatGPT ブラウザ生成は Playwright の専用 Chrome プロファイルを使う

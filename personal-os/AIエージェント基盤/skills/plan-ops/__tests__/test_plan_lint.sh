@@ -143,4 +143,63 @@ v2_step_review_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v2-step-review.md" 2>&1)
 assert_eq "(r) 工程レビュー行のplanはexit 0" "$?" "0"
 assert_not_contains "(r) 工程レビュー行を旧フィールド扱いしない" "$v2_step_review_out" "旧「レビュー:」フィールド"
 
+# ── テンプレv3: 実行ライン方式（直列化・軽量3節）。frontmatter「テンプレ: v3」の時だけ発火 ──
+write_v3() {
+  cat > "$1" <<'EOF'
+分類: skill ／ 種別: 新規作成
+テンプレ: v3
+規模: ライト
+テーマ: 未接続
+
+# v3テスト計画
+
+## 目的
+
+テーマから1行引用する。
+
+## 完了条件
+
+- [ ] 検証可能なチェックが1件以上ある
+
+## 実行ライン
+
+- [ ] 01 最初のステップ
+- [ ] 02 [SAVE] まとめ評価（1回。FAIL時は修正1回）
+- [ ] 03 完了条件チェック → done 申請
+
+## 記録
+
+実行中の判断をここへ追記する。
+EOF
+}
+
+# (s) 正常v3（軽量3節・実行契約なし）は exit 0 で違反なし。v2の必須契約を発火させない。
+write_v3 "$WORKDIR/v3-ok.md"
+v3_ok_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v3-ok.md" 2>&1)"
+assert_eq "(s) 正常v3はexit 0" "$?" "0"
+assert_contains "(s) 正常v3は違反なし" "$v3_ok_out" "違反なし"
+assert_not_contains "(s) v3は実行契約を要求しない" "$v3_ok_out" "実行契約の必須項目が無い"
+assert_not_contains "(s) v3は非対象を要求しない" "$v3_ok_out" "必須セクションが無い: ## 非対象"
+
+# (t) v3で実行ライン節が無い → FAIL
+write_v3 "$WORKDIR/v3-no-line.md"
+perl -0pi -e 's/## 実行ライン.*?## 記録/## 記録/s' "$WORKDIR/v3-no-line.md"
+v3_no_line_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v3-no-line.md" 2>&1)"
+assert_eq "(t) v3で実行ライン節なしはexit 1" "$?" "1"
+assert_contains "(t) 実行ライン節なしを検出" "$v3_no_line_out" "実行ライン節が無い（テンプレv3は必須）"
+
+# (u) v3で実行ライン節にステップ行が無い → FAIL
+write_v3 "$WORKDIR/v3-empty-line.md"
+perl -0pi -e 's/- \[ \] 01[^\n]*\n- \[ \] 02[^\n]*\n- \[ \] 03[^\n]*\n/（ステップ未記入）\n/' "$WORKDIR/v3-empty-line.md"
+v3_empty_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v3-empty-line.md" 2>&1)"
+assert_eq "(u) v3でステップ行なしはexit 1" "$?" "1"
+assert_contains "(u) ステップ行なしを検出" "$v3_empty_out" "実行ライン節にステップ行が無い"
+
+# (v) v3で完了条件のチェックボックスが無い → FAIL（doneゲートの前提）
+write_v3 "$WORKDIR/v3-no-check.md"
+perl -0pi -e 's/- \[ \] 検証可能なチェックが1件以上ある/検証（チェックボックスなし）/' "$WORKDIR/v3-no-check.md"
+v3_no_check_out="$("$SCRIPTS/plan-lint.sh" "$WORKDIR/v3-no-check.md" 2>&1)"
+assert_eq "(v) v3で完了条件チェックなしはexit 1" "$?" "1"
+assert_contains "(v) 完了条件チェックなしを検出" "$v3_no_check_out" "完了条件が1件以上必要"
+
 report

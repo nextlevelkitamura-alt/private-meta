@@ -10,24 +10,27 @@ TEMPLATES="$SELFDIR/../templates"
 
 usage() {
   cat >&2 <<'EOF'
-usage: new-plan.sh --out <生成する.mdの絶対パス> [--program] [--class <分類>] [--kind <種別>]
-  --out      生成先の絶対パス（必須。親ディレクトリが無ければ作成。既存ファイルは上書きしない）
-  --program  単発plan.mdでなくprogram.mdテンプレ（子計画マップ雛形付き）を生成する。
-             同じフォルダに 実装/共通.md・評価/(.gitkeep) も生成する。
-  --class    分類（skill/repo/loop/横断 等）。省略時はプレースホルダのまま
-  --kind     種別（新規作成/既存改善/統合整理）。省略時はプレースホルダのまま
+usage: new-plan.sh --out <生成する.mdの絶対パス> [--program] [--legacy-v2] [--class <分類>] [--kind <種別>]
+  --out        生成先の絶対パス（必須。親ディレクトリが無ければ作成。既存ファイルは上書きしない）
+  --program    単発plan.mdでなくprogram.mdテンプレ（子計画マップ雛形付き）を生成する。
+               同じフォルダに 実装/共通.md・評価/(.gitkeep) も生成する。
+  --legacy-v2  旧テンプレv2（工程節・実行契約つきの重量版）で単発plan.mdを生成する。
+  --class      分類（skill/repo/loop/横断 等）。省略時はプレースホルダのまま
+  --kind       種別（新規作成/既存改善/統合整理）。省略時はプレースホルダのまま
 
-生成物はテンプレv2＝工程節必須（frontmatter「テンプレ: v2」＋「## 工程」節をテンプレ本体に含む）。
-テンプレ本文の正本: skills/plan-ops/templates/{plan.md,program.md}（areas/AGENTS.md §3 転記）
+既定はテンプレv3＝実行ライン方式（直列化・軽量。frontmatter「テンプレ: v3」＋「## 実行ライン」節）。
+program と --legacy-v2 は従来どおりテンプレv2（工程節必須）。
+テンプレ本文の正本: skills/plan-ops/templates/{plan-v3.md,plan.md,program.md}（areas/AGENTS.md §3 転記）
 EOF
   exit 2
 }
 
-out="" is_program=0 class="" kind=""
+out="" is_program=0 legacy_v2=0 class="" kind=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) out="${2:-}"; shift 2;;
     --program) is_program=1; shift;;
+    --legacy-v2) legacy_v2=1; shift;;
     --class) class="${2:-}"; shift 2;;
     --kind) kind="${2:-}"; shift 2;;
     -h|--help) usage;;
@@ -41,8 +44,10 @@ case "$out" in /*) ;; *) echo "--out は絶対パスで指定: $out" >&2; exit 2
 
 if [ "$is_program" = 1 ]; then
   tpl="$TEMPLATES/program.md"
-else
+elif [ "$legacy_v2" = 1 ]; then
   tpl="$TEMPLATES/plan.md"
+else
+  tpl="$TEMPLATES/plan-v3.md"
 fi
 [ -f "$tpl" ] || { echo "テンプレが見つからない: $tpl" >&2; exit 1; }
 

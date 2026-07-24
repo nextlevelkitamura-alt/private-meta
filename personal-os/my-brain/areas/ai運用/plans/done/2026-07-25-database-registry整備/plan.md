@@ -4,7 +4,7 @@
 形態判定: 単発 ／ 理由: 基盤内の案内文書・無視設定を1つのrollback単位で整える
 並列: 不可
 
-# DBレジストリ整備
+# database-registry整備
 
 ## 目的
 
@@ -27,9 +27,9 @@ Focusmapに関係する接続サービスについて、secretや実プロジェ
 - 最初に読む順番:
   1. `personal-os/AIエージェント基盤/AGENTS.md`
   2. この計画
-  3. `personal-os/AIエージェント基盤/DBレジストリ/AGENTS.md`（作成後）
+  3. `personal-os/AIエージェント基盤/database-registry/AGENTS.md`（作成後）
 - 依存成果: なし
-- 変更可能範囲: `personal-os/AIエージェント基盤/DBレジストリ/`、同階層の`AGENTS.md`、この計画とその`explain/`
+- 変更可能範囲: `personal-os/AIエージェント基盤/database-registry/`、同階層の`AGENTS.md`、この計画とその`explain/`
 - 変更禁止範囲: 既存の`.env`、認証情報、各サービスの実プロジェクト設定、基盤外のrepo
 - ファイル担当マップ: 不要
 - worktree方針: 不要
@@ -40,23 +40,23 @@ Focusmapに関係する接続サービスについて、secretや実プロジェ
 
 ## 方針
 
-`DBレジストリ/` を基盤の案内入口とし、provider別の文書を置く。Cloudflareは単一文書内でWorkersとR2を分け、Wranglerで両方を扱うことと、S3互換のR2直接アクセスには別種のキーが必要になり得ることを明記する。ローカル設定の実体は`local/`にだけ置けるようにして追跡しない。
+`database-registry/` を基盤の案内入口とし、provider別の文書を置く。Cloudflareは単一文書内でWorkersとR2を分け、Wranglerで両方を扱うことと、S3互換のR2直接アクセスには別種のキーが必要になり得ることを明記する。ローカル設定の実体は`local/`にだけ置けるようにして追跡しない。
 
 ## 工程
 
-- [x] 01 実装: DBレジストリの案内、provider文書、ローカル隔離領域、入口一覧を整える  評価: まとめ
+- [x] 01 実装: database-registryの案内、provider文書、ローカル隔離領域、入口一覧を整える  評価: まとめ
 - [x] 02 レビュー: 構造・安全制約・リンクと追跡範囲を評価する  評価: まとめ
 
 ## 完了条件
 
-- [x] `DBレジストリ/`の入口・provider別文書・local領域に、役割と正本の境界が記載され、すべての新規フォルダに`AGENTS.md`と`CLAUDE.md` symlinkがある。
+- [x] `database-registry/`の入口・provider別文書・local領域に、役割と正本の境界が記載され、すべての新規フォルダに`AGENTS.md`と`CLAUDE.md` symlinkがある。
 - [x] Supabase、Turso、Cloudflare（Workers/R2）、Cloud Runの各案内が、値を保存せずに安全確認・CLI・公式コンソール・repo内設定の確認順を示す。
 - [x] `local/`の任意の設定実体はgit追跡されず、sampleにもsecret・接続URL・実プロジェクト情報がない。
 - [x] 基盤入口のフォルダ一覧、計画、派生HTML、評価の内容が一致し、対象パスだけをcommit/pushできる。
 
 ## 実装結果
 
-- DBレジストリ、provider別案内、ローカル隔離領域、基盤入口一覧、派生HTMLを追加した。
+- database-registry、provider別案内、ローカル隔離領域、基盤入口一覧、派生HTMLを追加した。
 - 値を読まずに設定ファイル名とキー種別だけを確認し、Supabase、Turso、Cloudflare R2、Cloud Runの関係する設定の存在を確認した。
 - `評価01.md`で4つの完了条件を全PASSとした。
 

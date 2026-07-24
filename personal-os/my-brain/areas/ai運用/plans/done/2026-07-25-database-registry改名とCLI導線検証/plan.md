@@ -8,7 +8,7 @@
 
 ## 目的
 
-既存の`DBレジストリ/`を既存registry群と同じ英小文字・ハイフンの`database-registry/`へ改名し、Supabase、Turso、Cloudflare（Workers/R2）、Cloud Runの公式入口と非破壊CLI導線を、値を記録せず検証可能な形に整える。
+既存レジストリを既存registry群と同じ英小文字・ハイフンの`database-registry/`へ統一し、Supabase、Turso、Cloudflare（Workers/R2）、Cloud Runの公式入口と非破壊CLI導線を、値を記録せず検証可能な形に整える。
 
 ## 非対象
 
@@ -18,7 +18,7 @@
 
 ## 現状
 
-既存の案内は専用ブランチに`DBレジストリ/`として存在するが、現在の作業ブランチには未導入である。親の基盤入口一覧の更新は別タスクの所有範囲である。
+既存の案内は専用ブランチに存在するが、現在の作業ブランチには未導入である。親の基盤入口一覧の更新は別タスクの所有範囲である。
 
 ## 実行契約
 
@@ -29,7 +29,7 @@
   2. この計画
   3. `personal-os/AIエージェント基盤/database-registry/AGENTS.md`（改名後）
 - 依存成果: `codex/db-registry-connection-guidance`の既存案内コミット
-- 変更可能範囲: `personal-os/AIエージェント基盤/database-registry/`、`personal-os/my-brain/areas/ai運用/plans/done/2026-07-25-DBレジストリ整備/`、`personal-os/my-brain/areas/ai運用/plans/done/2026-07-25-database-registry改名とCLI導線検証/`
+- 変更可能範囲: `personal-os/AIエージェント基盤/database-registry/`、`personal-os/my-brain/areas/ai運用/plans/done/2026-07-25-database-registry整備/`、`personal-os/my-brain/areas/ai運用/plans/done/2026-07-25-database-registry改名とCLI導線検証/`
 - 変更禁止範囲: `personal-os/AIエージェント基盤/AGENTS.md`、`personal-os/AIエージェント基盤/GLOBAL_AGENTS.md`、認証情報・ローカル設定実体・各providerの資源
 - ファイル担当マップ: 不要
 - worktree方針: 不要
@@ -56,7 +56,7 @@
 
 ## 実装結果
 
-- `DBレジストリ/`の既存案内を取り込み、`database-registry/`へ改名した。親`AGENTS.md`は最終差分0で、一覧更新は実施していない。
+- 初期案内を取り込み、`database-registry/`へ統一した。親`AGENTS.md`の一覧更新は後続のmain統合作業で実施した。
 - Supabase、Turso、gcloudはhelpと出力非保存の認証プローブが成功した。Wranglerは未導入のため、導入・認証確認を行わず未対応とした。
 - provider文書の公式URL到達、`CLAUDE.md -> AGENTS.md`、`local/.gitignore`、旧名参照0件、機密値形式0件、`git diff --check`を確認した。
 

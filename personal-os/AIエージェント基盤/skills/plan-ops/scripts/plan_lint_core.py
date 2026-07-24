@@ -10,6 +10,9 @@ from _planops_map import find_blocks, find_field_line, find_section, read_lines
 import bucketctl_core
 
 PLAN_SECTIONS = ["目的", "非対象", "現状", "実行契約", "方針", "完了条件"]
+# テンプレv3（実行ライン方式・直列化）は計画の重さの既定値を下げる。必須は3節だけで、
+# 非対象/現状/実行契約/方針 は任意（必要な内容は実行ラインの各ステップと「記録」に吸収する）。
+PLAN_V3_SECTIONS = ["目的", "完了条件", "実行ライン"]
 CONTRACT_FIELDS = [
     "対象repo:", "実行形:", "最初に読む順番:", "依存成果:",
     "変更可能範囲:", "変更禁止範囲:", "維持する契約:", "検証:",
@@ -32,6 +35,11 @@ def is_template_v2(lines):
     return found is not None and found[0] == "v2"
 
 
+def is_template_v3(lines):
+    found = parse_top_field(lines, "テンプレ:")
+    return found is not None and found[0] == "v3"
+
+
 def lint_steps(path, lines, out):
     """テンプレv2の「## 工程」節を検査する。単発plan.mdとProgram子にだけ呼ぶ（programには呼ばない）。"""
     section = find_section(lines, "工程")
@@ -46,6 +54,19 @@ def lint_steps(path, lines, out):
     for idx in step_indices:
         if not STEP_LINE_RE.match(lines[idx].strip()):
             report(path, idx + 1, "工程行の形式不正（- [ ] NN 実装|レビュー|修正: 内容  評価: 都度|まとめ）", out)
+
+
+def lint_exec_line(path, lines, out):
+    """テンプレv3の「## 実行ライン」節を検査する。直列ステップ（- [ ] NN …）が1件以上あればよい。
+    v2の工程節のような厳密な「種別: 内容  評価:」形式は課さない（[SAVE] や 並列区間 ⇉ を許すため）。"""
+    section = find_section(lines, "実行ライン")
+    if section is None:
+        report(path, 1, "実行ライン節が無い（テンプレv3は必須）", out)
+        return
+    _, start, end = section
+    step_indices = [idx for idx in range(start, end) if STEP_CHECKBOX_RE.match(lines[idx])]
+    if not step_indices:
+        report(path, section[0] + 1, "実行ライン節にステップ行が無い（- [ ] NN …が1件以上必要）", out)
 
 
 def lint_eval_mixing(path, lines, out):
@@ -85,29 +106,33 @@ def parse_top_field(lines, label):
 
 
 def lint_plan(path, lines, allow_placeholders, out):
+    v3 = is_template_v3(lines)
     for idx, line in enumerate(lines, 1):
         if REVIEW_FIELD_RE.search(line) and not STEP_LINE_RE.match(line.strip()):
             report(path, idx, "旧「レビュー:」フィールドは使えない。実装・評価に分ける", out)
-    for heading in PLAN_SECTIONS:
+    # 必須セクションはテンプレ版で切り替える。v3（実行ライン方式）は軽量3節、v2/legacyは従来6節。
+    for heading in (PLAN_V3_SECTIONS if v3 else PLAN_SECTIONS):
         if find_section(lines, heading) is None:
             report(path, 1, f"必須セクションが無い: ## {heading}", out)
 
-    contract = find_section(lines, "実行契約")
-    if contract is not None:
-        for label in CONTRACT_FIELDS:
-            found = field_value(lines, contract, label)
-            if found is None:
-                report(path, contract[0] + 1, f"実行契約の必須項目が無い: {label}", out)
-        for label in ("変更可能範囲:", "変更禁止範囲:", "対象repo:"):
-            found = field_value(lines, contract, label)
-            if found is not None and not found[0]:
-                report(path, found[1], f"{label} が空（理由または値を記載）", out)
-        execution = field_value(lines, contract, "実行形:")
-        if execution is not None and execution[0] == "delegated-parallel":
-            for label in ("ファイル担当マップ:", "worktree方針:"):
+    # 実行契約とその必須フィールドは v2/legacy だけ課す。v3 は実行契約節を持たない（重さを下げる）。
+    if not v3:
+        contract = find_section(lines, "実行契約")
+        if contract is not None:
+            for label in CONTRACT_FIELDS:
                 found = field_value(lines, contract, label)
-                if found is None or not found[0] or PLACEHOLDER_RE.search(found[0]):
-                    report(path, execution[1], f"delegated-parallelには{label}が必須", out)
+                if found is None:
+                    report(path, contract[0] + 1, f"実行契約の必須項目が無い: {label}", out)
+            for label in ("変更可能範囲:", "変更禁止範囲:", "対象repo:"):
+                found = field_value(lines, contract, label)
+                if found is not None and not found[0]:
+                    report(path, found[1], f"{label} が空（理由または値を記載）", out)
+            execution = field_value(lines, contract, "実行形:")
+            if execution is not None and execution[0] == "delegated-parallel":
+                for label in ("ファイル担当マップ:", "worktree方針:"):
+                    found = field_value(lines, contract, label)
+                    if found is None or not found[0] or PLACEHOLDER_RE.search(found[0]):
+                        report(path, execution[1], f"delegated-parallelには{label}が必須", out)
 
     completion = find_section(lines, "完了条件")
     if completion is not None:
@@ -115,9 +140,13 @@ def lint_plan(path, lines, allow_placeholders, out):
         if not any(re.match(r"\s*- \[[ x]\]", lines[idx]) for idx in range(start, end)):
             report(path, completion[0] + 1, "完了条件が1件以上必要", out)
 
-    # テンプレv2マーカーがある計画にだけ、工程節の必須化・形式検査・評価混在検査を発火させる。
-    # マーカー無し/v2でない既存計画では新検査を一切発火させない（後方互換）。
-    if is_template_v2(lines):
+    # テンプレ版ごとに実行順の節を検査する（評価本文の混在検査は両版で発火）。
+    # v3=実行ライン節（緩い・[SAVE]や並列区間を許す）／v2=工程節（厳密な種別:/評価:形式）。
+    # マーカー無しの legacy 計画では実行順の検査を一切発火させない（後方互換）。
+    if v3:
+        lint_exec_line(path, lines, out)
+        lint_eval_mixing(path, lines, out)
+    elif is_template_v2(lines):
         lint_steps(path, lines, out)
         lint_eval_mixing(path, lines, out)
 

@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 BUCKETS = ("planning", "active", "paused", "done", "archive")
-LIMITS = {"planning": None, "active": 6, "paused": 3, "done": 8, "archive": None}
+LIMITS = {"planning": 5, "active": 6, "paused": 3, "done": 8, "archive": None}
 ALLOWED = {
     "planning": {"active", "archive"}, "active": {"paused", "done", "archive"},
     "paused": {"planning", "active", "archive"}, "done": {"active", "archive"},
@@ -159,7 +159,11 @@ def move(args):
     count = state["buckets"][destination]["count"]
     if limit is not None and count >= limit:
         names = ", ".join(state["buckets"][destination]["items"])
-        fail(f"{destination} は上限{limit}件です（現在{count}件）。人間が整理先を選んでください。対象: {names}")
+        hint = ""
+        if destination == "planning":
+            # planning は「実行を決めた計画の順番待ち」に絞る。未成熟な構想の受け皿は themes/。
+            hint = " 未成熟な構想は planning でなく themes/ で育てる（themes/ へ差し戻すか、既存planを整理する）。"
+        fail(f"{destination} は上限{limit}件です（現在{count}件）。人間が整理先を選んでください。対象: {names}{hint}")
     repo = subprocess.run(["git", "-C", str(source), "rev-parse", "--show-toplevel"], capture_output=True, text=True)
     if repo.returncode:
         fail(f"対象repoが見つからない: {source}")

@@ -17,7 +17,7 @@
 #   - secret / token / DB URL の auth 部は絶対に出力しない（store.read が Keychain 経由で扱い値は表に出ない）。
 #   - Turso 不通・SESSION_BOARD_NO_TURSO 時は read()=None。該当配列は空、turso.*_read="unavailable" と明示する（黙って空にしない）。
 #   - md 本文の扱い: 当日/前日/月間デイリーmd はパス解決だけ（本文は呼び出し元スキルが Read）。
-#     active計画の「## 工程」節だけは、選択のための軽量要約としてここで読む（子03で contract を緩和）。
+#     active計画の「## 工程」/「## 実行ライン」節だけは、選択のための軽量要約としてここで読む（子03で contract を緩和）。
 #     選択後の確定起票では、呼び出し元スキルが選択計画を Read して工程節の正文を board.py steps へ渡す（作文ゼロの担保）。
 #
 # 使い方:
@@ -97,7 +97,8 @@ monthly_plan = monthly_md(today)
 # roots: PLAN_ACTIVE_ROOTS（:区切り・各 plans/active ディレクトリ）で差し替え可。
 # 既定は areas/*/plans/active（my-brain の領域別計画）。repo-local の active 計画はここでは
 # 自動走査しない（構造が repo ごとに異なるため。必要なら PLAN_ACTIVE_ROOTS で明示追加する）。
-_PROC_HEAD = "## 工程"
+# 節名は移行期の別名を許す: 旧「## 工程」(テンプレv2) と 新「## 実行ライン」(テンプレv3・直列化)。
+_PROC_HEADS = ("## 工程", "## 実行ライン")
 _DONE_RE = re.compile(r"^- \[[xX]\]\s+(.*)$")
 _OPEN_RE = re.compile(r"^- \[ \]\s+(.*)$")
 _PRIO_RE = re.compile(r"^優先[:：]\s*(\S+)")
@@ -128,7 +129,7 @@ def _scan_process(text):
     for raw in text.splitlines():
         s = raw.strip()
         if s.startswith("## "):
-            if s.startswith(_PROC_HEAD):
+            if any(s.startswith(h) for h in _PROC_HEADS):
                 in_sec = True
                 continue
             if in_sec:

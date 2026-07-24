@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DBレジストリ整備の構成</title>
+<style>
+:root{--ink:#172033;--muted:#5a6678;--line:#dce2ec;--soft:#f6f8fb;--blue:#304493;--blue-soft:#eaf0ff;--green:#1f714d;--green-soft:#e6f4ec;--amber:#9d4d19;--amber-soft:#fff0e5;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);line-height:1.65}.page{max-width:920px;margin:auto;padding:48px 24px 72px}h1{font-size:32px;line-height:1.25;margin:0 0 12px}h2{font-size:20px;border-left:5px solid var(--blue);padding-left:12px;margin:0 0 14px}.lede{color:var(--muted);max-width:62ch;margin:0}.key{font-weight:700;color:var(--blue);background:linear-gradient(transparent 60%,var(--blue-soft) 60%)}section{margin-top:40px}.diagram{border:1px solid var(--line);border-radius:14px;background:#fff;padding:20px;overflow:auto}.tree{display:grid;grid-template-columns:210px 40px minmax(430px,1fr);align-items:center;min-width:720px}.box{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff}.box.primary{background:var(--blue-soft);border-color:var(--blue)}.box.local{background:var(--amber-soft);border-color:#d6854f}.box h3{margin:0 0 5px;font-size:15px}.box p{margin:0;color:var(--muted);font-size:13px}.arrow{text-align:center;color:var(--muted);font-size:25px}.children{display:grid;grid-template-columns:1fr 1fr;gap:12px}.children .box:last-child{grid-column:span 2}.flow{display:flex;gap:10px;align-items:stretch;min-width:680px}.step{flex:1;border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff;font-size:13px}.step b{display:block;margin-bottom:5px}.step.good{background:var(--green-soft);border-color:var(--green)}.step.warn{background:var(--amber-soft);border-color:#d6854f}.chev{align-self:center;color:var(--muted);font-size:22px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{border:1px solid var(--line);border-radius:12px;padding:16px}.card h3{font-size:15px;margin:0 0 7px}.card p{color:var(--muted);font-size:13px;margin:0}.note{border:1px solid #d6854f;background:var(--amber-soft);border-radius:12px;padding:15px;color:#61320f}.note b{color:var(--amber)}code{background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:12px}@media(max-width:720px){.page{padding:28px 16px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <p style="color:var(--muted);font-size:12px;letter-spacing:.08em">AIエージェント基盤 / 表示専用の構造説明</p>
+    <h1>DBレジストリ整備</h1>
+    <p class="lede">接続情報を集める場所ではなく、各サービスの正本へ安全に辿り着くための案内を作る。<span class="key">値・接続URL・現在状態は保存しない。</span></p>
+  </header>
+
+  <section>
+    <h2>どこを触るか</h2>
+    <p class="lede">基盤内に案内専用のフォルダを1つ追加し、既存repoの設定や認証情報には触れない。</p>
+    <div class="diagram" role="img" aria-label="DBレジストリのフォルダ構成">
+      <div class="tree">
+        <div class="box primary"><h3>AIエージェント基盤/</h3><p>既存の基盤入口。フォルダ一覧だけ更新。</p></div>
+        <div class="arrow">→</div>
+        <div class="children">
+          <div class="box primary"><h3>DBレジストリ/</h3><p>共通の安全規約と接続案内。</p></div>
+          <div class="box"><h3>providers/</h3><p>Supabase / Turso / Cloudflare / Cloud Run。</p></div>
+          <div class="box local"><h3>local/</h3><p>gitignoreされたMac専用の補助設定。</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>こう変わるか</h2>
+    <p class="lede">散在する設定を移動せず、確認するときの入口だけを一箇所にそろえる。</p>
+    <div class="diagram" role="img" aria-label="確認経路の変更前後">
+      <div class="flow">
+        <div class="step warn"><b>変更前</b>repoごとに環境変数・CLI・コンソールの入口を探す。</div><div class="chev">→</div>
+        <div class="step good"><b>変更後</b>DBレジストリでproviderを選び、正本と安全な確認順を辿る。</div><div class="chev">→</div>
+        <div class="step"><b>正本</b>対象repoと公式コンソールでだけ実状態を確認・変更する。</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>中身の意味</h2>
+    <p class="lede">各provider文書は「どこが正本か」「何なら安全に確かめられるか」「値はどこへ置くか」だけを短く示す。</p>
+    <div class="cards">
+      <div class="card"><h3>Supabase / Turso</h3><p>Dashboardと対象repoを正本にし、CLIはhelp・バージョン確認から入る。</p></div>
+      <div class="card"><h3>Cloudflare</h3><p>WorkersとR2を同じWrangler案内にまとめる。R2のS3互換は別種のキーになり得る。</p></div>
+      <div class="card"><h3>Cloud Run</h3><p>Google Cloud Consoleと対象repoのbuild/deploy定義を正本にする。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>守る境界</h2>
+    <div class="note"><b>残すもの:</b> 値なしの案内、正本へのリンク、非破壊の確認手順。<br><b>残さないもの:</b> secret、token、環境変数値、接続URL、実プロジェクト名・数、CLIの認証出力。</div>
+  </section>
+</main>
+</body>
+</html>

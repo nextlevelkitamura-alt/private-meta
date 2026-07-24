@@ -23,7 +23,7 @@
 ### repo内起点
 
 1. `git rev-parse --show-toplevel` 相当でcanonical repoを固定する。
-2. 起点から最寄りの `AGENTS.md` を読む。repo-registryは読まない。
+2. 起点から最寄りの `AGENTS.md` を読む。Theme内起点ではTheme最寄りの `AGENTS.md` を優先し、そのTheme固有の計画箱と横断計画箱を混同しない。repo-registryは読まない。
 3. AGENTSが宣言した検索範囲だけで既存planを先に検索する。
 4. 一意な既存planがあれば `join_existing`。一致0件なら宣言済み計画箱を新規候補にする。
 

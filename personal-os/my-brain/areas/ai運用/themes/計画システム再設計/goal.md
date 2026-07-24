@@ -1,6 +1,6 @@
 # Focusmap計画運用のゴール
 
-このファイルは、「計画システム再設計」テーマで今後の検討を始める入口である。このテーマには `theme.md` を置かず、全体目的と現在の決定は `goal.md` に集約する。
+このファイルは、「計画システム再設計」テーマで今後の検討を始める入口である。このテーマには `theme.md` を置かず、全体目的と現在の決定は `goal.md` に集約する。構想本文の現時点の正本はローカル/Gitであり、将来Tursoへ移す候補の短い状態・活動履歴を先取りして本文同期しない。
 
 ## 全体の目的
 
@@ -12,13 +12,13 @@
 
 ### 構成
 
-- このテーマフォルダを正式な検討場所として使い、新しい計画フォルダは作らない。
+- このテーマフォルダを正式な検討場所として使い、構想は `concepts/`、Theme固有の実行計画は `plans/` に分ける。
 - 全体目的と現在の決定は、この `goal.md` に置く。
-- 個別検討は [databaseの保存・参照設計](./topics/database/保存・参照設計.md) と [topics/ui/](./topics/ui/) の2つだけに分ける。
+- 個別検討は [databaseの保存・参照設計](./concepts/topics/database/storage-and-references.md) と [concepts/topics/ui/](./concepts/topics/ui/) の2つだけに分ける。
 - `focusmap/` というトピックフォルダは作らず、Focusmap全体の確認事項は `goal.md` に置く。
-- 両方のトピックで使う調査・根拠は [references/](./references/) に置く。
+- 両方のトピックで使う調査・比較・根拠は [concepts/research/](./concepts/research/) に置く。
 - 現段階では `program / plan / 子計画` に分類しない。
-- 既存のplanやUI資料はこのテーマへ移さず、現在位置に残す。
+- Theme固有のactive計画は [plans/active/](./plans/active/) に置く。横断計画は `ai運用/plans/` に残す。
 
 ### 計画運用
 
@@ -31,7 +31,8 @@
 
 ## 検討場所
 
-- [topics/database/保存・参照設計.md](./topics/database/保存・参照設計.md): DBの持ち方、正本境界、同期、AIからの参照・更新方法の正本
-- [topics/ui/](./topics/ui/): Focusmapでの見え方、操作、PC・スマホの使用体験
-- [references/](./references/): databaseとuiの両方で参照する調査・根拠資料
-- [壁打ち/](./壁打ち/): 会話ごとの検討ログ
+- [concepts/topics/database/storage-and-references.md](./concepts/topics/database/storage-and-references.md): DBの持ち方、正本境界、同期、AIからの参照・更新方法の正本
+- [concepts/topics/ui/](./concepts/topics/ui/): Focusmapでの見え方、操作、PC・スマホの使用体験
+- [concepts/research/](./concepts/research/): databaseとuiの両方で参照する調査・比較・根拠資料
+- [concepts/discussion-logs/](./concepts/discussion-logs/): 壁打ち・検討から残す記録
+- [plans/](./plans/): Theme固有の実行計画。計画内の `references/` は補助根拠資料として別用途で維持する

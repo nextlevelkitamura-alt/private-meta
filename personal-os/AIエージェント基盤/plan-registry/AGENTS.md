@@ -80,7 +80,7 @@
 ## 5. 物理的な置き場
 
 - repo固有の仕事は、そのrepoの最寄り `AGENTS.md` が宣言する計画箱を使う。
-- Personal OS、横断repo、Global Skill、repo、loopの計画は `../../my-brain/areas/ai運用/` を起点にし、`../../my-brain/areas/AGENTS.md` のバケット規約に従う。
+- Personal OS、横断repo、Global Skill、repo、loopの横断計画は `../../my-brain/areas/ai運用/plans/` を起点にし、`../../my-brain/areas/AGENTS.md` のバケット規約に従う。Theme固有の計画は、対象Theme最寄り `AGENTS.md` が宣言するTheme配下の計画箱を起点にする。
 - `plan-registry/` へ計画本文、評価結果、移行ログ、session-boardの行をコピーしない。必要な時は正本への相対パスを参照する。
 
 ## 6. 経路解決（triage決定手続き）
@@ -98,7 +98,7 @@
 
 ### 二段ルーティング
 
-- repo内起点: canonical repo → 最寄り `AGENTS.md` → 宣言範囲の既存plan → 宣言箱。repo-registryは読まない。
+- repo内起点: canonical repo → 最寄り `AGENTS.md` → 宣言範囲の既存plan → 宣言箱。Theme内起点はTheme最寄り `AGENTS.md` を優先する。repo-registryは読まない。
 - Private／headless起点: `../repo-registry/repo概要.md` で担当repoだけを決め → canonical repo → 最寄り `AGENTS.md` → 宣言範囲の既存plan → 宣言箱 → 対象repo所有sessionへのhandoff。領域・project・計画箱は対象repoの `AGENTS.md` だけから決め、registryへ複製しない。
 - 既存planが1件なら必ず合流（`join_existing`）。0件かつ宣言箱が一意な時だけ新規を候補（`create_new`）にする。
 

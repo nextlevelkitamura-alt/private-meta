@@ -30,4 +30,4 @@ board-theme-id: 未登録（ローカルで `board.py theme-add --name 計画シ
 
 ## 派生計画
 
-- [plans/planning/2026-07-24-計画システム再設計-テーマ層とゴール実行/plan.md](../../plans/planning/2026-07-24-計画システム再設計-テーマ層とゴール実行/plan.md) （planning・実行ライン08手・図解は同フォルダ explain/plan.html）
+- [plans/active/2026-07-24-計画システム再設計-テーマ層とゴール実行/plan.md](../../plans/active/2026-07-24-計画システム再設計-テーマ層とゴール実行/plan.md) （**active**・実行ライン8手・図解は同フォルダ explain/plan.html）

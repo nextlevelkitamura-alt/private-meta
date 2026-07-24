@@ -73,6 +73,11 @@ _INBOX_DDL = [
         id TEXT PRIMARY KEY, name TEXT, purpose TEXT, done_criteria TEXT,
         goal_ref TEXT, plan_refs TEXT, sort_order INTEGER, status TEXT,
         created_at TEXT, updated_at TEXT)""",
+    """CREATE TABLE theme_candidates (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, purpose TEXT, done_criteria TEXT, goal_ref TEXT,
+        repo_slug TEXT, source_session_key TEXT, source_turn_id TEXT, proposed_by TEXT,
+        status TEXT, adopted_theme_id TEXT, created_at TEXT, updated_at TEXT,
+        UNIQUE(source_session_key, source_turn_id))""",
     """CREATE TABLE goals (
         id INTEGER PRIMARY KEY, name TEXT, goal_date TEXT, created_at TEXT, source TEXT, status TEXT)""",
     """CREATE TABLE plan_docs (
@@ -105,6 +110,7 @@ class FakeTurso:
             self.inbox.execute(ddl)
         self.sent = []      # 送信バッチの履歴（1要素=1バッチ=[(sql,args),...]）
         self.db_urls = []   # sent と並行: 各バッチの宛先 db_url（board / inbox の検証用）
+        self.transactions = []  # 原子更新として実行したバッチ
 
     def _conn(self, db_url):
         return self.inbox if "inbox" in (db_url or "") else self.board
@@ -145,6 +151,28 @@ class FakeTurso:
             batches.append(rows)
         return batches
 
+    def transaction(self, statements, expected_affected=None, db_url=None, service=None, token_getter=None):
+        statements = [statement for statement in statements if statement]
+        expected = list(expected_affected or [1] * len(statements))
+        if not statements or len(expected) != len(statements):
+            return False
+        self.sent.append(list(statements))
+        self.db_urls.append(db_url)
+        self.transactions.append(list(statements))
+        conn = self._conn(db_url)
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            for index, (sql, args) in enumerate(statements):
+                cursor = conn.execute(sql, _params(args))
+                if cursor.rowcount != expected[index]:
+                    conn.rollback()
+                    return False
+            conn.commit()
+            return True
+        except Exception:  # noqa: BLE001
+            conn.rollback()
+            return False
+
     # ---- 検証補助 ----
     def flat(self):
         """全バッチをフラット化した [(sql, args), ...]。"""
@@ -172,6 +200,7 @@ def install(board):
     board._turso_send = fake.send
     board._turso_read = fake.read
     board._turso_read_many = fake.read_many
+    board._turso_transaction = fake.transaction
     return fake
 
 

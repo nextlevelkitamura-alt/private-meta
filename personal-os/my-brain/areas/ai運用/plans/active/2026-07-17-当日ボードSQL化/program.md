@@ -148,12 +148,12 @@
     次: 追加2表migration・実DB readback・Codex自動trustは完了。SessionStart実測後に子12へ
     場所: plans/11-Hook順序とrepo実行Context.md ／ 依存: 10
     参照: hooks-registry/events/prompt-register/・hooks-registry/shared/session-board/
-- [ ] 12 Dailyのrepo選択とTheme内作業 … 計画
+- [ ] 12 Dailyのrepo選択・Theme日次継承・Plan紐付け … 評価待ち
     役割: 実装
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap
     並列: 不可 ／ レビュー: まとめ
     自律実行: origin/main push・本番反映・本番readback
-    次: session由来repo selectorとTheme直下作業帯を追加
+    次: Theme日次継承・人の即追加・AI候補採用・Plan DnD・typed bucket遷移は実装/対象テスト済み。本番UI視覚確認後に子13へ
     場所: plans/12-Dailyのrepo選択とTheme内作業.md ／ 依存: 11
     参照: harness-registry/focusmap-daily.md
 - [ ] 13 人間採用と単発完了導線 … 計画
@@ -161,7 +161,7 @@
     対象repo: /Users/kitamuranaohiro/Private/projects/active/focusmap（＋AIエージェント基盤 session-board）
     並列: 不可 ／ レビュー: まとめ
     自律実行: inbox/board DB本番書込み・origin/main push・本番反映・rollback検証
-    次: proposal採用、Theme内Todo、完了チェック、archiveを接続
+    次: proposal採用のsessions所属適用とAI Theme候補の人間採用は実装済み。Theme内Todo、単発完了チェック、Theme別archiveを接続
     場所: plans/13-人間採用と単発完了導線.md ／ 依存: 12
     参照: harness-registry/focusmap-daily.md
 - [ ] 14 分類統合評価と段階展開 … 計画
@@ -202,6 +202,10 @@
 - [ ] ボードに大課題テーマの階層が表示され、テーマの編集・タスクの翌日引き継ぎ・エージェント行の「テーマ›タスク」位置表示・終わったことのテーマ別入れ子が動き、的・計画の本文コピーがDBに存在しない（対象: 子09・board画面）
 - [ ] Codex / Claudeの全トップレベルセッションがrepo-registry登録有無に関係なく受付され、UserPromptSubmitで短い分類packetが注入される。AIが提案を書かなかった場合も判定待ちとして消えない（対象: 子10・11）
 - [ ] Dailyのrepo selectorに登録済みGit・未登録Git・非Git作業フォルダが区別して表示され、linked worktreeは同じrepoへまとめられる（対象: 子11・12）
+- [x] Theme本体を日ごとに複製せず、前日未完了Themeが翌日へ自動継承され、昨日のTheme状態も参照できる（対象: 子12・themes/theme_days）
+- [x] Plan未紐付けThemeがrepo filterで消えず、PlanのTheme間DnDが楽観更新・失敗rollback・重複防止つきで動く（対象: 子12・theme_repos/theme_plan_links）
+- [x] Planのplanning/active/done/archive表示はrepoフォルダ正本と一致し、UI操作はtyped command経由でbucketctlとplansync readbackを通る（対象: 子12・plan-ops/focusmap-agent）
+- [x] 人が当日思いついたThemeを即追加でき、AIの新Theme判断は候補として表示され、人間採用時だけTheme・当日・repo所属へ昇格する（対象: 子12・13・theme_candidates）
 - [ ] Themeへ貢献する計画外修正がTheme直下の「テーマ内作業」に表示され、正式Plan進捗%と単発完了数が混ざらず、人間チェック後にTheme別archiveへ入る（対象: 子12・13）
 - [ ] 統合評価 `評価/評価01.md` が全PASS（対象: 評価/）
 

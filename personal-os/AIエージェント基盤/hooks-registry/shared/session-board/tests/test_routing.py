@@ -126,6 +126,118 @@ check("route-proposeで対象turnだけ更新しreadback", proposed == [("plan_c
 masked = fake.query("SELECT safe_summary, reason FROM session_route_proposals WHERE turn_id='turn-1'")[0]
 check("明示書戻しもDB境界で再マスク", "raw-secret" not in masked[0] and "user@example.com" not in masked[1])
 
+
+def seed_pending(session_key, turn_id):
+    statement = turso_store.stmt_route_pending(
+        "id-" + turn_id, session_key, turn_id, "codex", "repo-private",
+        "f" * 64, "safe",
+    )
+    check(f"{turn_id}: pendingを準備", fake.send([statement]))
+
+
+seed_pending("s:12345678", "turn-theme-candidate")
+candidate_output = run_board_inprocess(board, [
+    "route-propose", "--key", "12345678", "--turn", "turn-theme-candidate",
+    "--kind", "theme_candidate", "--status", "proposed",
+    "--summary", "Dailyの新Theme候補", "--reason", "既存Themeに収まらない継続課題",
+    "--repo", "private",
+])
+candidate_rows = fake.inbox.execute(
+    "SELECT name, purpose, repo_slug, status FROM theme_candidates"
+).fetchall()
+check("新Theme候補は提案表とDaily採用候補へ記録",
+      "recorded status=proposed" in candidate_output
+      and fake.query("SELECT route_kind, status FROM session_route_proposals WHERE turn_id='turn-theme-candidate'")
+      == [("theme_candidate", "proposed")]
+      and candidate_rows
+      == [("Dailyの新Theme候補", "既存Themeに収まらない継続課題", "private", "proposed")])
+
+
+# accepted plan はproposalとsessions.plan/theme_idを1トランザクションで確定する。
+seed_pending("s:12345678", "turn-plan")
+fake.transactions.clear()
+accepted_plan = run_board_inprocess(board, [
+    "route-propose", "--key", "12345678", "--turn", "turn-plan",
+    "--kind", "plan", "--plan", "plan-1", "--theme", "theme-1", "--status", "accepted",
+])
+plan_proposal = fake.query(
+    "SELECT route_kind, theme_id, plan_slug, status FROM session_route_proposals WHERE turn_id='turn-plan'"
+)
+plan_session = fake.query("SELECT plan, theme_id FROM sessions WHERE session_key='s:12345678'")
+check("accepted planはproposalとsession所属を確定", plan_proposal == [("plan", "theme-1", "plan-1", "accepted")]
+      and plan_session == [("plan-1", "theme-1")] and "recorded status=accepted" in accepted_plan)
+check("accepted planの2更新は同一トランザクション", len(fake.transactions) == 1
+      and len(fake.transactions[0]) == 2
+      and any("session_route_proposals" in sql for sql, _ in fake.transactions[0])
+      and any("UPDATE sessions SET plan" in sql for sql, _ in fake.transactions[0]))
+
+# 同一acceptedの再試行は書き換えず成功、別経路での再試行は競合として拒む。
+tx_count = len(fake.transactions)
+retry_plan = run_board_inprocess(board, [
+    "route-propose", "--key", "12345678", "--turn", "turn-plan",
+    "--kind", "plan", "--plan", "plan-1", "--theme", "theme-1", "--status", "accepted",
+])
+check("accepted再試行は冪等", "recorded status=accepted" in retry_plan and len(fake.transactions) == tx_count)
+conflicting = run_board_inprocess(board, [
+    "route-propose", "--key", "12345678", "--turn", "turn-plan",
+    "--kind", "plan", "--plan", "plan-other", "--status", "accepted",
+])
+check("別内容のaccepted再試行は競合として不変", "unchanged status=accepted" in conflicting
+      and fake.query("SELECT plan, theme_id FROM sessions WHERE session_key='s:12345678'") == [("plan-1", "theme-1")])
+
+# theme_work はthemeだけ更新し、既存planを保つ。
+seed_pending("s:12345678", "turn-theme")
+run_board_inprocess(board, [
+    "route-propose", "--key", "12345678", "--turn", "turn-theme",
+    "--kind", "theme_work", "--theme", "theme-2", "--status", "accepted",
+])
+check("theme_workはthemeだけ実適用", fake.query(
+    "SELECT plan, theme_id FROM sessions WHERE session_key='s:12345678'"
+) == [("plan-1", "theme-2")])
+
+# 候補・未分類をacceptedしてもsessions所属は変えない。
+before_candidate = fake.query("SELECT plan, theme_id FROM sessions WHERE session_key='s:12345678'")
+seed_pending("s:12345678", "turn-candidate")
+candidate_out = run_board_inprocess(board, [
+    "route-propose", "--key", "12345678", "--turn", "turn-candidate",
+    "--kind", "theme_candidate", "--theme", "theme-new", "--status", "accepted",
+])
+check("accepted候補はsessions所属を変えない", "recorded status=accepted" in candidate_out
+      and fake.query("SELECT plan, theme_id FROM sessions WHERE session_key='s:12345678'") == before_candidate)
+
+# accepted以外はproposalだけを更新する。
+seed_pending("s:12345678", "turn-rejected")
+before_rejected = fake.query("SELECT plan, theme_id FROM sessions WHERE session_key='s:12345678'")
+run_board_inprocess(board, [
+    "route-propose", "--key", "12345678", "--turn", "turn-rejected",
+    "--kind", "plan", "--plan", "plan-other", "--status", "rejected",
+])
+check("rejectedはsessions所属を変えない", fake.query(
+    "SELECT status FROM session_route_proposals WHERE turn_id='turn-rejected'"
+) == [("rejected",)] and fake.query(
+    "SELECT plan, theme_id FROM sessions WHERE session_key='s:12345678'"
+) == before_rejected)
+
+# session行が無ければaccepted提案自体も確定しない。
+seed_pending("s:missing00", "turn-missing")
+missing_out = run_board_inprocess(board, [
+    "route-propose", "--key", "missing00", "--turn", "turn-missing",
+    "--kind", "plan", "--plan", "plan-1", "--status", "accepted",
+])
+check("session行不在でpartial successにしない", "unavailable" in missing_out and fake.query(
+    "SELECT route_kind, status FROM session_route_proposals WHERE turn_id='turn-missing'"
+) == [("pending", "pending")])
+
+# 必須参照の無いacceptedは提案行も変えない。
+seed_pending("s:12345678", "turn-invalid")
+run_board_inprocess(board, [
+    "route-propose", "--key", "12345678", "--turn", "turn-invalid",
+    "--kind", "plan", "--status", "accepted",
+])
+check("不正acceptedは無変更", fake.query(
+    "SELECT route_kind, status FROM session_route_proposals WHERE turn_id='turn-invalid'"
+) == [("pending", "pending")])
+
 # 同じhookイベントが再試行されてもaccepted行をpendingへ戻さない。
 common.register_prompt(event, "codex")
 preserved = fake.query("SELECT route_kind, status FROM session_route_proposals WHERE turn_id='turn-1'")
@@ -180,6 +292,57 @@ try:
     ]})
     batches = turso_store.read_many([("SELECT 1", []), ("SELECT NULL", [])], token_getter=lambda service: "token")
     check("read_manyは複数SELECTを入力順に返す", batches == [[{"n": "1"}], [{"n": None}]])
+
+    tx_calls = []
+
+    def tx_urlopen(request, *args, **kwargs):
+        body = json.loads(request.data.decode())
+        tx_calls.append(body)
+        sqls = [item.get("stmt", {}).get("sql") for item in body.get("requests", [])]
+        if sqls == ["BEGIN IMMEDIATE"]:
+            return _FakeResponse({"baton": "baton-1", "results": [
+                {"response": {"result": {"affected_row_count": 0}}},
+            ]})
+        if sqls == ["UPDATE a", "UPDATE b"]:
+            return _FakeResponse({"baton": "baton-1", "results": [
+                {"response": {"result": {"affected_row_count": 1}}},
+                {"response": {"result": {"affected_row_count": 1}}},
+            ]})
+        return _FakeResponse({"baton": None, "results": [
+            {"response": {"result": {"affected_row_count": 0}}}, {"response": {}},
+        ]})
+
+    turso_store.urllib.request.urlopen = tx_urlopen
+    tx_ok = turso_store.transaction(
+        [("UPDATE a", []), ("UPDATE b", [])], [1, 1], token_getter=lambda service: "token",
+    )
+    check("transactionはBEGIN→更新→COMMITをbatonで実行", tx_ok
+          and [item.get("stmt", {}).get("sql") for item in tx_calls[-1]["requests"]] == ["COMMIT", None])
+
+    tx_calls.clear()
+
+    def zero_row_urlopen(request, *args, **kwargs):
+        body = json.loads(request.data.decode())
+        tx_calls.append(body)
+        sqls = [item.get("stmt", {}).get("sql") for item in body.get("requests", [])]
+        if sqls == ["BEGIN IMMEDIATE"]:
+            return _FakeResponse({"baton": "baton-2", "results": [
+                {"response": {"result": {"affected_row_count": 0}}},
+            ]})
+        if sqls == ["UPDATE a"]:
+            return _FakeResponse({"baton": "baton-2", "results": [
+                {"response": {"result": {"affected_row_count": 0}}},
+            ]})
+        return _FakeResponse({"baton": None, "results": [
+            {"response": {"result": {"affected_row_count": 0}}}, {"response": {}},
+        ]})
+
+    turso_store.urllib.request.urlopen = zero_row_urlopen
+    tx_failed = turso_store.transaction(
+        [("UPDATE a", [])], [1], token_getter=lambda service: "token",
+    )
+    check("transactionは0件更新をROLLBACK", not tx_failed
+          and [item.get("stmt", {}).get("sql") for item in tx_calls[-1]["requests"]] == ["ROLLBACK", None])
 finally:
     turso_store.urllib.request.urlopen = original_urlopen
 
